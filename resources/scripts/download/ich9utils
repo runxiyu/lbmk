@@ -32,7 +32,7 @@ fi
 # ------------------------------------------------------------------------------
 
 # download it using git
-git clone https://notabug.org/osboot/ich9utils.git
+git clone https://notabug.org/libreboot/ich9utils.git
 
 if [ ! -d "ich9utils" ]; then
     printf "ich9utils not downloaded; check network connection?\n\n"
