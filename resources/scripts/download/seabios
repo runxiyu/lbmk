@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+#   Copyright (C) 2015, 2016, 2021 Leah Rowe <info@minifree.org>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+# Get SeaBIOS, revert to commit last used and apply patches.
+
+# Remove the old version that may still exist
+# ------------------------------------------------------------------------------
+
+printf "Downloading SeaBIOS\n"
+
+rm -f build_error
+
+rm -rf "seabios/"
+
+# Get latest SeaBIOS
+# ------------------------------------------------------------------------------
+
+# download it using git
+git clone https://git.seabios.org/seabios.git
+
+if [ ! -d "seabios" ]; then
+	printf "seabios not downloaded; check network connection?\n\n"
+	exit 1
+fi
+
+(
+# modifications are required
+cd "seabios/"
+
+# Reset to the last commit that was tested (we use stable releases for seabios)
+# ------------------------------------------------------------------------------
+
+git reset --hard b0d61ecef66eb05bd7a4eb7ada88ec5dab06dfee
+
+for patchfile in ../resources/seabios/patches/*.patch; do
+	git am "${patchfile}" || touch ../build_error
+	if [ -f ../build_error ]; then
+		git am --abort
+		break
+	fi
+done
+)
+
+if [ -f build_error ]; then
+	rm -f build_error
+	exit 1
+fi
+
+exit 0

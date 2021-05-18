@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# Generic script for downloading programs used by the build system
+#
+#	Copyright (C) 2014, 2015, 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
+#	Copyright (C) 2015, 2016 Klemens Nanni <contact@autoboot.org>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+./resources/scripts/misc/versioncheck
+
+# set this when you want to modify each coreboot tree
+# for example, you want to test custom patches
+# NODELETE= ./download coreboot
+deleteblobs="true"
+[ "x${NODELETE+set}" = 'xset' ] && deleteblobs="false"
+
+rm -f "build_error"
+
+download=resources/scripts/download
+
+listprograms() {
+	for program in "${download}"/*; do
+		printf '%s\n' "${program##*/}"
+	done
+}
+
+help() {
+	cat <<- EOF
+	USAGE:	./download <PROGRAM> <OPTIONS>
+
+	possible values for 'program':
+	$(listprograms)
+
+	Example:	./download flashrom
+	Example:	./download coreboot
+
+	Some program options allow for additional parameters:
+	Example:	./download coreboot default
+	Example:	./download coreboot x60
+
+	Each program download script should work without extra paramaters, but
+	they can use them. For instance, './download coreboot' will download all
+	coreboot trees by default, but './download coreboot x60' will only download
+	the coreboot tree required for the target: x60
+
+	Refer to the documentation for more information.
+	EOF
+}
+
+die() {
+	printf 'Error: %s\n' "${@}" 1>&2
+	exit 1
+}
+
+if [ $# -lt 1 ]; then
+	help
+	die "Please specify arguments."
+fi
+
+program="${1}"
+shift 1
+[ "${program}" = help ] && help && exit 0
+
+if [ "${program}" = "all" ]; then
+	for downloadProgram in ${download}/*; do
+		if [ -f "${downloadProgram}" ]; then
+			if [ "${deleteblobs}" = "false" ]; then
+				NODELETE= "${downloadProgram}"
+			else
+				"${downloadProgram}"
+			fi
+		fi
+	done
+	exit 0
+elif [ ! -f "${download}/${program}" ]; then
+	help
+	die "Invalid argument '${program}'. See: './download help'."
+fi
+
+if [ $# -lt 1 ]; then	
+	if [ "${deleteblobs}" = "false" ]; then
+		NODELETE= "${download}/${program}"
+	else
+		"${download}/${program}"
+	fi
+else	
+	if [ "${deleteblobs}" = "false" ]; then
+		NODELETE= "${download}/${program}" $@
+	else
+		"${download}/${program}" $@
+	fi
+fi
+
+exit 0

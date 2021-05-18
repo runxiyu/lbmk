@@ -1,0 +1,193 @@
+From 7413a445b51db0adb9faf1bb21d8f6d2311a35d0 Mon Sep 17 00:00:00 2001
+From: Patrick Georgi <pgeorgi@google.com>
+Date: Wed, 12 May 2021 14:52:12 +0200
+Subject: [PATCH 12/17] src: Match array format in function declarations and
+ definitions
+
+gcc 11.1 complains when we're passing a type* into a function that was
+declared to get a type[], even if the ABI has identical parameter
+passing for both.
+
+To prepare for newer compilers, adapt to this added constraint.
+
+Change-Id: I5a1b3824a85a178431177620c4c0d5fddc993b4f
+Signed-off-by: Patrick Georgi <pgeorgi@google.com>
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/54094
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+Reviewed-by: Tim Wawrzynczak <twawrzynczak@chromium.org>
+Reviewed-by:  Felix Singer <felixsinger@posteo.net>
+Reviewed-by: Angel Pons <th3fanbus@gmail.com>
+---
+ src/mainboard/lenovo/t400/romstage.c             | 2 +-
+ src/mainboard/lenovo/x200/romstage.c             | 2 +-
+ src/mainboard/roda/rk9/romstage.c                | 2 +-
+ src/soc/intel/alderlake/espi.c                   | 2 +-
+ src/soc/intel/cannonlake/lpc.c                   | 2 +-
+ src/soc/intel/elkhartlake/espi.c                 | 2 +-
+ src/soc/intel/icelake/espi.c                     | 2 +-
+ src/soc/intel/jasperlake/espi.c                  | 2 +-
+ src/soc/intel/skylake/lpc.c                      | 2 +-
+ src/soc/intel/tigerlake/espi.c                   | 2 +-
+ src/soc/intel/xeon_sp/lpc.c                      | 2 +-
+ src/vendorcode/mediatek/mt8192/dramc/dramc_top.c | 2 +-
+ 12 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/src/mainboard/lenovo/t400/romstage.c b/src/mainboard/lenovo/t400/romstage.c
+index b4766ed737..aa3462a901 100644
+--- a/src/mainboard/lenovo/t400/romstage.c
++++ b/src/mainboard/lenovo/t400/romstage.c
+@@ -15,7 +15,7 @@ static void hybrid_graphics_init(sysinfo_t *sysinfo)
+ 	sysinfo->enable_peg = peg;
+ }
+ 
+-void get_mb_spd_addrmap(u8 *spd_addrmap)
++void get_mb_spd_addrmap(u8 spd_addrmap[4])
+ {
+ 	spd_addrmap[0] = 0x50;
+ 	spd_addrmap[2] = 0x51;
+diff --git a/src/mainboard/lenovo/x200/romstage.c b/src/mainboard/lenovo/x200/romstage.c
+index 46cedfb07f..6764644274 100644
+--- a/src/mainboard/lenovo/x200/romstage.c
++++ b/src/mainboard/lenovo/x200/romstage.c
+@@ -3,7 +3,7 @@
+ #include <southbridge/intel/common/gpio.h>
+ #include <northbridge/intel/gm45/gm45.h>
+ 
+-void get_mb_spd_addrmap(u8 *spd_addrmap)
++void get_mb_spd_addrmap(u8 spd_addrmap[4])
+ {
+ 	spd_addrmap[0] = 0x50;
+ 	spd_addrmap[2] = 0x51;
+diff --git a/src/mainboard/roda/rk9/romstage.c b/src/mainboard/roda/rk9/romstage.c
+index be8ba5dbb3..dabef34707 100644
+--- a/src/mainboard/roda/rk9/romstage.c
++++ b/src/mainboard/roda/rk9/romstage.c
+@@ -2,7 +2,7 @@
+ 
+ #include <northbridge/intel/gm45/gm45.h>
+ 
+-void get_mb_spd_addrmap(u8 *spd_addrmap)
++void get_mb_spd_addrmap(u8 spd_addrmap[4])
+ {
+ 	spd_addrmap[0] = 0x50;
+ 	spd_addrmap[2] = 0x52;
+diff --git a/src/soc/intel/alderlake/espi.c b/src/soc/intel/alderlake/espi.c
+index feec465a92..dd0edcde2c 100644
+--- a/src/soc/intel/alderlake/espi.c
++++ b/src/soc/intel/alderlake/espi.c
+@@ -20,7 +20,7 @@
+ #include <soc/pcr_ids.h>
+ #include <soc/soc_chip.h>
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/cannonlake/lpc.c b/src/soc/intel/cannonlake/lpc.c
+index 20704e5bc6..0e63e0dc97 100644
+--- a/src/soc/intel/cannonlake/lpc.c
++++ b/src/soc/intel/cannonlake/lpc.c
+@@ -17,7 +17,7 @@
+ 
+ #include "chip.h"
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/elkhartlake/espi.c b/src/soc/intel/elkhartlake/espi.c
+index 1737a474ac..46646d8485 100644
+--- a/src/soc/intel/elkhartlake/espi.c
++++ b/src/soc/intel/elkhartlake/espi.c
+@@ -16,7 +16,7 @@
+ #include <soc/pcr_ids.h>
+ #include <soc/soc_chip.h>
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/icelake/espi.c b/src/soc/intel/icelake/espi.c
+index 489fe34223..d634cf8943 100644
+--- a/src/soc/intel/icelake/espi.c
++++ b/src/soc/intel/icelake/espi.c
+@@ -16,7 +16,7 @@
+ #include <soc/pcr_ids.h>
+ #include <soc/soc_chip.h>
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/jasperlake/espi.c b/src/soc/intel/jasperlake/espi.c
+index c3b50de8f0..1d1f94e328 100644
+--- a/src/soc/intel/jasperlake/espi.c
++++ b/src/soc/intel/jasperlake/espi.c
+@@ -16,7 +16,7 @@
+ #include <soc/pcr_ids.h>
+ #include <soc/soc_chip.h>
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/skylake/lpc.c b/src/soc/intel/skylake/lpc.c
+index 5abae765c9..5d38bb8683 100644
+--- a/src/soc/intel/skylake/lpc.c
++++ b/src/soc/intel/skylake/lpc.c
+@@ -14,7 +14,7 @@
+ 
+ #include "chip.h"
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/tigerlake/espi.c b/src/soc/intel/tigerlake/espi.c
+index 8386cd9df1..427867622b 100644
+--- a/src/soc/intel/tigerlake/espi.c
++++ b/src/soc/intel/tigerlake/espi.c
+@@ -22,7 +22,7 @@
+ #include <soc/pcr_ids.h>
+ #include <soc/soc_chip.h>
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/soc/intel/xeon_sp/lpc.c b/src/soc/intel/xeon_sp/lpc.c
+index f0cb6db63d..dad0a4914d 100644
+--- a/src/soc/intel/xeon_sp/lpc.c
++++ b/src/soc/intel/xeon_sp/lpc.c
+@@ -8,7 +8,7 @@
+ 
+ #include <chip.h>
+ 
+-void soc_get_gen_io_dec_range(uint32_t *gen_io_dec)
++void soc_get_gen_io_dec_range(uint32_t gen_io_dec[LPC_NUM_GENERIC_IO_RANGES])
+ {
+ 	const config_t *config = config_of_soc();
+ 
+diff --git a/src/vendorcode/mediatek/mt8192/dramc/dramc_top.c b/src/vendorcode/mediatek/mt8192/dramc/dramc_top.c
+index 8af6a36851..04fd62a27f 100644
+--- a/src/vendorcode/mediatek/mt8192/dramc/dramc_top.c
++++ b/src/vendorcode/mediatek/mt8192/dramc/dramc_top.c
+@@ -475,7 +475,7 @@ int get_dram_freq_cnt(void)
+ #if (FOR_DV_SIMULATION_USED==0)
+ #if !__FLASH_TOOL_DA__ && !__ETT__
+ 
+-void get_dram_rank_size(u64 dram_rank_size[DRAMC_MAX_RK])
++void get_dram_rank_size(u64 dram_rank_size[])
+ {
+ #ifdef COMBO_MCP
+ 	int index, rank_nr, i;
+-- 
+2.25.1
+

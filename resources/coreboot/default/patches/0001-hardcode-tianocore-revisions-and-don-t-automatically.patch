@@ -1,0 +1,128 @@
+From 91b073efaca57d455e2f25370918b9796cbc1a15 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 13 May 2021 23:52:08 +0100
+Subject: [PATCH 01/17] hardcode tianocore revisions, and don't automatically
+ download
+
+---
+ Makefile                             |  2 +-
+ payloads/external/tianocore/Makefile | 57 ++++++++--------------------
+ 2 files changed, 17 insertions(+), 42 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 02c6288f15..8290b45e89 100644
+--- a/Makefile
++++ b/Makefile
+@@ -486,7 +486,7 @@ distclean-utils:
+ 		$(MAKE) -C util/$(tool) distclean MFLAGS= MAKEFLAGS= ; \
+ 		rm -f /util/$(tool)/junit.xml;)
+ 
+-distclean: clean clean-ctags clean-cscope distclean-payloads distclean-utils
++distclean: clean clean-ctags clean-cscope distclean-utils
+ 	rm -f .config .config.old ..config.tmp* .kconfig.d .tmpconfig* .ccwrap .xcompile
+ 	rm -rf coreboot-builds coreboot-builds-chromeos
+ 	rm -f abuild*.xml junit.xml* util/lint/junit.xml
+diff --git a/payloads/external/tianocore/Makefile b/payloads/external/tianocore/Makefile
+index 7cd34f1732..3527b7a2ad 100644
+--- a/payloads/external/tianocore/Makefile
++++ b/payloads/external/tianocore/Makefile
+@@ -1,5 +1,8 @@
+ ## SPDX-License-Identifier: GPL-2.0-only
+ 
++# This file has been modified for libreboot/osboot/osboot-libre.
++# The tianocore repo/branch/revision has been hardcoded, as have some options
++
+ # force the shell to bash - the edksetup.sh script doesn't work with dash
+ export SHELL := env bash
+ 
+@@ -9,51 +12,31 @@ project_git_repo=https://github.com/mrchromebox/edk2
+ project_git_branch=coreboot_fb
+ upstream_git_repo=https://github.com/tianocore/edk2
+ 
+-ifeq ($(CONFIG_TIANOCORE_UEFIPAYLOAD),y)
+-bootloader=UefiPayloadPkg
+-logo_pkg=MdeModulePkg
+-build_flavor=-D BOOTLOADER=COREBOOT -D PCIE_BASE=$(CONFIG_MMCONF_BASE_ADDRESS) -DPS2_KEYBOARD_ENABLE
+-TAG=upstream/master
+-else
+ bootloader=CorebootPayloadPkg
+ logo_pkg=CorebootPayloadPkg
+ # STABLE revision is MrChromebox's coreboot framebuffer (coreboot_fb) branch
+-TAG=origin/$(project_git_branch)
+-endif
+-
+-ifneq ($(CONFIG_TIANOCORE_REVISION_ID),)
+-TAG=$(CONFIG_TIANOCORE_REVISION_ID)
+-endif
++TAG=ca08920ded1649921a12105d1959df423733431f
++# above is a commit ID in MrChromebox's coreboot_fb branch
+ 
+ export EDK_TOOLS_PATH=$(project_dir)/BaseTools
+ 
+-ifeq ($(CONFIG_TIANOCORE_DEBUG),y)
+-BUILD_TYPE=DEBUG
+-else
+ BUILD_TYPE=RELEASE
+-endif
+ 
+-ifneq ($(CONFIG_TIANOCORE_USE_8254_TIMER), y)
+ TIMER=-DUSE_HPET_TIMER
+-endif
+ 
+-TIMEOUT=-D PLATFORM_BOOT_TIMEOUT=$(CONFIG_TIANOCORE_BOOT_TIMEOUT)
++# see coreboot 61a3c8a005922d46425c84f847c0ad26e9c3cdca
++# "2 seconds for board with internal display"
++# "5 seconds for board without internal display"
++# libreboot takes the shotgun approach. 5 seconds for all
++TIMEOUT=-D PLATFORM_BOOT_TIMEOUT=5
+ 
+-ifeq ($(CONFIG_TIANOCORE_COREBOOTPAYLOAD),y)
+-ifeq ($(CONFIG_TIANOCORE_TARGET_IA32), y)
+-ARCH=-a IA32 -p CorebootPayloadPkg/CorebootPayloadPkgIa32.dsc
+-else
+ ARCH=-a IA32 -a X64 -p CorebootPayloadPkg/CorebootPayloadPkgIa32X64.dsc
+-endif
+-else
+-ARCH=-a IA32 -a X64 -p UefiPayloadPkg/UefiPayloadPkg.dsc
+-endif
+ 
+-BUILD_STR=-q $(ARCH) -t COREBOOT -b $(BUILD_TYPE) $(TIMER) $(TIMEOUT) $(build_flavor)
++BUILD_STR=-q $(ARCH) -t COREBOOT -b $(BUILD_TYPE) $(TIMER) $(TIMEOUT)
+ 
+ all: clean build
+ 
+-$(project_dir):
++download:
+ 	echo "    Cloning $(project_name) from Git"
+ 	git clone --branch $(project_git_branch) $(project_git_repo) $(project_dir); \
+ 		cd $(project_dir); \
+@@ -76,17 +59,9 @@ update: $(project_dir)
+ 		git submodule update --init
+ 
+ checktools:
+-	echo "Checking uuid-dev..."
+-	echo "#include <uuid/uuid.h>" > libtest.c
+-	echo "int main(int argc, char **argv) { (void) argc; (void) argv; return 0; }" >> libtest.c
+-	$(HOSTCC) $(HOSTCCFLAGS) libtest.c -o libtest >/dev/null 2>&1 && echo " found uuid-dev." || \
+-		( echo " Not found."; echo "ERROR: please_install uuid-dev (libuuid-devel)"; exit 1 )
+-	rm -rf libtest.c libtest
+-	echo "Checking nasm..."
+-	type nasm > /dev/null 2>&1 && echo " found nasm." || \
+-		( echo " Not found."; echo "Error: Please install nasm."; exit 1 )
+-
+-build: update checktools
++	echo "tianocore tool check disabled"
++
++build: checktools
+ 	unset CC; $(MAKE) -C $(project_dir)/BaseTools
+ 	echo " build $(project_name) $(TAG)"
+ 	if [ -n "$(CONFIG_TIANOCORE_BOOTSPLASH_FILE)" ]; then \
+@@ -116,4 +91,4 @@ clean:
+ distclean:
+ 	rm -rf $(project_dir)
+ 
+-.PHONY: all update checktools config build clean distclean
++.PHONY: all update checktools config build clean distclean download
+-- 
+2.25.1
+

@@ -1,0 +1,58 @@
+From 69d303f3860b4127343613785ceb5d52fa715321 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 16 May 2021 00:16:30 +0100
+Subject: [PATCH 1/1] Add runtime option: etc/only-load-option-roms (load, but
+ don't run)
+
+From anecdotal reports, sometimes it is useful; I've heard of instances where
+certain Nvidia graphics cards can, if using the nouveau driver on a GNU+Linux
+system, be used without running any option ROM, but where the option ROM has
+certain data tables in it that the driver can use.
+
+If set to 1, this will disable *all* option ROM loading, even SeaVGABIOS. It
+also affects CSM. In practise, the only time someone would ever use this is if
+they were using a graphics card in the above scenario. Such a use-case is
+incredibly rare.
+
+If set to 0, the normal behaviour can be observed (load, and execute). The
+run time option etc/pci-optionrom-exec will still be in effect.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/optionroms.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/optionroms.c b/src/optionroms.c
+index e906ab9..db5e893 100644
+--- a/src/optionroms.c
++++ b/src/optionroms.c
+@@ -23,7 +23,7 @@
+ #include "util.h" // get_pnp_offset
+ #include "tcgbios.h" // tpm_*
+ 
+-static int EnforceChecksum, S3ResumeVga, RunPCIroms;
++static int EnforceChecksum, S3ResumeVga, RunPCIroms, OnlyLoadOptionRoms;
+ 
+ 
+ /****************************************************************
+@@ -34,6 +34,9 @@ static int EnforceChecksum, S3ResumeVga, RunPCIroms;
+ static void
+ __callrom(struct rom_header *rom, u16 offset, u16 bdf)
+ {
++    if (OnlyLoadOptionRoms)
++        return;
++
+     u16 seg = FLATPTR_TO_SEG(rom);
+     dprintf(1, "Running option rom at %04x:%04x\n", seg, offset);
+ 
+@@ -461,6 +464,7 @@ vgarom_setup(void)
+     EnforceChecksum = romfile_loadint("etc/optionroms-checksum", 1);
+     S3ResumeVga = romfile_loadint("etc/s3-resume-vga-init", CONFIG_QEMU);
+     RunPCIroms = romfile_loadint("etc/pci-optionrom-exec", 2);
++    OnlyLoadOptionRoms = romfile_loadint("etc/only-load-option-roms", 0);
+     ScreenAndDebug = romfile_loadint("etc/screen-and-debug", 1);
+ 
+     // Clear option rom memory
+-- 
+2.25.1
+

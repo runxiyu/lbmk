@@ -1,0 +1,49 @@
+#!/bin/bash
+
+#  helper script: downloads ich9utils
+#
+#	Copyright (C) 2021 Leah Rowe <info@minifree.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+printf "Downloading ich9utils\n"
+
+if [ -d ich9utils ]; then
+	printf "ich9utils already downloaded. skipping\n"
+	exit 0
+fi
+
+# Get flashrom
+# ------------------------------------------------------------------------------
+
+# download it using git
+git clone https://notabug.org/osboot/ich9utils.git
+
+if [ ! -d "ich9utils" ]; then
+    printf "ich9utils not downloaded; check network connection?\n\n"
+    exit 1
+fi
+
+(
+cd "ich9utils/"
+
+# reset to known revision
+git reset --hard 53749b0c6f7c5778bdd1ec2b91cd230626752579
+)
+
+printf "\n\n"

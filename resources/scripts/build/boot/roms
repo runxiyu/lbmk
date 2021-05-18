@@ -1,0 +1,100 @@
+#!/bin/bash
+
+#
+#  helper script: build coreboot images with various payloads
+#
+#	Copyright (C) 2014, 2015, 2016, 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# This script assumes that the working directory is the root
+# of git or release archive
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+projectname="$(cat projectname)"
+
+listboards() {
+	for boarddir in resources/coreboot/*; do
+		if [ ! -d "${boarddir}" ]; then continue; fi
+		board="${boarddir##resources/coreboot/}"
+		board="${board%/}"
+		printf '%s\n' "${board##*/}"
+	done
+}
+
+help() {
+	cat <<- EOF
+	USAGE:	./build boot roms boardname
+	To build *all* boards, do this: ./build boot roms all
+	To list *all* boards, do this: ./build boot roms list
+
+	possible values for 'options':
+	$(listboards)
+
+	Example:	./build boot roms x60
+	Example:	./build boot roms x200_8mb x60
+
+	Refer to the ${projectname} documentation for more information.
+	EOF
+}
+
+die() {
+	printf 'Error: %s\n' "${@}" 1>&2
+	exit 1
+}
+
+# Build ROM images for supported boards
+buildrom() {
+	board="$1"
+	if [ -d "resources/coreboot/${board}/" ]; then
+		./build boot roms_helper "${board}"
+	else
+		die "\nbuild/roms: target not defined in the build system: %s\n" "${board}"
+	fi
+}
+
+if [ $# -gt 0 ]; then
+	firstoption="${1}"
+	if [ "${firstoption}" = "help" ]; then
+		help
+		exit 0
+	fi
+	if [ "${firstoption}" = "list" ]; then
+		listboards
+		exit 0
+	fi
+
+	printf "Building %s ROM images\n" "${projectname}"
+
+	if [ "${firstoption}" = "all" ]; then
+		for boardname in $(listboards); do
+			buildrom "${boardname}" || die "build/roms: something went wrong"
+		done
+	else
+		for board in ${@}; do
+			buildrom "${board}" || die "build/roms: something went wrong"
+		done
+	fi
+else
+	help
+	exit 1
+fi
+
+
+printf "\n\nDone! Your ROMs are in bin/\n\n"
+

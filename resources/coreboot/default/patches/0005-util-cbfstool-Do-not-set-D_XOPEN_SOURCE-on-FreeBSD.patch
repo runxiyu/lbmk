@@ -1,0 +1,46 @@
+From f0c8276fe364d4773f9f305f2678a0b8e8f84830 Mon Sep 17 00:00:00 2001
+From: Idwer Vollering <vidwer@gmail.com>
+Date: Sun, 9 May 2021 18:16:26 +0200
+Subject: [PATCH 05/17] util/cbfstool: Do not set -D_XOPEN_SOURCE on FreeBSD
+
+Fixes compilation on FreeBSD CURRENT, and possibly other releases.
+
+The compiler, clang, complained about:
+util/cbfstool/cbfstool.c:181:40: error: implicit declaration of function 'memmem' is invalid in C99 [-Werror,-Wimplicit-function-declaration]
+util/cbfstool/cbfstool.c:181:31: error: incompatible integer to pointer conversion initializing 'struct metadata_hash_anchor *' with an expression of type 'int' [-Werror,-Wint-conversion]
+
+Signed-off-by: Idwer Vollering <vidwer@gmail.com>
+Change-Id: I45c02a21709160df44fc8da329f6c4a9bad24478
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/53996
+Reviewed-by: Angel Pons <th3fanbus@gmail.com>
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+---
+ util/cbfstool/Makefile.inc | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/util/cbfstool/Makefile.inc b/util/cbfstool/Makefile.inc
+index 5b49fe80ad..47b89e57b0 100644
+--- a/util/cbfstool/Makefile.inc
++++ b/util/cbfstool/Makefile.inc
+@@ -95,7 +95,6 @@ TOOLCFLAGS += -Wstrict-prototypes -Wwrite-strings
+ TOOLCFLAGS += -O2
+ TOOLCPPFLAGS ?= -D_DEFAULT_SOURCE # memccpy() from string.h
+ TOOLCPPFLAGS += -D_BSD_SOURCE -D_SVID_SOURCE # _DEFAULT_SOURCE for older glibc
+-TOOLCPPFLAGS += -D_XOPEN_SOURCE=700 # strdup() from string.h
+ TOOLCPPFLAGS += -D_GNU_SOURCE # memmem() from string.h
+ TOOLCPPFLAGS += -I$(top)/util/cbfstool/flashmap
+ TOOLCPPFLAGS += -I$(top)/util/cbfstool
+@@ -113,6 +112,10 @@ TOOLCPPFLAGS += -I$(top)/src/vendorcode/intel/edk2/uefi_2.4/MdePkg/Include
+ TOOLLDFLAGS ?=
+ HOSTCFLAGS += -fms-extensions
+ 
++ifneq ($(shell uname -o 2>/dev/null), FreeBSD)
++TOOLCPPFLAGS += -D_XOPEN_SOURCE=700 # strdup() from string.h
++endif
++
+ ifeq ($(shell uname -s | cut -c-7 2>/dev/null), MINGW32)
+ TOOLCFLAGS += -mno-ms-bitfields
+ endif
+-- 
+2.25.1
+

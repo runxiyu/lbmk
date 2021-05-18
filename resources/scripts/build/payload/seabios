@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#  helper script: builds SeaBIOS source code
+#
+#	Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+# Build SeaBIOS
+# ---------------------------------------------------------------------
+
+printf "Building SeaBIOS payloads and SeaVGABIOS\n"
+
+[ ! -d "payload/" ] && mkdir -p payload/
+[ ! -d "payload/seabios" ] && mkdir -p payload/seabios/
+
+rm -f payload/seabios/*
+
+if [ ! -d "seabios/" ]; then
+    ./download seabios
+fi
+
+cd seabios/
+
+# for libgfxinit setup:
+[[ -f Makefile ]] && make distclean
+cp ../resources/seabios/config/libgfxinit .config
+make -j$(nproc)
+mv out/bios.bin.elf ../payload/seabios/seabios_libgfxinit.elf
+mv out/vgabios.bin ../payload/seabios/seavgabios.bin
+rm .config
+
+# for vgarom setup:
+[[ -f Makefile ]] && make distclean
+cp ../resources/seabios/config/vgarom .config
+make -j$(nproc)
+mv out/bios.bin.elf ../payload/seabios/seabios_vgarom.elf
+rm .config
+
+# clean it again. gotta keep it clean!
+[[ -f Makefile ]] && make distclean
+
+printf "Done! SeaBIOS files are in payload/seabios/\n\n"
+
+# done. go back to main directory
+cd ../
+
+# ------------------- DONE ----------------------

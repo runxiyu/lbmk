@@ -1,0 +1,54 @@
+From 86af2659583125b2891ad57bde30a33adff91c03 Mon Sep 17 00:00:00 2001
+From: Patrick Georgi <pgeorgi@google.com>
+Date: Mon, 10 May 2021 23:34:18 +0200
+Subject: [PATCH 09/17] util/crossgcc: Update gmp to 6.2.1
+
+Change-Id: I871942f66e8fc496ebe523fdab539ea20950a202
+Signed-off-by: Patrick Georgi <pgeorgi@google.com>
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/54047
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+Reviewed-by: Arthur Heymans <arthur@aheymans.xyz>
+---
+ util/crossgcc/buildgcc                                          | 2 +-
+ ...-6.2.0_generic-build.patch => gmp-6.2.1_generic-build.patch} | 0
+ util/crossgcc/sum/gmp-6.2.0.tar.xz.cksum                        | 1 -
+ util/crossgcc/sum/gmp-6.2.1.tar.xz.cksum                        | 1 +
+ 4 files changed, 2 insertions(+), 2 deletions(-)
+ rename util/crossgcc/patches/{gmp-6.2.0_generic-build.patch => gmp-6.2.1_generic-build.patch} (100%)
+ delete mode 100644 util/crossgcc/sum/gmp-6.2.0.tar.xz.cksum
+ create mode 100644 util/crossgcc/sum/gmp-6.2.1.tar.xz.cksum
+
+diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
+index c947dd45ab..d8f25dbbb8 100755
+--- a/util/crossgcc/buildgcc
++++ b/util/crossgcc/buildgcc
+@@ -32,7 +32,7 @@ BOOTSTRAP=0
+ THREADS=1
+ 
+ # GCC toolchain version numbers
+-GMP_VERSION=6.2.0
++GMP_VERSION=6.2.1
+ MPFR_VERSION=4.1.0
+ MPC_VERSION=1.2.0
+ GCC_VERSION=8.3.0
+diff --git a/util/crossgcc/patches/gmp-6.2.0_generic-build.patch b/util/crossgcc/patches/gmp-6.2.1_generic-build.patch
+similarity index 100%
+rename from util/crossgcc/patches/gmp-6.2.0_generic-build.patch
+rename to util/crossgcc/patches/gmp-6.2.1_generic-build.patch
+diff --git a/util/crossgcc/sum/gmp-6.2.0.tar.xz.cksum b/util/crossgcc/sum/gmp-6.2.0.tar.xz.cksum
+deleted file mode 100644
+index b00b669fe7..0000000000
+--- a/util/crossgcc/sum/gmp-6.2.0.tar.xz.cksum
++++ /dev/null
+@@ -1 +0,0 @@
+-052a5411dc74054240eec58132d2cf41211d0ff6  tarballs/gmp-6.2.0.tar.xz
+diff --git a/util/crossgcc/sum/gmp-6.2.1.tar.xz.cksum b/util/crossgcc/sum/gmp-6.2.1.tar.xz.cksum
+new file mode 100644
+index 0000000000..3ea4232e59
+--- /dev/null
++++ b/util/crossgcc/sum/gmp-6.2.1.tar.xz.cksum
+@@ -0,0 +1 @@
++0578d48607ec0e272177d175fd1807c30b00fdf2  tarballs/gmp-6.2.1.tar.xz
+-- 
+2.25.1
+

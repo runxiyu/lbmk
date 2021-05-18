@@ -1,0 +1,77 @@
+#!/bin/bash
+
+#  helper script: builds Tianocore source code
+#
+#	Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+printf "Building Tianocore\n"
+
+[ ! -d "payload/" ] && mkdir -p payload/
+[ ! -d "payload/tianocore/" ] && mkdir -p payload/tianocore/
+
+rm -f payload/tianocore/*
+
+if [ ! -d "coreboot/default/" ]; then
+    ./download coreboot default
+    ./build module cbutils default
+fi
+
+if [ ! -d "coreboot/default/util/crossgcc/xgcc/i386-elf" ]; then
+    (
+        cd coreboot/default/
+        make crossgcc-i386 CPUS=$(nproc) # tianocore actually uses host gcc, which means
+        # right now you should be building this on a 64-bit x86 host.
+        # It does not currently use coreboot crossgcc. However, a dummy coreboot
+        # ROM is compiled using Tianocore in order to derive tianocore.elf
+
+        # and of course, that implies crossgcc. tianocore is only really use
+        # on x86, so we only care about i386 crossgcc here
+    )
+fi
+
+if [ ! -d "coreboot/default/payloads/external/tianocore/tianocore/" ]; then
+    ./download tianocore
+fi
+
+(
+cd coreboot/default/payloads/external/tianocore/
+make clean
+)
+
+(
+cd coreboot/default/
+make distclean
+cp ../../resources/tianocore/dummy.coreboot.config .config
+make -j$(nproc)
+)
+
+cp coreboot/default/payloads/external/tianocore/tianocore/Build/UEFIPAYLOAD.fd \
+    payload/tianocore/tianocore.elf
+
+(
+cd coreboot/default/
+make distclean
+)
+
+(
+cd coreboot/default/payloads/external/tianocore/
+make clean
+)
+

@@ -1,0 +1,36 @@
+From 37589dc0c9c0bb78904b0b2b9aae0ba519eb6e04 Mon Sep 17 00:00:00 2001
+From: Patrick Georgi <pgeorgi@google.com>
+Date: Wed, 12 May 2021 14:54:49 +0200
+Subject: [PATCH 13/17] src/security/tpm: Deal with zero length tlcl writes
+
+While memcpy(foo, bar, 0) should be a no-op, that's hard to prove for a
+compiler and so gcc 11.1 complains about the use of an uninitialized
+"bar" even though it's harmless in this case.
+
+Change-Id: Idbffa508c2cd68790efbc0b4ab97ae1b4d85ad51
+Signed-off-by: Patrick Georgi <pgeorgi@google.com>
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/54095
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+Reviewed-by: Jacob Garber <jgarber1@ualberta.ca>
+Reviewed-by: Angel Pons <th3fanbus@gmail.com>
+---
+ src/security/tpm/tss/tcg-1.2/tss.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/security/tpm/tss/tcg-1.2/tss.c b/src/security/tpm/tss/tcg-1.2/tss.c
+index 8b7778ddb2..413b68193f 100644
+--- a/src/security/tpm/tss/tcg-1.2/tss.c
++++ b/src/security/tpm/tss/tcg-1.2/tss.c
+@@ -215,7 +215,8 @@ uint32_t tlcl_write(uint32_t index, const void *data, uint32_t length)
+ 
+ 	to_tpm_uint32(cmd.buffer + tpm_nv_write_cmd.index, index);
+ 	to_tpm_uint32(cmd.buffer + tpm_nv_write_cmd.length, length);
+-	memcpy(cmd.buffer + tpm_nv_write_cmd.data, data, length);
++	if (length > 0)
++		memcpy(cmd.buffer + tpm_nv_write_cmd.data, data, length);
+ 
+ 	return tlcl_send_receive(cmd.buffer, response, sizeof(response));
+ }
+-- 
+2.25.1
+

@@ -1,0 +1,36 @@
+From cd7f511bc8e7227f20eec25aa69fa6bc33d59233 Mon Sep 17 00:00:00 2001
+From: "D.d.P.F. Lombard" <lombard@lombards.xyz>
+Date: Sun, 7 Feb 2021 17:05:38 +0100
+Subject: [PATCH 2/6] Allow loading Option ROM (so we can use graphics cards)
+
+Since 49d99fcebc7c3860def51812c2f723ad3e8a4ea3 Option ROMs can't be loaded
+PCI graphics cards anymore when "Graphics initialization" is set to "Use
+native graphics init". This means only onboard graphics can be used until
+the OS or SeaBIOS initialise PCI graphics cards.
+This patch allows us to do a little hack. We can set "Use native graphics
+init" to "Run VGA Option ROMs" and activate "Load Option ROMs on PCI
+devices". This way coreboot will load the Option ROM on PCI graphics cards
+which means payloads like GRUB can display graphics.
+There's only one catch: onboard graphics won't work anymore. Because of this
+we'll include seavgabios.bin (compiled by SeaBIOS) in CBFS. This will give
+us the option to use both PCI graphics cards and onboard graphics that work
+with native graphics init.
+---
+ src/mainboard/asus/kcma-d8/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/mainboard/asus/kcma-d8/Kconfig b/src/mainboard/asus/kcma-d8/Kconfig
+index d568ff579b..adba4df782 100644
+--- a/src/mainboard/asus/kcma-d8/Kconfig
++++ b/src/mainboard/asus/kcma-d8/Kconfig
+@@ -29,7 +29,6 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SPI_FLASH
+ 	select DRIVERS_I2C_W83795
+ 	select DRIVERS_ASPEED_AST2050
+-	select MAINBOARD_FORCE_NATIVE_VGA_INIT
+ 	select POWER_STATE_DEFAULT_ON_AFTER_FAILURE
+ 
+ config MAINBOARD_DIR
+-- 
+2.25.1
+
