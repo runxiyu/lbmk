@@ -24,7 +24,6 @@
 set -u -e
 
 projectname="$(cat projectname)"
-./resources/scripts/misc/versioncheck
 
 build=./resources/scripts/build
 
@@ -67,6 +66,10 @@ if [ $# -lt 1 ]; then
 fi
 
 mode="${1}"
+
+if [ "${mode}" != "dependencies" ]; then
+	./resources/scripts/misc/versioncheck
+fi
 
 [ "${mode}" = help ] && help && exit 0
 
