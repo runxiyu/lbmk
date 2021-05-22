@@ -132,6 +132,7 @@ fi
 if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 	if [ ! -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ]; then
 		(
+			cat version > "${cbdir}/.coreboot-version"
 			cd "${cbdir}"
 			make crossgcc-i386 CPUS=$(nproc) # even for 64-bit machines, coreboot builds
 				# 32-bit ROM images, so we only need to worry about i386-elf

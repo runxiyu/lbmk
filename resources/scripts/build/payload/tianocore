@@ -35,6 +35,7 @@ fi
 
 if [ ! -d "coreboot/default/util/crossgcc/xgcc/i386-elf" ]; then
     (
+	cat version coreboot/default/.coreboot-version
         cd coreboot/default/
         make crossgcc-i386 CPUS=$(nproc) # tianocore actually uses host gcc, which means
         # right now you should be building this on a 64-bit x86 host.
