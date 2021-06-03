@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #   generate GRUB ELF files (coreboot payload) and configuration files
 #
