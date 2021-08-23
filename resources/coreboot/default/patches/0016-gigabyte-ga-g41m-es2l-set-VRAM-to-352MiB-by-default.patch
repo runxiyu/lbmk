@@ -1,4 +1,4 @@
-From 213c3ad9ca58b0c7f273d80f195c442ed5d7ec54 Mon Sep 17 00:00:00 2001
+From 8b2eb25cdd1868e2e98eefa783e04b1797b1a701 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:18:26 +0100
 Subject: [PATCH 16/19] gigabyte/ga-g41m-es2l: set VRAM to 352MiB by default

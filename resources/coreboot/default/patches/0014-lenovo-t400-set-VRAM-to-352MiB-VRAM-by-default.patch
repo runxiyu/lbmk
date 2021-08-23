@@ -1,4 +1,4 @@
-From 0966b4c69f6c3df000cb4f904b9dc0bf822e5b4f Mon Sep 17 00:00:00 2001
+From ade5066801bbc20e88205299e3b66de7f1a1bc82 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:10:33 +0100
 Subject: [PATCH 14/19] lenovo/t400: set VRAM to 352MiB VRAM by default

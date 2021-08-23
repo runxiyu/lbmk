@@ -1,11 +1,14 @@
-From e91840f8c19fde6706937a1e9285ac83fceec59a Mon Sep 17 00:00:00 2001
+From 989abca57d4bcc2f7194a9dfb3a7fc67f62fbde3 Mon Sep 17 00:00:00 2001
 From: Rodrigo <rm@firemail.cc>
 Date: Mon, 23 Aug 2021 03:51:21 -0300
 Subject: [PATCH 19/19] Fix missing include
 
 ---
  src/cpu/intel/model_1067x/model_1067x_init.c | 1 +
- 1 file changed, 1 insertion(+)
+ src/cpu/intel/model_106cx/model_106cx_init.c | 1 +
+ src/cpu/intel/model_6ex/model_6ex_init.c     | 1 +
+ src/cpu/intel/model_6fx/model_6fx_init.c     | 1 +
+ 4 files changed, 4 insertions(+)
 
 diff --git a/src/cpu/intel/model_1067x/model_1067x_init.c b/src/cpu/intel/model_1067x/model_1067x_init.c
 index ca3ce274fc..cc7a5edca9 100644
@@ -19,6 +22,42 @@ index ca3ce274fc..cc7a5edca9 100644
  
  #include "chip.h"
  
+diff --git a/src/cpu/intel/model_106cx/model_106cx_init.c b/src/cpu/intel/model_106cx/model_106cx_init.c
+index a0917045dd..7b88f19ee0 100644
+--- a/src/cpu/intel/model_106cx/model_106cx_init.c
++++ b/src/cpu/intel/model_106cx/model_106cx_init.c
+@@ -8,6 +8,7 @@
+ #include <cpu/intel/speedstep.h>
+ #include <cpu/x86/cache.h>
+ #include <cpu/x86/name.h>
++#include <cpu/intel/common/common.h>
+ 
+ #define HIGHEST_CLEVEL		3
+ static void configure_c_states(void)
+diff --git a/src/cpu/intel/model_6ex/model_6ex_init.c b/src/cpu/intel/model_6ex/model_6ex_init.c
+index 31399bdbd7..7347400766 100644
+--- a/src/cpu/intel/model_6ex/model_6ex_init.c
++++ b/src/cpu/intel/model_6ex/model_6ex_init.c
+@@ -8,6 +8,7 @@
+ #include <cpu/intel/speedstep.h>
+ #include <cpu/x86/cache.h>
+ #include <cpu/x86/name.h>
++#include <cpu/intel/common/common.h>
+ 
+ #define HIGHEST_CLEVEL		3
+ static void configure_c_states(void)
+diff --git a/src/cpu/intel/model_6fx/model_6fx_init.c b/src/cpu/intel/model_6fx/model_6fx_init.c
+index 17a865c9f3..3b8a2f4708 100644
+--- a/src/cpu/intel/model_6fx/model_6fx_init.c
++++ b/src/cpu/intel/model_6fx/model_6fx_init.c
+@@ -8,6 +8,7 @@
+ #include <cpu/intel/speedstep.h>
+ #include <cpu/x86/cache.h>
+ #include <cpu/x86/name.h>
++#include <cpu/intel/common/common.h>
+ 
+ #define HIGHEST_CLEVEL		3
+ static void configure_c_states(void)
 -- 
 2.25.1
 

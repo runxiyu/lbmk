@@ -1,4 +1,4 @@
-From bb4f6e441d94d52c37998d6894b373a4e797de80 Mon Sep 17 00:00:00 2001
+From aba6235d16b87706357d0fdb35afaf52968fac53 Mon Sep 17 00:00:00 2001
 From: Martin Roth <martin@coreboot.org>
 Date: Sun, 9 May 2021 11:44:15 -0600
 Subject: [PATCH 08/19] util/genbuild_h: Update IASL location finding code

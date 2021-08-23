@@ -1,4 +1,4 @@
-From 44de7f951ae55d60b96794b68d505d42af184d0a Mon Sep 17 00:00:00 2001
+From 1804c7cb2e6e62a363a18f237ecdf8337e58c20d Mon Sep 17 00:00:00 2001
 From: Martin Roth <martin@coreboot.org>
 Date: Mon, 10 May 2021 11:28:45 -0600
 Subject: [PATCH 06/19] src/security/intel/stm: Add warning for

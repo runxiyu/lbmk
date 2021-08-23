@@ -1,4 +1,4 @@
-From fb4c9fcad31d50949ffaeb35dbcfe10c7b9c1dbb Mon Sep 17 00:00:00 2001
+From f90a509e24ced459bc24ad9c34f363f9f413f558 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:21:39 +0100
 Subject: [PATCH 17/19] acer/g43t-am3: set VRAM to 352MiB by default

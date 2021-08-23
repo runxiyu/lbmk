@@ -1,4 +1,4 @@
-From bc1be4e1a6c6104693ad8fc44be8feb8e0112765 Mon Sep 17 00:00:00 2001
+From f92b7f3c5c9da178e2417333895fe735796e7954 Mon Sep 17 00:00:00 2001
 From: Patrick Georgi <pgeorgi@google.com>
 Date: Wed, 12 May 2021 14:52:12 +0200
 Subject: [PATCH 12/19] src: Match array format in function declarations and

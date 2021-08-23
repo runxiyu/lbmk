@@ -1,4 +1,4 @@
-From 08f1bb813721bb9e7c9f60d3d08e22391080c69e Mon Sep 17 00:00:00 2001
+From d57e7edf35a923ebf0177b9a816179be0ad4b72f Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@osboot.org>
 Date: Mon, 22 Feb 2021 22:16:59 +0000
 Subject: [PATCH 03/19] lenovo/t60: make 64MiB VRAM the default in cmos.default

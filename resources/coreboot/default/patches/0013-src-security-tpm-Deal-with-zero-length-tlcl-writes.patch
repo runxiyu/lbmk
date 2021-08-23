@@ -1,4 +1,4 @@
-From 416c686c4c06ab42f700187ee1dc7fe9e4fed525 Mon Sep 17 00:00:00 2001
+From 6c9fe645f8444bd4586e26b545cc9dceb162f03a Mon Sep 17 00:00:00 2001
 From: Patrick Georgi <pgeorgi@google.com>
 Date: Wed, 12 May 2021 14:54:49 +0200
 Subject: [PATCH 13/19] src/security/tpm: Deal with zero length tlcl writes

@@ -1,4 +1,4 @@
-From 87f01ab327469aae978884b83dd218416cf5035b Mon Sep 17 00:00:00 2001
+From 65f0c7278ec0c1cb197e3110e2bc4ebb4bd5caf4 Mon Sep 17 00:00:00 2001
 From: Martin Roth <martin@coreboot.org>
 Date: Sun, 9 May 2021 10:26:10 -0600
 Subject: [PATCH 07/19] Makefile: Don't run genbuild_h if not doing a build
