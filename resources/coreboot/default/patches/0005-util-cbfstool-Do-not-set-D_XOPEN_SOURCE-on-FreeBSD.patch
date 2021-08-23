@@ -1,7 +1,7 @@
-From f0c8276fe364d4773f9f305f2678a0b8e8f84830 Mon Sep 17 00:00:00 2001
+From 95466021fb0e581442be523f4b84939ef5c28ea7 Mon Sep 17 00:00:00 2001
 From: Idwer Vollering <vidwer@gmail.com>
 Date: Sun, 9 May 2021 18:16:26 +0200
-Subject: [PATCH 05/17] util/cbfstool: Do not set -D_XOPEN_SOURCE on FreeBSD
+Subject: [PATCH 05/19] util/cbfstool: Do not set -D_XOPEN_SOURCE on FreeBSD
 
 Fixes compilation on FreeBSD CURRENT, and possibly other releases.
 

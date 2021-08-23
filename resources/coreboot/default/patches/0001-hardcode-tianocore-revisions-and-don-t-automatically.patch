@@ -1,7 +1,7 @@
-From 91b073efaca57d455e2f25370918b9796cbc1a15 Mon Sep 17 00:00:00 2001
+From 0d1703b38c15d3a30d86e257adc71212ed1553e6 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Thu, 13 May 2021 23:52:08 +0100
-Subject: [PATCH 01/17] hardcode tianocore revisions, and don't automatically
+Subject: [PATCH 01/19] hardcode tianocore revisions, and don't automatically
  download
 
 ---

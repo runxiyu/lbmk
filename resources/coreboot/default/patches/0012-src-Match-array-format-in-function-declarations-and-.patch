@@ -1,7 +1,7 @@
-From 7413a445b51db0adb9faf1bb21d8f6d2311a35d0 Mon Sep 17 00:00:00 2001
+From bc1be4e1a6c6104693ad8fc44be8feb8e0112765 Mon Sep 17 00:00:00 2001
 From: Patrick Georgi <pgeorgi@google.com>
 Date: Wed, 12 May 2021 14:52:12 +0200
-Subject: [PATCH 12/17] src: Match array format in function declarations and
+Subject: [PATCH 12/19] src: Match array format in function declarations and
  definitions
 
 gcc 11.1 complains when we're passing a type* into a function that was

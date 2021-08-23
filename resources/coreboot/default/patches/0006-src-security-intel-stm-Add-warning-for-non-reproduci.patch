@@ -1,7 +1,7 @@
-From 8a687e2efd7199a06cd6bdd85fa1a1b17bca53cc Mon Sep 17 00:00:00 2001
+From 44de7f951ae55d60b96794b68d505d42af184d0a Mon Sep 17 00:00:00 2001
 From: Martin Roth <martin@coreboot.org>
 Date: Mon, 10 May 2021 11:28:45 -0600
-Subject: [PATCH 06/17] src/security/intel/stm: Add warning for
+Subject: [PATCH 06/19] src/security/intel/stm: Add warning for
  non-reproducible build
 
 Because the STM build doesn't use the coreboot toolchain it's not

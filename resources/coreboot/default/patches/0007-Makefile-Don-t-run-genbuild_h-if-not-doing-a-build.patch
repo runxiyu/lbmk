@@ -1,7 +1,7 @@
-From 710301b4e80325012e86cdec3c0c4bcca03be551 Mon Sep 17 00:00:00 2001
+From 87f01ab327469aae978884b83dd218416cf5035b Mon Sep 17 00:00:00 2001
 From: Martin Roth <martin@coreboot.org>
 Date: Sun, 9 May 2021 10:26:10 -0600
-Subject: [PATCH 07/17] Makefile: Don't run genbuild_h if not doing a build
+Subject: [PATCH 07/19] Makefile: Don't run genbuild_h if not doing a build
 
 genbuild_h was being run on every make invocation - clean, distclean,
 etc. to get the source date epoch value.  This value isn't used unless

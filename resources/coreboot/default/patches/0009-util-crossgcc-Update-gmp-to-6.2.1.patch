@@ -1,7 +1,7 @@
-From 86af2659583125b2891ad57bde30a33adff91c03 Mon Sep 17 00:00:00 2001
+From f9e67d0def253cd28ffe841f1e99885e7a44b0b5 Mon Sep 17 00:00:00 2001
 From: Patrick Georgi <pgeorgi@google.com>
 Date: Mon, 10 May 2021 23:34:18 +0200
-Subject: [PATCH 09/17] util/crossgcc: Update gmp to 6.2.1
+Subject: [PATCH 09/19] util/crossgcc: Update gmp to 6.2.1
 
 Change-Id: I871942f66e8fc496ebe523fdab539ea20950a202
 Signed-off-by: Patrick Georgi <pgeorgi@google.com>

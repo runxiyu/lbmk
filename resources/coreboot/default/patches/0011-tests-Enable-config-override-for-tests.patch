@@ -1,7 +1,7 @@
-From 89236c7c44797cd8306d9509552bf0115ffe928a Mon Sep 17 00:00:00 2001
+From 277f409dcb520911b55a73c5f5c0e39ae1078012 Mon Sep 17 00:00:00 2001
 From: Jakub Czapiga <jacz@semihalf.com>
 Date: Wed, 28 Apr 2021 16:50:51 +0200
-Subject: [PATCH 11/17] tests: Enable config override for tests
+Subject: [PATCH 11/19] tests: Enable config override for tests
 
 Some tests require to change kconfig symbols values to cover the code.
 This patch enables one to set these vaues using <test-name>-config

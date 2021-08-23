@@ -1,7 +1,7 @@
-From b1533d4dca6b9c88f9e0418d5a93dd9a3c4cd7f3 Mon Sep 17 00:00:00 2001
+From af8727a0b86f0f705129529a478a29622df3fed9 Mon Sep 17 00:00:00 2001
 From: Patrick Georgi <pgeorgi@google.com>
 Date: Mon, 10 May 2021 23:35:51 +0200
-Subject: [PATCH 10/17] util/crossgcc: Update mpc to 1.2.1
+Subject: [PATCH 10/19] util/crossgcc: Update mpc to 1.2.1
 
 Change-Id: Ic1422464d0a95c9cba1c417aaa05e4f1fe799d26
 Signed-off-by: Patrick Georgi <pgeorgi@google.com>

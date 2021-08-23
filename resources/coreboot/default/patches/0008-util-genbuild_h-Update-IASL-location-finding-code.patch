@@ -1,7 +1,7 @@
-From 5c4c5cdc3110bf02b93be9d5eb744235c8f49e33 Mon Sep 17 00:00:00 2001
+From bb4f6e441d94d52c37998d6894b373a4e797de80 Mon Sep 17 00:00:00 2001
 From: Martin Roth <martin@coreboot.org>
 Date: Sun, 9 May 2021 11:44:15 -0600
-Subject: [PATCH 08/17] util/genbuild_h: Update IASL location finding code
+Subject: [PATCH 08/19] util/genbuild_h: Update IASL location finding code
 
 Update the iasl path finding code to use XGCCPATH if it's set, and to
 look for iasl on the path if it's not set and not under util/crossgcc.

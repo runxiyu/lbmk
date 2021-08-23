@@ -1,7 +1,7 @@
-From d2da9e70f608016c20976623a6ca9916da13e647 Mon Sep 17 00:00:00 2001
+From edac42ddfaf86d60575f7789ad66c95adea8b4af Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@retroboot.org>
 Date: Fri, 19 Mar 2021 05:54:58 +0000
-Subject: [PATCH 04/17] apple/macbook21: Set default VRAM to 64MiB instead of
+Subject: [PATCH 04/19] apple/macbook21: Set default VRAM to 64MiB instead of
  8MiB
 
 ---
