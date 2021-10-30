@@ -221,6 +221,18 @@ moverom() {
 		cp ${rompath} ${newrompath}
 	fi
 
+	# pike2008 cards cause a system hang when loading the option rom in seabios
+	# if there is an empty option rom in cbfs, no option rom will be loaded
+	if [ "${cuttype}" = "d8d16sas" ]; then
+		emptyrom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
+		rm -f "${emptyrom}"
+		touch "${emptyrom}"
+		for deviceID in "0072" "3050"; do
+			"${cbfstool}" "${newrompath}" add -f "${emptyrom}" -n pci1000,${deviceID} -t raw
+		done
+		rm -f "${emptyrom}"
+	fi
+
 	for romsize in 4 8 16; do
 		if [ "${cuttype}" = "${romsize}MiB ICH9 IFD NOR flash" ]; then
 			if [ ! -f "descriptors/ich9m/ich9fdgbe_${romsize}m.bin" ]; then
