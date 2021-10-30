@@ -347,6 +347,14 @@ make_grubrom_from_keymap() {
 	"${cbfstool_path}" "${tmprom}" add -f "${grubcfg}" -n grub.cfg -t raw
 	"${cbfstool_path}" "${tmprom}" add -f "${grubtestcfg}" -n grubtest.cfg -t raw
 
+	backgroundfile="background1280x800.png"
+	if [ "${board}" = "x60" ] || [ "${board}" = "t60_intelgpu" ]; then
+		# TODO: don't hardcode this check. do it in board.cfg per board
+		backgroundfile="background1024x768.png"
+	fi
+	backgroundfile="resources/grub/background/${backgroundfile}"
+	"${cbfstool_path}" "${tmprom}" add -f ${backgroundfile} -n background.png -t raw
+
 	printf "%s\n" "${tmprom}"
 }
 

@@ -1,0 +1,25 @@
+From f1f995a20cd246448881b4ee23375d25baf89a9e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 31 Oct 2021 03:49:26 +0000
+Subject: [PATCH 2/2] display free as in freedom instead of grub version
+
+---
+ grub-core/normal/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grub-core/normal/main.c b/grub-core/normal/main.c
+index c4ebe9e22..6784d4154 100644
+--- a/grub-core/normal/main.c
++++ b/grub-core/normal/main.c
+@@ -209,7 +209,7 @@ grub_normal_init_page (struct grub_term_output *term,
+  
+   grub_term_cls (term);
+ 
+-  msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
++  msg_formatted = grub_xasprintf (_("FREE AS IN FREEDOM"));
+   if (!msg_formatted)
+     return;
+  
+-- 
+2.25.1
+

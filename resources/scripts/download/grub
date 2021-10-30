@@ -43,7 +43,10 @@ fi
 # modifications are required
 cd "grub/"
 # reset to known revision
-git reset --hard c0e647eb0e2bd09315612446cb4d90f7f75cb44c
+git reset --hard 50aace6bdb918150ba47e3c16146dcca271c134a
+for grubpatch in ../resources/grub/patches/*; do
+	git am "${grubpatch}"
+done
 
 git clone git://git.sv.gnu.org/gnulib gnulib
 cd gnulib/
