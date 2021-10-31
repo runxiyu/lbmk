@@ -59,11 +59,6 @@ pacman -S --needed --noconfirm sharutils curl parted e2fsprogs unzip
 # for cross-compiling ARM binaries
 pacman -S --needed --noconfirm arm-none-eabi-gcc
 
-# Memtest86+ build dependencies
-# ------------------------------------------------------------
-
-pacman -S --needed --noconfirm base-devel python2
-
 # i945-pwm build dependencies
 # ------------------------------------------------------------
 

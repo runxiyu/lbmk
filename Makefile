@@ -51,7 +51,6 @@ clean:
 	./build clean payloads
 	./build clean seabios
 	./build clean grub
-	./build clean memtest86plus
 	./build clean rom_images
 	./build clean tianocore
 
