@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+#  helper script: Downloads MemTest86+ and patches it
+#
+#	Copyright (C) 2014, 2015, 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2015 Joseph Michael Thompson <jmt@josepht.me>
+#	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+# Get the last version of MemTest86+ used, apply patches, build it.
+
+# Remove the old version that may exist
+# ------------------------------------------------------------------------------
+
+printf "Downloading MemTest86+\n"
+
+rm -Rf "memtest86plus/"
+
+# Get latest memtest86+:
+# ------------------------------------------------------------------------------
+
+# download it using wget
+wget http://memtest.org/download/5.31b/memtest86+-5.31b.tar.gz
+
+if [ "$(sha512sum memtest86+-5.31b.tar.gz | cut -c1-128)" = "ad5891fd0c430ce7a5d0cde2d10dee20b66ad8060d47c3e70e038461d9cde3a78dfc13442b5b09da7c662741945a670353c72dbc08fd5ee8bae82256001a9541" ]; then
+	printf "Valid checksum for memtest86plus\n"
+else
+	rm -f "memtest86+-5.31b.tar.gz"
+	printf "Invalid checksum for memtest86plus, or memtest86plus not downloaded\n"
+	exit 1
+fi
+
+# extract it
+tar -xzf "memtest86+-5.31b.tar.gz"
+
+# delete the tar file (no longer needed)
+rm -f "memtest86+-5.31b.tar.gz"
+
+# make direcotory name consistent
+mv "memtest86+-5.31b/" "memtest86plus/"
+
+# Apply necessary patches
+# ------------------------------------------------------------------------------
+
+(
+cd "memtest86plus/"
+for patch in ../resources/memtest86plus/patch/*; do
+	patch < "${patch}"
+done
+)
+
+printf "\n\n"

@@ -59,6 +59,7 @@ payload_seabios="n"
 payload_seabios_withgrub="n" # i386-coreboot grub accessible from SeaBIOS boot menu
 payload_tianocore="n"
 seabios_opromloadonly="0"
+payload_memtest="n"
 # Override the above defaults using board.cfg
 source "resources/coreboot/${board}/board.cfg"
 if [ "${cbtree}" = "undefined" ]; then
@@ -73,6 +74,10 @@ fi
 if [ "${seabios_opromloadonly}" != "0" ] && \
 		[ "${seabios_opromloadonly}" != "1" ]; then
 	seabios_opromloadonly="0"
+fi
+if [ "${payload_memtest}" != "n" ] && \
+		[ "${payload_memtest}" != "y" ]; then
+	payload_memtest="n"
 fi
 if [ "${payload_grub_withseabios}" = "y" ] \
 		|| [ "${payload_grub_withtianocore}" = "y" ]; then
@@ -102,6 +107,12 @@ if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] \
 		done
 		break
 	done
+fi
+
+if [ "${payload_memtest}" = "y" ]; then
+	if [ ! -f "memtest86plus/memtest" ]; then
+		./build module memtest86plus
+	fi
 fi
 
 romdir="bin/${board}"
@@ -413,6 +424,10 @@ mkRoms() {
 
 	if [ "${displaymode}" = "${tianocoreRequiredDisplayMode}" ]; then
 		mkRomWithTianocoreOnly "${corebootrom}" "${initmode}"
+	fi
+
+	if [ "${displaymode}" = "txtmode" ] && [ "${payload_memtest}" = "y" ]; then
+		"${cbfstool}" "${corebootrom}" add-payload -f memtest86plus/memtest -n img/memtest -c lzma
 	fi
 
 	if [ "${payload_seabios}" = "y" ]; then

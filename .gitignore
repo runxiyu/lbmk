@@ -20,6 +20,7 @@
 /flashrom/
 /resources/coreboot/*/seen
 /grub/
+/memtest86plus/
 /seabios/
 /bin/
 /release/
