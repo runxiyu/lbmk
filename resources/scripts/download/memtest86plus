@@ -36,7 +36,7 @@ git clone https://review.coreboot.org/memtest86plus.git
 
 (
 cd "memtest86plus/"
-git reset --hard dd5b4ff2660a11041a05713f65ab65be19335153
+git reset --hard a78401b9704cfdd49c89bfb31d2df08f60521d0b
 rm -Rf .git*
 )
 
