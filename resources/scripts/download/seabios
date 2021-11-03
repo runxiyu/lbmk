@@ -48,9 +48,10 @@ cd "seabios/"
 # Reset to the last commit that was tested (we use stable releases for seabios)
 # ------------------------------------------------------------------------------
 
-git reset --hard b0d61ecef66eb05bd7a4eb7ada88ec5dab06dfee
+git reset --hard 64f37cc530f144e53c190c9e8209a51b58fd5c43
 
 for patchfile in ../resources/seabios/patches/*.patch; do
+	if [ ! -f "${patchfile}" ]; then continue; fi
 	git am "${patchfile}" || touch ../build_error
 	if [ -f ../build_error ]; then
 		git am --abort
