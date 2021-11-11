@@ -34,7 +34,7 @@ rm -rf "seabios/"
 # ------------------------------------------------------------------------------
 
 # download it using git
-git clone https://git.seabios.org/seabios.git
+git clone https://review.coreboot.org/seabios
 
 if [ ! -d "seabios" ]; then
 	printf "seabios not downloaded; check network connection?\n\n"
