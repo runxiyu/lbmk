@@ -21,7 +21,8 @@
 #
 
 .PHONY: all download modules ich9m-descriptors payloads roms release clean \
-	crossgcc-clean install-dependencies-ubuntu
+	crossgcc-clean install-dependencies-ubuntu install-dependencies-debian \
+	install-dependencies-arch
 
 all: roms
 
@@ -60,3 +61,9 @@ crossgcc-clean:
 
 install-dependencies-ubuntu:
 	./build dependencies ubuntu2004
+
+install-dependencies-debian:
+	./build dependencies debian
+
+install-dependencies-arch:
+	./build dependencies arch
