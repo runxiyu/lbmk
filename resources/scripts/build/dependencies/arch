@@ -38,11 +38,6 @@ pacman -S --needed --noconfirm wget
 
 pacman -S --needed --noconfirm git
 
-# For building the documentation
-# ------------------------------------------------------------
-
-pacman -S --needed --noconfirm pandoc
-
 # For Tianocore and iPXE
 # TODO: check whether this is the full list
 
