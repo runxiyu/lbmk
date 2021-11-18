@@ -228,7 +228,7 @@ moverom() {
 		rm -f "${emptyrom}"
 		touch "${emptyrom}"
 		for deviceID in "0072" "3050"; do
-			"${cbfstool}" "${newrompath}" add -f "${emptyrom}" -n pci1000,${deviceID} -t raw
+			"${cbfstool}" "${newrompath}" add -f "${emptyrom}" -n pci1000,${deviceID}.rom -t raw
 		done
 		rm -f "${emptyrom}"
 	fi
