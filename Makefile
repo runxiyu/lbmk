@@ -22,7 +22,7 @@
 
 .PHONY: all download modules ich9m-descriptors payloads roms release clean \
 	crossgcc-clean install-dependencies-ubuntu install-dependencies-debian \
-	install-dependencies-arch
+	install-dependencies-arch install-dependencies-void
 
 all: roms
 
@@ -67,3 +67,6 @@ install-dependencies-debian:
 
 install-dependencies-arch:
 	./build dependencies arch
+
+install-dependencies-void:
+	./build dependencies void
