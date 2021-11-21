@@ -54,10 +54,8 @@ arch="undefined"
 # board.cfg files have to specifically enable [a] payload(s)
 payload_grub="n"
 payload_grub_withseabios="n" # seabios chainloaded from grub
-payload_grub_withtianocore="n" # tianocore chainloaded from grub
 payload_seabios="n"
 payload_seabios_withgrub="n" # i386-coreboot grub accessible from SeaBIOS boot menu
-payload_tianocore="n"
 seabios_opromloadonly="0"
 payload_memtest="n"
 # Override the above defaults using board.cfg
@@ -79,8 +77,7 @@ if [ "${payload_memtest}" != "n" ] && \
 		[ "${payload_memtest}" != "y" ]; then
 	payload_memtest="n"
 fi
-if [ "${payload_grub_withseabios}" = "y" ] \
-		|| [ "${payload_grub_withtianocore}" = "y" ]; then
+if [ "${payload_grub_withseabios}" = "y" ]; then
 	payload_grub="y"
 fi
 if [ "${payload_grub_withseabios}" = "y" ]; then
@@ -93,11 +90,7 @@ fi
 # NOTE: reverse logic must not be applied. If SeaBIOS-with-GRUB works, that doesn't
 # necessarily mean GRUB-with-SeaBIOS will work nicely. for example, the board might
 # only have an add-on GPU available, where it's recommended to boot SeaBIOS first
-if [ "${payload_grub_withtianocore}" = "y" ]; then
-	payload_tianocore="y"
-fi
-if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] \
-		&& [ "${payload_tianocore}" != "y" ]; then
+if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ]; then
 	while true; do
 		for configfile in "resources/coreboot/${board}/config/"*; do
 			if [ -f "${configfile}" ]; then
@@ -123,7 +116,6 @@ fi
 cbfstool="${cbdir}/util/cbfstool/cbfstool"
 corebootrom="${cbdir}/build/coreboot.rom"
 seavgabiosrom="payload/seabios/seavgabios.bin"
-tianocoreelf="payload/tianocore/tianocore.elf"
 
 if [ ! -d "${cbdir}" ]; then
 	./download coreboot ${cbtree}
@@ -140,22 +132,8 @@ if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 	fi
 fi
 
-if [ "${arch}" != "x86_64" ]; then
-	payload_tianocore="n"
-	payload_grub_withtianocore="n"
-fi
-
 if [ ! -f "${cbfstool}" ]; then
 	./build module cbutils ${cbtree}
-fi
-
-if [ ! -f "${tianocoreelf}" ]; then
-	if [ "${payload_tianocore}" = "y" ]; then
-		./build payload tianocore
-	elif [ "${payload_grub}" = "y" ] \
-			&& [ "${payload_grub_withtianocore}" = "y" ]; then
-		./build payload tianocore
-	fi
 fi
 
 if [ ! -f "${seavgabiosrom}" ] \
@@ -276,20 +254,6 @@ mkCoreboot() {
 	)
 }
 
-mkRomWithTianocoreOnly() {
-	rompath="${1}"
-	initmode="${2}"
-	if [ "${payload_tianocore}" = "y" ] && [ "${arch}" = "x86_64" ]; then
-		# do not include on 32-bit-only machines. this is 64-bit tianocore
-
-		tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
-		cp "${corebootrom}" "${tmprom}"
-		"${cbfstool}" "${tmprom}" add-payload -f ${tianocoreelf} -n fallback/payload -c lzma
-		moverom "${tmprom}" "${romdir}/tianocore_${board}_${initmode}.rom" "${romtype}"
-		rm -f "${tmprom}"
-	fi
-}
-
 # make a rom in /tmp/ and then print the path of that ROM
 make_seabios_rom() {
 	target_cbrom="${1}" # rom to insert seabios in. this rom won't be touched
@@ -365,10 +329,6 @@ mkRomsWithGrub() {
 	displaymode="${3}"
 	firstpayloadname="${4}" # allow values: grub, seabios, seabios_withgrub, seabios_grubfirst
 
-	if [ "${payload_grub_withtianocore}" = "y" ] && [ "${firstpayloadname}" = "grub" ]; then
-		"${cbfstool}" "${tmprompath}" add-payload -f ${tianocoreelf} -n tianocore.elf -c lzma
-	fi
-
 	if [ "${payload_grub_withseabios}" = "y" ] && [ "${firstpayloadname}" = "grub" ]; then
 		mv "$(make_seabios_rom "${tmprompath}" "seabios.elf" "${seabios_opromloadonly}" "${initmode}" "${cbfstool}")" "${tmprompath}"
 	elif [ "${payload_seabios_withgrub}" ] && [ "${firstpayloadname}" != "grub" ]; then
@@ -409,10 +369,9 @@ mkRomsWithGrub() {
 
 # Main ROM building function. This calls all other functions
 mkRoms() {
-	tianocoreRequiredDisplayMode="${1}"
-	cbcfgpath="${2}"
-	displaymode="${3}"
-	initmode="${4}"
+	cbcfgpath="${1}"
+	displaymode="${2}"
+	initmode="${3}"
 
 	if [ ! -f "${cbcfgpath}" ]; then
 		printf "'%s' does not exist. Skipping build for %s %s %s\n" \
@@ -421,10 +380,6 @@ mkRoms() {
 	fi
 
 	mkCoreboot "${cbdir}" "${cbcfgpath}"
-
-	if [ "${displaymode}" = "${tianocoreRequiredDisplayMode}" ]; then
-		mkRomWithTianocoreOnly "${corebootrom}" "${initmode}"
-	fi
 
 	if [ "${displaymode}" = "txtmode" ] && [ "${payload_memtest}" = "y" ]; then
 		"${cbfstool}" "${corebootrom}" add-payload -f memtest86plus/memtest -n img/memtest -c lzma
@@ -457,24 +412,21 @@ mkRoms() {
 }
 
 initmode="libgfxinit"
-tianocoreRequiredDisplayMode="corebootfb"
 for displaymode in corebootfb txtmode; do
 	cbcfgpath="resources/coreboot/${board}/config/${initmode}_${displaymode}"
-	mkRoms "${tianocoreRequiredDisplayMode}" "${cbcfgpath}" "${displaymode}" "${initmode}"
+	mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 done
 
 initmode="vgarom"
-tianocoreRequiredDisplayMode="vesafb"
 for displaymode in vesafb txtmode; do	
 	cbcfgpath="resources/coreboot/${board}/config/${initmode}_${displaymode}"
-	mkRoms "${tianocoreRequiredDisplayMode}" "${cbcfgpath}" "${displaymode}" "${initmode}"
+	mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 done
 
 initmode="normal"
 displaymode="txtmode"
-tianocoreRequiredDisplayMode="unsupported"
 cbcfgpath="resources/coreboot/${board}/config/${initmode}"
-mkRoms "${tianocoreRequiredDisplayMode}" "${cbcfgpath}" "${displaymode}" "${initmode}"
+mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 
 (
 cd "${cbdir}"

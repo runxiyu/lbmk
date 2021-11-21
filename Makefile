@@ -54,7 +54,6 @@ clean:
 	./build clean grub
 	./build clean memtest86plus
 	./build clean rom_images
-	./build clean tianocore
 
 crossgcc-clean:
 	./build clean crossgcc

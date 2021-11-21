@@ -1,7 +1,7 @@
-From f2b62dca2238ec7782739e81490846673d754629 Mon Sep 17 00:00:00 2001
+From 8e8704050aec67490a6d1f272840e5a04ee1bcff Mon Sep 17 00:00:00 2001
 From: Rodrigo <rm@firemail.cc>
 Date: Mon, 23 Aug 2021 02:20:32 -0300
-Subject: [PATCH 18/19] Revert "cpu/intel: Configure IA32_FEATURE_CONTROL for
+Subject: [PATCH 09/11] Revert "cpu/intel: Configure IA32_FEATURE_CONTROL for
  alternative SMRR"
 
 This rendered at least the x200 unable to reboot.
@@ -30,10 +30,10 @@ index 3e4de1fa31..ca3ce274fc 100644
  	configure_c_states(quad);
  
 diff --git a/src/cpu/intel/model_1067x/mp_init.c b/src/cpu/intel/model_1067x/mp_init.c
-index fd6a82ac17..e2fa7c8f20 100644
+index bc53214310..72f40f6762 100644
 --- a/src/cpu/intel/model_1067x/mp_init.c
 +++ b/src/cpu/intel/model_1067x/mp_init.c
-@@ -42,34 +42,8 @@ static void pre_mp_smm_init(void)
+@@ -43,34 +43,8 @@ static void pre_mp_smm_init(void)
  	smm_initialize();
  }
  
@@ -83,7 +83,7 @@ index 278d8dea81..a0917045dd 100644
  	configure_c_states();
  
 diff --git a/src/cpu/intel/model_6ex/model_6ex_init.c b/src/cpu/intel/model_6ex/model_6ex_init.c
-index 16c6866f45..31399bdbd7 100644
+index 34646ad5e9..36cfd51f01 100644
 --- a/src/cpu/intel/model_6ex/model_6ex_init.c
 +++ b/src/cpu/intel/model_6ex/model_6ex_init.c
 @@ -109,6 +109,9 @@ static void model_6ex_init(struct device *cpu)
@@ -97,7 +97,7 @@ index 16c6866f45..31399bdbd7 100644
  	configure_c_states();
  
 diff --git a/src/cpu/intel/model_6fx/model_6fx_init.c b/src/cpu/intel/model_6fx/model_6fx_init.c
-index d0987b4a63..17a865c9f3 100644
+index 72ece23935..6f2d6ef599 100644
 --- a/src/cpu/intel/model_6fx/model_6fx_init.c
 +++ b/src/cpu/intel/model_6fx/model_6fx_init.c
 @@ -123,6 +123,9 @@ static void model_6fx_init(struct device *cpu)

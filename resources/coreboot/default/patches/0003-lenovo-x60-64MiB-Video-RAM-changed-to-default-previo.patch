@@ -1,7 +1,7 @@
-From 7abacb9f5b07df89136751fbcc1569fe02f1c23b Mon Sep 17 00:00:00 2001
+From 6302d89dfd785330944ad091767c7e7eb8da4aed Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@osboot.org>
 Date: Sun, 3 Jan 2021 03:34:01 +0000
-Subject: [PATCH 02/19] lenovo/x60: 64MiB Video RAM changed to default
+Subject: [PATCH 03/11] lenovo/x60: 64MiB Video RAM changed to default
  (previously it was 8MiB)
 
 ---

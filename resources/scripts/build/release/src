@@ -94,13 +94,6 @@ done
     rm -Rf coreboot/coreboot/
     rm -Rf .git* */.git* coreboot/*/.git* coreboot/*/3rdparty/*/.git*
     rm -Rf coreboot/*/util/nvidia/cbootimage/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/CryptoPkg/Library/OpensslLib/openssl/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/ArmPkg/Library/ArmSoftFloatLib/"berkeley-softfloat-3"/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/UnitTestFrameworkPkg/Library/CmockaLib/cmocka/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/MdeModulePkg/Universal/RegularExpressionDxe/oniguruma/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/.git*
-    rm -Rf coreboot/*/payloads/external/tianocore/tianocore/BaseTools/Source/C/BrotliCompress/brotli/.git*
 )
 
 (

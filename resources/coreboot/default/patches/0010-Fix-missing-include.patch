@@ -1,7 +1,7 @@
-From 989abca57d4bcc2f7194a9dfb3a7fc67f62fbde3 Mon Sep 17 00:00:00 2001
+From e6960dec197491941254af48b60f1cf1592bcb2b Mon Sep 17 00:00:00 2001
 From: Rodrigo <rm@firemail.cc>
 Date: Mon, 23 Aug 2021 03:51:21 -0300
-Subject: [PATCH 19/19] Fix missing include
+Subject: [PATCH 10/11] Fix missing include
 
 ---
  src/cpu/intel/model_1067x/model_1067x_init.c | 1 +
@@ -35,7 +35,7 @@ index a0917045dd..7b88f19ee0 100644
  #define HIGHEST_CLEVEL		3
  static void configure_c_states(void)
 diff --git a/src/cpu/intel/model_6ex/model_6ex_init.c b/src/cpu/intel/model_6ex/model_6ex_init.c
-index 31399bdbd7..7347400766 100644
+index 36cfd51f01..793474ffa5 100644
 --- a/src/cpu/intel/model_6ex/model_6ex_init.c
 +++ b/src/cpu/intel/model_6ex/model_6ex_init.c
 @@ -8,6 +8,7 @@
@@ -47,7 +47,7 @@ index 31399bdbd7..7347400766 100644
  #define HIGHEST_CLEVEL		3
  static void configure_c_states(void)
 diff --git a/src/cpu/intel/model_6fx/model_6fx_init.c b/src/cpu/intel/model_6fx/model_6fx_init.c
-index 17a865c9f3..3b8a2f4708 100644
+index 6f2d6ef599..d0031ad741 100644
 --- a/src/cpu/intel/model_6fx/model_6fx_init.c
 +++ b/src/cpu/intel/model_6fx/model_6fx_init.c
 @@ -8,6 +8,7 @@
