@@ -47,6 +47,10 @@ if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
 	exit 1
 fi
 
+
+# Workaround to grub's slow boot
+grub_scan_disk="both" # both: scan ata and ahci (slow), there is ata and ahci too
+                      # as an option
 cbtree="undefined"
 romtype="normal" # optional parameter in board.cfg. "normal" is default
 arch="undefined"
@@ -60,6 +64,14 @@ seabios_opromloadonly="0"
 payload_memtest="n"
 # Override the above defaults using board.cfg
 source "resources/coreboot/${board}/board.cfg"
+
+if [ "${grub_scan_disk}" != "both" ] || \
+	[ "${grub_scan_disk}" != "ata" ] || \
+	[ "${grub_scan_disk}" != "ahci" ]; then
+	printf "build/roms: Target %s 's grub_scan_disk variable: unvalid value. Skipping build.\n" "${board}"
+	exit 1
+fi
+
 if [ "${cbtree}" = "undefined" ]; then
 	printf "build/roms: Target %s does not define a coreboot tree. Skipping build.\n" "${board}"
 	exit 1
@@ -308,6 +320,12 @@ make_grubrom_from_keymap() {
 	cp "${target_cbrom}" "${tmprom}"
 
 	"${cbfstool_path}" "${tmprom}" add-payload -f "${grubelf}" -n ${target_grubelf_cbfs_path} -c lzma
+	if [ "${grub_scan_disk}" = "ahci" ]; then
+		sed 's/search_grub ata//' "${grubcfg}" > "${grubcfg}"
+	elif [ "${grub_scan_disk}" = "ata" ]; then
+		sed 's/search_grub ahci//' "${grubcfg}" > "${grubcfg}"
+	fi
+
 	"${cbfstool_path}" "${tmprom}" add -f "${grubcfg}" -n grub.cfg -t raw
 	"${cbfstool_path}" "${tmprom}" add -f "${grubtestcfg}" -n grubtest.cfg -t raw
 
