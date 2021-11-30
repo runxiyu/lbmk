@@ -68,8 +68,8 @@ source "resources/coreboot/${board}/board.cfg"
 if [ "${grub_scan_disk}" != "both" ] && \
 	[ "${grub_scan_disk}" != "ata" ] && \
 	[ "${grub_scan_disk}" != "ahci" ]; then
-	printf "build/roms: Target %s 's grub_scan_disk variable: invalid value. Skipping build.\n" "${board}"
-	exit 1
+	grub_scan_disk="both"
+	# erroring out would be silly. just use the default
 fi
 
 if [ "${cbtree}" = "undefined" ]; then
