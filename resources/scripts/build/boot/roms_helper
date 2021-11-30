@@ -49,7 +49,7 @@ fi
 
 
 # Workaround to grub's slow boot
-grub_scan_disk="both" # both: scan ata and ahci (slow), there is ata and ahci too
+grub_scan_disk="undefined" # both: scan ata and ahci (slow), there is ata and ahci too
                       # as an option
 cbtree="undefined"
 romtype="normal" # optional parameter in board.cfg. "normal" is default
@@ -64,6 +64,11 @@ seabios_opromloadonly="0"
 payload_memtest="n"
 # Override the above defaults using board.cfg
 source "resources/coreboot/${board}/board.cfg"
+
+if [ "${grub_scan_disk}" = "undefined" ]; then
+	printf "build/roms: Target %s does not define grub_scan_disk. Defaulting to 'both'.\n" "${board}"
+	grub_scan_disk="both"
+fi
 
 if [ "${grub_scan_disk}" != "both" ] && \
 	[ "${grub_scan_disk}" != "ata" ] && \
