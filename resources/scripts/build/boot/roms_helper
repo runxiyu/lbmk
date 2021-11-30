@@ -65,10 +65,10 @@ payload_memtest="n"
 # Override the above defaults using board.cfg
 source "resources/coreboot/${board}/board.cfg"
 
-if [ "${grub_scan_disk}" != "both" ] || \
-	[ "${grub_scan_disk}" != "ata" ] || \
+if [ "${grub_scan_disk}" != "both" ] && \
+	[ "${grub_scan_disk}" != "ata" ] && \
 	[ "${grub_scan_disk}" != "ahci" ]; then
-	printf "build/roms: Target %s 's grub_scan_disk variable: unvalid value. Skipping build.\n" "${board}"
+	printf "build/roms: Target %s 's grub_scan_disk variable: invalid value. Skipping build.\n" "${board}"
 	exit 1
 fi
 
