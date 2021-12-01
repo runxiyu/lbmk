@@ -36,5 +36,5 @@ printf "Building flashrom\n"
 (
 cd "flashrom/"
 make clean
-make -j$(nproc)
+make WARNERROR=no -j$(nproc)
 )
