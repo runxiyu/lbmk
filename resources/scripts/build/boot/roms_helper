@@ -149,6 +149,14 @@ if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 				# 32-bit ROM images, so we only need to worry about i386-elf
 		)
 	fi
+elif [ "${arch}" = "ARMv7" ]; then
+	cat version > "${cbdir}/.coreboot-version"
+	cd "${cbdir}"
+	make crossgcc-arm CPUS=$(nproc) # This is for armv7, doesn't apply to aarch64
+elif [ "${arch}" = "AArch64" ]; then
+	cat version > "${cbdir}/.coreboot-version"
+	cd "${cbdir}"
+	make crossgcc-aarch64 CPUS=$(nproc) # This is for aarch64, doesn't apply to armv7
 fi
 
 if [ ! -f "${cbfstool}" ]; then
