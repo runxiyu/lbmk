@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+#
+#  helper script: generate deblobbed stable u-boot source code releases
+#
+#	Copyright (C) 2020,2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+version="v2021.07"
+revision="r1"
+
+topdir="$(realpath $(dirname $(realpath $0))/../../../../)"
+tmpdir="${topdir}/release/u-boot/u-boot-${version}-${revision}"
+tarball="${tmpdir}.tar"
+
+printf "Building source code archive, version %s revision %s\n" "${version}" "${revision}"
+
+cd "${topdir}"
+"${topdir}/download" u-boot
+
+rm -rf \
+   "${tmpdir}/" \
+   "${tarball}" \
+   "${tarball}.lz" \
+   "${tarball}.xz"
+
+mkdir -p "$(dirname ${tmpdir})"
+cp -R "u-boot/u-boot/" "${tmpdir}"
+
+rm -rf ${tmpdir}/.git ${tmpdir}/.gitignore
+make -C ${tmpdir} distclean
+
+prefix="$(dirname ${tmpdir} | sed 's#^/*##')/"
+tar cf "${tarball}" "${tmpdir}"  --transform="s#${prefix}##"
+lzip -9 --keep -vv "${tarball}"
+xz   -9 --keep -vv "${tarball}"
+
+rm -rf "${tmpdir}/"
+
+printf "Source code archives available at:\n\t%s\n\t%s\n\t%s\n" \
+       "${tarball}" \
+       "${tarball}.lz" \
+       "${tarball}.xz"
