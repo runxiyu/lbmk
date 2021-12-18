@@ -125,7 +125,7 @@ downloadfor() {
 	fi
 
 	cp -R coreboot "${cbtree}" || touch ../build_error
-	if [ -d ../build_error ]; then
+	if [ -f ../build_error ]; then
 		printf "ERROR: download/coreboot: Unable to copy directory. Check file system permissions or free space.\n"
 		rm -Rf "${cbtree}/"
 		cd ../; return 1
