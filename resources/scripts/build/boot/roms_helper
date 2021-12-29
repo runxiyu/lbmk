@@ -350,7 +350,7 @@ make_grubrom_from_keymap() {
 	fi
 	"${cbfstool_path}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw
 	"${cbfstool_path}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg -t raw
-	rm -f "${tmpgrubcfg}" "${tmpgrubcfgtest}"
+	rm -f "${tmpgrubcfg}" "${tmpgrubtestcfg}"
 
 	backgroundfile="background1280x800.png"
 	if [ "${board}" = "x60" ] || [ "${board}" = "t60_intelgpu" ]; then
