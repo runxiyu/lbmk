@@ -1,0 +1,25 @@
+From bed727867b7f5bc246067a4195a96abbc82aef35 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?F=C3=A9licien=20Pillot?= <felicien@gnu.org>
+Date: Tue, 8 Feb 2022 07:37:50 +0000
+Subject: [PATCH 1/1] fix memtest86+ linker error during build
+
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 7732491..23ea640 100644
+--- a/Makefile
++++ b/Makefile
+@@ -75,7 +75,7 @@ reloc.o: reloc.c
+ 	$(CC) -c $(CFLAGS) -fno-strict-aliasing reloc.c
+ 
+ test.o: test.c
+-	$(CC) -c -Wall -march=i486 -m32 -O0 -fomit-frame-pointer -fno-builtin -ffreestanding -fno-strict-overflow test.c
++	$(CC) -c -Wall -march=i486 -m32 -O0 -fomit-frame-pointer -fno-builtin -ffreestanding -fno-strict-overflow -fno-stack-protector test.c
+ 
+ random.o: random.c
+ 	$(CC) -c -Wall -march=i486 -m32 -O3 -fomit-frame-pointer -fno-builtin -ffreestanding random.c
+-- 
+2.25.1
+

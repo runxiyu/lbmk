@@ -37,6 +37,14 @@ git clone https://review.coreboot.org/memtest86plus.git
 (
 cd "memtest86plus/"
 git reset --hard a78401b9704cfdd49c89bfb31d2df08f60521d0b
+
+for patchfile in ../resources/memtest86plus/patch/*; do
+	if [ ! -f "${patchfile}" ]; then
+		continue
+	fi
+	git am "${patchfile}"
+done
+
 rm -Rf .git*
 )
 
