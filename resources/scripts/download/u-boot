@@ -32,6 +32,12 @@ deleteblobs="true"
 # This script handles the internet, and Git. Both are inherently unreliable.
 [[ -f build_error ]] && rm -f build_error
 
+# Make sure that older revision are first as code uses that order to
+# find the latest supported revision.
+supported_uboot_revisions=" \
+	v2021.07 \
+"
+
 downloadfor() {
 	uboot_revision="v2021.07"
 	uboot_dir="u-boot/u-boot"
@@ -99,25 +105,77 @@ strip_comments()
 		sed '/^$/d'
 }
 
-printf "Downloading u-boot and (if exist in build system) applying patches\n"
-downloadfor
+usage()
+{
+	progname="./download u-boot"
 
-rm -f "build_error"
-printf "\n\n"
+	printf "Usage:\n"
+	printf "\t%s                  # %s\n" \
+	       "${progname}" \
+	       "Download latest u-boot git revision and deblob it"
+	printf "\t%s [revision]       # %s\n" \
+	       "${progname}" \
+	       "Download given u-boot git revision and deblob it"
+	printf "\t%s --list-revisions # %s\n" \
+	       "${progname}" \
+	       "List supported u-boot revisions"
+	printf "\t%s --help           # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+}
 
-if [ "${deleteblobs}" = "true" ]; then
-	bloblist="resources/u-boot/default/blobs.list"
+download_uboot_revision()
+{
+	git_revision="$1"
 
-	for blob_path in $(strip_comments "${bloblist}"); do
-		if echo "${blob_path}" | grep '/$' 2>&1 >/dev/null ; then
-			printf "Deleting blob directory: '%s/%s'\n" \
-			       "${uboot_dir}" "${blob_path}"
-			rm -rf "${uboot_dir}/${blob_path}"
-		else
-			printf "Deleting blob file: '%s/%s'\n" \
-			       "${uboot_dir}" "${blob_path}"
-			rm -f "${uboot_dir}/${blob_path}"
+	printf "Downloading u-boot "
+	printf "and (if exist in build system) applying patches\n"
+	downloadfor "${git_revision}"
+
+	rm -f "build_error"
+	printf "\n\n"
+
+	if [ "${deleteblobs}" = "true" ]; then
+		bloblist="resources/u-boot/default/blobs.list"
+		for blob_path in $(strip_comments "${bloblist}"); do
+		    if echo "${blob_path}" | \
+			    grep '/$' 2>&1 >/dev/null ; then
+				printf "Deleting blob directory: '%s/%s'\n" \
+				       "${uboot_dir}" "${blob_path}"
+				rm -rf "${uboot_dir}/${blob_path}"
+			else
+				printf "Deleting blob file: '%s/%s'\n" \
+				       "${uboot_dir}" "${blob_path}"
+				rm -f "${uboot_dir}/${blob_path}"
+			fi
+		done
+	fi
+}
+
+if [ $# -eq 0 ] ; then
+	latest_revision="$(echo ${supported_uboot_revisions} | tail -n1)"
+	download_uboot_revision "${latest_revision}"
+	exit 0
+elif [ $# -eq 1 -a "$1" == "--help" ] ; then
+	usage
+	exit 0
+elif [ $# -eq 1 -a "$1" == "--list-revisions" ] ; then
+	for revision in ${supported_uboot_revisions} ; do
+		printf "${revision}\n"
+	done
+	exit 0
+elif [ $# -eq 1 ] ; then
+	found=0
+	for revision in ${supported_uboot_revisions} ; do
+		if [ "${revision}" = "$1" ] ; then
+			download_uboot_revision "$1"
+			exit 0
 		fi
 	done
+
+	printf "Error: Revision '${1}' is not supported\n"
+
+	exit 1
 fi
+
 exit 0
