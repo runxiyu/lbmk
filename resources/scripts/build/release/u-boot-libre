@@ -29,6 +29,11 @@ supported_uboot_versions=" \
 	2021.07 \
 "
 
+topdir="$(realpath $(dirname $(realpath $0))/../../../../)"
+uboot_release_topdir="${topdir}/release/u-boot-libre"
+
+release_files=""
+
 usage()
 {
 	progname="resources/scripts/build/release/u-boot-libre"
@@ -48,13 +53,36 @@ usage()
 	       "Prints this help"
 }
 
+append_release_file()
+{
+	if [ -z "${release_files}" ] ; then
+		release_files="${release_files}$1"
+	else
+		release_files="${release_files} $1"
+	fi
+}
+
+append_release_files()
+{
+	for file in "$@" ; do
+		append_release_file "${file}"
+	done
+}
+
+print_release_files()
+{
+	printf "Source code archives available at:\n"
+	for file in "${release_files}" ; do
+		printf "\t${file}\n"
+	done
+}
+
 release_deblobbed_uboot()
 {
 	version="$1"
 
-	topdir="$(realpath $(dirname $(realpath $0))/../../../../)"
-	versiondir="${topdir}/release/u-boot-libre/${version}-${revision}"
-	tmpdir="${versiondir}/u-boot-libre-${version}-${revision}"
+	release_version_dir="${uboot_release_topdir}/${version}-${revision}"
+	tmpdir="${release_version_dir}/u-boot-libre-${version}-${revision}"
 	tarball="${tmpdir}.tar"
 
 	printf "Building source code archive, version %s revision %s\n" \
@@ -88,15 +116,44 @@ release_deblobbed_uboot()
 
 	rm -rf "${tmpdir}/"
 
-	printf "Source code archives available at:\n\t%s\n\t%s\n\t%s\n" \
+	append_release_files \
 	       "${tarball}" \
 	       "${tarball}.lz" \
 	       "${tarball}.xz"
 }
 
+release_uboot_blobs_list()
+{
+	version="$1"
+
+	blobs_list="$(${topdir}/download u-boot --blobs-list v${version})"
+
+	release_version_dir="${uboot_release_topdir}/${version}-${revision}"
+	destination="${release_version_dir}/blobs-${version}-${revision}.list"
+
+	cd "${topdir}"
+
+	rm -rf \
+	   "${destination}" \
+	   "${destination}.lz" \
+	   "${destination}.xz"
+
+	install -m 755 -d "${release_version_dir}"
+	install -m 644 -T "${blobs_list}" "${destination}"
+
+	lzip -9 --keep -vv "${destination}"
+	xz   -9 --keep -vv "${destination}"
+
+	append_release_files \
+	    "${destination}" \
+	    "${destination}.lz" \
+	    "${destination}.xz"
+}
+
 if [ $# -eq 0 ] ; then
 	for version in ${supported_uboot_versions} ; do
 		release_deblobbed_uboot "${version}"
+		release_uboot_blobs_list "${version}"
 	done
 	exit 0
 elif [ $# -eq 1 -a "$1" == "--help" ] ; then
@@ -112,6 +169,7 @@ elif [ $# -eq 1 ] ; then
 	for revision in ${supported_uboot_revisions} ; do
 		if [ "${revision}" = "$1" ] ; then
 			release_deblobbed_uboot "$1"
+			release_uboot_blobs_list "$1"
 			exit 0
 		fi
 	done

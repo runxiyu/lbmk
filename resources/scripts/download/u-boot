@@ -110,16 +110,22 @@ usage()
 	progname="./download u-boot"
 
 	printf "Usage:\n"
-	printf "\t%s                  # %s\n" \
+	printf "\t%s                         # %s\n" \
 	       "${progname}" \
 	       "Download latest u-boot git revision and deblob it"
-	printf "\t%s [revision]       # %s\n" \
+	printf "\t%s [revision]              # %s\n" \
 	       "${progname}" \
 	       "Download given u-boot git revision and deblob it"
-	printf "\t%s --list-revisions # %s\n" \
+	printf "\t%s --blobs-list            # %s\n" \
+	       "${progname}" \
+	       "Print the path of the blobs.list file for the latest supported u-boot revision"
+	printf "\t%s --blobs-list [revision] # %s\n" \
+	       "${progname}" \
+	       "Print the path of the blobs.list file for the given u-boot revision"
+	printf "\t%s --list-revisions        # %s\n" \
 	       "${progname}" \
 	       "List supported u-boot revisions"
-	printf "\t%s --help           # %s\n" \
+	printf "\t%s --help                  # %s\n" \
 	       "${progname}" \
 	       "Prints this help"
 }
@@ -136,8 +142,8 @@ download_uboot_revision()
 	printf "\n\n"
 
 	if [ "${deleteblobs}" = "true" ]; then
-		bloblist="resources/u-boot/default/blobs.list"
-		for blob_path in $(strip_comments "${bloblist}"); do
+		blobslist="resources/u-boot/default/blobs.list"
+		for blob_path in $(strip_comments "${blobslist}"); do
 		    if echo "${blob_path}" | \
 			    grep '/$' 2>&1 >/dev/null ; then
 				printf "Deleting blob directory: '%s/%s'\n" \
@@ -152,6 +158,11 @@ download_uboot_revision()
 	fi
 }
 
+print_blobs_list_path()
+{
+	printf "resources/u-boot/default/blobs.list\n"
+}
+
 if [ $# -eq 0 ] ; then
 	latest_revision="$(echo ${supported_uboot_revisions} | tail -n1)"
 	download_uboot_revision "${latest_revision}"
@@ -164,6 +175,22 @@ elif [ $# -eq 1 -a "$1" == "--list-revisions" ] ; then
 		printf "${revision}\n"
 	done
 	exit 0
+elif [ $# -eq 1 -a "$1" == "--blobs-list" ] ; then
+	latest_revision="$(echo ${supported_uboot_revisions} | tail -n1)"
+	print_blobs_list_path "${latest_revision}"
+	exit 0
+elif [ $# -eq 2 -a "$1" == "--blobs-list" ] ; then
+	found=0
+	for revision in ${supported_uboot_revisions} ; do
+		if [ "${revision}" = "$2" ] ; then
+			print_blobs_list_path "$2"
+			exit 0
+		fi
+	done
+
+	printf "Error: Revision '${1}' is not supported\n"
+
+	exit 1
 elif [ $# -eq 1 ] ; then
 	found=0
 	for revision in ${supported_uboot_revisions} ; do
