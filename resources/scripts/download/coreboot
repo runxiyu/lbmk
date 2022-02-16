@@ -21,6 +21,42 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+list_supported_boards()
+{
+	for board in resources/coreboot/*; do
+		echo $board | sed 's#resources/coreboot/##'
+	done
+}
+
+usage()
+{
+	progname="./download coreboot"
+	printf "Usage:\n"
+	printf "\t%s                     # %s\n" \
+	       "${progname}" \
+	       "Download and deblob Coreboot for all the boards"
+	printf "\t%s [board [board] ...] # %s\n" \
+	       "${progname}" \
+	       "Download and deblob Coreboot for the given boards"
+	printf "\t%s --list-boards       # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+	printf "\t%s --help              # %s\n" \
+	       "${progname}" \
+	       "List supported boards"
+	printf "\t%s --help              # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+}
+
+if [ $# -eq 1 -a "$1" == "--help" ] ; then
+	usage
+	exit 0
+elif [ $# -eq 1 -a "$1" == "--list-boards" ] ; then
+	list_supported_boards
+	exit 0
+fi
+
 # set this when you want to modify each coreboot tree
 # for example, you want to test custom patches
 # NODELETE= ./download coreboot

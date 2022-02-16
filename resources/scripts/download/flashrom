@@ -21,6 +21,23 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+usage()
+{
+	progname="./download flashrom"
+	printf "Usage:\n"
+	printf "\t%s         # %s\n" \
+	       "${progname}" \
+	       "Download flashrom"
+	printf "\t%s --help  # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+}
+
+if [ $# -ne 0 ] ; then
+	usage
+	exit 0
+fi
+
 # Get flashrom at the last previously tested revision
 
 # Remove the old version that may still exist:

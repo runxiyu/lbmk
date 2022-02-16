@@ -19,6 +19,23 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+usage()
+{
+	progname="./download seabios"
+	printf "Usage:\n"
+	printf "\t%s         # %s\n" \
+	       "${progname}" \
+	       "Download SeaBIOS"
+	printf "\t%s --help  # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+}
+
+if [ $# -ne 0 ] ; then
+	usage
+	exit 0
+fi
+
 # Get SeaBIOS, revert to commit last used and apply patches.
 
 # Remove the old version that may still exist
