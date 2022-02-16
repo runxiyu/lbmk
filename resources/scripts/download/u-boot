@@ -65,7 +65,7 @@ downloadfor() {
 
 	if [ ! -d "${uboot_dir}" ]; then
 		printf "Download u-boot from upstream:\n"
-		git clone https://source.denx.de/u-boot/u-boot \
+		git clone https://source.denx.de/u-boot/u-boot.git \
 		    "${uboot_dir}" || \
 		    rm -Rf "${uboot_dir}"
 		if [ ! -d "${uboot_dir}" ]; then
