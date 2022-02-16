@@ -23,44 +23,102 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-version="2021.07"
 revision="r1"
 
-topdir="$(realpath $(dirname $(realpath $0))/../../../../)"
-tmpdir="${topdir}/release/u-boot-libre/${version}-${revision}/u-boot-libre-${version}-${revision}"
-tarball="${tmpdir}.tar"
+supported_uboot_versions=" \
+	2021.07 \
+"
 
-printf "Building source code archive, version %s revision %s\n" "${version}" "${revision}"
+usage()
+{
+	progname="resources/scripts/build/release/u-boot-libre"
 
-cd "${topdir}"
-"${topdir}/download" u-boot
+	printf "Usage:\n"
+	printf "\t%s                  # %s\n" \
+	       "${progname}" \
+	       "Release deblobbed u-boot tarballs for all supported versions"
+	printf "\t%s [version]        # %s\n" \
+	       "${progname}" \
+	       "Release deblobbed u-boot tarballs for the given versions"
+	printf "\t%s --list-versions  # %s\n" \
+	       "${progname}" \
+	       "List supported u-boot versions"
+	printf "\t%s --help           # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+}
 
-rm -rf \
-   "${tmpdir}/" \
-   "${tarball}" \
-   "${tarball}.lz" \
-   "${tarball}.xz"
+release_deblobbed_uboot()
+{
+	version="$1"
 
-mkdir -p "$(dirname ${tmpdir})"
-cp -R "u-boot/u-boot/" "${tmpdir}"
+	topdir="$(realpath $(dirname $(realpath $0))/../../../../)"
+	versiondir="${topdir}/release/u-boot-libre/${version}-${revision}"
+	tmpdir="${versiondir}/u-boot-libre-${version}-${revision}"
+	tarball="${tmpdir}.tar"
 
-rm -rf ${tmpdir}/.git ${tmpdir}/.gitignore
-make -C ${tmpdir} distclean
+	printf "Building source code archive, version %s revision %s\n" \
+	       "${version}" "${revision}"
 
-prefix="$(dirname ${tmpdir} | sed 's#^/*##')/"
-tar cf "${tarball}" "${tmpdir}" \
-    --transform="s#${prefix}##" \
-    --format=gnu \
-    --sort=name \
-    --owner=0 --group=0 --numeric-owner \
-    --mtime="1970-01-01" \
+	cd "${topdir}"
+	"${topdir}/download" u-boot "v${version}"
 
-lzip -9 --keep -vv "${tarball}"
-xz   -9 --keep -vv "${tarball}"
+	rm -rf \
+	   "${tmpdir}/" \
+	   "${tarball}" \
+	   "${tarball}.lz" \
+	   "${tarball}.xz"
 
-rm -rf "${tmpdir}/"
+	mkdir -p "$(dirname ${tmpdir})"
+	cp -R "u-boot/u-boot/" "${tmpdir}"
 
-printf "Source code archives available at:\n\t%s\n\t%s\n\t%s\n" \
-       "${tarball}" \
-       "${tarball}.lz" \
-       "${tarball}.xz"
+	rm -rf ${tmpdir}/.git ${tmpdir}/.gitignore
+	make -C ${tmpdir} distclean
+
+	prefix="$(dirname ${tmpdir} | sed 's#^/*##')/"
+	tar cf "${tarball}" "${tmpdir}" \
+	    --transform="s#${prefix}##" \
+	    --format=gnu \
+	    --sort=name \
+	    --owner=0 --group=0 --numeric-owner \
+	    --mtime="1970-01-01" \
+
+	lzip -9 --keep -vv "${tarball}"
+	xz   -9 --keep -vv "${tarball}"
+
+	rm -rf "${tmpdir}/"
+
+	printf "Source code archives available at:\n\t%s\n\t%s\n\t%s\n" \
+	       "${tarball}" \
+	       "${tarball}.lz" \
+	       "${tarball}.xz"
+}
+
+if [ $# -eq 0 ] ; then
+	for version in ${supported_uboot_versions} ; do
+		release_deblobbed_uboot "${version}"
+	done
+	exit 0
+elif [ $# -eq 1 -a "$1" == "--help" ] ; then
+	usage
+	exit 0
+elif [ $# -eq 1 -a "$1" == "--list-versions" ] ; then
+	for version in ${supported_uboot_versions} ; do
+		printf "${version}\n"
+	done
+	exit 0
+elif [ $# -eq 1 ] ; then
+	found=0
+	for revision in ${supported_uboot_revisions} ; do
+		if [ "${revision}" = "$1" ] ; then
+			release_deblobbed_uboot "$1"
+			exit 0
+		fi
+	done
+
+	printf "Error: Version '${1}' is not supported\n"
+
+	exit 1
+fi
+
+exit 0
