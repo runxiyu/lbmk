@@ -23,11 +23,11 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-version="v2021.07"
+version="2021.07"
 revision="r1"
 
 topdir="$(realpath $(dirname $(realpath $0))/../../../../)"
-tmpdir="${topdir}/release/u-boot/u-boot-${version}-${revision}"
+tmpdir="${topdir}/release/u-boot-libre/${version}-${revision}/u-boot-libre-${version}-${revision}"
 tarball="${tmpdir}.tar"
 
 printf "Building source code archive, version %s revision %s\n" "${version}" "${revision}"
