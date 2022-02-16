@@ -71,8 +71,11 @@ append_release_files()
 
 print_release_files()
 {
-	printf "Source code archives available at:\n"
-	for file in "${release_files}" ; do
+	version="$1"
+	printf "Source code archives for u-boot-libre-%s-%s available at:\n" \
+	       "${version}" "${revision}"
+
+	for file in ${release_files} ; do
 		printf "\t${file}\n"
 	done
 }
@@ -150,10 +153,40 @@ release_uboot_blobs_list()
 	    "${destination}.xz"
 }
 
+release_uboot_deblob_script()
+{
+	version="$1"
+
+	deblob_script="$(${topdir}/download u-boot --gen-deblob-script v${version})"
+
+	release_version_dir="${uboot_release_topdir}/${version}-${revision}"
+	destination="${release_version_dir}/deblob-${version}-${revision}.sh"
+
+	cd "${topdir}"
+
+	rm -rf \
+	   "${destination}" \
+	   "${destination}.lz" \
+	   "${destination}.xz"
+
+	install -m 755 -d "${release_version_dir}"
+	install -m 644 -T "${blobs_list}" "${destination}"
+
+	lzip -9 --keep -vv "${destination}"
+	xz   -9 --keep -vv "${destination}"
+
+	append_release_files \
+	    "${destination}" \
+	    "${destination}.lz" \
+	    "${destination}.xz"
+}
+
 if [ $# -eq 0 ] ; then
 	for version in ${supported_uboot_versions} ; do
 		release_deblobbed_uboot "${version}"
 		release_uboot_blobs_list "${version}"
+		release_uboot_deblob_script "${version}"
+		print_release_files "${version}"
 	done
 	exit 0
 elif [ $# -eq 1 -a "$1" == "--help" ] ; then
@@ -170,6 +203,8 @@ elif [ $# -eq 1 ] ; then
 		if [ "${revision}" = "$1" ] ; then
 			release_deblobbed_uboot "$1"
 			release_uboot_blobs_list "$1"
+			release_uboot_deblob_script "$1"
+			print_release_files "$1"
 			exit 0
 		fi
 	done
