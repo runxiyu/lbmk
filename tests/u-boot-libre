@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+#
+#  tests for resources/scripts/build/release/u-boot-stable-src-release
+#
+#	Copyright (C) 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+topdir="$(realpath $(dirname $(realpath $0))/../)"
+progname="$(basename $(realpath $0))"
+
+"${topdir}/resources/scripts/build/release/u-boot-libre"
+sha512sum -c "${topdir}/tests/${progname}.sha512"

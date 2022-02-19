@@ -20,9 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.PHONY: all download modules ich9m-descriptors payloads roms release clean \
-	crossgcc-clean install-dependencies-ubuntu install-dependencies-debian \
-	install-dependencies-arch install-dependencies-void
+.PHONY: all check download modules ich9m-descriptors payloads roms release \
+	clean crossgcc-clean install-dependencies-ubuntu \
+	install-dependencies-debian install-dependencies-arch \
+	install-dependencies-void
 
 all: roms
 
@@ -69,3 +70,5 @@ install-dependencies-arch:
 
 install-dependencies-void:
 	./build dependencies void
+check:
+	./tests/u-boot-libre

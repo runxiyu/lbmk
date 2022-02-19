@@ -21,6 +21,23 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+usage()
+{
+	progname="./download ich9utils"
+	printf "Usage:\n"
+	printf "\t%s         # %s\n" \
+	       "${progname}" \
+	       "Download ich9utils"
+	printf "\t%s --help  # %s\n" \
+	       "${progname}" \
+	       "Prints this help"
+}
+
+if [ $# -ne 0 ] ; then
+	usage
+	exit 0
+fi
+
 printf "Downloading ich9utils\n"
 
 if [ -d ich9utils ]; then

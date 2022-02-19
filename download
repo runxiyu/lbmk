@@ -60,6 +60,9 @@ help() {
 	coreboot trees by default, but './download coreboot x60' will only download
 	the coreboot tree required for the target: x60
 
+	Each program download script should also accept the --help paramater to
+	display the usage of the script.
+
 	Refer to the documentation for more information.
 	EOF
 }
