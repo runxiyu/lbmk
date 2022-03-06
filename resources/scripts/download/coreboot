@@ -49,10 +49,14 @@ usage()
 	       "Prints this help"
 }
 
-if [ $# -eq 1 -a "$1" == "--help" ] ; then
+# In this script, set -u is used to check for undefined variables, and
+# the test command doesn't do any lazy evaluation, so we can't use
+# a syntax like that: [ $# -eq 1 -a "$1" == "--help" ].
+
+if [ $# -eq 1 ] && [ "$1" == "--help" ] ; then
 	usage
 	exit 0
-elif [ $# -eq 1 -a "$1" == "--list-boards" ] ; then
+elif [ $# -eq 1 ] && [ "$1" == "--list-boards" ] ; then
 	list_supported_boards
 	exit 0
 fi
