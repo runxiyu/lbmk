@@ -24,7 +24,7 @@ if [ -f version ]; then
 	version="$(cat version)"
 fi
 version_="${version}"
-if [ -d ".git/" ]; then
+if [ -e ".git" ]; then
 	version="$(git describe --tags HEAD 2>&1)" \
 	|| version="git-$(git rev-parse HEAD 2>&1)" \
 	|| version="${version_}"
@@ -36,7 +36,7 @@ if [ -f versiondate ]; then
 	versiondate="$(cat versiondate)"
 fi
 versiondate_="${versiondate}"
-if [ -d ".git/" ]; then
+if [ -e ".git" ]; then
 	versiondate="$(git show --no-patch --no-notes --pretty='%ct' HEAD)" \
 	|| versiondate="${versiondate_}"
 	printf "%s\n" "${versiondate}" > versiondate
