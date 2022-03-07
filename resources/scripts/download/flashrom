@@ -62,7 +62,7 @@ fi
 cd "flashrom/"
 
 # reset to known revision
-git reset --hard v1.2
+git reset --hard 11680db4e1251eb842bee11e53b6d1f0ae67767b
 )
 
 printf "\n\n"
