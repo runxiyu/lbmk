@@ -5,6 +5,7 @@
 #	Copyright (C) 2014, 2015, 2020, 2021 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
 #	Copyright (C) 2015, 2016 Klemens Nanni <contact@autoboot.org>
+#	Copyright (C) 2022, Caleb La Grange <thonkpeasant@protonmail.com>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -19,6 +20,8 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+./.gitcheck
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
@@ -112,3 +115,5 @@ else
 fi
 
 exit 0
+
+./.gitcheck clean
