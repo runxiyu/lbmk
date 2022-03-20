@@ -1,7 +1,7 @@
-From cc315e7b4f9e9b7ac4ed2a662526744c51f789d1 Mon Sep 17 00:00:00 2001
+From 49cb9863828b90d1dcbd107f4ce4987d0567b837 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 13 Mar 2022 18:08:57 +0000
-Subject: [PATCH 1/1] specifically use python3 in gentpl.py
+Subject: [PATCH 3/3] specifically use python3 in gentpl.py
 
 ---
  gentpl.py | 2 +-
