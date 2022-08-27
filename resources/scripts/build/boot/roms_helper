@@ -307,6 +307,7 @@ mkCoreboot() {
 		make distclean		
 	)
 	cp "${cbcfgpath}" "${cbdir}"/.config
+	./build module cbutils ${cbdir#coreboot/}
 	(
 		cd "${cbdir}"
 		make -j$(nproc)
