@@ -1,0 +1,100 @@
+From 7e73b7a7550cfdd22a1413c263026e41e56e7617 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Fri, 8 Oct 2021 17:33:22 +0300
+Subject: [PATCH] clk: rockchip: rk3399: Set hardcoded clock rates same as
+ devicetree
+
+Update hardcoded RK3399 clock rate definitions to match those in its
+devicetree (rk3399.dtsi), based on clock-controller assigned-clocks.
+Add and initialize NPLL since it's on that list, though nothing seems to
+use it in the driver so far.
+
+Also update VOP ACLK to 400MHz as it divides from CPLL (now 800MHz).
+All this stops the displayed vendor bitmap from getting disfigured
+when chainloading U-Boot from coreboot+depthcharge (as RW_LEGACY).
+
+Link: https://github.com/alpernebbi/u-boot/commit/7e73b7a7550cfdd22a1413c263026e41e56e7617
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ .../include/asm/arch-rockchip/cru_rk3399.h    | 19 ++++++++++---------
+ drivers/clk/rockchip/clk_rk3399.c             | 10 ++++++----
+ 2 files changed, 16 insertions(+), 13 deletions(-)
+
+diff --git a/arch/arm/include/asm/arch-rockchip/cru_rk3399.h b/arch/arm/include/asm/arch-rockchip/cru_rk3399.h
+index d941a129f3e5..54035c0df1f3 100644
+--- a/arch/arm/include/asm/arch-rockchip/cru_rk3399.h
++++ b/arch/arm/include/asm/arch-rockchip/cru_rk3399.h
+@@ -69,7 +69,8 @@ check_member(rockchip_cru, sdio1_con[1], 0x594);
+ #define LPLL_HZ		(600*MHz)
+ #define BPLL_HZ		(600*MHz)
+ #define GPLL_HZ		(594*MHz)
+-#define CPLL_HZ		(384*MHz)
++#define CPLL_HZ		(800*MHz)
++#define NPLL_HZ		(1000*MHz)
+ #define PPLL_HZ		(676*MHz)
+ 
+ #define PMU_PCLK_HZ	(48*MHz)
+@@ -82,16 +83,16 @@ check_member(rockchip_cru, sdio1_con[1], 0x594);
+ #define ATCLK_CORE_B_HZ	(300*MHz)
+ #define PCLK_DBG_B_HZ	(100*MHz)
+ 
+-#define PERIHP_ACLK_HZ	(148500*KHz)
+-#define PERIHP_HCLK_HZ	(148500*KHz)
+-#define PERIHP_PCLK_HZ	(37125*KHz)
++#define PERIHP_ACLK_HZ	(150*MHz)
++#define PERIHP_HCLK_HZ	(75*MHz)
++#define PERIHP_PCLK_HZ	(37500*KHz)
+ 
+-#define PERILP0_ACLK_HZ	(99000*KHz)
+-#define PERILP0_HCLK_HZ	(99000*KHz)
+-#define PERILP0_PCLK_HZ	(49500*KHz)
++#define PERILP0_ACLK_HZ	(100*MHz)
++#define PERILP0_HCLK_HZ	(100*MHz)
++#define PERILP0_PCLK_HZ	(50*MHz)
+ 
+-#define PERILP1_HCLK_HZ	(99000*KHz)
+-#define PERILP1_PCLK_HZ	(49500*KHz)
++#define PERILP1_HCLK_HZ	(100*MHz)
++#define PERILP1_PCLK_HZ	(50*MHz)
+ 
+ #define PWM_CLOCK_HZ    PMU_PCLK_HZ
+ 
+diff --git a/drivers/clk/rockchip/clk_rk3399.c b/drivers/clk/rockchip/clk_rk3399.c
+index 7d31a9f22a85..7cb3b0c23b72 100644
+--- a/drivers/clk/rockchip/clk_rk3399.c
++++ b/drivers/clk/rockchip/clk_rk3399.c
+@@ -54,10 +54,11 @@ struct pll_div {
+ 	.fbdiv = (u32)((u64)hz * _refdiv * _postdiv1 * _postdiv2 / OSC_HZ),\
+ 	.postdiv1 = _postdiv1, .postdiv2 = _postdiv2};
+ 
+-static const struct pll_div gpll_init_cfg = PLL_DIVISORS(GPLL_HZ, 2, 2, 1);
+-static const struct pll_div cpll_init_cfg = PLL_DIVISORS(CPLL_HZ, 1, 2, 2);
++static const struct pll_div gpll_init_cfg = PLL_DIVISORS(GPLL_HZ, 1, 4, 1);
++static const struct pll_div cpll_init_cfg = PLL_DIVISORS(CPLL_HZ, 1, 3, 1);
++static const struct pll_div npll_init_cfg = PLL_DIVISORS(NPLL_HZ, 1, 3, 1);
+ #if !defined(CONFIG_SPL_BUILD)
+-static const struct pll_div ppll_init_cfg = PLL_DIVISORS(PPLL_HZ, 2, 2, 1);
++static const struct pll_div ppll_init_cfg = PLL_DIVISORS(PPLL_HZ, 3, 2, 1);
+ #endif
+ 
+ static const struct pll_div apll_l_1600_cfg = PLL_DIVISORS(1600 * MHz, 3, 1, 1);
+@@ -682,7 +683,7 @@ static ulong rk3399_spi_set_clk(struct rockchip_cru *cru, ulong clk_id, uint hz)
+ static ulong rk3399_vop_set_clk(struct rockchip_cru *cru, ulong clk_id, u32 hz)
+ {
+ 	struct pll_div vpll_config = {0};
+-	int aclk_vop = 198 * MHz;
++	int aclk_vop = 400 * MHz;
+ 	void *aclkreg_addr, *dclkreg_addr;
+ 	u32 div;
+ 
+@@ -1316,6 +1317,7 @@ static void rkclk_init(struct rockchip_cru *cru)
+ 	/* configure gpll cpll */
+ 	rkclk_set_pll(&cru->gpll_con[0], &gpll_init_cfg);
+ 	rkclk_set_pll(&cru->cpll_con[0], &cpll_init_cfg);
++	rkclk_set_pll(&cru->npll_con[0], &npll_init_cfg);
+ 
+ 	/* configure perihp aclk, hclk, pclk */
+ 	aclk_div = GPLL_HZ / PERIHP_ACLK_HZ - 1;
+-- 
+2.37.2
+

@@ -21,6 +21,7 @@
 /grub/
 /memtest86plus/
 /seabios/
+/u-boot/
 /bin/
 /release/
 /descriptors/
