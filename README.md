@@ -81,23 +81,14 @@ Libreboot gives *you* control over *your* computing.
 Project goals
 -------------
 
--   *Recommend and distribute only free software*. Coreboot
-    distributes certain pieces of proprietary software which is needed
-    on some systems. Examples can include things like CPU microcode
-    updates, memory initialization blobs and so on. The coreboot project
-    sometimes recommends adding more blobs which it does not distribute,
-    such as the Video BIOS or Intel's *Management Engine*. However, a
-    lot of dedicated and talented individuals in coreboot work hard to
-    replace these blobs whenever possible.
--   *Support as much hardware as possible!* Libreboot supports less
-    hardware than coreboot, because most systems from coreboot still
-    require certain proprietary software to work properly. Libreboot is
-    an attempt to support as much hardware as possible, without any
-    proprietary software.
+-   *Support as much hardware as possible!* Libreboot aims to eventually
+    have *maintainers* for every board supported by coreboot, at every
+    point in time.
 -   *Make coreboot easy to use*. Coreboot is notoriously difficult
     to install, due to an overall lack of user-focused documentation
     and support. Most people will simply give up before attempting to
-    install coreboot.
+    install coreboot. Libreboot's automated build system and user-friendly
+    installation instructions solves this problem.
 
 Libreboot attempts to bridge this divide by providing a build system
 automating much of the coreboot image creation and customization.
@@ -122,22 +113,6 @@ Libreboot is not a fork of coreboot. Every so often, the project
 re-bases on the latest version of coreboot, with the number of custom
 patches in use minimized. Tested, *stable* (static) releases are then provided
 in Libreboot, based on specific coreboot revisions.
-
-Coreboot is not entirely free software. It has binary blobs in it for some
-platforms. What Libreboot does is download several revisions of coreboot, for
-different boards, and *de-blob* those coreboot revisions. This is done using
-the *linux-libre* deblob scripts, to find binary blobs in coreboot.
-
-All new coreboot development should be done in coreboot (upstream), not
-libreboot! Libreboot is about deblobbing and packaging coreboot in a
-user-friendly way, where most work is already done for the user.
-
-For example, if you wanted to add a new board to libreboot, you should
-add it to coreboot first. Libreboot will automatically receive your code
-at a later date, when it updates itself.
-
-The deblobbed coreboot tree used in libreboot is referred to as
-*coreboot-libre*, to distinguish it as a component of *libreboot*.
 
 LICENSE FOR THIS README:
 GNU Free Documentation License 1.3 as published by the Free Software Foundation,
