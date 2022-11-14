@@ -25,24 +25,24 @@ Modify_gbe(){
 	printf "changing mac address in gbe to ${new_mac}\n"
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
-	if [ ! -d nvmutils/ ]; then
-		git clone https://notabug.org/osboot/nvmutils
-		if [ ! -d nvmutils/ ]; then
-			printf "E: could not download nvmutils"
+	if [ ! -d nvmutil/ ]; then
+		git clone https://notabug.org/osboot/nvmutil
+		if [ ! -d nvmutil/ ]; then
+			printf "E: could not download nvmutil"
 			exit 1
 		fi
 		(
-		cd nvmutils/
-		git reset --hard ba9f5ada6a05d7ef8af45e30b700cd627a055867
+		cd nvmutil/
+		git reset --hard 886a5ffb0d68a1e9627b1ecb7e4ab30bf6c66c21
 		)
 	fi
-	if [ ! -f nvmutils/nvmmac ]; then
-		( cd nvmutils/ && make )
+	if [ ! -f nvmutil/nvm ]; then
+		( cd nvmutil/ && make )
 	fi
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
 	cp ${_gbe_location} ${_gbe_tmp}
-	./nvmutils/nvmmac ${_gbe_tmp} ${new_mac} || Error_out 'failed to modify mac address\nmake sure the mac address in the correct format'
+	./nvmutil/nvm ${_gbe_tmp} setmac ${new_mac} || Error_out 'failed to modify mac address\nmake sure the mac address in the correct format'
 	
 	./coreboot/default/util/ifdtool/ifdtool -i GbE:${_gbe_tmp} ${rom} -O ${rom} || exit 1
 
