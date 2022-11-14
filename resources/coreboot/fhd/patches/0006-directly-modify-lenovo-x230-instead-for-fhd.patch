@@ -1,0 +1,37 @@
+From 9e9a46426414d3c5fc6f7714453f1a9da0d168d9 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 24 Jul 2022 18:29:01 +0100
+Subject: [PATCH 6/6] directly modify lenovo/x230 instead (for fhd)
+
+i kept having build issues. it's a simple patch.
+---
+ .../lenovo/x230/variants/x230/data.vbt        | Bin 4281 -> 4281 bytes
+ .../x230/variants/x230/gma-mainboard.ads      |   1 -
+ 2 files changed, 1 deletion(-)
+
+diff --git a/src/mainboard/lenovo/x230/variants/x230/data.vbt b/src/mainboard/lenovo/x230/variants/x230/data.vbt
+index 0f50d706c1e943302f598ebc5534dec5080b532c..13384d45571ff76e592335143d01315e37893186 100644
+GIT binary patch
+delta 58
+zcmdm~xKnXM6(iHJiplpGWhc*Mbef#XrZYK<No?`~W^QzPa~9JvW=6TqhHM>N0A_^~
+AE&u=k
+
+delta 84
+zcmdm~xKnXM6{ED000RUlfG8FQ24)DCL4jfNR7N)z1%_)0lWQ1dC&x1>PX55iJvoa>
+T44K}X#dM6Bk#DmhTL%{aog@;;
+
+diff --git a/src/mainboard/lenovo/x230/variants/x230/gma-mainboard.ads b/src/mainboard/lenovo/x230/variants/x230/gma-mainboard.ads
+index 3df1e37f3e..f7cf0bc264 100644
+--- a/src/mainboard/lenovo/x230/variants/x230/gma-mainboard.ads
++++ b/src/mainboard/lenovo/x230/variants/x230/gma-mainboard.ads
+@@ -16,7 +16,6 @@ private package GMA.Mainboard is
+       HDMI2,
+       HDMI3,
+       Analog,
+-      LVDS,
+       others => Disabled);
+ 
+ end GMA.Mainboard;
+-- 
+2.25.1
+

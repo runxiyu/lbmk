@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-License-Identifier: GPL-3.0-only
+
+board="${1}"
+board_config_dir="resources/coreboot/${board}/config"
+set -- "${board_config_dir}/*"
+. ${1} 2>/dev/null
+
+if [ "${CONFIG_HAVE_MRC}" = "y" ] || [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+	rm ${board_config_dir}/*_deblobbed
+	for config in ${board_config_dir}/* ; do
+		grep -v 'CONFIG_HAVE_ME_BIN\|CONFIG_ME_BIN_PATH\|CONFIG_HAVE_MRC\|CONFIG_MRC_FILE' ${config} > "${config}_deblobbed"
+	done
+	./blobutil download ${board} redistributable
+
+else
+	# Quickly exits for boards requiring no blobs
+	exit 2
+fi

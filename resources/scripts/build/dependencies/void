@@ -67,12 +67,12 @@ xbps-install -y base-devel perl
 # Coreboot build dependencies (also requires build-essential and git)
 # ------------------------------------------------------------
 
-xbps-install -y ncurses doxygen acpica-utils gdb flex bison base-devel git openssl gcc-ada
+xbps-install -y ncurses doxygen acpica-utils gdb flex bison base-devel git openssl gcc-ada ncurses-devel
 
 # GRUB build dependencies (also requires build-essential, bison and flex)
 # ------------------------------------------------------------
 
-xbps-install -y font-unifont-bdf autogen help2man base-devel bison flex dejavu-fonts-ttf texinfo rsync python3 libusb xz gawk device-mapper fuse gettext freetype
+xbps-install -y font-unifont-bdf autogen help2man base-devel bison flex dejavu-fonts-ttf texinfo rsync python3 libusb xz gawk device-mapper fuse gettext gettext-devel freetype 
 
 # BucTS build dependencies (external script)
 # ------------------------------------------------------------
@@ -83,3 +83,8 @@ xbps-install -y base-devel
 # ------------------------------------------------------------
 
 xbps-install -y libpciaccess pciutils zlib libftdi1 base-devel libusb
+
+# Management engine extraction dependencies
+# ------------------------------------------------------------
+
+xbps-install -y innoextract

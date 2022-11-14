@@ -5,6 +5,7 @@
 #
 #	Copyright (C) 2014, 2015, 2016, 2020, 2021 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
+#	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -42,12 +43,18 @@ help() {
 	USAGE:	./build boot roms boardname
 	To build *all* boards, do this: ./build boot roms all
 	To list *all* boards, do this: ./build boot roms list
-
-	possible values for 'options':
-	$(listboards)
+	
+	Optional Flags:
+	-d: displaymode
+	-p: payload
+	-k: keyboard layout
 
 	Example:	./build boot roms x60
 	Example:	./build boot roms x200_8mb x60
+	Example:	./build boot roms x230_12mb -p grub -d corebootfb -k usqwerty
+
+	possible values for 'boardname':
+	$(listboards)
 
 	Refer to the ${projectname} documentation for more information.
 	EOF
@@ -61,12 +68,32 @@ die() {
 # Build ROM images for supported boards
 buildrom() {
 	board="$1"
+
+	# Start by building blobs and placing them in the coreboot tree only for boards that need them
+	./blobutil download ${board} || exit 1
+
 	if [ -d "resources/coreboot/${board}/" ]; then
-		./build boot roms_helper "${board}"
+		./build boot roms_helper "${board}${opts}"
 	else
 		die "\nbuild/roms: target not defined in the build system: %s\n" "${board}"
 	fi
 }
+
+buildrom_release() {
+	board="$1"
+
+	if [ -d "resources/coreboot/${board}/" ]; then
+		./build release deblob ${board}
+		if [ "$?" = 2 ]; then
+			./build boot roms_helper "${board}"
+		else
+			./build boot roms_helper deblobbed "${board}"
+		fi
+	else
+		die "\nbuild/roms: target not defined in the build system: %s\n" "${board}"
+	fi
+}
+
 
 if [ $# -gt 0 ]; then
 	firstoption="${1}"
@@ -78,15 +105,40 @@ if [ $# -gt 0 ]; then
 		listboards
 		exit 0
 	fi
+	
+	while [[ $# > 0 ]]; do
+		case ${1} in
+			-d)
+			opts+=" -d ${2}" 
+			shift ;;
+			-p)
+			opts+=" -p ${2}"
+			shift ;;
+			-k)
+			opts+=" -k ${2}"
+			shift ;;
+			*)
+			boards+="${1} " ;;
+		esac
+		shift
+	done
+
+if [ -z ${opts+x} ]; then
+	opts=""
+fi
 
 	printf "Building %s ROM images\n" "${projectname}"
 
-	if [ "${firstoption}" = "all" ]; then
+	if [ "${firstoption}" = "release" ]; then
+		for boardname in $(listboards); do
+			buildrom_release "${boardname}" || die "build/roms: something went wrong"
+		done
+	elif [ "${firstoption}" = "all" ]; then
 		for boardname in $(listboards); do
 			buildrom "${boardname}" || die "build/roms: something went wrong"
 		done
 	else
-		for board in ${@}; do
+		for board in ${boards}; do
 			buildrom "${board}" || die "build/roms: something went wrong"
 		done
 	fi

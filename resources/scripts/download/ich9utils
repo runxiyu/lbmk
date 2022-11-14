@@ -21,46 +21,5 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-usage()
-{
-	progname="./download ich9utils"
-	printf "Usage:\n"
-	printf "\t%s         # %s\n" \
-	       "${progname}" \
-	       "Download ich9utils"
-	printf "\t%s --help  # %s\n" \
-	       "${progname}" \
-	       "Prints this help"
-}
-
-if [ $# -ne 0 ] ; then
-	usage
-	exit 0
-fi
-
 printf "Downloading ich9utils\n"
-
-if [ -d ich9utils ]; then
-	printf "ich9utils already downloaded. skipping\n"
-	exit 0
-fi
-
-# Get flashrom
-# ------------------------------------------------------------------------------
-
-# download it using git
-git clone https://notabug.org/libreboot/ich9utils.git
-
-if [ ! -d "ich9utils" ]; then
-    printf "ich9utils not downloaded; check network connection?\n\n"
-    exit 1
-fi
-
-(
-cd "ich9utils/"
-
-# reset to known revision
-git reset --hard 53749b0c6f7c5778bdd1ec2b91cd230626752579
-)
-
-printf "\n\n"
+./download gitmodule ich9utils

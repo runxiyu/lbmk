@@ -3,6 +3,7 @@
 # arch script: installs build dependencies for Arch Linux
 #
 #	Copyright (C) 2021 Melissa Goad <mszoopers@protonmail.com>
+#	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -83,3 +84,8 @@ pacman -S --needed --noconfirm base-devel
 # ------------------------------------------------------------
 
 pacman -S --needed --noconfirm libpciaccess pciutils zlib libftdi base-devel libusb
+
+# Management engine extraction dependencies
+# ------------------------------------------------------------
+
+pacman -S --needed --noconfirm innoextract

@@ -37,7 +37,7 @@ if [ -f versiondate ]; then
 fi
 
 if [ ! -d "bin/" ]; then
-    ./build boot roms all
+    ./build boot roms release
 fi
 
 [ ! -d "release/" ] && \

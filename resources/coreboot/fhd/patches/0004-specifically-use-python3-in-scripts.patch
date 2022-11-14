@@ -1,0 +1,36 @@
+From b5a03bb1800a067de0f05658af26b8d4a8055599 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 24 Jul 2022 14:52:26 +0100
+Subject: [PATCH 4/6] specifically use python3, in scripts
+
+---
+ src/drivers/intel/fsp2_0/Makefile.inc | 2 +-
+ util/spdtool/spdtool.py               | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/drivers/intel/fsp2_0/Makefile.inc b/src/drivers/intel/fsp2_0/Makefile.inc
+index f5641ac182..d807320f29 100644
+--- a/src/drivers/intel/fsp2_0/Makefile.inc
++++ b/src/drivers/intel/fsp2_0/Makefile.inc
+@@ -87,7 +87,7 @@ endif
+ 
+ ifeq ($(CONFIG_FSP_FULL_FD),y)
+ $(obj)/Fsp_M.fd: $(call strip_quotes,$(CONFIG_FSP_FD_PATH)) $(DOTCONFIG)
+-	python 3rdparty/fsp/Tools/SplitFspBin.py split -f $(CONFIG_FSP_FD_PATH) -o "$(obj)" -n "Fsp.fd"
++	python3 3rdparty/fsp/Tools/SplitFspBin.py split -f $(CONFIG_FSP_FD_PATH) -o "$(obj)" -n "Fsp.fd"
+ 
+ $(obj)/Fsp_S.fd: $(call strip_quotes,$(CONFIG_FSP_FD_PATH)) $(obj)/Fsp_M.fd
+ 	true
+diff --git a/util/spdtool/spdtool.py b/util/spdtool/spdtool.py
+index 89976eac59..2cd7027377 100644
+--- a/util/spdtool/spdtool.py
++++ b/util/spdtool/spdtool.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ # spdtool - Tool for partial deblobbing of UEFI firmware images
+ # SPDX-License-Identifier: GPL-3.0-or-later
+ #
+-- 
+2.25.1
+

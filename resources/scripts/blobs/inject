@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-License-Identifier: GPL-3.0-only
+
+Error_out(){
+	if [ ! -z ${@+x} ]; then
+		printf "ERROR: ${@}\n"
+	fi
+
+	cat <<- EOF
+	USAGE: ./blobutil inject -r [/path/to/rom] -b [boardname] -m [macaddress]
+	Example: ./blobutil inject -r x230_12mb.rom -b x230_12mb
+
+	Adding a macadress to the gbe is optional.
+	If the [-m] parameter is left blank, the gbe will not be touched.
+
+	Type './blobutil inject listboards' to get a list of valid boards
+	EOF
+
+	exit 1
+}
+
+Modify_gbe(){
+	printf "changing mac address in gbe to ${new_mac}\n"
+	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
+
+	if [ ! -d nvmutils/ ]; then
+		git clone https://notabug.org/osboot/nvmutils
+		if [ ! -d nvmutils/ ]; then
+			printf "E: could not download nvmutils"
+			exit 1
+		fi
+		(
+		cd nvmutils/
+		git reset --hard ba9f5ada6a05d7ef8af45e30b700cd627a055867
+		)
+	fi
+	if [ ! -f nvmutils/nvmmac ]; then
+		( cd nvmutils/ && make )
+	fi
+
+	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
+	cp ${_gbe_location} ${_gbe_tmp}
+	./nvmutils/nvmmac ${_gbe_tmp} ${new_mac} || Error_out 'failed to modify mac address\nmake sure the mac address in the correct format'
+	
+	./coreboot/default/util/ifdtool/ifdtool -i GbE:${_gbe_tmp} ${rom} -O ${rom} || exit 1
+
+	rm ${_gbe_tmp}
+}
+
+listboards() {
+	for boarddir in resources/coreboot/*; do
+		if [ ! -d "${boarddir}" ]; then continue; fi
+		board="${boarddir##resources/coreboot/}"
+		board="${board%/}"
+		printf '%s\n' "${board##*/}"
+	done
+}
+
+# This function tries to determine the board from the filename of the rom.
+# It will only succeed if the filename is not changed from the build/download
+Detect_board(){
+	filename=$(basename ${rom})
+	case ${filename} in
+		grub_*)
+		board=$(cut -d '_' -f2-3 <<<${filename})
+		;;
+		seabios_grubfirst_*|seabios_withgrub_*)
+		board=$(cut -d '_' -f3-4 <<<${filename})
+		;;
+		*)
+		return 1
+	esac	
+
+	if [ -d "resources/coreboot/${board}/" ]; then
+		printf '%s\n' "${board}"
+	else
+		return 1
+	fi
+}
+
+Patch(){
+set -- "resources/coreboot/${board}/config/*"
+. ${1} 2>/dev/null
+. "resources/coreboot/${board}/board.cfg"
+
+	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
+		printf 'adding mrc\n'
+		./coreboot/default/util/cbfstool/cbfstool ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc || exit 1
+	fi
+
+	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+		_me_location=${CONFIG_ME_BIN_PATH#../../}
+		printf 'adding intel management engine\n'
+		./coreboot/default/util/ifdtool/ifdtool -i me:${_me_location} ${rom} -O ${rom} || exit 1
+	fi
+
+	if [ "${modifygbe}" = "true" ]; then
+		Modify_gbe
+	fi
+}
+
+if [ "${1}" = "listboards" ]; then
+	listboards
+	exit 0
+fi
+
+# Implementing parameter parsing now so more options can be added later
+while getopts r:b:m: option
+do 
+    case "${option}"
+        in
+        r)rom=${OPTARG};;
+	b)board=${OPTARG};;
+	m)
+		modifygbe=true
+		new_mac=${OPTARG}
+		;;
+    esac
+done
+
+if [ -z ${rom+x} ]; then
+	Error_out 'no rom specified'
+elif [ ! -f "${rom}" ]; then
+	Error_out "${rom} is not a valid path"
+elif [ -z ${board+x} ]; then
+	board=$(Detect_board) || \
+	Error_out 'no board specified'
+fi
+
+if [ ! -d "resources/coreboot/${board}/" ]; then
+	printf "board ${board} not found\n"
+	Error_out
+fi
+
+if [ ! -d coreboot/default ]; then
+	printf "downloading coreboot\n"
+	./download coreboot default
+fi
+
+if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
+printf "building ifdtool from coreboot\n"
+( cd coreboot/default/util/ifdtool && make )
+fi
+
+if [ ! -f "coreboot/default/util/cbfstool/cbfstool" ]; then
+printf "building cbfstool from coreboot\n"
+( cd coreboot/default/util/cbfstool && make )
+fi
+
+./blobutil download ${board} && Patch

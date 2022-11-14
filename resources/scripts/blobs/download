@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-License-Identifier: GPL-3.0-only
+
+board="${1}"
+# A shorthand for each board so as not to duplicate blobs for boards of different sizes
+board_short=${board%%_*mb}
+
+# Allow adding only blobs that can be legally redistributed (ifd+gbe)
+if [ "${2}" = "redistributable" ]; then
+	redistributable=true
+else
+	redistributable=false
+fi
+
+Download_needed(){
+	for need in ${needs}; do
+		case ${need} in
+			*ME*)
+				Extract_me || _failed+=" me"
+				;;
+			*MRC*)
+				./download mrc || _failed+=" mrc"
+				;;
+	esac
+	done
+	
+	if [ ! -z ${_failed+x} ]; then
+	printf "\nERROR: failed to obtain${_failed}\nrun: './blobutil extract ${board} /path/to/romdump.rom' to extract the remaining blobs\n"
+	exit 1
+	fi
+}
+
+Extract_me(){
+	_me_destination=${CONFIG_ME_BIN_PATH#../../}
+
+	if [ -f "${_me_destination}" ]; then
+		printf 'me already downloaded\n'
+		return 0
+	fi
+
+	if [ -z "${me_dl+x}" ]; then
+		printf 'no me download available for this board\n'
+		return 1
+	fi
+
+	if [ ! -d "${_me_destination%/*}" ]; then
+		mkdir -p ${_me_destination%/*}
+	fi
+
+	printf "Extracting neutered me for ${board}\n"
+	
+	# Delete old me downloads in case user is building for multiple boards
+	if [ -f "blobs/me.exe" ]; then
+		rm blobs/me.exe
+	fi
+
+	if [ -d "blobs/app" ]; then
+		rm -r blobs/app
+	fi
+
+	curl ${me_dl} > blobs/me.exe || curl ${me_dl_bkup} > blobs/me.exe
+
+	if [ ! "$(sha1sum blobs/me.exe)" = "${me_hash}  blobs/me.exe" ]; then
+		printf 'checksum of downloaded me did not mactch\ncorrupted me downloaded or wrong me for board\n'
+		rm blobs/me.exe
+		return 1
+	fi
+
+	( cd blobs && innoextract me.exe )
+	printf 'extracting and stripping intel management engine\n'
+	./me_cleaner/me_cleaner.py -r -t -O ${_me_destination} blobs/app/*ME*.bin \
+	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} blobs/app/ME7*.bin
+	printf "Truncated and cleaned me output to ${_me_destination}\n"
+}
+
+Build_deps(){
+	if [ ! -d me_cleaner ]; then
+		printf "downloading me_cleaner\n"
+		./download me_cleaner
+	fi
+
+	if [ ! -d coreboot/default ]; then
+		printf "downloading coreboot\n"
+		./download coreboot default
+	fi
+	
+	if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
+	printf "building ifdtool from coreboot\n"
+	( cd coreboot/default/util/ifdtool && make )
+	fi
+}
+
+set -- "resources/coreboot/${board}/config/*"
+. ${1} 2>/dev/null
+. "resources/coreboot/${board}/board.cfg"
+
+if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
+	if [ "${redistributable}" = "false" ]; then
+		printf 'haswell board detected, downloading mrc\n'
+		needs+=" MRC"
+	fi
+
+fi
+
+if [ "${CONFIG_HAVE_IFD_BIN}" = "y" ]; then
+	printf 'board needs intel firmware descriptor\n'
+	needs+=" IFD"
+fi
+
+if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+	if [ "${redistributable}" = "false" ]; then
+		printf 'board needs intel management engine\n'
+		needs+=" ME"
+	fi
+fi
+
+if [ "${CONFIG_HAVE_GBE_BIN}" = "y" ]; then
+	printf 'board needs gigabit ethernet firmware\n'
+	needs+=" GBE"
+fi
+
+# Quickly exit without wasting more time if there are no blobs needed (GM45)
+if [ -z ${needs+x} ]; then
+	printf 'No binary blobs needed for this board\n'
+	exit 0
+fi
+
+Build_deps
+
+while read -r line ; do
+	case ${line} in
+		ME_hash*)
+		set ${line}
+		me_hash=${2}
+		;;
+		ME_dl*)
+		set ${line}
+		me_dl=${2}
+		;;
+		ME_bkup_dl*)
+		set ${line}
+		me_dl_bkup=${2}
+		;;
+	esac
+done <<< $(eval "awk ' /\{.*${board_short}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/blobs/sources")
+
+Download_needed
+
+

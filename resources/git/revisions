@@ -1,0 +1,51 @@
+# This file contains information needed for getting the correct versions
+# for various git projects used by osbmk.
+# Project name is enclosed by curly braces '{}' information about the
+# project relevant to osbmk is stored between the subsequent curly
+# braces. This file is used by the gitcheck script as well as the
+# gitmodule script. Each entry must include: revision 'rev', location
+# 'loc', and the git url 'url'. Bkup_url is optional.
+
+{grub}{
+	rev: 50aace6bdb918150ba47e3c16146dcca271c134a
+	loc: grub
+	url: git://git.savannah.gnu.org/grub.git
+	bkup_url: http://git.savannah.gnu.org/r/grub.git
+}
+
+{gnulib}{
+	rev: d271f868a8df9bbec29049d01e056481b7a1a263
+	loc: grub/gnulib
+	url: git://git.sv.gnu.org/gnulib 
+}
+
+{ich9utils}{
+	rev: 53749b0c6f7c5778bdd1ec2b91cd230626752579
+	loc: ich9utils
+	url: https://notabug.org/libreboot/ich9utils.git
+}
+
+{me_cleaner}{
+	rev: 43612a630c79f3bc6f2653bfe90dfe0b7b137e08
+	loc: me_cleaner
+	url: https://github.com/corna/me_cleaner.git
+}
+
+{memtest86plus}{
+	rev: a78401b9704cfdd49c89bfb31d2df08f60521d0b
+	loc: memtest86plus
+	url: https://review.coreboot.org/memtest86plus.git
+}
+
+{seabios}{
+	rev: 64f37cc530f144e53c190c9e8209a51b58fd5c43
+	loc: seabios
+	url: https://review.coreboot.org/seabios
+	bkup_url: https://github.com/coreboot/seabios
+}
+
+{flashrom}{
+	rev: 11680db4e1251eb842bee11e53b6d1f0ae67767b
+	loc: flashrom 
+	url: https://review.coreboot.org/flashrom.git
+}

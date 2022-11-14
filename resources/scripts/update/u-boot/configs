@@ -3,7 +3,6 @@
 #
 #  helper script: update U-Boot configs (run make oldconfig)
 #
-#	Copyright (C) 2021 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify

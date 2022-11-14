@@ -3,6 +3,7 @@
 # ubuntu2004 script: installs build dependencies for Ubuntu 20.04
 #
 #	Copyright (C) 2014, 2015, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -102,3 +103,9 @@ apt-get -y install libpci-dev pciutils zlib1g-dev libftdi-dev build-essential li
 
 # For cross-compiling i686 target on x86_64 host.
 [ "${arch}" -eq 0 ] && apt-get -y install lib32z1-dev
+
+
+# Blobs building dependencies (for me)
+# ------------------------------------------------------------
+
+apt-get -y install innoextract

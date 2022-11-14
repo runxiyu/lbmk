@@ -70,5 +70,3 @@ install-dependencies-arch:
 
 install-dependencies-void:
 	./build dependencies void
-check:
-	./tests/u-boot-libre

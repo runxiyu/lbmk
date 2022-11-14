@@ -53,9 +53,9 @@ mkdir -p "${srcdir}/"
 
 printf "%s" "${version}" > "${srcdir}"/version
 
-modlist="coreboot flashrom grub memtest86plus seabios ich9utils"
-dirlist="resources"
-filelist="download build README.md COPYING Makefile update version versiondate projectname .gitcheck"
+modlist="coreboot flashrom grub memtest86plus seabios ich9utils me_cleaner"
+dirlist="resources" # do not add blobs directory here. it is handled below
+filelist="blobutil modify download build README.md COPYING Makefile update version versiondate projectname .gitcheck"
 
 for modname in ${modlist}; do
     if [ ! -d "${modname}/" ]; then
@@ -65,6 +65,19 @@ done
 
 for dir in ${modlist} ${dirlist}; do
     cp -R "${dir}/" "${srcdir}/"
+done
+
+mkdir -p "${srcdir}"/blobs
+# do not copy intel ME etc, but do copy ifd/gbe files
+for i in t440p w541 xx20 xx30; do
+	for j in ifd gbe 16_ifd; do
+		if [ -f "blobs/${i}/${j}.bin"]; then
+			if [ ! -e "${srcdir}/blobs/${i}" ]; then
+				mkdir -p "${srcdir}/blobs/${i}"
+			fi
+			cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}"
+		fi
+	done
 done
 
 for i in ${filelist}; do
