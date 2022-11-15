@@ -3,16 +3,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 Set_placeholder(){
-	git config user.name || git config user.name 'osbmkplaceholder'
-	git config user.email || git config user.email 'placeholder@osbmkplaceholder.com'
+	git config user.name || git config user.name 'lbmkplaceholder'
+	git config user.email || git config user.email 'placeholder@lbmkplaceholder.com'
 }
 
 Clean(){
-	if [ "$(git config user.name)" = "osbmkplaceholder" ]; then
+	if [ "$(git config user.name)" = "lbmkplaceholder" ]; then
 		git config --unset user.name
 	fi
 
-	if [ "$(git config user.email)" = "placeholder@osbmkplaceholder.com" ]; then
+	if [ "$(git config user.email)" = "placeholder@lbmkplaceholder.com" ]; then
 		git config --unset user.email
 	fi
 }
