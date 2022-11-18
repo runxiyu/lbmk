@@ -105,6 +105,8 @@ main(int argc, char *argv[])
 			errno = 0;
 			if (pwrite(fd, gbe, SIZE_8KB, 0) == SIZE_8KB)
 				close(fd);
+			if (errno == 0)
+				printf("%s successfully modified\n", FILENAME);
 		}
 	}
 
@@ -286,7 +288,7 @@ validChecksum(int partnum)
 		total += word(w, partnum);
 
 	if (total != 0xBABA) {
-		fprintf(stderr, "BAD checksum in part %d\n", partnum);
+		fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
 		errno = ECANCELED;
 		return 0;
 	}
