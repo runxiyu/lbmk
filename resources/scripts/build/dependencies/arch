@@ -42,7 +42,7 @@ pacman -S --needed --noconfirm git
 # For Tianocore and iPXE
 # TODO: check whether this is the full list
 
-pacman -S --needed --noconfirm nasm perl-libwww python2 subversion
+pacman -S --needed --noconfirm nasm perl-libwww python subversion
 
 # For building source code:
 # ------------------------------------------------------------
@@ -58,7 +58,7 @@ pacman -S --needed --noconfirm arm-none-eabi-gcc
 # Memtest86+ build dependencies
 # ------------------------------------------------------------
 
-pacman -S --needed --noconfirm base-devel python2
+pacman -S --needed --noconfirm base-devel python
 
 # i945-pwm build dependencies
 # ------------------------------------------------------------
