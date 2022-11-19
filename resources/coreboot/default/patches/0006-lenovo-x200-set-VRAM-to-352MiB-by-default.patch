@@ -1,7 +1,7 @@
-From 383c273f0c44eec93cd55c3d21d6c1a8316d8dbe Mon Sep 17 00:00:00 2001
+From d9d2e1fceb4abf99e140662a25059c6e913556de Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:11:59 +0100
-Subject: [PATCH 06/11] lenovo/x200: set VRAM to 352MiB by default
+Subject: [PATCH 06/14] lenovo/x200: set VRAM to 352MiB by default
 
 This fix makes it possible:
 https://review.coreboot.org/c/coreboot/+/16831

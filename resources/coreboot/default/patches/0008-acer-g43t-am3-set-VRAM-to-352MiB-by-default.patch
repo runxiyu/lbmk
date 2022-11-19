@@ -1,7 +1,7 @@
-From 1ee893f9fc5251968500695824ab9fd39461d318 Mon Sep 17 00:00:00 2001
+From 5409b84b222f4f04238dcafb7411986692909098 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:21:39 +0100
-Subject: [PATCH 08/11] acer/g43t-am3: set VRAM to 352MiB by default
+Subject: [PATCH 08/14] acer/g43t-am3: set VRAM to 352MiB by default
 
 ---
  src/mainboard/acer/g43t-am3/cmos.default | 2 +-

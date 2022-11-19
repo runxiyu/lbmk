@@ -1,7 +1,7 @@
-From cb3b04a3849952d8c0fa90616f45cfe5e613a286 Mon Sep 17 00:00:00 2001
+From 4106d0163987ae926a7f4261dec06e3e8bf85ff0 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 13 Mar 2022 18:04:55 +0000
-Subject: [PATCH 1/1] specifically use python3, in scripts
+Subject: [PATCH 13/14] specifically use python3, in scripts
 
 ---
  src/drivers/intel/fsp2_0/Makefile.inc | 2 +-
