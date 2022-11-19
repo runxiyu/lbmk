@@ -1,7 +1,7 @@
-From 4f52c0880bd8fbf53a49e6a29318033fbf756ee0 Mon Sep 17 00:00:00 2001
+From cabd40fee5fddd9884f93cf0d93c3f03013fae8b Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 24 Jul 2022 14:46:54 +0100
-Subject: [PATCH 2/6] Lenovo X230 patch: gfx_uma_size 224M by default
+Subject: [PATCH 2/7] Lenovo X230 patch: gfx_uma_size 224M by default
 
 ---
  src/mainboard/lenovo/x230/cmos.default | 1 +

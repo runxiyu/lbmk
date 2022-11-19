@@ -1,7 +1,7 @@
-From 9e9a46426414d3c5fc6f7714453f1a9da0d168d9 Mon Sep 17 00:00:00 2001
+From b07677830d698660f6a4a4dd15767fcbfb1e8478 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 24 Jul 2022 18:29:01 +0100
-Subject: [PATCH 6/6] directly modify lenovo/x230 instead (for fhd)
+Subject: [PATCH 6/7] directly modify lenovo/x230 instead (for fhd)
 
 i kept having build issues. it's a simple patch.
 ---

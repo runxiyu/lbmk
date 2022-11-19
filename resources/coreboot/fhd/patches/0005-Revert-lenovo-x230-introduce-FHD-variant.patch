@@ -1,7 +1,7 @@
-From a05d4ff30806272eda4e57876bdc06eac0a23ed8 Mon Sep 17 00:00:00 2001
+From b91490d6f72010d49fd102373533a4c3a5034f15 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 24 Jul 2022 18:23:24 +0100
-Subject: [PATCH 5/6] Revert "lenovo/x230: introduce FHD variant"
+Subject: [PATCH 5/7] Revert "lenovo/x230: introduce FHD variant"
 
 This reverts commit d898a4300d614bd2927cbf61ba1901bf120edb4e.
 ---

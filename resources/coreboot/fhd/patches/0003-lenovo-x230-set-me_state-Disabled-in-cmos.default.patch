@@ -1,7 +1,7 @@
-From 1f4fc0fe77eef6e5042612ed11529c984fe0592a Mon Sep 17 00:00:00 2001
+From fb3aa1522900bd892d2ce0412bbecddf30ab5aa6 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 24 Jul 2022 14:49:50 +0100
-Subject: [PATCH 3/6] lenovo/x230: set me_state=Disabled in cmos.default
+Subject: [PATCH 3/7] lenovo/x230: set me_state=Disabled in cmos.default
 
 I only recently found out about this. It's possible to use me_cleaner to
 do the same thing, but some people might just flash coreboot and not do

@@ -1,0 +1,55 @@
+From 0d5a5f3ee1ee5d6f757d5877b7adbe9839487ccf Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 19 Nov 2022 14:55:01 +0000
+Subject: [PATCH 1/1] fix crossgcc build error
+
+---
+ util/crossgcc/patches/gcc-11.2.0_gnat.patch | 32 ++++++++++++++++++++-
+ 1 file changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/util/crossgcc/patches/gcc-11.2.0_gnat.patch b/util/crossgcc/patches/gcc-11.2.0_gnat.patch
+index 2d7cecee24..c22cec45d0 100644
+--- a/util/crossgcc/patches/gcc-11.2.0_gnat.patch
++++ b/util/crossgcc/patches/gcc-11.2.0_gnat.patch
+@@ -5,7 +5,37 @@
+  
+  # Extra flags to pass to recursive makes.
+ -COMMON_ADAFLAGS= -gnatpg
+-+COMMON_ADAFLAGS= -gnatpg -gnatwGUR
+++COMMON_ADAFLAGS= -gnatpg -gnatwn
+  ifeq ($(TREECHECKING),)
+  CHECKING_ADAFLAGS=
+  else
++diff -Nurp gcc-11.2.0/gcc/ada/gcc-interface/Make-lang.in gcc-11.2.0.new/gcc/ada/gcc-interface/Make-lang.in
++--- gcc-11.2.0/gcc/ada/gcc-interface/Make-lang.in	2022-06-03 00:31:57.993273717 +0200
+++++ gcc-11.2.0.new/gcc/ada/gcc-interface/Make-lang.in	2022-06-03 00:30:50.214166847 +0200
++@@ -334,6 +334,7 @@ GNAT_ADA_OBJS =	\
++  ada/hostparm.o	\
++  ada/impunit.o	\
++  ada/inline.o	\
+++ ada/libgnat/i-c.o	\
++  ada/libgnat/interfac.o	\
++  ada/itypes.o	\
++  ada/krunch.o	\
++@@ -364,7 +365,10 @@ GNAT_ADA_OBJS =	\
++  ada/rtsfind.o	\
++  ada/libgnat/s-addope.o	\
++  ada/libgnat/s-addima.o \
+++ ada/libgnat/s-aotase.o	\
++  ada/libgnat/s-assert.o	\
+++ ada/libgnat/s-atoope.o	\
+++ ada/libgnat/s-atopri.o	\
++  ada/libgnat/s-bitops.o	\
++  ada/libgnat/s-carun8.o	\
++  ada/libgnat/s-casuti.o	\
++@@ -548,6 +552,7 @@ GNATBIND_OBJS = \
++  ada/hostparm.o   \
++  ada/init.o       \
++  ada/initialize.o \
+++ ada/libgnat/i-c.o        \
++  ada/libgnat/interfac.o   \
++  ada/krunch.o     \
++  ada/lib.o        \
+-- 
+2.25.1
+

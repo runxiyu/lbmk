@@ -1,7 +1,7 @@
-From d898a4300d614bd2927cbf61ba1901bf120edb4e Mon Sep 17 00:00:00 2001
+From 53ebc7b1b9b59cc831383ed71478536c9e183d00 Mon Sep 17 00:00:00 2001
 From: Alexander Couzens <lynxis@fe80.eu>
 Date: Sat, 19 Mar 2022 13:42:33 +0000
-Subject: [PATCH 1/6] lenovo/x230: introduce FHD variant
+Subject: [PATCH 1/7] lenovo/x230: introduce FHD variant
 
 There is a modification for the x230 which uses the 2nd DP from the dock
 as the integrated panel's connection, which allows using a custom eDP
