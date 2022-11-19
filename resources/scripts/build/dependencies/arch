@@ -87,3 +87,6 @@ pacman -S --needed --noconfirm libpciaccess pciutils zlib libftdi base-devel lib
 # ------------------------------------------------------------
 
 pacman -S --needed --noconfirm innoextract
+
+printf "You also need unifont from AUR, to build GRUB:\n"
+printf "https://aur.archlinux.org/pkgbase/unifont\n"
