@@ -14,6 +14,11 @@ else
 	redistributable=false
 fi
 
+Fail(){
+	printf "\nERROR: $@\n"
+	exit 1
+}
+
 Download_needed(){
 	for need in ${needs}; do
 		case ${need} in
@@ -27,8 +32,7 @@ Download_needed(){
 	done
 	
 	if [ ! -z ${_failed+x} ]; then
-	printf "\nERROR: failed to obtain${_failed}\nrun: './blobutil extract ${board} /path/to/romdump.rom' to extract the remaining blobs\n"
-	exit 1
+	Fail "failed to obtain ${_failed}\nYou may try manually extracting blobs with './blobutil extract'"
 	fi
 }
 
@@ -68,27 +72,28 @@ Extract_me(){
 		return 1
 	fi
 
-	( cd blobs && innoextract me.exe )
 	printf 'extracting and stripping intel management engine\n'
+	innoextract blobs/me.exe -d blobs || Fail 'could not extract me executable with innoextract' 
 	./me_cleaner/me_cleaner.py -r -t -O ${_me_destination} blobs/app/*ME*.bin \
-	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} blobs/app/ME7*.bin
+	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} blobs/app/ME7*.bin \
+	|| return 1
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
 }
 
 Build_deps(){
 	if [ ! -d me_cleaner ]; then
 		printf "downloading me_cleaner\n"
-		./download me_cleaner
+		./download me_cleaner || Fail 'could not download me_cleaner'
 	fi
 
 	if [ ! -d coreboot/default ]; then
 		printf "downloading coreboot\n"
-		./download coreboot default
+		./download coreboot default || Fail 'could not download coreboot'
 	fi
 	
 	if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
 	printf "building ifdtool from coreboot\n"
-	( cd coreboot/default/util/ifdtool && make )
+	( cd coreboot/default/util/ifdtool && make ) || Fail 'could not build ifdtool'
 	fi
 }
 
