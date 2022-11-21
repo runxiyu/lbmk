@@ -92,8 +92,8 @@ Build_deps(){
 	fi
 	
 	if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
-	printf "building ifdtool from coreboot\n"
-	( cd coreboot/default/util/ifdtool && make ) || Fail 'could not build ifdtool'
+		printf "building ifdtool from coreboot\n"
+		make -C coreboot/default/util/ifdtool || Fail 'could not build ifdtool'
 	fi
 }
 
