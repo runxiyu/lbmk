@@ -55,7 +55,7 @@ Detect_board(){
 		grub_*)
 		board=$(cut -d '_' -f2-3 <<<${filename})
 		;;
-		seabios_grubfirst_*|seabios_withgrub_*)
+		seabios_withgrub_*)
 		board=$(cut -d '_' -f3-4 <<<${filename})
 		;;
 		*)
