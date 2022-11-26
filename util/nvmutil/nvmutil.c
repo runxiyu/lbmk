@@ -337,21 +337,29 @@ cmd_swap(void)
 	part0 = validChecksum(0);
 	part1 = validChecksum(1);
 
-	if ((gbeFileModified = (part0 | part1))) {
+	if ((part0 | part1)) {
 		for(part0 = 0; part0 < SIZE_4KB; part0++) {
 			gbe[part0] ^= gbe[part1 = (part0 | SIZE_4KB)];
 			gbe[part1] ^= gbe[part0];
 			gbe[part0] ^= gbe[part1];
 		}
+
+		gbeFileModified = 1;
+		nvmPartModified[0] = 1;
+		nvmPartModified[1] = 1;
 	}
 }
 
 void
 cmd_copy(void)
 {
-	if (validChecksum(part))
-		memcpy(gbe + ((part ^ (gbeFileModified = 1)) << 12),
+	if (validChecksum(part)) {
+		memcpy(gbe + ((part ^ 1) << 12),
 			gbe + (part << 12), SIZE_4KB);
+
+		gbeFileModified = 1;
+		nvmPartModified[part] = 1;
+	}
 }
 
 int
