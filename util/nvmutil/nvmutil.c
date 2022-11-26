@@ -43,6 +43,7 @@ void showmac(int partnum);
 void hexdump(int partnum);
 void cmd_setchecksum(void);
 void cmd_brick(void);
+void cmd_swap(void);
 int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val);
@@ -238,8 +239,6 @@ invalid_mac_address:
 void
 cmd(const char *command)
 {
-	int part0, part1;
-
 	if (strcmp(command, "dump") == 0) {
 		cmd_dump();
 	} else if (strcmp(command, "setchecksum") == 0) {
@@ -247,15 +246,7 @@ cmd(const char *command)
 	} else if (strcmp(command, "brick") == 0) {
 		cmd_brick();
 	} else if (strcmp(command, "swap") == 0) {
-		part0 = validChecksum(0);
-		part1 = validChecksum(1);
-		if ((gbeFileModified = (part0 | part1))) {
-			for(part0 = 0; part0 < SIZE_4KB; part0++) {
-				gbe[part0] ^= gbe[part1 = (part0 | SIZE_4KB)];
-				gbe[part1] ^= gbe[part0];
-				gbe[part0] ^= gbe[part1];
-			}
-		}
+		cmd_swap();
 	} else if (strcmp(command, "copy") == 0) {
 		if (validChecksum(part))
 			memcpy(gbe + ((part ^ (gbeFileModified = 1)) << 12),
@@ -337,6 +328,23 @@ cmd_brick(void)
 {
 	if (validChecksum(part))
 		setWord(0x3F, part, (word(0x3F, part)) ^ 0xFF);
+}
+
+void
+cmd_swap(void)
+{
+	int part0, part1;
+
+	part0 = validChecksum(0);
+	part1 = validChecksum(1);
+
+	if ((gbeFileModified = (part0 | part1))) {
+		for(part0 = 0; part0 < SIZE_4KB; part0++) {
+			gbe[part0] ^= gbe[part1 = (part0 | SIZE_4KB)];
+			gbe[part1] ^= gbe[part0];
+			gbe[part0] ^= gbe[part1];
+		}
+	}
 }
 
 int
