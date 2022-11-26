@@ -44,6 +44,7 @@ void hexdump(int partnum);
 void cmd_setchecksum(void);
 void cmd_brick(void);
 void cmd_swap(void);
+void cmd_copy(void);
 int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val);
@@ -248,9 +249,7 @@ cmd(const char *command)
 	} else if (strcmp(command, "swap") == 0) {
 		cmd_swap();
 	} else if (strcmp(command, "copy") == 0) {
-		if (validChecksum(part))
-			memcpy(gbe + ((part ^ (gbeFileModified = 1)) << 12),
-				gbe + (part << 12), SIZE_4KB);
+		cmd_copy();
 	} else
 		errno = EINVAL;
 }
@@ -345,6 +344,14 @@ cmd_swap(void)
 			gbe[part0] ^= gbe[part1];
 		}
 	}
+}
+
+void
+cmd_copy(void)
+{
+	if (validChecksum(part))
+		memcpy(gbe + ((part ^ (gbeFileModified = 1)) << 12),
+			gbe + (part << 12), SIZE_4KB);
 }
 
 int
