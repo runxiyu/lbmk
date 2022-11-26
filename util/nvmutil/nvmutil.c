@@ -51,7 +51,8 @@ void byteswap(uint8_t *byte);
 #define SIZE_8KB 0x2000
 
 uint8_t gbe[SIZE_8KB];
-int part, modified = 0;
+int part, gbeFileModified = 0;
+uint8_t nvmPartModified[2];
 
 uint16_t test;
 uint8_t little_endian;
@@ -59,10 +60,12 @@ uint8_t little_endian;
 int
 main(int argc, char *argv[])
 {
-	int fd;
+	int fd, partnum;
 	int flags = O_RDWR;
 	char *strMac = NULL;
 	char *strRMac = "??:??:??:??:??:??";
+	nvmPartModified[0] = 0;
+	nvmPartModified[1] = 0;
 
 	test = 1;
 	little_endian = ((uint8_t *) &test)[0];
@@ -101,12 +104,22 @@ main(int argc, char *argv[])
 		else
 			cmd(COMMAND);
 
-		if (modified) {
+		if (gbeFileModified) {
 			errno = 0;
 			if (pwrite(fd, gbe, SIZE_8KB, 0) == SIZE_8KB)
 				close(fd);
-			if (errno == 0)
-				printf("%s successfully modified\n", FILENAME);
+			if (errno == 0) {
+				for (partnum = 0; partnum < 2; partnum++) {
+					if (nvmPartModified[partnum])
+						printf("Part %d modified\n",
+						partnum);
+					else
+						fprintf (stderr, "Part %d NOT "
+						"modified\n", partnum);
+				}
+				printf("File `%s` successfully "
+					"modified\n", FILENAME);
+			}
 		}
 	}
 
@@ -263,7 +276,7 @@ cmd(const char *command)
 	} else if (strcmp(command, "swap") == 0) {
 		part0 = validChecksum(0);
 		part1 = validChecksum(1);
-		if ((modified = (part0 | part1))) {
+		if ((gbeFileModified = (part0 | part1))) {
 			for(part0 = 0; part0 < SIZE_4KB; part0++) {
 				gbe[part0] ^= gbe[part1 = (part0 | SIZE_4KB)];
 				gbe[part1] ^= gbe[part0];
@@ -272,7 +285,7 @@ cmd(const char *command)
 		}
 	} else if (strcmp(command, "copy") == 0) {
 		if (validChecksum(part))
-			memcpy(gbe + ((part ^ (modified = 1)) << 12),
+			memcpy(gbe + ((part ^ (gbeFileModified = 1)) << 12),
 				gbe + (part << 12), SIZE_4KB);
 	} else
 		errno = EINVAL;
@@ -310,7 +323,8 @@ setWord(int pos16, int partnum, uint16_t val)
 	((uint16_t *) gbe)[pos16 + (partnum << 11)] = val;
 	if (!little_endian)
 		byteswap(gbe + (pos16 << 1) + (partnum << 12));
-	modified = 1;
+	gbeFileModified = 1;
+	nvmPartModified[partnum] = 1;
 }
 
 void
