@@ -41,6 +41,7 @@ void cmd(const char *command);
 void cmd_dump(void);
 void showmac(int partnum);
 void hexdump(int partnum);
+void cmd_setchecksum(void);
 int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val);
@@ -236,16 +237,12 @@ invalid_mac_address:
 void
 cmd(const char *command)
 {
-	int c, part0, part1;
-	uint16_t val16;
+	int part0, part1;
 
 	if (strcmp(command, "dump") == 0) {
 		cmd_dump();
 	} else if (strcmp(command, "setchecksum") == 0) {
-		val16 = 0;
-		for (c = 0; c < 0x3F; c++)
-			val16 += word(c, part);
-		setWord(0x3F, part, 0xBABA - val16);
+		cmd_setchecksum();
 	} else if (strcmp(command, "brick") == 0) {
 		if (validChecksum(part))
 			setWord(0x3F, part, (word(0x3F, part)) ^ 0xFF);
@@ -323,6 +320,16 @@ hexdump(int partnum)
 		}
 		printf("\n");
 	}
+}
+
+void
+cmd_setchecksum(void)
+{
+	int c;
+	uint16_t val16 = 0;
+	for (c = 0; c < 0x3F; c++)
+		val16 += word(c, part);
+	setWord(0x3F, part, 0xBABA - val16);
 }
 
 int
