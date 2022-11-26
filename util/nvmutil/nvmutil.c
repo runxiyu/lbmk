@@ -358,7 +358,7 @@ cmd_copy(void)
 			gbe + (part << 12), SIZE_4KB);
 
 		gbeFileModified = 1;
-		nvmPartModified[part] = 1;
+		nvmPartModified[part ^ 1] = 1;
 	}
 }
 
