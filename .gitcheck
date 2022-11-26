@@ -3,8 +3,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 Set_placeholder(){
-	git config user.name || git config user.name 'lbmkplaceholder'
-	git config user.email || git config user.email 'placeholder@lbmkplaceholder.com'
+	# Check if username and or email is set.
+	if ! git config user.name || git config user.email ; then
+		git config user.name || git config user.name 'lbmkplaceholder'
+		git config user.email || git config user.email 'placeholder@lbmkplaceholder.com'
+	fi
 }
 
 Clean(){
@@ -21,9 +24,13 @@ Run(){
 if [ "${1}" = "clean" ]; then
 	Clean
 else
-	# Check if username and or email is set.
-	if ! git config user.name || git config user.email ; then
+	Set_placeholder
+
+	# Check coreboot as well to prevent errors during building
+	if [ -d coreboot ]; then
+		cd coreboot
 		Set_placeholder
+		cd -
 	fi
 fi
 }

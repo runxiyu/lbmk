@@ -3,9 +3,9 @@
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-Error_out(){
+Fail(){
 	if [ ! -z ${@+x} ]; then
-		printf "ERROR: ${@}\n"
+		printf "\nERROR: ${@}\n"
 	fi
 
 	cat <<- EOF
@@ -26,12 +26,12 @@ Modify_gbe(){
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
 	if [ ! -f util/nvmutil/nvm ]; then
-		( cd util/nvmutil/ && make )
+		make -C /util/nvmutil || Fail 'failed to build nvmutil'
 	fi
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
 	cp ${_gbe_location} ${_gbe_tmp}
-	./util/nvmutil/nvm ${_gbe_tmp} setmac ${new_mac} || Error_out 'failed to modify mac address\nmake sure the mac address in the correct format'
+	./util/nvmutil/nvm ${_gbe_tmp} setmac ${new_mac} || Fail 'failed to modify mac address\nmake sure the mac address in the correct format'
 	
 	./coreboot/default/util/ifdtool/ifdtool -i GbE:${_gbe_tmp} ${rom} -O ${rom} || exit 1
 
@@ -110,17 +110,16 @@ do
 done
 
 if [ -z ${rom+x} ]; then
-	Error_out 'no rom specified'
+	Fail 'no rom specified'
 elif [ ! -f "${rom}" ]; then
-	Error_out "${rom} is not a valid path"
+	Fail "${rom} is not a valid path"
 elif [ -z ${board+x} ]; then
 	board=$(Detect_board) || \
-	Error_out 'no board specified'
+	Fail 'no board specified'
 fi
 
 if [ ! -d "resources/coreboot/${board}/" ]; then
-	printf "board ${board} not found\n"
-	Error_out
+	Fail "board ${board} not found"
 fi
 
 if [ ! -d coreboot/default ]; then
@@ -130,12 +129,12 @@ fi
 
 if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
 printf "building ifdtool from coreboot\n"
-( cd coreboot/default/util/ifdtool && make )
+		make -C coreboot/default/util/ifdtool || Fail 'could not build ifdtool'
 fi
 
 if [ ! -f "coreboot/default/util/cbfstool/cbfstool" ]; then
 printf "building cbfstool from coreboot\n"
-( cd coreboot/default/util/cbfstool && make )
+make -C cd coreboot/default/util/cbfstool || Fail 'could not build ifdtool'
 fi
 
 ./blobutil download ${board} && Patch

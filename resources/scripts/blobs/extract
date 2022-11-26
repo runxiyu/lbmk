@@ -13,10 +13,15 @@ Print_help(){
 	printf "\nYou need to specify exactly 2 arguments\n"
 }
 
+Fail(){
+	printf "\nERROR: $@\n"
+	exit 1
+}
+
 Build_deps(){
 	if [ ! -d me_cleaner ]; then
 		printf "downloading me_cleaner\n"
-		./download me_cleaner
+		./download me_cleaner || Fail 'could not download me_cleaner'
 	else
 		printf "me_cleaner already downloaded. Skipping.\n"
 		printf "run ./download me_cleaner to manually overwrite\n"
@@ -24,19 +29,16 @@ Build_deps(){
 
 	if [ ! -d coreboot/default ]; then
 		printf "downloading coreboot\n"
-		./download coreboot default
+		./download coreboot default || Fail 'could not download coreboot'
 	else
 		printf "coreboot already downloaded. Skipping.\n"
 		printf "run ./download coreboot to manually overwrite\n"
 	fi
 
-	printf "building ifdtool from coreboot\n"
-	( cd coreboot/default/util/ifdtool && make )
-}
-
-Error_out(){
-	printf "failed to extract ${1}\nmake sure that your rom dump is valid\n"
-	exit 1
+	if ! [ -f coreboot/default/util/ifdtool/ifdtool ]; then
+		printf "building ifdtool from coreboot\n"
+		make -C coreboot/default/util/ifdtool || Fail 'could not build ifdtool'
+	fi
 }
 
 
@@ -48,7 +50,7 @@ Extract_blobs(){
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		printf 'haswell board detected, downloading mrc\n'
-		./download mrc
+		./download mrc || Fail 'could not download mrc, check network connection'
 	fi
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
@@ -56,15 +58,22 @@ Extract_blobs(){
 	_ifd_destination=${CONFIG_IFD_BIN_PATH#../../}
 
 	printf "extracting clean ime and modified ifd\n"
-	./me_cleaner/me_cleaner.py -D ${_ifd_destination} -M ${_me_destination} ${vendor_rom} -t -r -S || Error_out me
+	./me_cleaner/me_cleaner.py -D ${_ifd_destination} -M ${_me_destination} ${vendor_rom} -t -r -S \
+	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} ${vendor_rom} \
+	|| Fail 'me_cleaner failed to extract blobs from rom'
 
 	printf "extracting gigabit ethernet firmware"
 	./coreboot/default/util/ifdtool/ifdtool -x ${vendor_rom}
-	mv flashregion*gbe.bin ${_gbe_destination} || Error_out gbe
+	mv flashregion*gbe.bin ${_gbe_destination} || Fail 'could not extract gbe'
 	
 	# Cleans up other files extracted with ifdtool
 	rm flashregion*.bin 2> /dev/null
-	printf "gbe, ifd, and me extracted to ${_me_destination%/*}\n"
+
+	if [ -f ${_ifd_destination} ]; then
+		printf "gbe, ifd, and me extracted to ${_me_destination%/*}\n"
+	else
+		printf "WARNING: Intel firmware descriptor could not be extracted with modified me\n"
+	fi
 }
 
 if [ ! -f "${vendor_rom}" ] ; then
