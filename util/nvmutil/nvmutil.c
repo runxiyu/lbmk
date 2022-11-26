@@ -97,17 +97,16 @@ main(int argc, char *argv[])
 	if (errno != 0)
 		goto nvmutil_exit;
 
-	if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB)
-		== SIZE_8KB)
-	{
-		if (strMac != NULL)
-			setmac(strMac);
-		else
-			cmd(COMMAND);
+	if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
+		goto nvmutil_exit;
 
-		if (gbeFileModified)
-			writeGbeFile(&fd, FILENAME);
-	}
+	if (strMac != NULL)
+		setmac(strMac);
+	else
+		cmd(COMMAND);
+
+	if (gbeFileModified)
+		writeGbeFile(&fd, FILENAME);
 
 nvmutil_exit:
 	if (errno == ENOTDIR)
@@ -126,16 +125,17 @@ writeGbeFile(int *fd, const char *filename)
 
 	if (pwrite((*fd), gbe, SIZE_8KB, 0) == SIZE_8KB)
 		close((*fd));
-	if (errno == 0) {
-		for (partnum = 0; partnum < 2; partnum++) {
-			if (nvmPartModified[partnum])
-				printf("Part %d modified\n", partnum);
-			else
-				fprintf (stderr,
-					"Part %d NOT modified\n", partnum);
-		}
-		printf("File `%s` successfully modified\n", filename);
+	if (errno != 0)
+		return;
+
+	for (partnum = 0; partnum < 2; partnum++) {
+		if (nvmPartModified[partnum])
+			printf("Part %d modified\n", partnum);
+		else
+			fprintf (stderr,
+				"Part %d NOT modified\n", partnum);
 	}
+	printf("File `%s` successfully modified\n", filename);
 }
 
 ssize_t
@@ -171,8 +171,10 @@ setmac(const char *strMac)
 
 	if (readFromFile(&macfd, rmac, "/dev/urandom", O_RDONLY, 12) != 12)
 		return;
-	else if (strnlen(strMac, 20) != 17)
+
+	if (strnlen(strMac, 20) != 17)
 		goto invalid_mac_address;
+
 	for (o = 0, random = 0; o < 16; o += 3) {
 		if (o != 15)
 			if (strMac[o + 2] != ':')
@@ -214,12 +216,12 @@ setmac(const char *strMac)
 			byteswap((uint8_t *) &mac[o]);
 
 	for (partnum = 0; partnum < 2; partnum++) {
-		if (validChecksum(partnum)) {
-			for (o = 0; o < 3; o++)
-				setWord(o, partnum, mac[o]);
-			part = partnum;
-			cmd("setchecksum");
-		}
+		if (!validChecksum(partnum))
+			continue;
+		for (o = 0; o < 3; o++)
+			setWord(o, partnum, mac[o]);
+		part = partnum;
+		cmd("setchecksum");
 	}
 	return;
 invalid_mac_address:
@@ -306,12 +308,12 @@ validChecksum(int partnum)
 	for(w = 0; w <= 0x3F; w++)
 		total += word(w, partnum);
 
-	if (total != 0xBABA) {
-		fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-		errno = ECANCELED;
-		return 0;
-	}
-	return 1;
+	if (total == 0xBABA)
+		return 1;
+
+	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
+	errno = ECANCELED;
+	return 0;
 }
 
 uint16_t
