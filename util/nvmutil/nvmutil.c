@@ -42,6 +42,7 @@ int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val);
 void byteswap(uint8_t *byte);
+void writeGbeFile(int *fd, const char *filename);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -60,7 +61,7 @@ uint8_t little_endian;
 int
 main(int argc, char *argv[])
 {
-	int fd, partnum;
+	int fd;
 	int flags = O_RDWR;
 	char *strMac = NULL;
 	char *strRMac = "??:??:??:??:??:??";
@@ -104,23 +105,8 @@ main(int argc, char *argv[])
 		else
 			cmd(COMMAND);
 
-		if (gbeFileModified) {
-			errno = 0;
-			if (pwrite(fd, gbe, SIZE_8KB, 0) == SIZE_8KB)
-				close(fd);
-			if (errno == 0) {
-				for (partnum = 0; partnum < 2; partnum++) {
-					if (nvmPartModified[partnum])
-						printf("Part %d modified\n",
-						partnum);
-					else
-						fprintf (stderr, "Part %d NOT "
-						"modified\n", partnum);
-				}
-				printf("File `%s` successfully "
-					"modified\n", FILENAME);
-			}
-		}
+		if (gbeFileModified)
+			writeGbeFile(&fd, FILENAME);
 	}
 
 nvmutil_exit:
@@ -130,6 +116,26 @@ nvmutil_exit:
 		if (errno != 0)
 			fprintf(stderr, "%s\n", strerror(errno));
 	return errno;
+}
+
+void
+writeGbeFile(int *fd, const char *filename)
+{
+	int partnum;
+	errno = 0;
+
+	if (pwrite((*fd), gbe, SIZE_8KB, 0) == SIZE_8KB)
+		close((*fd));
+	if (errno == 0) {
+		for (partnum = 0; partnum < 2; partnum++) {
+			if (nvmPartModified[partnum])
+				printf("Part %d modified\n", partnum);
+			else
+				fprintf (stderr,
+					"Part %d NOT modified\n", partnum);
+		}
+		printf("File `%s` successfully modified\n", filename);
+	}
 }
 
 ssize_t
