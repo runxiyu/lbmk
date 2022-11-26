@@ -38,6 +38,9 @@ ssize_t readFromFile(int *fd, uint8_t *buf, const char *path, int flags,
 	size_t size);
 void setmac(const char *strMac);
 void cmd(const char *command);
+void cmd_dump(void);
+void showmac(int partnum);
+void hexdump(int partnum);
 int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val);
@@ -233,46 +236,11 @@ invalid_mac_address:
 void
 cmd(const char *command)
 {
-	int c, partnum, part0, part1, row, numInvalid;
-	uint8_t *byte;
+	int c, part0, part1;
 	uint16_t val16;
 
 	if (strcmp(command, "dump") == 0) {
-		numInvalid = 0;
-		for (partnum = 0; partnum < 2; partnum++) {
-			if (!validChecksum(partnum))
-				++numInvalid;
-
-			printf("Part %d:\n", partnum);
-
-			printf("MAC: ");
-			for (c = 0; c < 3; c++) {
-				val16 = word(c, partnum);
-				byte = (uint8_t *) &val16;
-				if (!little_endian)
-					byteswap(byte);
-				printf("%02x:%02x", byte[0], byte[1]);
-				if (c == 2)
-					printf("\n");
-				else
-					printf(":");
-			}
-
-			for (row = 0; row < 8; row++) {
-				printf("%07x ", row << 4);
-				for (c = 0; c < 8; c++) {
-					val16 = word((row << 3) + c, partnum);
-					byte = (uint8_t *) &val16;
-					if (!little_endian)
-						byteswap(byte);
-					printf("%02x%02x ", byte[1], byte[0]);
-				}
-				printf("\n");
-			}
-		}
-		if (numInvalid < 2) {
-			errno = 0;
-		}
+		cmd_dump();
 	} else if (strcmp(command, "setchecksum") == 0) {
 		val16 = 0;
 		for (c = 0; c < 0x3F; c++)
@@ -297,6 +265,64 @@ cmd(const char *command)
 				gbe + (part << 12), SIZE_4KB);
 	} else
 		errno = EINVAL;
+}
+
+void
+cmd_dump(void)
+{
+	int numInvalid, partnum;
+
+	numInvalid = 0;
+	for (partnum = 0; partnum < 2; partnum++) {
+		if (!validChecksum(partnum))
+			++numInvalid;
+		printf("MAC (part %d): ", partnum);
+		showmac(partnum);
+		hexdump(partnum);
+	}
+	if (numInvalid < 2)
+		errno = 0;
+
+}
+
+void
+showmac(int partnum)
+{
+	int c;
+	uint16_t val16;
+	uint8_t *byte;
+
+	for (c = 0; c < 3; c++) {
+		val16 = word(c, partnum);
+		byte = (uint8_t *) &val16;
+		if (!little_endian)
+			byteswap(byte);
+		printf("%02x:%02x", byte[0], byte[1]);
+		if (c == 2)
+			printf("\n");
+		else
+			printf(":");
+	}
+}
+
+void
+hexdump(int partnum)
+{
+	int row, c;
+	uint16_t val16;
+	uint8_t *byte;
+
+	for (row = 0; row < 8; row++) {
+		printf("%07x ", row << 4);
+		for (c = 0; c < 8; c++) {
+			val16 = word((row << 3) + c, partnum);
+			byte = (uint8_t *) &val16;
+			if (!little_endian)
+				byteswap(byte);
+			printf("%02x%02x ", byte[1], byte[0]);
+		}
+		printf("\n");
+	}
 }
 
 int
