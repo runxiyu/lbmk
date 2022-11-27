@@ -34,7 +34,7 @@
 
 ssize_t readFromFile(int *fd, uint8_t *buf, const char *path, int flags,
 	size_t size);
-void setmac(const char *strMac);
+void cmd_setmac(const char *strMac);
 uint8_t hextonum(char chs);
 void cmd_dump(void);
 void showmac(int partnum);
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 
 	if (errno == 0) {
 		if (strMac != NULL)
-			setmac(strMac);
+			cmd_setmac(strMac);
 		else if (cmd != NULL)
 			(*cmd)();
 
@@ -128,27 +128,6 @@ nvmutil_exit:
 		if (errno != 0)
 			fprintf(stderr, "%s\n", strerror(errno));
 	return errno;
-}
-
-void
-writeGbeFile(int *fd, const char *filename)
-{
-	int partnum;
-	errno = 0;
-
-	if (pwrite((*fd), gbe, SIZE_8KB, 0) == SIZE_8KB)
-		close((*fd));
-	if (errno != 0)
-		return;
-
-	for (partnum = 0; partnum < 2; partnum++) {
-		if (nvmPartModified[partnum])
-			printf("Part %d modified\n", partnum);
-		else
-			fprintf (stderr,
-				"Part %d NOT modified\n", partnum);
-	}
-	printf("File `%s` successfully modified\n", filename);
 }
 
 ssize_t
@@ -175,7 +154,7 @@ readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
 }
 
 void
-setmac(const char *strMac)
+cmd_setmac(const char *strMac)
 {
 	uint8_t o, val8;
 	uint16_t val16;
@@ -244,9 +223,9 @@ hextonum(char chs)
 	if (random > 15) {
 		close(macfd);
 		free(rmac);
-		random = 0;
 		rmac = NULL;
-	} else if (rmac == NULL) {
+	}
+	if (rmac == NULL) {
 		random = 0;
 		if ((rmac = (uint8_t *) malloc(12)) == NULL)
 			err(1, NULL);
@@ -422,4 +401,25 @@ byteswap(uint8_t *byte) {
 	byte[0] ^= byte[1];
 	byte[1] ^= byte[0];
 	byte[0] ^= byte[1];
+}
+
+void
+writeGbeFile(int *fd, const char *filename)
+{
+	int partnum;
+	errno = 0;
+
+	if (pwrite((*fd), gbe, SIZE_8KB, 0) == SIZE_8KB)
+		close((*fd));
+	if (errno != 0)
+		return;
+
+	for (partnum = 0; partnum < 2; partnum++) {
+		if (nvmPartModified[partnum])
+			printf("Part %d modified\n", partnum);
+		else
+			fprintf (stderr,
+				"Part %d NOT modified\n", partnum);
+	}
+	printf("File `%s` successfully modified\n", filename);
 }
