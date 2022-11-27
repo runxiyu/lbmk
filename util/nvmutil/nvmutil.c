@@ -30,13 +30,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <dirent.h>
-#ifdef HAVE_PLEDGE
 #include <err.h>
-#endif
 
 ssize_t readFromFile(int *fd, uint8_t *buf, const char *path, int flags,
 	size_t size);
 void setmac(const char *strMac);
+uint8_t hextonum(char chs);
 void cmd_dump(void);
 void showmac(int partnum);
 void hexdump(int partnum);
@@ -178,41 +177,30 @@ readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
 void
 setmac(const char *strMac)
 {
-	uint8_t rmac[12];
-	uint8_t o, ch, val8;
+	uint8_t o, val8;
 	uint16_t val16;
-	int macfd, partnum, random, byte, nib;
+	int partnum, byte, nib;
 	uint16_t mac[3] = {0, 0, 0};
 	uint64_t total = 0;
-
-	if (readFromFile(&macfd, rmac, "/dev/urandom", O_RDONLY, 12) != 12)
-		return;
 
 	if (strnlen(strMac, 20) != 17)
 		goto invalid_mac_address;
 
-	for (o = 0, random = 0; o < 16; o += 3) {
+	for (o = 0; o < 16; o += 3) {
 		if (o != 15)
 			if (strMac[o + 2] != ':')
 				goto invalid_mac_address;
 		byte = o / 3;
 		for (nib = 0; nib < 2; nib++, total += val8) {
-			ch = strMac[o + nib];
-			if ((ch >= '0') && ch <= '9') {
-				val8 = ch - '0';
-			} else if ((ch >= 'A') && (ch <= 'F')) {
-				val8 = ch - 'A' + 10;
-			} else if ((ch >= 'a') && (ch <= 'f')) {
-				val8 = ch - 'a' + 10;
-			} else if (ch == '?') {
-				val8 = rmac[random++] & 0xf;
-				if ((byte == 0 && (nib == 1))) {
-					val8 &= 0xE;
-					val8 |= 2;
-				}
-			} else {
+			if ((val8 = hextonum(strMac[o + nib])) > 15) {
+				if (errno != 0)
+					return;
 				goto invalid_mac_address;
+			} else if ((byte == 0 && (nib == 1))) {
+				val8 &= 0xE;
+				val8 |= 2;
 			}
+
 			val16 = val8;
 			if ((byte % 2) ^ 1)
 				byteswap((uint8_t *) &val16);
@@ -244,6 +232,45 @@ invalid_mac_address:
 	fprintf(stderr, "Bad MAC address\n");
 	errno = ECANCELED;
 	return;
+}
+
+uint8_t
+hextonum(char chs)
+{
+	uint8_t val8, ch;
+	static int macfd;
+	static uint8_t *rmac = NULL;
+	static int random;
+	if (random > 15) {
+		close(macfd);
+		free(rmac);
+		random = 0;
+		rmac = NULL;
+	} else if (rmac == NULL) {
+		random = 0;
+		if ((rmac = (uint8_t *) malloc(12)) == NULL)
+			err(1, NULL);
+		if (readFromFile(&macfd, rmac, "/dev/urandom", O_RDONLY, 12)
+		!= 12) {
+			warn("%s", "/dev/urandom");
+			return 16;
+		}
+	}
+	ch = (uint8_t) chs;
+
+	if ((ch >= '0') && ch <= '9') {
+		val8 = ch - '0';
+	} else if ((ch >= 'A') && (ch <= 'F')) {
+		val8 = ch - 'A' + 10;
+	} else if ((ch >= 'a') && (ch <= 'f')) {
+		val8 = ch - 'a' + 10;
+	} else if (ch == '?') {
+		val8 = rmac[random++] & 0xf;
+	} else {
+		return 16;
+	}
+
+	return val8;
 }
 
 void
