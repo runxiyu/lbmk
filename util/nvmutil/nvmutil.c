@@ -37,7 +37,6 @@
 ssize_t readFromFile(int *fd, uint8_t *buf, const char *path, int flags,
 	size_t size);
 void setmac(const char *strMac);
-void cmd(const char *command);
 void cmd_dump(void);
 void showmac(int partnum);
 void hexdump(int partnum);
@@ -72,6 +71,8 @@ main(int argc, char *argv[])
 	int flags = O_RDWR;
 	char *strMac = NULL;
 	char *strRMac = "??:??:??:??:??:??";
+	void (*cmd)(void) = NULL;
+
 	nvmPartModified[0] = 0;
 	nvmPartModified[1] = 0;
 
@@ -89,14 +90,26 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 #endif
 			flags = O_RDONLY;
-		} else if (strcmp(COMMAND, "setmac") == 0) {
+			cmd = &cmd_dump;
+		} else if (strcmp(COMMAND, "setmac") == 0)
 			strMac = strRMac;
-		}
+		else if (strcmp(COMMAND, "swap") == 0)
+			cmd = &cmd_swap;
+		else
+			errno = EINVAL;
 	} else if (argc == 4) {
 		if (strcmp(COMMAND, "setmac") == 0)
 			strMac = MAC_ADDRESS;
 		else if ((!((part = PARTNUM[0] - '0') == 0 || part == 1))
 				|| PARTNUM[1])
+			errno = EINVAL;
+		else if (strcmp(COMMAND, "setchecksum") == 0)
+			cmd = &cmd_setchecksum;
+		else if (strcmp(COMMAND, "brick") == 0)
+			cmd = &cmd_brick;
+		else if (strcmp(COMMAND, "copy") == 0)
+			cmd = &cmd_copy;
+		else
 			errno = EINVAL;
 	} else
 		errno = EINVAL;
@@ -107,17 +120,22 @@ main(int argc, char *argv[])
 	if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
 
+	if (errno == ENOTDIR)
+		errno = 0;
+	if (errno != 0)
+		goto nvmutil_exit;
+
 	if (strMac != NULL)
 		setmac(strMac);
+	else if (cmd != NULL)
+		(*cmd)();
 	else
-		cmd(COMMAND);
+		errno = EINVAL;
 
 	if (gbeFileModified)
 		writeGbeFile(&fd, FILENAME);
 
 nvmutil_exit:
-	if (errno == ENOTDIR)
-		errno = 0;
 	if (!((errno == ECANCELED) && (flags == O_RDONLY)))
 		if (errno != 0)
 			fprintf(stderr, "%s\n", strerror(errno));
@@ -228,30 +246,13 @@ setmac(const char *strMac)
 		for (o = 0; o < 3; o++)
 			setWord(o, partnum, mac[o]);
 		part = partnum;
-		cmd("setchecksum");
+		cmd_setchecksum();
 	}
 	return;
 invalid_mac_address:
 	fprintf(stderr, "Bad MAC address\n");
 	errno = ECANCELED;
 	return;
-}
-
-void
-cmd(const char *command)
-{
-	if (strcmp(command, "dump") == 0) {
-		cmd_dump();
-	} else if (strcmp(command, "setchecksum") == 0) {
-		cmd_setchecksum();
-	} else if (strcmp(command, "brick") == 0) {
-		cmd_brick();
-	} else if (strcmp(command, "swap") == 0) {
-		cmd_swap();
-	} else if (strcmp(command, "copy") == 0) {
-		cmd_copy();
-	} else
-		errno = EINVAL;
 }
 
 void
