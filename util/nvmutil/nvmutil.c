@@ -95,8 +95,6 @@ main(int argc, char *argv[])
 			strMac = strRMac;
 		else if (strcmp(COMMAND, "swap") == 0)
 			cmd = &cmd_swap;
-		else
-			errno = EINVAL;
 	} else if (argc == 4) {
 		if (strcmp(COMMAND, "setmac") == 0)
 			strMac = MAC_ADDRESS;
@@ -109,21 +107,15 @@ main(int argc, char *argv[])
 			cmd = &cmd_brick;
 		else if (strcmp(COMMAND, "copy") == 0)
 			cmd = &cmd_copy;
-		else
-			errno = EINVAL;
-	} else
-		errno = EINVAL;
+	}
 
 	if (errno != 0)
 		goto nvmutil_exit;
 
 	if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
-
-	if (errno == ENOTDIR)
+	else if (errno == ENOTDIR)
 		errno = 0;
-	if (errno != 0)
-		goto nvmutil_exit;
 
 	if (strMac != NULL)
 		setmac(strMac);
