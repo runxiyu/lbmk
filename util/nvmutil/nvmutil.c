@@ -113,8 +113,6 @@ main(int argc, char *argv[])
 		errno = EINVAL;
 	else if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
-	else if (errno == ENOTDIR)
-		errno = 0;
 
 	if (errno != 0)
 		goto nvmutil_exit;
@@ -172,6 +170,8 @@ readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
 			return -1;
 		}
 	}
+	if (errno == ENOTDIR)
+		errno = 0;
 	return read((*fd), buf, size);
 }
 
