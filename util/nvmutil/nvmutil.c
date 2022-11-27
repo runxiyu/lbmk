@@ -113,15 +113,15 @@ main(int argc, char *argv[])
 	else if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
 
-	if (errno != 0)
-		goto nvmutil_exit;
-	else if (strMac != NULL)
-		setmac(strMac);
-	else if (cmd != NULL)
-		(*cmd)();
+	if (errno == 0) {
+		if (strMac != NULL)
+			setmac(strMac);
+		else if (cmd != NULL)
+			(*cmd)();
 
-	if (gbeFileModified)
-		writeGbeFile(&fd, FILENAME);
+		if (gbeFileModified)
+			writeGbeFile(&fd, FILENAME);
+	}
 
 nvmutil_exit:
 	if (!((errno == ECANCELED) && (flags == O_RDONLY)))
