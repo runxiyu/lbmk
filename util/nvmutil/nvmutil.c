@@ -109,20 +109,19 @@ main(int argc, char *argv[])
 			cmd = &cmd_copy;
 	}
 
-	if (errno != 0)
-		goto nvmutil_exit;
-
-	if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
+	if ((strMac == NULL) && (cmd == NULL))
+		errno = EINVAL;
+	else if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
 	else if (errno == ENOTDIR)
 		errno = 0;
 
-	if (strMac != NULL)
+	if (errno != 0)
+		goto nvmutil_exit;
+	else if (strMac != NULL)
 		setmac(strMac);
 	else if (cmd != NULL)
 		(*cmd)();
-	else
-		errno = EINVAL;
 
 	if (gbeFileModified)
 		writeGbeFile(&fd, FILENAME);
