@@ -5,13 +5,13 @@
 # If you want to make additions, try to add a backup url for download links and 
 # list hashes as sha1 sums.
 
-{x230 x230t x230i t430 x230edp}{
+{x230 x230t x230i x230edp t430}{
 	ME_hash 039c89c6d44ae11ae2510cbd5fed756e97ed9a31
 	ME_dl https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
 	ME_bkup_dl https://web.archive.org/web/20210706183911/https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
 }
 
-{x220 x220t t420 t520 t420s t520}{
+{x220 x220t t420 t520 t420s}{
 	ME_hash fa0f96c8f36646492fb8c57ad3296bf5f647d9c5
 	ME_dl https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
 	ME_bkup_dl https://web.archive.org/web/20220202201637/https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe

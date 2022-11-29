@@ -35,7 +35,7 @@ download_image()
 
 	echo "Downloading recovery image"
 	curl "$_url" > "$_file.zip"
-	if [ "$(sha1sum ${_file}.zip)" = "${_sha1sum}  ${_file}.zip" ]; then
+	if [ "$(sha1sum ${_file}.zip | awk '{print $1}')" = "${_sha1sum}" ]; then
 		unzip -q "${_file}.zip"
 		rm "${_file}.zip"
 		echo "Checksum verification passed for recovery image."
@@ -95,7 +95,7 @@ check_existing()
 	_mrc_complete_hash="d18de1e3d52c0815b82ea406ca07897c56c65696"
 	if [ -f mrc/haswell/mrc.bin ]; then
 		printf 'found existing mrc.bin, checking its hash\n'
-		if [ "$(sha1sum mrc/haswell/mrc.bin)" = "${_mrc_complete_hash}  mrc/haswell/mrc.bin" ]; then
+		if [ "$(sha1sum mrc/haswell/mrc.bin | awk '{print $1}')" = "${_mrc_complete_hash}" ]; then
 			printf 'checksums matched, skipping redownloading image\n'
 			return 0
 		else

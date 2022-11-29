@@ -66,7 +66,7 @@ Extract_me(){
 
 	curl ${me_dl} > blobs/me.exe || curl ${me_dl_bkup} > blobs/me.exe
 
-	if [ ! "$(sha1sum blobs/me.exe)" = "${me_hash}  blobs/me.exe" ]; then
+	if [ "$(sha1sum blobs/me.exe | awk '{print $1}')" != "${me_hash}" ]; then
 		printf 'checksum of downloaded me did not mactch\ncorrupted me downloaded or wrong me for board\n'
 		rm blobs/me.exe
 		return 1

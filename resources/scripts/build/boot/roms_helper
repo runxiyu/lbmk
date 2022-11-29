@@ -230,10 +230,8 @@ rm -f "${romdir}"/*
 
 if [ "${payload_grub}" = "y" ] || [ "${payload_seabios_withgrub}" = "y" ]; then
 	if [ -f "payload/grub/grub_usqwerty.cfg" ]; then
-		grubrefchecksum="$(sha1sum resources/grub/config/grub.cfg)"
-		grubrefchecksum="${grubrefchecksum%  resources/grub/config/grub.cfg}"
-		grubbuildchecksum="$(sha1sum payload/grub/grub_usqwerty.cfg)"
-		grubbuildchecksum="${grubbuildchecksum%  payload/grub/grub_usqwerty.cfg}"
+		grubrefchecksum="$(sha1sum resources/grub/config/grub.cfg | awk '{print $1}')"
+		grubbuildchecksum="$(sha1sum payload/grub/grub_usqwerty.cfg | awk '{print $1}')"
 		if [ "${grubrefchecksum}" != "${grubbuildchecksum}" ]; then
 			rm -Rf payload/grub/
 			printf "Changes detected to GRUB. Re-building now:\n"
