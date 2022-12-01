@@ -345,6 +345,7 @@ cmd_swap(void)
 		gbeFileModified = 1;
 		nvmPartModified[0] = 1;
 		nvmPartModified[1] = 1;
+		errno = 0;
 	}
 }
 
