@@ -3,83 +3,69 @@ Free your BIOS today! GNU GPL style
 
 Find libreboot documentation at <https://libreboot.org/>
 
-Libreboot is
-[freedom-respecting](https://www.gnu.org/philosophy/free-sw.html)
-*boot firmware* that initializes the hardware (e.g.
-memory controller, CPU, peripherals) in your computer so that software can run.
-Libreboot then starts a bootloader to load your operating system. It replaces the
-proprietary BIOS/UEFI firmware typically found on a computer. Libreboot is
-compatible with specific computer models that use the Intel/AMD x86
-architecture. Libreboot works well with GNU+Linux and BSD
-operating systems. User support is available
-at [\#libreboot](https://webchat.freenode.net/?channels=libreboot) on Freenode
-IRC.
-
-Libreboot is a *Free Software* project, but can be considered Open Source.
-[The GNU website](https://www.gnu.org/philosophy/open-source-misses-the-point.en.html)
-teaches why you should call it Free Software instead; alternatively, you may
-call it libre software.
-
-Libreboot uses [coreboot](https://www.coreboot.org/) for hardware initialization.
-However, *coreboot* is notoriously difficult to compile and install for most
-non-technical users. There are many complicated configuration steps required,
-and coreboot by itself is useless; coreboot only handles basic hardware
-initialization, and then jumps to a separate *payload* program. The payload
-program can be anything, for example a Linux kernel, bootloader (such as
-GNU GRUB), UEFI implementation (such as Tianocore) or BIOS implementation
-(such as SeaBIOS). While not quite as complicated as building a GNU+Linux
-distribution from scratch, it may aswell be as far as most non-technical users
-are concerned.
-
-Libreboot solves this problem in a novel way:
-Libreboot is a *coreboot distribution* much like Debian is a *GNU+Linux
-distribution*. Libreboot provides an *automated build system* that downloads,
-patches (where necessary) and compiles coreboot, GNU GRUB, various payloads and
-all other software components needed to build a complete, working *ROM image*
-that you can install to replace your current BIOS/UEFI firmware, much like a
-GNU+Linux distribution (e.g. Debian) provides an ISO image that you can use to
-replace your current operating system (e.g. Windows).
-
-Information about who works on Libreboot, and who runs the project, can be
-found on the [who page](https://libreboot.org/who.html) page.
+The `libreboot` project provides
+[libre](https://en.wikipedia.org/wiki/Open_source) *boot
+firmware* that initializes the hardware (e.g. memory controller, CPU,
+peripherals) on specific Intel/AMD x86 and ARM targets, which
+then starts a bootloader for your operating system. Linux/BSD are
+well-supported. It replaces proprietary BIOS/UEFI firmware. Help is available
+via [\#libreboot IRC](https://web.libera.chat/#libreboot)
+on [Libera](https://libera.chat/) IRC.
 
 Why use Libreboot?
 ==================
 
-[Free software](https://www.gnu.org/philosophy/free-sw.html) is important for
-the same reason that education is important.
-All children and adults alike should be entitled to a good education.
-Knowledge begs to be free! In the context of computing, this means that the
-source code should be fully available to study, and use in whatever way you
-see fit. In the context of computer hardware, this means that
-[Right to Repair](https://yewtu.be/watch?v=Npd_xDuNi9k)
-should be universal, with full access to documents such as the schematics and
-boardview files.
+Why should you use *libreboot*?
+----------------------------
 
-**[The four freedoms are paramount!](https://www.gnu.org/philosophy/free-sw.html)**
+Libreboot gives you freedoms that you otherwise can't get with most other
+boot firmware. It's extremely powerful and configurable for many use cases.
 
-You have rights. The right to privacy, freedom of thought, freedom
-of speech and the right to read. In the context of computing, that means anyone
-can use [free software](https://www.gnu.org/philosophy/free-sw.html). Simply
-speaking, free software is software that is under the direct sovereignty of the
-user and, more importantly, the collective that is the *community*. Libreboot
-is dedicated to the Free Software community, with the aim of making free software
-at a *low level* more accessible to non-technical people.
+You have rights. The right to privacy, freedom of thought, freedom of speech
+and the right to read. In this context, Libreboot gives you these rights.
+Your freedom matters.
+[Right to repair](https://vid.puffyan.us/watch?v=Npd_xDuNi9k) matters.
+Many people use proprietary (non-libre)
+boot firmware, even if they use [a libre OS](https://www.openbsd.org/).
+Proprietary firmware often contains backdoors (more info on the FAQ), and it
+and can be buggy. The libreboot project was founded in in December 2013,
+with the express purpose of making coreboot firmware accessible for
+non-technical users.
 
-Many people use [proprietary](https://www.gnu.org/philosophy/proprietary.html)
-boot firmware, even if they use GNU+Linux. Non-free boot firmware often
-contains backdoors, can be slow and have severe
-bugs. Development and support can be abandoned at any time. By contrast,
-Libreboot is a free software project, where anyone can contribute or inspect
-its code.
+The `libreboot` project uses [coreboot](https://www.coreboot.org/) for [hardware
+initialisation](https://doc.coreboot.org/getting_started/architecture.html).
+Coreboot is notoriously difficult to install for most non-technical users; it
+handles only basic initialization and jumps to a separate
+[payload](https://doc.coreboot.org/payloads.html) program (e.g.
+[GRUB](https://www.gnu.org/software/grub/),
+[Tianocore](https://www.tianocore.org/)), which must also be configured.
+*The libreboot software solves this problem*; it is a *coreboot distribution* with
+an automated build system (named *lbmk*) that builds complete *ROM images*, for
+more robust installation. Documentation is provided.
 
-Libreboot is faster, more secure and more reliable than most non-free
-firmware. Libreboot provides many advanced features, like encrypted
-/boot/, GPG signature checking before booting a Linux kernel and more!
-Libreboot gives *you* control over *your* computing.
+How does Libreboot differ from coreboot?
+========================================
+
+In the same way that *Debian* is a GNU+Linux distribution, `libreboot` is
+a *coreboot distribution*. If you want to build a ROM image from scratch, you
+otherwise have to perform expert-level configuration of coreboot, GRUB and
+whatever other software you need, to prepare the ROM image. With *libreboot*,
+you can literally download from Git or a source archive, and run `make`, and it
+will build entire ROM images. An automated build system, named `lbmk`
+(Libreboot MaKe), builds these ROM images automatically, without any user input
+or intervention required. Configuration has already been performed in advance.
+
+If you were to build regular coreboot, without using libreboot's automated
+build system, it would require a lot more intervention and decent technical
+knowledge to produce a working configuration.
+
+Regular binary releases of `libreboot` provide these
+ROM images pre-compiled, and you can simply install them, with no special
+knowledge or skill except the ability to follow installation instructions
+and run commands BSD/Linux.
 
 Project goals
--------------
+=============
 
 -   *Support as much hardware as possible!* Libreboot aims to eventually
     have *maintainers* for every board supported by coreboot, at every
@@ -93,8 +79,7 @@ Project goals
 Libreboot attempts to bridge this divide by providing a build system
 automating much of the coreboot image creation and customization.
 Secondly, the project produces documentation aimed at non-technical users.
-Thirdly, the project attempts to provide excellent user support via mailing
-lists and IRC.
+Thirdly, the project attempts to provide excellent user support via IRC.
 
 Libreboot already comes with a payload (GRUB), flashrom and other
 needed parts. Everything is fully integrated, in a way where most of
@@ -114,14 +99,25 @@ re-bases on the latest version of coreboot, with the number of custom
 patches in use minimized. Tested, *stable* (static) releases are then provided
 in Libreboot, based on specific coreboot revisions.
 
-LICENSE FOR THIS README:
-GNU Free Documentation License 1.3 as published by the Free Software Foundation,
-with no invariant sections, no front cover texts and no back cover texts. If
-you wish it, you may use a later version of the GNU Free Documentation License
-as published by the Free Software Foundation.
+How to help
+===========
 
-Copy of the GNU Free Documentation License v1.3 here:
-<https://www.gnu.org/licenses/fdl-1.3.en.html>
+You can check bugs listed on
+the [bug tracker](https://notabug.org/libreboot/lbmk/issues).
 
-Info about Free Software Foundation:
-<https://www.fsf.org/>
+If you spot a bug and have a fix, the website has instructions for how to send
+patches, and you can also report it. Also, this entire website is
+written in Markdown and hosted in a [separate
+repository](https://notabug.org/libreboot/lbwww) where you can send patches.
+
+Any and all development discussion and user support are all done on the IRC
+channel. More information is on the contact page of libreboot.org.
+
+LICENSE FOR THIS README
+=======================
+
+It's just a README file. This README file is released under the terms of the
+Creative Commons Zero license, version 1.0 of the license, which you can
+read here:
+
+<https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt>
