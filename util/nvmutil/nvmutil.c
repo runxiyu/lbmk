@@ -217,24 +217,26 @@ uint8_t
 hextonum(char chs)
 {
 	uint8_t val8, ch;
-	static int macfd;
+	static int macfd = -1;
 	static uint8_t *rbuf = NULL;
-	static size_t rindex;
-	if (rindex == BUFSIZ) {
-		close(macfd);
-		free(rbuf);
-		rbuf = NULL;
-	}
-	if (rbuf == NULL) {
+	static size_t rindex = BUFSIZ;
+
+	if ((rindex == BUFSIZ)) {
 		rindex = 0;
-		if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
-			err(1, NULL);
+		if (rbuf == NULL)
+			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
+				err(1, NULL);
+		if ((macfd != -1)) {
+			close(macfd);
+			macfd = -1;
+		}
 		if (readFromFile(&macfd, rbuf, "/dev/urandom", O_RDONLY,
 				BUFSIZ) != BUFSIZ) {
 			warn("%s", "/dev/urandom");
 			return 16;
 		}
 	}
+
 	ch = (uint8_t) chs;
 
 	if ((ch >= '0') && ch <= '9') {
