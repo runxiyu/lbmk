@@ -276,7 +276,6 @@ cmd_dump(void)
 	}
 	if (numInvalid < 2)
 		errno = 0;
-
 }
 
 void
