@@ -218,18 +218,18 @@ hextonum(char chs)
 {
 	uint8_t val8, ch;
 	static int macfd;
-	static uint8_t *rmac = NULL;
-	static size_t random;
-	if (random == BUFSIZ) {
+	static uint8_t *rbuf = NULL;
+	static size_t rindex;
+	if (rindex == BUFSIZ) {
 		close(macfd);
-		free(rmac);
-		rmac = NULL;
+		free(rbuf);
+		rbuf = NULL;
 	}
-	if (rmac == NULL) {
-		random = 0;
-		if ((rmac = (uint8_t *) malloc(BUFSIZ)) == NULL)
+	if (rbuf == NULL) {
+		rindex = 0;
+		if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
 			err(1, NULL);
-		if (readFromFile(&macfd, rmac, "/dev/urandom", O_RDONLY,
+		if (readFromFile(&macfd, rbuf, "/dev/urandom", O_RDONLY,
 				BUFSIZ) != BUFSIZ) {
 			warn("%s", "/dev/urandom");
 			return 16;
@@ -244,7 +244,7 @@ hextonum(char chs)
 	} else if ((ch >= 'a') && (ch <= 'f')) {
 		val8 = ch - 'a' + 10;
 	} else if (ch == '?') {
-		val8 = rmac[random++] & 0xf;
+		val8 = rbuf[rindex++] & 0xf;
 	} else {
 		return 16;
 	}
