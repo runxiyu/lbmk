@@ -220,7 +220,7 @@ hextonum(char chs)
 	uint8_t val8, ch;
 	ch = (uint8_t) chs;
 
-	if ((ch >= '0') && ch <= '9') {
+	if ((ch >= '0') && (ch <= '9')) {
 		val8 = ch - '0';
 	} else if ((ch >= 'A') && (ch <= 'F')) {
 		val8 = ch - 'A' + 10;
