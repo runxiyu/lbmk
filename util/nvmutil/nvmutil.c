@@ -217,7 +217,7 @@ uint8_t
 hextonum(char chs)
 {
 	uint8_t val8, ch;
-	static int macfd = -1;
+	static int rfd = -1;
 	static uint8_t *rbuf = NULL;
 	static size_t rindex = BUFSIZ;
 
@@ -226,11 +226,11 @@ hextonum(char chs)
 		if (rbuf == NULL)
 			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
 				err(1, NULL);
-		if ((macfd != -1)) {
-			close(macfd);
-			macfd = -1;
+		if ((rfd != -1)) {
+			close(rfd);
+			rfd = -1;
 		}
-		if (readFromFile(&macfd, rbuf, "/dev/urandom", O_RDONLY,
+		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY,
 				BUFSIZ) != BUFSIZ) {
 			warn("%s", "/dev/urandom");
 			return 16;
