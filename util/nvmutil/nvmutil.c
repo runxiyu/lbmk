@@ -220,7 +220,7 @@ hextonum(char chs)
 	static int macfd;
 	static uint8_t *rmac = NULL;
 	static int random;
-	if (random > 15) {
+	if (random > 11) {
 		close(macfd);
 		free(rmac);
 		rmac = NULL;
