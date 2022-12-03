@@ -219,18 +219,18 @@ hextonum(char chs)
 	uint8_t val8, ch;
 	static int macfd;
 	static uint8_t *rmac = NULL;
-	static int random;
-	if (random > 11) {
+	static size_t random;
+	if (random == BUFSIZ) {
 		close(macfd);
 		free(rmac);
 		rmac = NULL;
 	}
 	if (rmac == NULL) {
 		random = 0;
-		if ((rmac = (uint8_t *) malloc(12)) == NULL)
+		if ((rmac = (uint8_t *) malloc(BUFSIZ)) == NULL)
 			err(1, NULL);
-		if (readFromFile(&macfd, rmac, "/dev/urandom", O_RDONLY, 12)
-		!= 12) {
+		if (readFromFile(&macfd, rmac, "/dev/urandom", O_RDONLY,
+				BUFSIZ) != BUFSIZ) {
 			warn("%s", "/dev/urandom");
 			return 16;
 		}
