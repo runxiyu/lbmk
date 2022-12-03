@@ -36,6 +36,7 @@ ssize_t readFromFile(int *fd, uint8_t *buf, const char *path, int flags,
 	size_t size);
 void cmd_setmac(const char *strMac);
 uint8_t hextonum(char chs);
+uint8_t rhex(void);
 void cmd_dump(void);
 void showmac(int partnum);
 void hexdump(int partnum);
@@ -217,6 +218,26 @@ uint8_t
 hextonum(char chs)
 {
 	uint8_t val8, ch;
+	ch = (uint8_t) chs;
+
+	if ((ch >= '0') && ch <= '9') {
+		val8 = ch - '0';
+	} else if ((ch >= 'A') && (ch <= 'F')) {
+		val8 = ch - 'A' + 10;
+	} else if ((ch >= 'a') && (ch <= 'f')) {
+		val8 = ch - 'a' + 10;
+	} else if (ch == '?') {
+		val8 = rhex();
+	} else {
+		return 16;
+	}
+
+	return val8;
+}
+
+uint8_t
+rhex(void)
+{
 	static int rfd = -1;
 	static uint8_t *rbuf = NULL;
 	static size_t rindex = BUFSIZ;
@@ -237,21 +258,7 @@ hextonum(char chs)
 		}
 	}
 
-	ch = (uint8_t) chs;
-
-	if ((ch >= '0') && ch <= '9') {
-		val8 = ch - '0';
-	} else if ((ch >= 'A') && (ch <= 'F')) {
-		val8 = ch - 'A' + 10;
-	} else if ((ch >= 'a') && (ch <= 'f')) {
-		val8 = ch - 'a' + 10;
-	} else if (ch == '?') {
-		val8 = rbuf[rindex++] & 0xf;
-	} else {
-		return 16;
-	}
-
-	return val8;
+	return rbuf[rindex++] & 0xf;
 }
 
 void
