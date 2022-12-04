@@ -1,7 +1,7 @@
-From 702e80f25436126f0b157dff95a90fdbe318c2c5 Mon Sep 17 00:00:00 2001
+From 21b3f3773dcb50cef81690d6648e804814e573a4 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:10:33 +0100
-Subject: [PATCH 05/14] lenovo/t400: set VRAM to 352MiB VRAM by default
+Subject: [PATCH 05/17] lenovo/t400: set VRAM to 352MiB VRAM by default
 
 In the past, this caused stability issues so we set it to 256MiB. Nowadays,
 coreboot has fixed the issue preventing this. See:

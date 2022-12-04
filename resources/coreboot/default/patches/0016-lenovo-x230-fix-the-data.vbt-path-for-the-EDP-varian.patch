@@ -1,7 +1,7 @@
-From 62cd7b24205122d366526aea1e3ad0c15ec8210f Mon Sep 17 00:00:00 2001
+From 27f963913d9afc6da15043c6e8b224c9b1a727ac Mon Sep 17 00:00:00 2001
 From: Alexei Sorokin <sor.alexei@meowr.ru>
 Date: Sun, 27 Nov 2022 18:36:26 +0300
-Subject: [PATCH] lenovo/x230: fix the data.vbt path for the EDP variant
+Subject: [PATCH 16/17] lenovo/x230: fix the data.vbt path for the EDP variant
 
 ---
  src/mainboard/lenovo/x230/Kconfig | 3 ---

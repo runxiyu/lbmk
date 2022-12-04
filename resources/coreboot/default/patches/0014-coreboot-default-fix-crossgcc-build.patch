@@ -1,7 +1,7 @@
-From 9837b542ee2ff56032950b211e60e1e180343f44 Mon Sep 17 00:00:00 2001
+From d89a5c66a0150bb6a2e82c685915b2c8a44cb9ed Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 19 Nov 2022 03:30:34 +0000
-Subject: [PATCH 14/14] coreboot/default: fix crossgcc build
+Subject: [PATCH 14/17] coreboot/default: fix crossgcc build
 
 patch copied from
 coreboot f9b5665d280faa35c6b41fe0c48a9e9e1afd634b
