@@ -128,6 +128,7 @@ nvmutil_exit:
 	if (!((errno == ECANCELED) && (flags == O_RDONLY)))
 		if (errno != 0)
 			fprintf(stderr, "%s\n", strerror(errno));
+
 	return errno;
 }
 
@@ -149,8 +150,10 @@ readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
 			return -1;
 		}
 	}
+
 	if (errno == ENOTDIR)
 		errno = 0;
+
 	return read((*fd), buf, size);
 }
 
@@ -207,11 +210,11 @@ cmd_setmac(const char *strMac)
 		part = partnum;
 		cmd_setchecksum();
 	}
+
 	return;
 invalid_mac_address:
 	fprintf(stderr, "Bad MAC address\n");
 	errno = ECANCELED;
-	return;
 }
 
 uint8_t
@@ -220,17 +223,16 @@ hextonum(char chs)
 	uint8_t val8, ch;
 	ch = (uint8_t) chs;
 
-	if ((ch >= '0') && (ch <= '9')) {
+	if ((ch >= '0') && (ch <= '9'))
 		val8 = ch - '0';
-	} else if ((ch >= 'A') && (ch <= 'F')) {
+	else if ((ch >= 'A') && (ch <= 'F'))
 		val8 = ch - 'A' + 10;
-	} else if ((ch >= 'a') && (ch <= 'f')) {
+	else if ((ch >= 'a') && (ch <= 'f'))
 		val8 = ch - 'a' + 10;
-	} else if (ch == '?') {
+	else if (ch == '?')
 		val8 = rhex();
-	} else {
+	else
 		return 16;
-	}
 
 	return val8;
 }
@@ -244,15 +246,15 @@ rhex(void)
 
 	if ((rindex == BUFSIZ)) {
 		rindex = 0;
-		if (rbuf == NULL)
+		if ((rbuf == NULL))
 			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
 				err(1, NULL);
 		if ((rfd != -1)) {
 			close(rfd);
 			rfd = -1;
 		}
-		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY,
-				BUFSIZ) != BUFSIZ) {
+		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY, BUFSIZ)
+		    != BUFSIZ) {
 			warn("%s", "/dev/urandom");
 			return 16;
 		}
@@ -267,11 +269,13 @@ cmd_dump(void)
 	int numInvalid, partnum;
 
 	numInvalid = 0;
-	for (partnum = 0; partnum < 2; partnum++) {
+	for (partnum = 0; (partnum < 2); partnum++) {
 		if (!validChecksum(partnum))
 			++numInvalid;
+
 		printf("MAC (part %d): ", partnum);
 		showmac(partnum);
+
 		hexdump(partnum);
 	}
 	if (numInvalid < 2)
@@ -288,8 +292,10 @@ showmac(int partnum)
 	for (c = 0; c < 3; c++) {
 		val16 = word(c, partnum);
 		byte = (uint8_t *) &val16;
+
 		if (!little_endian)
 			byteswap(byte);
+
 		printf("%02x:%02x", byte[0], byte[1]);
 		if (c == 2)
 			printf("\n");
@@ -310,8 +316,10 @@ hexdump(int partnum)
 		for (c = 0; c < 8; c++) {
 			val16 = word((row << 3) + c, partnum);
 			byte = (uint8_t *) &val16;
+
 			if (!little_endian)
 				byteswap(byte);
+
 			printf("%02x%02x ", byte[1], byte[0]);
 		}
 		printf("\n");
@@ -323,8 +331,10 @@ cmd_setchecksum(void)
 {
 	int c;
 	uint16_t val16 = 0;
+
 	for (c = 0; c < 0x3F; c++)
 		val16 += word(c, part);
+
 	setWord(0x3F, part, 0xBABA - val16);
 }
 
@@ -353,6 +363,7 @@ cmd_swap(void)
 		gbeFileModified = 1;
 		nvmPartModified[0] = 1;
 		nvmPartModified[1] = 1;
+
 		errno = 0;
 	}
 }
@@ -360,12 +371,16 @@ cmd_swap(void)
 void
 cmd_copy(void)
 {
+	int src = (part << 12);
+
+	int destPart = (part ^ 1);
+	int dest = (destPart << 12);
+
 	if (validChecksum(part)) {
-		memcpy(gbe + ((part ^ 1) << 12),
-			gbe + (part << 12), SIZE_4KB);
+		memcpy((gbe + dest), (gbe + src), SIZE_4KB);
 
 		gbeFileModified = 1;
-		nvmPartModified[part ^ 1] = 1;
+		nvmPartModified[destPart] = 1;
 	}
 }
 
@@ -392,6 +407,7 @@ word(int pos16, int partnum)
 	uint16_t val16 = ((uint16_t *) gbe)[pos16 + (partnum << 11)];
 	if (!little_endian)
 		byteswap((uint8_t *) &val16);
+
 	return val16;
 }
 
@@ -401,12 +417,14 @@ setWord(int pos16, int partnum, uint16_t val)
 	((uint16_t *) gbe)[pos16 + (partnum << 11)] = val;
 	if (!little_endian)
 		byteswap(gbe + (pos16 << 1) + (partnum << 12));
+
 	gbeFileModified = 1;
 	nvmPartModified[partnum] = 1;
 }
 
 void
-byteswap(uint8_t *byte) {
+byteswap(uint8_t *byte)
+{
 	byte[0] ^= byte[1];
 	byte[1] ^= byte[0];
 	byte[0] ^= byte[1];
