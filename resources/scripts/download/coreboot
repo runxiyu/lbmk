@@ -35,10 +35,10 @@ usage()
 	printf "Usage:\n"
 	printf "\t%s                     # %s\n" \
 	       "${progname}" \
-	       "Download and deblob Coreboot for all the boards"
+	       "Download coreboot for all the boards"
 	printf "\t%s [board [board] ...] # %s\n" \
 	       "${progname}" \
-	       "Download and deblob Coreboot for the given boards"
+	       "Download coreboot for the given boards"
 	printf "\t%s --list-boards       # %s\n" \
 	       "${progname}" \
 	       "Prints this help"
