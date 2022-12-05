@@ -30,13 +30,6 @@ set -u -e
 
 projectname="$(cat projectname)"
 
-if [ "${1}" = "deblobbed" ]; then
-	deblobbed=true
-	shift
-else
-	deblobbed=false
-fi
-
 displaymodes=""
 payloads=""
 keyboard_layouts=""
@@ -315,11 +308,7 @@ moverom() {
 # expected: configs must not specify a payload
 mkCoreboot() {
 	cbdir="${1}" # e.g. coreboot/default
-	if ${deblobbed} ; then
-		cbcfgpath="${2}_deblobbed"
-	else
-		cbcfgpath="${2}" # e.g. resources/coreboot/x200_8mb/config/libgfxinit_txtmode
-	fi
+	cbcfgpath="${2}" # e.g. resources/coreboot/x200_8mb/config/libgfxinit_txtmode
 	if [ ! -f "${cbcfgpath}" ]; then
 		printf "\nmkCoreboot: Coreboot config '%s' does not exist. Skipping build.\n" \
 			"${cbcfgpath}"

@@ -83,12 +83,7 @@ buildrom_release() {
 	board="$1"
 
 	if [ -d "resources/coreboot/${board}/" ]; then
-		./build release deblob ${board}
-		if [ "$?" = 2 ]; then
-			./build boot roms_helper "${board}"
-		else
-			./build boot roms_helper deblobbed "${board}"
-		fi
+		./build boot roms_helper "${board}"
 	else
 		die "\nbuild/roms: target not defined in the build system: %s\n" "${board}"
 	fi
