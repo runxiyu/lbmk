@@ -3,7 +3,7 @@
 #
 #  helper script: generate release archive (ROM images)
 #
-#	Copyright (C) 2020,2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2020,2021,2022 Leah Rowe <info@minifree.org>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -37,7 +37,8 @@ if [ -f versiondate ]; then
 fi
 
 if [ ! -d "bin/" ]; then
-    ./build boot roms release
+	printf "build/release/roms: no ROMs built yet. Exiting.\n"
+	exit 1
 fi
 
 [ ! -d "release/" ] && \
@@ -51,20 +52,71 @@ fi
 
 printf "Building ROM image archives for version %s\n" "${version}"
 
-(
-    cd bin/
-    for target in *; do
-        if [ ! -d "${target}/" ]; then
-            continue
-        fi
+for romdir in bin/*; do
+	target="${romdir##*/}"
 
-        printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" "${version}" "${projectname}" "${version}" "${target##*/}"
-	printf "%s\n" "${version}" > "${target}/version"
-	printf "%s\n" "${versiondate}" > "${target}/versiondate"
-	printf "%s\n" "${projectname}" > "${target}/projectname"
-        tar -c "${target}/" | xz -9e >"../release/${version}/roms/${projectname}-${version}_${target##*/}.tar.xz"
-    done
-)
+	echo ${target}
+	if [ ! -d "${romdir}/" ]; then
+	    continue
+	fi
+
+	CONFIG_HAVE_MRC="y"
+	CONFIG_HAVE_ME_BIN="y"
+	grep "CONFIG_HAVE_ME_BIN=y" "resources/coreboot/${target}/config/"* || CONFIG_HAVE_ME_BIN="n"
+	grep "CONFIG_HAVE_MRC=y" "resources/coreboot/${target}/config/"* || CONFIG_HAVE_MRC="n"
+
+	# remove ME/MRC from ROM images
+	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+		if [ ! -d coreboot/default ]; then
+			./download coreboot default || exit 1
+		fi
+
+		ifdtooldir="coreboot/default/util/ifdtool"
+		ifdtool="${ifdtooldir}/ifdtool"
+		if [ ! -f "${ifdtool}" ]; then
+			make -BC "${ifdtooldir}" || exit 1
+		fi
+
+		cbfstooldir="coreboot/default/util/cbfstool"
+		cbfstool="${cbfstooldir}/cbfstool"
+		if [ ! -f "${cbfstool}" ]; then
+			make -BC "${cbfstooldir}" || exit 1
+		fi
+
+		rm -Rf "${romdir}_tmp" # dirty hack, to reduce  disk io later
+		# rather than using /tmp, which might not be tmpfs
+		mkdir "${romdir}_tmp"
+
+		for romfile in "${romdir}"/*.rom
+		do
+			if [ ! -f "${romfile}" ]
+			then
+				continue
+			fi
+			${ifdtool} --nuke me "${romfile}" || exit 1
+			mv "${romfile}" "${romdir}_tmp"/
+			mv "${romfile}.new" "${romfile}"
+
+			if [ "${CONFIG_HAVE_MRC}" = "y" ]
+			then
+				${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
+				${cbfstool} "${romfile}" print
+			fi
+		done
+	fi
+
+	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" "${version}" "${projectname}" "${version}" "${target##*/}"
+	printf "%s\n" "${version}" > "${romdir}/version"
+	printf "%s\n" "${versiondate}" > "${romdir}/versiondate"
+	printf "%s\n" "${projectname}" > "${romdir}/projectname"
+	tar -c "${romdir}/" | xz -9e >"release/${version}/roms/${projectname}-${version}_${target##*/}.tar.xz"
+
+	if [ -d "${romdir}_tmp" ]
+	then
+		rm -Rf "${romdir}"
+		mv "${romdir}_tmp" "${romdir}"
+	fi
+done
 
 printf "\nROM image release archives available at release/%s/roms/\n\n" "${version}"
 
