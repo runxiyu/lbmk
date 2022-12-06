@@ -207,6 +207,9 @@ usage()
 	progname="./download u-boot"
 
 	printf "Usage:\n"
+	printf "\t%s                                # %s\n" \
+	       "${progname}" \
+	       "Download u-boot for all boards"
 	printf "\t%s [board]                        # %s\n" \
 	       "${progname}" \
 	       "Download u-boot for the given board"
