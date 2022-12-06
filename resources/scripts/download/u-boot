@@ -235,11 +235,6 @@ if [ $# -eq 0 ] ; then
 	for board in $(list_supported_boards); do
 		download_uboot_board "${board}"
 	done
-
-	if [ "${deletegit}" = "true" ]; then
-		rm -rf u-boot/u-boot/ u-boot/.git*
-	fi
-
 	exit 0
 elif [ $# -eq 1 -a "$1" == "--help" ] ; then
 	usage
@@ -254,10 +249,6 @@ elif [ $# -eq 1 ] ; then
 			exit 0
 		fi
 	done
-
-	if [ "${deletegit}" = "true" ]; then
-		rm -rf u-boot/u-boot/ u-boot/.git*
-	fi
 
 	printf "Error: Board '${1}' is not supported\n"
 
