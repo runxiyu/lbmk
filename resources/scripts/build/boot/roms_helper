@@ -159,6 +159,7 @@ if [ ! -z ${payloads} ]; then
 	payload_grub_withseabios="n" # seabios chainloaded from grub
 	payload_seabios="n"
 	payload_seabios_withgrub="n" # i386-coreboot grub accessible from SeaBIOS boot menu
+	payload_uboot="n"
 	seabios_opromloadonly="0"
 	payload_memtest="n"
 
