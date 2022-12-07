@@ -194,7 +194,8 @@ elif [ "${arch}" = "AArch64" ]; then
 	(
 		cat version > "${cbdir}/.coreboot-version"
 		cd "${cbdir}"
-		make crossgcc-aarch64 CPUS=$(nproc) # This is for aarch64, doesn't apply to armv7
+		# aarch64 needs armv7 toolchain for arm-trusted-firmware
+		make crossgcc-arm crossgcc-aarch64 CPUS=$(nproc)
 	)
 fi
 
