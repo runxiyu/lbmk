@@ -258,6 +258,8 @@ rhex(void)
 			warn("%s", "/dev/urandom");
 			return 16;
 		}
+		if ((errno != 0))
+			return 16;
 	}
 
 	return rbuf[rindex++] & 0xf;
