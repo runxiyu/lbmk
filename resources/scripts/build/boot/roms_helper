@@ -184,12 +184,20 @@ if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 				# 32-bit ROM images, so we only need to worry about i386-elf
 		)
 	fi
+	case "$(uname -m)" in
+		x86*|i*86|amd64) : ;;
+		*) export CROSS_COMPILE=i386-elf- ;;
+	esac
 elif [ "${arch}" = "ARMv7" ]; then
 	(
 		cat version > "${cbdir}/.coreboot-version"
 		cd "${cbdir}"
 		make crossgcc-arm CPUS=$(nproc) # This is for armv7, doesn't apply to aarch64
 	)
+	case "$(uname -m)" in
+		arm|arm32|armv6*|armv7*) : ;;
+		*) export CROSS_COMPILE=arm-eabi- ;;
+	esac
 elif [ "${arch}" = "AArch64" ]; then
 	(
 		cat version > "${cbdir}/.coreboot-version"
@@ -197,7 +205,13 @@ elif [ "${arch}" = "AArch64" ]; then
 		# aarch64 needs armv7 toolchain for arm-trusted-firmware
 		make crossgcc-arm crossgcc-aarch64 CPUS=$(nproc)
 	)
+	case "$(uname -m)" in
+		arm64|aarch64) : ;;
+		*) export CROSS_COMPILE=aarch64-elf- ;;
+	esac
 fi
+
+export PATH="$(pwd)/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
 
 if [ ! -f "${cbfstool}" ]; then
 	./build module cbutils ${cbtree}
