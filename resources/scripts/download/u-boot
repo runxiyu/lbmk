@@ -181,7 +181,7 @@ downloadfor() {
 	# extra.sh on a per-board basis
 	# In fact, extra.sh can be used for anything you want.
 	if [ -f "resources/u-boot/${board}/extra.sh" ]; then
-		"resources/u-boot/${board}/extra.sh" || touch build_error
+		( cd "${ubtree}" && "../../resources/u-boot/${board}/extra.sh"; ) || touch build_error
 		if [ -f build_error ]; then
 			return 1
 		fi
