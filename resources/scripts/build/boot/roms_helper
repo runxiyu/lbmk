@@ -146,12 +146,6 @@ if [ "${payload_uboot}" = "y" ] && \
 	uboot_config="default"
 fi
 
-if [ "${payload_memtest}" = "y" ]; then
-	if [ ! -f "memtest86plus/memtest" ]; then
-		./build module memtest86plus
-	fi
-fi
-
 # Override all payload directives with cmdline args
 if [ ! -z ${payloads} ]; then	
 	echo "setting payloads $payloads"
@@ -216,6 +210,12 @@ if [ ! -f "${seavgabiosrom}" ] \
 	elif [ "${payload_grub}" = "y" ] \
 			&& [ "${payload_grub_withseabios}" = "y" ]; then
 		./build payload seabios
+	fi
+fi
+
+if [ "${payload_memtest}" = "y" ]; then
+	if [ ! -f "memtest86plus/memtest" ]; then
+		./build module memtest86plus
 	fi
 fi
 
