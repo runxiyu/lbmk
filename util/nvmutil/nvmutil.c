@@ -143,7 +143,8 @@ readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
 	} else if (((*fd) = open(path, flags)) == -1) {
 		return -1;
 	} else if (size == SIZE_8KB) {
-		fstat((*fd), &st);
+		if (fstat((*fd), &st) == -1)
+			return -1;
 		if ((st.st_size != SIZE_8KB) && strcmp(path, "/dev/urandom")) {
 			fprintf(stderr, "Bad file size\n");
 			errno = ECANCELED;
