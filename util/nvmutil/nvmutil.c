@@ -182,7 +182,7 @@ cmd_setmac(const char *strMac)
 				if (errno != 0)
 					return;
 				goto invalid_mac_address;
-			} else if ((byte == 0 && (nib == 1))) {
+			} else if ((byte == 0) && (nib == 1)) {
 				val8 &= 0xE;
 				val8 |= 2;
 			}
@@ -247,12 +247,12 @@ rhex(void)
 	static uint8_t *rbuf = NULL;
 	static size_t rindex = BUFSIZ;
 
-	if ((rindex == BUFSIZ)) {
+	if (rindex == BUFSIZ) {
 		rindex = 0;
-		if ((rbuf == NULL))
+		if (rbuf == NULL)
 			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
 				err(1, NULL);
-		if ((rfd != -1)) {
+		if (rfd != -1) {
 			close(rfd);
 			rfd = -1;
 		}
@@ -261,7 +261,7 @@ rhex(void)
 			warn("%s", "/dev/urandom");
 			return 16;
 		}
-		if ((errno != 0))
+		if (errno != 0)
 			return 16;
 	}
 
@@ -358,7 +358,7 @@ cmd_swap(void)
 	part0 = validChecksum(0);
 	part1 = validChecksum(1);
 
-	if ((part0 | part1)) {
+	if (part0 || part1) {
 		for(part0 = 0; part0 < SIZE_4KB; part0++) {
 			gbe[part0] ^= gbe[part1 = (part0 | SIZE_4KB)];
 			gbe[part1] ^= gbe[part0];
