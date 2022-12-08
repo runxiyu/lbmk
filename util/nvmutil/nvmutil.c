@@ -154,6 +154,8 @@ readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
 
 	if (errno == ENOTDIR)
 		errno = 0;
+	else if (errno != 0)
+		return -1;
 
 	return read((*fd), buf, size);
 }
