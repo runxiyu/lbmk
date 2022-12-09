@@ -268,14 +268,17 @@ if [ "${payload_grub}" = "y" ] || [ "${payload_seabios_withgrub}" = "y" ]; then
 fi
 
 if [ "${payload_uboot}" = "y" ]; then
-	if [ "${uboot_config}" = "default" ] && \
-		[ -f "payload/u-boot/${board}/u-boot.elf" ]; then
-			ubootelf="payload/u-boot/${board}/u-boot.elf"
+	if [ "${uboot_config}" = "default" ]; then
+		ubdir="payload/u-boot/${board}"
 	else
-		ubootelf="payload/u-boot/${board}/${uboot_config}/u-boot.elf"
+		ubdir="payload/u-boot/${board}/${uboot_config}"
 	fi
 
-	if [ ! -f "${ubootelf}" ]; then
+	if [ -f "${ubdir}/u-boot.elf" ]; then
+		ubootelf="${ubdir}/u-boot.elf"
+	elif [ -f "${ubdir}/u-boot" ]; then
+		ubootelf="${ubdir}/u-boot"
+	else
 		printf "Required U-Boot payloads not yet built. Building now:\n"
 		rm -Rf "payload/u-boot/${board}" # just in case
 		./build payload u-boot "${board}"
@@ -397,9 +400,15 @@ make_uboot_payload_rom() {
 	cbfstool_path="${4}"
 
 	if [ "${target_uboot_config}" = "default" ]; then
-		target_ubootelf="payload/u-boot/${board}/u-boot.elf"
+		target_ubdir="payload/u-boot/${board}"
 	else
-		target_ubootelf="payload/u-boot/${board}/${target_uboot_config}/u-boot.elf"
+		target_ubdir="payload/u-boot/${board}/${target_uboot_config}"
+	fi
+
+	if [ -f "${target_ubdir}/u-boot.elf" ]; then
+		target_ubootelf="${target_ubdir}/u-boot.elf"
+	elif [ -f "${target_ubdir}/u-boot" ]; then
+		target_ubootelf="${target_ubdir}/u-boot"
 	fi
 
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
