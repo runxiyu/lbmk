@@ -1,0 +1,1294 @@
+From 796a8816a663d2b63dc9e6aa9a684b9ace15d557 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:15 +0200
+Subject: [PATCH 1/7] dm: video: Add damage tracking API
+
+We are going to introduce image damage tracking to fasten up screen
+refresh on large displays. This patch adds damage tracking for up to
+one rectangle of the screen which is typically enough to hold blt or
+text print updates. Callers into this API and a reduced dcache flush
+code path will follow in later patches.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reported-by: Da Xue <da@libre.computer>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-2-agraf@csgraf.de
+---
+ drivers/video/Kconfig        | 15 +++++++++++++
+ drivers/video/video-uclass.c | 41 ++++++++++++++++++++++++++++++++++++
+ include/video.h              | 29 +++++++++++++++++++++++--
+ 3 files changed, 83 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
+index 4ecc158c4605..21fca141a087 100644
+--- a/drivers/video/Kconfig
++++ b/drivers/video/Kconfig
+@@ -64,6 +64,21 @@ config VIDEO_COPY
+ 	  To use this, your video driver must set @copy_base in
+ 	  struct video_uc_plat.
+ 
++config VIDEO_DAMAGE
++	bool "Enable damage tracking of frame buffer regions"
++	depends on DM_VIDEO
++	default y if ARM && !SYS_DCACHE_OFF
++	help
++	  On some machines (most ARM), the display frame buffer resides in
++	  RAM. To make the display controller pick up screen updates, we
++	  have to flush frame buffer contents from CPU caches into RAM which
++	  can be a slow operation.
++
++	  This patch adds damage tracking to collect information about regions
++	  that received updates. When we want to sync, we then only flush
++	  regions of the frame buffer that were modified before, speeding up
++	  screen refreshes significantly.
++
+ config BACKLIGHT_PWM
+ 	bool "Generic PWM based Backlight Driver"
+ 	depends on BACKLIGHT && DM_PWM
+diff --git a/drivers/video/video-uclass.c b/drivers/video/video-uclass.c
+index 01e8af5ac677..17793490d1b6 100644
+--- a/drivers/video/video-uclass.c
++++ b/drivers/video/video-uclass.c
+@@ -21,6 +21,8 @@
+ #include <dm/device_compat.h>
+ #include <dm/device-internal.h>
+ #include <dm/uclass-internal.h>
++#include <linux/types.h>
++#include <linux/bitmap.h>
+ #ifdef CONFIG_SANDBOX
+ #include <asm/sdl.h>
+ #endif
+@@ -180,6 +182,45 @@ void video_set_default_colors(struct udevice *dev, bool invert)
+ 	priv->colour_bg = vid_console_color(priv, back);
+ }
+ 
++/* Notify about changes in the frame buffer */
++int video_damage(struct udevice *vid, int x, int y, int width, int height)
++{
++	struct video_priv *priv = dev_get_uclass_priv(vid);
++	int endx = x + width;
++	int endy = y + height;
++
++	if (!CONFIG_IS_ENABLED(VIDEO_DAMAGE))
++		return 0;
++
++	if (x > priv->xsize)
++		return 0;
++
++	if (y > priv->ysize)
++		return 0;
++
++	if (endx > priv->xsize)
++		endx = priv->xsize;
++
++	if (endy > priv->ysize)
++		endy = priv->ysize;
++
++	if (priv->damage.endx && priv->damage.endy) {
++		/* Span a rectangle across all old and new damage */
++		priv->damage.x = min(x, priv->damage.x);
++		priv->damage.y = min(y, priv->damage.y);
++		priv->damage.endx = max(endx, priv->damage.endx);
++		priv->damage.endy = max(endy, priv->damage.endy);
++	} else {
++		/* First damage, setting the rectangle to span it */
++		priv->damage.x = x;
++		priv->damage.y = y;
++		priv->damage.endx = endx;
++		priv->damage.endy = endy;
++	}
++
++	return 0;
++}
++
+ /* Flush video activity to the caches */
+ int video_sync(struct udevice *vid, bool force)
+ {
+diff --git a/include/video.h b/include/video.h
+index 43e2c8997783..acb65d70a2d9 100644
+--- a/include/video.h
++++ b/include/video.h
+@@ -109,6 +109,12 @@ struct video_priv {
+ 	void *fb;
+ 	int fb_size;
+ 	void *copy_fb;
++	struct {
++		int x;
++		int y;
++		int endx;
++		int endy;
++	} damage;
+ 	int line_length;
+ 	u32 colour_fg;
+ 	u32 colour_bg;
+@@ -167,8 +173,9 @@ int video_clear(struct udevice *dev);
+  * @return: 0 on success, error code otherwise
+  *
+  * Some frame buffers are cached or have a secondary frame buffer. This
+- * function syncs these up so that the current contents of the U-Boot frame
+- * buffer are displayed to the user.
++ * function syncs the damaged parts of them up so that the current contents
++ * of the U-Boot frame buffer are displayed to the user. It clears the damage
++ * buffer.
+  */
+ int video_sync(struct udevice *vid, bool force);
+ 
+@@ -268,6 +275,24 @@ static inline int video_sync_copy_all(struct udevice *dev)
+ 
+ #endif
+ 
++/**
++ * video_damage() - Notify the video subsystem about screen updates.
++ *
++ * @vid:	Device to sync
++ * @x:	        Upper left X coordinate of the damaged rectangle
++ * @y:	        Upper left Y coordinate of the damaged rectangle
++ * @width:	Width of the damaged rectangle
++ * @height:	Height of the damaged rectangle
++ *
++ * @return: 0
++ *
++ * Some frame buffers are cached or have a secondary frame buffer. This
++ * function notifies the video subsystem about rectangles that were updated
++ * within the frame buffer. They may only get written to the screen on the
++ * next call to video_sync().
++ */
++int video_damage(struct udevice *vid, int x, int y, int width, int height);
++
+ /**
+  * video_is_active() - Test if one video device it active
+  *
+-- 
+2.38.1
+
+
+From cb8cd1f44f4b2db9ec306dc81c36f4d84b8fd63c Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:16 +0200
+Subject: [PATCH 2/7] dm: video: Add damage notification on display clear
+
+Let's report the video damage when we clear the screen. This
+way we can later lazily flush only relevant regions to hardware.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reported-by: Da Xue <da@libre.computer>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-3-agraf@csgraf.de
+---
+ drivers/video/video-uclass.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/video/video-uclass.c b/drivers/video/video-uclass.c
+index 17793490d1b6..66df4c97ef7e 100644
+--- a/drivers/video/video-uclass.c
++++ b/drivers/video/video-uclass.c
+@@ -153,6 +153,8 @@ int video_clear(struct udevice *dev)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev, 0, 0, priv->xsize, priv->ysize);
++
+ 	return video_sync(dev, false);
+ }
+ 
+-- 
+2.38.1
+
+
+From 724577232caec0e7d19e055a2a500046ea869ebd Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:17 +0200
+Subject: [PATCH 3/7] vidconsole: Add damage notifications to all vidconsole
+ drivers
+
+Now that we have a damage tracking API, let's populate damage done by
+vidconsole drivers. We try to declare as little memory as damaged as
+possible, with the exception of rotated screens that I couldn't get my
+head wrapped around. On those, we revert to the old behavior and mark
+the full screen as damaged on every update.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reported-by: Da Xue <da@libre.computer>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-4-agraf@csgraf.de
+---
+ drivers/video/console_normal.c   | 10 ++++++
+ drivers/video/console_rotate.c   | 54 ++++++++++++++++++++++++++++++++
+ drivers/video/console_truetype.c | 15 +++++++++
+ 3 files changed, 79 insertions(+)
+
+diff --git a/drivers/video/console_normal.c b/drivers/video/console_normal.c
+index 9f552d02b308..e32fb23e3f9f 100644
+--- a/drivers/video/console_normal.c
++++ b/drivers/video/console_normal.c
+@@ -60,6 +60,9 @@ static int console_normal_set_row(struct udevice *dev, uint row, int clr)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent, 0, VIDEO_FONT_HEIGHT * row, vid_priv->xsize,
++		     VIDEO_FONT_HEIGHT);
++
+ 	return 0;
+ }
+ 
+@@ -79,6 +82,9 @@ static int console_normal_move_rows(struct udevice *dev, uint rowdst,
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent, 0, VIDEO_FONT_HEIGHT * rowdst, vid_priv->xsize,
++		     VIDEO_FONT_HEIGHT * count);
++
+ 	return 0;
+ }
+ 
+@@ -158,6 +164,10 @@ static int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y,
+ 		}
+ 		line += vid_priv->line_length;
+ 	}
++
++	video_damage(dev->parent, VID_TO_PIXEL(x_frac), y, VIDEO_FONT_WIDTH,
++		     VIDEO_FONT_HEIGHT);
++
+ 	ret = vidconsole_sync_copy(dev, start, line);
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/video/console_rotate.c b/drivers/video/console_rotate.c
+index 36c8d0609d87..56e20bb4f32e 100644
+--- a/drivers/video/console_rotate.c
++++ b/drivers/video/console_rotate.c
+@@ -57,6 +57,12 @@ static int console_set_row_1(struct udevice *dev, uint row, int clr)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent,
++		     vid_priv->xsize - ((row + 1) * VIDEO_FONT_HEIGHT),
++		     0,
++		     VIDEO_FONT_HEIGHT,
++		     vid_priv->ysize);
++
+ 	return 0;
+ }
+ 
+@@ -83,6 +89,12 @@ static int console_move_rows_1(struct udevice *dev, uint rowdst, uint rowsrc,
+ 		dst += vid_priv->line_length;
+ 	}
+ 
++	video_damage(dev->parent,
++		     vid_priv->xsize - ((rowdst + count) * VIDEO_FONT_HEIGHT),
++		     0,
++		     count * VIDEO_FONT_HEIGHT,
++		     vid_priv->ysize);
++
+ 	return 0;
+ }
+ 
+@@ -150,6 +162,12 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent,
++		     vid_priv->xsize - y - VIDEO_FONT_HEIGHT - 1,
++		     linenum - 1,
++		     VIDEO_FONT_HEIGHT,
++		     VIDEO_FONT_WIDTH);
++
+ 	return VID_TO_POS(VIDEO_FONT_WIDTH);
+ }
+ 
+@@ -199,6 +217,12 @@ static int console_set_row_2(struct udevice *dev, uint row, int clr)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent,
++		     0,
++		     vid_priv->ysize - (row + 1) * VIDEO_FONT_HEIGHT,
++		     vid_priv->xsize,
++		     VIDEO_FONT_HEIGHT);
++
+ 	return 0;
+ }
+ 
+@@ -218,6 +242,12 @@ static int console_move_rows_2(struct udevice *dev, uint rowdst, uint rowsrc,
+ 	vidconsole_memmove(dev, dst, src,
+ 			   VIDEO_FONT_HEIGHT * vid_priv->line_length * count);
+ 
++	video_damage(dev->parent,
++		     0,
++		     vid_priv->ysize - (rowdst + count) * VIDEO_FONT_HEIGHT,
++		     vid_priv->xsize,
++		     count * VIDEO_FONT_HEIGHT);
++
+ 	return 0;
+ }
+ 
+@@ -288,6 +318,12 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent,
++		     x - VIDEO_FONT_WIDTH,
++		     linenum - VIDEO_FONT_HEIGHT + 1,
++		     VIDEO_FONT_WIDTH,
++		     VIDEO_FONT_HEIGHT);
++
+ 	return VID_TO_POS(VIDEO_FONT_WIDTH);
+ }
+ 
+@@ -335,6 +371,12 @@ static int console_set_row_3(struct udevice *dev, uint row, int clr)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent,
++		     row * VIDEO_FONT_HEIGHT,
++		     0,
++		     VIDEO_FONT_HEIGHT,
++		     vid_priv->ysize);
++
+ 	return 0;
+ }
+ 
+@@ -359,6 +401,12 @@ static int console_move_rows_3(struct udevice *dev, uint rowdst, uint rowsrc,
+ 		dst += vid_priv->line_length;
+ 	}
+ 
++	video_damage(dev->parent,
++		     rowdst * VIDEO_FONT_HEIGHT,
++		     0,
++		     count * VIDEO_FONT_HEIGHT,
++		     vid_priv->ysize);
++
+ 	return 0;
+ }
+ 
+@@ -424,6 +472,12 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent,
++		     y,
++		     x - VIDEO_FONT_WIDTH + 1,
++		     VIDEO_FONT_HEIGHT,
++		     VIDEO_FONT_WIDTH);
++
+ 	return VID_TO_POS(VIDEO_FONT_WIDTH);
+ }
+ 
+diff --git a/drivers/video/console_truetype.c b/drivers/video/console_truetype.c
+index c04b449a6d5d..cfeeed71db39 100644
+--- a/drivers/video/console_truetype.c
++++ b/drivers/video/console_truetype.c
+@@ -126,6 +126,7 @@ struct console_tt_priv {
+ static int console_truetype_set_row(struct udevice *dev, uint row, int clr)
+ {
+ 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
++	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+ 	struct console_tt_priv *priv = dev_get_priv(dev);
+ 	void *end, *line;
+ 	int ret;
+@@ -168,6 +169,9 @@ static int console_truetype_set_row(struct udevice *dev, uint row, int clr)
+ 	if (ret)
+ 		return ret;
+ 
++	video_damage(dev->parent, 0, vc_priv->y_charsize * row, vid_priv->xsize,
++		     vc_priv->y_charsize);
++
+ 	return 0;
+ }
+ 
+@@ -175,6 +179,7 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
+ 				     uint rowsrc, uint count)
+ {
+ 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
++	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+ 	struct console_tt_priv *priv = dev_get_priv(dev);
+ 	void *dst;
+ 	void *src;
+@@ -192,6 +197,9 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
+ 	for (i = 0; i < priv->pos_ptr; i++)
+ 		priv->pos[i].ypos -= diff;
+ 
++	video_damage(dev->parent, 0, vc_priv->y_charsize * rowdst, vid_priv->xsize,
++		     vc_priv->y_charsize * count);
++
+ 	return 0;
+ }
+ 
+@@ -348,6 +356,10 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
+ 
+ 		line += vid_priv->line_length;
+ 	}
++
++	video_damage(dev->parent, VID_TO_PIXEL(x) + xoff,
++		     y + priv->baseline + yoff, width, height);
++
+ 	ret = vidconsole_sync_copy(dev, start, line);
+ 	if (ret)
+ 		return ret;
+@@ -415,6 +427,9 @@ static int console_truetype_erase(struct udevice *dev, int xstart, int ystart,
+ 		}
+ 		line += vid_priv->line_length;
+ 	}
++
++	video_damage(dev->parent, xstart, ystart, xend - xstart, yend - ystart);
++
+ 	ret = vidconsole_sync_copy(dev, start, line);
+ 	if (ret)
+ 		return ret;
+-- 
+2.38.1
+
+
+From b5aa2573a8976ce983ecb42c312d4c64ea118550 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:18 +0200
+Subject: [PATCH 4/7] video: Add damage notification on bmp display
+
+Let's report the video damage when we draw a bitmap on the screen. This
+way we can later lazily flush only relevant regions to hardware.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reported-by: Da Xue <da@libre.computer>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-5-agraf@csgraf.de
+---
+ drivers/video/video_bmp.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/video/video_bmp.c b/drivers/video/video_bmp.c
+index 4d2d961696aa..da8a7b37019b 100644
+--- a/drivers/video/video_bmp.c
++++ b/drivers/video/video_bmp.c
+@@ -416,6 +416,8 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
+ 		break;
+ 	};
+ 
++	video_damage(dev, x, y, width, height);
++
+ 	/* Find the position of the top left of the image in the framebuffer */
+ 	fb = (uchar *)(priv->fb + y * priv->line_length + x * bpix / 8);
+ 	ret = video_sync_copy(dev, start, fb);
+-- 
+2.38.1
+
+
+From a5192a72ecdb522e0d8d0e2af93049fa6c70b947 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:19 +0200
+Subject: [PATCH 5/7] efi_loader: GOP: Add damage notification on BLT
+
+Now that we have a damage tracking API, let's populate damage done by
+UEFI payloads when they BLT data onto the screen.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reported-by: Da Xue <da@libre.computer>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-6-agraf@csgraf.de
+---
+ lib/efi_loader/efi_gop.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/lib/efi_loader/efi_gop.c b/lib/efi_loader/efi_gop.c
+index 5908b5c64669..c50880806ddb 100644
+--- a/lib/efi_loader/efi_gop.c
++++ b/lib/efi_loader/efi_gop.c
+@@ -32,6 +32,7 @@ struct efi_gop_obj {
+ 	struct efi_gop ops;
+ 	struct efi_gop_mode_info info;
+ 	struct efi_gop_mode mode;
++	struct udevice *vdev;
+ 	/* Fields we only have access to during init */
+ 	u32 bpix;
+ 	void *fb;
+@@ -243,6 +244,9 @@ static __always_inline efi_status_t gop_blt_int(struct efi_gop *this,
+ 		dlineoff += dwidth;
+ 	}
+ 
++	if (IS_ENABLED(CONFIG_DM_VIDEO))
++		video_damage(gopobj->vdev, dx, dy, width, height);
++
+ 	return EFI_SUCCESS;
+ }
+ 
+@@ -476,9 +480,9 @@ efi_status_t efi_gop_register(void)
+ 	u64 fb_base, fb_size;
+ 	void *fb;
+ 	efi_status_t ret;
++	struct udevice *vdev = NULL;
+ 
+ #ifdef CONFIG_DM_VIDEO
+-	struct udevice *vdev;
+ 	struct video_priv *priv;
+ 
+ 	/* We only support a single video output device for now */
+@@ -577,6 +581,7 @@ efi_status_t efi_gop_register(void)
+ 	gopobj->info.pixels_per_scanline = col;
+ 	gopobj->bpix = bpix;
+ 	gopobj->fb = fb;
++	gopobj->vdev = vdev;
+ 
+ 	return EFI_SUCCESS;
+ }
+-- 
+2.38.1
+
+
+From 6b0f2545fe828d5f6fa262d10f7c9eef003a9bd8 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:20 +0200
+Subject: [PATCH 6/7] video: Only dcache flush damaged lines
+
+Now that we have a damage area tells us which parts of the frame buffer
+actually need updating, let's only dcache flush those on video_sync()
+calls. With this optimization in place, frame buffer updates - especially
+on large screen such as 4k displays - speed up significantly.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reported-by: Da Xue <da@libre.computer>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-7-agraf@csgraf.de
+---
+ drivers/video/video-uclass.c | 51 ++++++++++++++++++++++++++++++------
+ 1 file changed, 43 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/video/video-uclass.c b/drivers/video/video-uclass.c
+index 66df4c97ef7e..95126b9bdb02 100644
+--- a/drivers/video/video-uclass.c
++++ b/drivers/video/video-uclass.c
+@@ -223,9 +223,45 @@ int video_damage(struct udevice *vid, int x, int y, int width, int height)
+ 	return 0;
+ }
+ 
++#if defined(CONFIG_ARM) && !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
++static void video_flush_dcache(struct udevice *vid)
++{
++	struct video_priv *priv = dev_get_uclass_priv(vid);
++
++	if (!priv->flush_dcache)
++		return;
++
++	if (!CONFIG_IS_ENABLED(VIDEO_DAMAGE)) {
++		flush_dcache_range((ulong)priv->fb,
++				   ALIGN((ulong)priv->fb + priv->fb_size,
++					 CONFIG_SYS_CACHELINE_SIZE));
++
++		return;
++	}
++
++	if (priv->damage.endx && priv->damage.endy) {
++		int lstart = priv->damage.x * VNBYTES(priv->bpix);
++		int lend = priv->damage.endx * VNBYTES(priv->bpix);
++		int y;
++
++		for (y = priv->damage.y; y < priv->damage.endy; y++) {
++			ulong fb = (ulong)priv->fb;
++			ulong start = fb + (y * priv->line_length) + lstart;
++			ulong end = start + lend - lstart;
++
++			start = ALIGN_DOWN(start, CONFIG_SYS_CACHELINE_SIZE);
++			end = ALIGN(end, CONFIG_SYS_CACHELINE_SIZE);
++
++			flush_dcache_range(start, end);
++		}
++	}
++}
++#endif
++
+ /* Flush video activity to the caches */
+ int video_sync(struct udevice *vid, bool force)
+ {
++	struct video_priv *priv = dev_get_uclass_priv(vid);
+ 	struct video_ops *ops = video_get_ops(vid);
+ 	int ret;
+ 
+@@ -241,15 +277,8 @@ int video_sync(struct udevice *vid, bool force)
+ 	 * out whether it exists? For now, ARM is safe.
+ 	 */
+ #if defined(CONFIG_ARM) && !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
+-	struct video_priv *priv = dev_get_uclass_priv(vid);
+-
+-	if (priv->flush_dcache) {
+-		flush_dcache_range((ulong)priv->fb,
+-				   ALIGN((ulong)priv->fb + priv->fb_size,
+-					 CONFIG_SYS_CACHELINE_SIZE));
+-	}
++	video_flush_dcache(vid);
+ #elif defined(CONFIG_VIDEO_SANDBOX_SDL)
+-	struct video_priv *priv = dev_get_uclass_priv(vid);
+ 	static ulong last_sync;
+ 
+ 	if (force || get_timer(last_sync) > 100) {
+@@ -257,6 +286,12 @@ int video_sync(struct udevice *vid, bool force)
+ 		last_sync = get_timer(0);
+ 	}
+ #endif
++
++	if (CONFIG_IS_ENABLED(VIDEO_DAMAGE)) {
++		priv->damage.endx = 0;
++		priv->damage.endy = 0;
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+2.38.1
+
+
+From d2a78b028083bf1b17e8a72ce84b65d8861951a6 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Fri, 10 Jun 2022 00:59:21 +0200
+Subject: [PATCH 7/7] video: Use VIDEO_DAMAGE for VIDEO_COPY
+
+CONFIG_VIDEO_COPY implemented a range based copying mechanism: If we
+print a single character, it will always copy the full range of bytes
+from the top left corner of the character to the lower right onto the
+uncached frame buffer. This includes pretty much the full line contents
+of the printed character.
+
+Since we now have proper damage tracking, let's make use of that to reduce
+the amount of data we need to copy. With this patch applied, we will only
+copy the tiny rectangle surrounding characters when we print them,
+speeding up the video console.
+
+As a bonus, we remove a lot of code.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Tested-by: Matthias Brugger <mbrugger@suse.com>
+Link: https://lore.kernel.org/r/20220609225921.62462-8-agraf@csgraf.de
+[Alper: Fix instances of memmove(dev, ...)]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ configs/chromebook_coral_defconfig   |  1 +
+ configs/chromebook_link_defconfig    |  1 +
+ configs/chromebook_samus_defconfig   |  1 +
+ configs/minnowmax_defconfig          |  1 +
+ configs/sandbox_defconfig            |  1 +
+ configs/xilinx_zynqmp_virt_defconfig |  1 +
+ drivers/video/Kconfig                |  8 ++-
+ drivers/video/console_normal.c       | 14 +----
+ drivers/video/console_rotate.c       | 37 ++---------
+ drivers/video/console_truetype.c     | 17 +-----
+ drivers/video/vidconsole-uclass.c    | 16 -----
+ drivers/video/video-uclass.c         | 91 ++++++++--------------------
+ drivers/video/video_bmp.c            |  7 ---
+ include/video.h                      | 37 -----------
+ include/video_console.h              | 49 ---------------
+ 15 files changed, 44 insertions(+), 238 deletions(-)
+
+diff --git a/configs/chromebook_coral_defconfig b/configs/chromebook_coral_defconfig
+index 60c50e75be65..9518fb6b867e 100644
+--- a/configs/chromebook_coral_defconfig
++++ b/configs/chromebook_coral_defconfig
+@@ -117,6 +117,7 @@ CONFIG_USB_XHCI_HCD=y
+ CONFIG_USB_STORAGE=y
+ CONFIG_USB_KEYBOARD=y
+ CONFIG_VIDEO_COPY=y
++CONFIG_VIDEO_DAMAGE=y
+ CONFIG_FS_CBFS=y
+ CONFIG_SPL_FS_CBFS=y
+ CONFIG_FAT_WRITE=y
+diff --git a/configs/chromebook_link_defconfig b/configs/chromebook_link_defconfig
+index fa3641e42f53..bfaf4dbb7feb 100644
+--- a/configs/chromebook_link_defconfig
++++ b/configs/chromebook_link_defconfig
+@@ -74,6 +74,7 @@ CONFIG_TPM_TIS_LPC=y
+ CONFIG_USB_STORAGE=y
+ CONFIG_USB_KEYBOARD=y
+ CONFIG_VIDEO_COPY=y
++CONFIG_VIDEO_DAMAGE=y
+ CONFIG_FRAMEBUFFER_SET_VESA_MODE=y
+ CONFIG_FRAMEBUFFER_VESA_MODE_11A=y
+ CONFIG_VIDEO_IVYBRIDGE_IGD=y
+diff --git a/configs/chromebook_samus_defconfig b/configs/chromebook_samus_defconfig
+index 56a0d6c8a8ee..53ca6225cd4b 100644
+--- a/configs/chromebook_samus_defconfig
++++ b/configs/chromebook_samus_defconfig
+@@ -78,6 +78,7 @@ CONFIG_TPM_TIS_LPC=y
+ CONFIG_USB_STORAGE=y
+ CONFIG_USB_KEYBOARD=y
+ CONFIG_VIDEO_COPY=y
++CONFIG_VIDEO_DAMAGE=y
+ CONFIG_FRAMEBUFFER_SET_VESA_MODE=y
+ CONFIG_FRAMEBUFFER_VESA_MODE_11A=y
+ CONFIG_TPM=y
+diff --git a/configs/minnowmax_defconfig b/configs/minnowmax_defconfig
+index 2e9edc6c4ee6..eb6cebaf8879 100644
+--- a/configs/minnowmax_defconfig
++++ b/configs/minnowmax_defconfig
+@@ -69,6 +69,7 @@ CONFIG_SPI=y
+ CONFIG_USB_STORAGE=y
+ CONFIG_USB_KEYBOARD=y
+ CONFIG_VIDEO_COPY=y
++CONFIG_VIDEO_DAMAGE=y
+ CONFIG_FRAMEBUFFER_SET_VESA_MODE=y
+ CONFIG_GENERATE_ACPI_TABLE=y
+ # CONFIG_GZIP is not set
+diff --git a/configs/sandbox_defconfig b/configs/sandbox_defconfig
+index ab5d3f19bf96..d2b9486d7d6c 100644
+--- a/configs/sandbox_defconfig
++++ b/configs/sandbox_defconfig
+@@ -292,6 +292,7 @@ CONFIG_USB_ETHER=y
+ CONFIG_USB_ETH_CDC=y
+ CONFIG_DM_VIDEO=y
+ CONFIG_VIDEO_COPY=y
++CONFIG_VIDEO_DAMAGE=y
+ CONFIG_CONSOLE_ROTATION=y
+ CONFIG_CONSOLE_TRUETYPE=y
+ CONFIG_CONSOLE_TRUETYPE_CANTORAONE=y
+diff --git a/configs/xilinx_zynqmp_virt_defconfig b/configs/xilinx_zynqmp_virt_defconfig
+index e5ac26e0381f..e0dbf4b51070 100644
+--- a/configs/xilinx_zynqmp_virt_defconfig
++++ b/configs/xilinx_zynqmp_virt_defconfig
+@@ -221,6 +221,7 @@ CONFIG_USB_ETHER=y
+ CONFIG_USB_ETH_CDC=y
+ CONFIG_DM_VIDEO=y
+ CONFIG_VIDEO_COPY=y
++CONFIG_VIDEO_DAMAGE=y
+ CONFIG_DISPLAY=y
+ CONFIG_VIDEO_SEPS525=y
+ CONFIG_LCD=y
+diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
+index 21fca141a087..5f84d8ad0571 100644
+--- a/drivers/video/Kconfig
++++ b/drivers/video/Kconfig
+@@ -54,12 +54,14 @@ config VIDEO_PCI_DEFAULT_FB_SIZE
+ 
+ config VIDEO_COPY
+ 	bool "Enable copying the frame buffer to a hardware copy"
+-	depends on DM_VIDEO
++	depends on DM_VIDEO && VIDEO_DAMAGE
+ 	help
+ 	  On some machines (e.g. x86), reading from the frame buffer is very
+ 	  slow because it is uncached. To improve performance, this feature
+ 	  allows the frame buffer to be kept in cached memory (allocated by
+ 	  U-Boot) and then copied to the hardware frame-buffer as needed.
++	  It uses the VIDEO_DAMAGE feature to keep track of regions to copy
++	  and will only copy actually touched regions.
+ 
+ 	  To use this, your video driver must set @copy_base in
+ 	  struct video_uc_plat.
+@@ -74,11 +76,13 @@ config VIDEO_DAMAGE
+ 	  have to flush frame buffer contents from CPU caches into RAM which
+ 	  can be a slow operation.
+ 
+-	  This patch adds damage tracking to collect information about regions
++	  This feature adds damage tracking to collect information about regions
+ 	  that received updates. When we want to sync, we then only flush
+ 	  regions of the frame buffer that were modified before, speeding up
+ 	  screen refreshes significantly.
+ 
++	  It is also used by VIDEO_COPY to identify which regions changed.
++
+ config BACKLIGHT_PWM
+ 	bool "Generic PWM based Backlight Driver"
+ 	depends on BACKLIGHT && DM_PWM
+diff --git a/drivers/video/console_normal.c b/drivers/video/console_normal.c
+index e32fb23e3f9f..ebb7fdd69307 100644
+--- a/drivers/video/console_normal.c
++++ b/drivers/video/console_normal.c
+@@ -21,7 +21,6 @@ static int console_normal_set_row(struct udevice *dev, uint row, int clr)
+ 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+ 	void *line, *end;
+ 	int pixels = VIDEO_FONT_HEIGHT * vid_priv->xsize;
+-	int ret;
+ 	int i;
+ 
+ 	line = vid_priv->fb + row * VIDEO_FONT_HEIGHT * vid_priv->line_length;
+@@ -56,9 +55,6 @@ static int console_normal_set_row(struct udevice *dev, uint row, int clr)
+ 	default:
+ 		return -ENOSYS;
+ 	}
+-	ret = vidconsole_sync_copy(dev, line, end);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev->parent, 0, VIDEO_FONT_HEIGHT * row, vid_priv->xsize,
+ 		     VIDEO_FONT_HEIGHT);
+@@ -73,14 +69,11 @@ static int console_normal_move_rows(struct udevice *dev, uint rowdst,
+ 	void *dst;
+ 	void *src;
+ 	int size;
+-	int ret;
+ 
+ 	dst = vid_priv->fb + rowdst * VIDEO_FONT_HEIGHT * vid_priv->line_length;
+ 	src = vid_priv->fb + rowsrc * VIDEO_FONT_HEIGHT * vid_priv->line_length;
+ 	size = VIDEO_FONT_HEIGHT * vid_priv->line_length * count;
+-	ret = vidconsole_memmove(dev, dst, src, size);
+-	if (ret)
+-		return ret;
++	memmove(dst, src, size);
+ 
+ 	video_damage(dev->parent, 0, VIDEO_FONT_HEIGHT * rowdst, vid_priv->xsize,
+ 		     VIDEO_FONT_HEIGHT * count);
+@@ -97,7 +90,6 @@ static int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y,
+ 	int i, row;
+ 	void *start;
+ 	void *line;
+-	int ret;
+ 
+ 	start = vid_priv->fb + y * vid_priv->line_length +
+ 		VID_TO_PIXEL(x_frac) * VNBYTES(vid_priv->bpix);
+@@ -168,10 +160,6 @@ static int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y,
+ 	video_damage(dev->parent, VID_TO_PIXEL(x_frac), y, VIDEO_FONT_WIDTH,
+ 		     VIDEO_FONT_HEIGHT);
+ 
+-	ret = vidconsole_sync_copy(dev, start, line);
+-	if (ret)
+-		return ret;
+-
+ 	return VID_TO_POS(VIDEO_FONT_WIDTH);
+ }
+ 
+diff --git a/drivers/video/console_rotate.c b/drivers/video/console_rotate.c
+index 56e20bb4f32e..ae0cbe41bfe4 100644
+--- a/drivers/video/console_rotate.c
++++ b/drivers/video/console_rotate.c
+@@ -53,9 +53,6 @@ static int console_set_row_1(struct udevice *dev, uint row, int clr)
+ 		}
+ 		line += vid_priv->line_length;
+ 	}
+-	ret = vidconsole_sync_copy(dev, start, line);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev->parent,
+ 		     vid_priv->xsize - ((row + 1) * VIDEO_FONT_HEIGHT),
+@@ -81,10 +78,7 @@ static int console_move_rows_1(struct udevice *dev, uint rowdst, uint rowsrc,
+ 		(rowsrc + count) * VIDEO_FONT_HEIGHT * pbytes;
+ 
+ 	for (j = 0; j < vid_priv->ysize; j++) {
+-		ret = vidconsole_memmove(dev, dst, src,
+-					 VIDEO_FONT_HEIGHT * pbytes * count);
+-		if (ret)
+-			return ret;
++		memmove(dst, src, VIDEO_FONT_HEIGHT * pbytes * count);
+ 		src += vid_priv->line_length;
+ 		dst += vid_priv->line_length;
+ 	}
+@@ -158,10 +152,6 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
+ 		mask >>= 1;
+ 	}
+ 	/* We draw backwards from 'start, so account for the first line */
+-	ret = vidconsole_sync_copy(dev, start - vid_priv->line_length, line);
+-	if (ret)
+-		return ret;
+-
+ 	video_damage(dev->parent,
+ 		     vid_priv->xsize - y - VIDEO_FONT_HEIGHT - 1,
+ 		     linenum - 1,
+@@ -213,9 +203,6 @@ static int console_set_row_2(struct udevice *dev, uint row, int clr)
+ 	default:
+ 		return -ENOSYS;
+ 	}
+-	ret = vidconsole_sync_copy(dev, start, end);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev->parent,
+ 		     0,
+@@ -239,8 +226,8 @@ static int console_move_rows_2(struct udevice *dev, uint rowdst, uint rowsrc,
+ 		vid_priv->line_length;
+ 	src = end - (rowsrc + count) * VIDEO_FONT_HEIGHT *
+ 		vid_priv->line_length;
+-	vidconsole_memmove(dev, dst, src,
+-			   VIDEO_FONT_HEIGHT * vid_priv->line_length * count);
++	memmove(dst, src, VIDEO_FONT_HEIGHT *
++		vid_priv->line_length * count);
+ 
+ 	video_damage(dev->parent,
+ 		     0,
+@@ -313,10 +300,6 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
+ 		}
+ 		line -= vid_priv->line_length;
+ 	}
+-	/* Add 4 bytes to allow for the first pixel writen */
+-	ret = vidconsole_sync_copy(dev, start + 4, line);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev->parent,
+ 		     x - VIDEO_FONT_WIDTH,
+@@ -367,9 +350,6 @@ static int console_set_row_3(struct udevice *dev, uint row, int clr)
+ 		}
+ 		line += vid_priv->line_length;
+ 	}
+-	ret = vidconsole_sync_copy(dev, start, line);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev->parent,
+ 		     row * VIDEO_FONT_HEIGHT,
+@@ -387,16 +367,13 @@ static int console_move_rows_3(struct udevice *dev, uint rowdst, uint rowsrc,
+ 	int pbytes = VNBYTES(vid_priv->bpix);
+ 	void *dst;
+ 	void *src;
+-	int j, ret;
++	int j;
+ 
+ 	dst = vid_priv->fb + rowdst * VIDEO_FONT_HEIGHT * pbytes;
+ 	src = vid_priv->fb + rowsrc * VIDEO_FONT_HEIGHT * pbytes;
+ 
+ 	for (j = 0; j < vid_priv->ysize; j++) {
+-		ret = vidconsole_memmove(dev, dst, src,
+-					 VIDEO_FONT_HEIGHT * pbytes * count);
+-		if (ret)
+-			return ret;
++		memmove(dst, src, VIDEO_FONT_HEIGHT * pbytes * count);
+ 		src += vid_priv->line_length;
+ 		dst += vid_priv->line_length;
+ 	}
+@@ -468,10 +445,6 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
+ 		mask >>= 1;
+ 	}
+ 	/* Add a line to allow for the first pixels writen */
+-	ret = vidconsole_sync_copy(dev, start + vid_priv->line_length, line);
+-	if (ret)
+-		return ret;
+-
+ 	video_damage(dev->parent,
+ 		     y,
+ 		     x - VIDEO_FONT_WIDTH + 1,
+diff --git a/drivers/video/console_truetype.c b/drivers/video/console_truetype.c
+index cfeeed71db39..4118add1cf79 100644
+--- a/drivers/video/console_truetype.c
++++ b/drivers/video/console_truetype.c
+@@ -165,9 +165,6 @@ static int console_truetype_set_row(struct udevice *dev, uint row, int clr)
+ 	default:
+ 		return -ENOSYS;
+ 	}
+-	ret = vidconsole_sync_copy(dev, line, end);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev->parent, 0, vc_priv->y_charsize * row, vid_priv->xsize,
+ 		     vc_priv->y_charsize);
+@@ -183,14 +180,11 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
+ 	struct console_tt_priv *priv = dev_get_priv(dev);
+ 	void *dst;
+ 	void *src;
+-	int i, diff, ret;
++	int i, diff;
+ 
+ 	dst = vid_priv->fb + rowdst * priv->font_size * vid_priv->line_length;
+ 	src = vid_priv->fb + rowsrc * priv->font_size * vid_priv->line_length;
+-	ret = vidconsole_memmove(dev, dst, src, priv->font_size *
+-				 vid_priv->line_length * count);
+-	if (ret)
+-		return ret;
++	memmove(dst, src, priv->font_size * vid_priv->line_length * count);
+ 
+ 	/* Scroll up our position history */
+ 	diff = (rowsrc - rowdst) * priv->font_size;
+@@ -360,9 +354,6 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
+ 	video_damage(dev->parent, VID_TO_PIXEL(x) + xoff,
+ 		     y + priv->baseline + yoff, width, height);
+ 
+-	ret = vidconsole_sync_copy(dev, start, line);
+-	if (ret)
+-		return ret;
+ 	free(data);
+ 
+ 	return width_frac;
+@@ -430,10 +421,6 @@ static int console_truetype_erase(struct udevice *dev, int xstart, int ystart,
+ 
+ 	video_damage(dev->parent, xstart, ystart, xend - xstart, yend - ystart);
+ 
+-	ret = vidconsole_sync_copy(dev, start, line);
+-	if (ret)
+-		return ret;
+-
+ 	return 0;
+ }
+ 
+diff --git a/drivers/video/vidconsole-uclass.c b/drivers/video/vidconsole-uclass.c
+index ca6e1a2620cc..9fe14ebc60a3 100644
+--- a/drivers/video/vidconsole-uclass.c
++++ b/drivers/video/vidconsole-uclass.c
+@@ -702,22 +702,6 @@ UCLASS_DRIVER(vidconsole) = {
+ 	.per_device_auto	= sizeof(struct vidconsole_priv),
+ };
+ 
+-#ifdef CONFIG_VIDEO_COPY
+-int vidconsole_sync_copy(struct udevice *dev, void *from, void *to)
+-{
+-	struct udevice *vid = dev_get_parent(dev);
+-
+-	return video_sync_copy(vid, from, to);
+-}
+-
+-int vidconsole_memmove(struct udevice *dev, void *dst, const void *src,
+-		       int size)
+-{
+-	memmove(dst, src, size);
+-	return vidconsole_sync_copy(dev, dst, dst + size);
+-}
+-#endif
+-
+ #if CONFIG_IS_ENABLED(CMD_VIDCONSOLE)
+ void vidconsole_position_cursor(struct udevice *dev, unsigned col, unsigned row)
+ {
+diff --git a/drivers/video/video-uclass.c b/drivers/video/video-uclass.c
+index 95126b9bdb02..6dffa5be814a 100644
+--- a/drivers/video/video-uclass.c
++++ b/drivers/video/video-uclass.c
+@@ -124,7 +124,6 @@ int video_reserve(ulong *addrp)
+ int video_clear(struct udevice *dev)
+ {
+ 	struct video_priv *priv = dev_get_uclass_priv(dev);
+-	int ret;
+ 
+ 	switch (priv->bpix) {
+ 	case VIDEO_BPP16:
+@@ -149,9 +148,6 @@ int video_clear(struct udevice *dev)
+ 		memset(priv->fb, priv->colour_bg, priv->fb_size);
+ 		break;
+ 	}
+-	ret = video_sync_copy(dev, priv->fb, priv->fb + priv->fb_size);
+-	if (ret)
+-		return ret;
+ 
+ 	video_damage(dev, 0, 0, priv->xsize, priv->ysize);
+ 
+@@ -258,6 +254,27 @@ static void video_flush_dcache(struct udevice *vid)
+ }
+ #endif
+ 
++static void video_flush_copy(struct udevice *vid)
++{
++	struct video_priv *priv = dev_get_uclass_priv(vid);
++
++	if (!priv->copy_fb)
++		return;
++
++	if (priv->damage.endx && priv->damage.endy) {
++		int lstart = priv->damage.x * VNBYTES(priv->bpix);
++		int lend = priv->damage.endx * VNBYTES(priv->bpix);
++		int y;
++
++		for (y = priv->damage.y; y < priv->damage.endy; y++) {
++			ulong offset = (y * priv->line_length) + lstart;
++			ulong len = lend - lstart;
++
++			memcpy(priv->copy_fb + offset, priv->fb + offset, len);
++		}
++	}
++}
++
+ /* Flush video activity to the caches */
+ int video_sync(struct udevice *vid, bool force)
+ {
+@@ -265,6 +282,9 @@ int video_sync(struct udevice *vid, bool force)
+ 	struct video_ops *ops = video_get_ops(vid);
+ 	int ret;
+ 
++	if (CONFIG_IS_ENABLED(VIDEO_COPY))
++		video_flush_copy(vid);
++
+ 	if (ops && ops->video_sync) {
+ 		ret = ops->video_sync(vid);
+ 		if (ret)
+@@ -339,69 +359,6 @@ int video_get_ysize(struct udevice *dev)
+ 	return priv->ysize;
+ }
+ 
+-#ifdef CONFIG_VIDEO_COPY
+-int video_sync_copy(struct udevice *dev, void *from, void *to)
+-{
+-	struct video_priv *priv = dev_get_uclass_priv(dev);
+-
+-	if (priv->copy_fb) {
+-		long offset, size;
+-
+-		/* Find the offset of the first byte to copy */
+-		if ((ulong)to > (ulong)from) {
+-			size = to - from;
+-			offset = from - priv->fb;
+-		} else {
+-			size = from - to;
+-			offset = to - priv->fb;
+-		}
+-
+-		/*
+-		 * Allow a bit of leeway for valid requests somewhere near the
+-		 * frame buffer
+-		 */
+-		if (offset < -priv->fb_size || offset > 2 * priv->fb_size) {
+-#ifdef DEBUG
+-			char str[120];
+-
+-			snprintf(str, sizeof(str),
+-				 "[** FAULT sync_copy fb=%p, from=%p, to=%p, offset=%lx]",
+-				 priv->fb, from, to, offset);
+-			console_puts_select_stderr(true, str);
+-#endif
+-			return -EFAULT;
+-		}
+-
+-		/*
+-		 * Silently crop the memcpy. This allows callers to avoid doing
+-		 * this themselves. It is common for the end pointer to go a
+-		 * few lines after the end of the frame buffer, since most of
+-		 * the update algorithms terminate a line after their last write
+-		 */
+-		if (offset + size > priv->fb_size) {
+-			size = priv->fb_size - offset;
+-		} else if (offset < 0) {
+-			size += offset;
+-			offset = 0;
+-		}
+-
+-		memcpy(priv->copy_fb + offset, priv->fb + offset, size);
+-	}
+-
+-	return 0;
+-}
+-
+-int video_sync_copy_all(struct udevice *dev)
+-{
+-	struct video_priv *priv = dev_get_uclass_priv(dev);
+-
+-	video_sync_copy(dev, priv->fb, priv->fb + priv->fb_size);
+-
+-	return 0;
+-}
+-
+-#endif
+-
+ #define SPLASH_DECL(_name) \
+ 	extern u8 __splash_ ## _name ## _begin[]; \
+ 	extern u8 __splash_ ## _name ## _end[]
+diff --git a/drivers/video/video_bmp.c b/drivers/video/video_bmp.c
+index da8a7b37019b..8281a8344935 100644
+--- a/drivers/video/video_bmp.c
++++ b/drivers/video/video_bmp.c
+@@ -244,7 +244,6 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
+ 	enum video_format eformat;
+ 	struct bmp_color_table_entry *palette;
+ 	int hdr_size;
+-	int ret;
+ 
+ 	if (!bmp || !(bmp->header.signature[0] == 'B' &&
+ 	    bmp->header.signature[1] == 'M')) {
+@@ -418,11 +417,5 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
+ 
+ 	video_damage(dev, x, y, width, height);
+ 
+-	/* Find the position of the top left of the image in the framebuffer */
+-	fb = (uchar *)(priv->fb + y * priv->line_length + x * bpix / 8);
+-	ret = video_sync_copy(dev, start, fb);
+-	if (ret)
+-		return log_ret(ret);
+-
+ 	return video_sync(dev, false);
+ }
+diff --git a/include/video.h b/include/video.h
+index acb65d70a2d9..11b81952f50b 100644
+--- a/include/video.h
++++ b/include/video.h
+@@ -238,43 +238,6 @@ void video_set_flush_dcache(struct udevice *dev, bool flush);
+  */
+ void video_set_default_colors(struct udevice *dev, bool invert);
+ 
+-#ifdef CONFIG_VIDEO_COPY
+-/**
+- * vidconsole_sync_copy() - Sync back to the copy framebuffer
+- *
+- * This ensures that the copy framebuffer has the same data as the framebuffer
+- * for a particular region. It should be called after the framebuffer is updated
+- *
+- * @from and @to can be in either order. The region between them is synced.
+- *
+- * @dev: Vidconsole device being updated
+- * @from: Start/end address within the framebuffer (->fb)
+- * @to: Other address within the frame buffer
+- * Return: 0 if OK, -EFAULT if the start address is before the start of the
+- *	frame buffer start
+- */
+-int video_sync_copy(struct udevice *dev, void *from, void *to);
+-
+-/**
+- * video_sync_copy_all() - Sync the entire framebuffer to the copy
+- *
+- * @dev: Vidconsole device being updated
+- * Return: 0 (always)
+- */
+-int video_sync_copy_all(struct udevice *dev);
+-#else
+-static inline int video_sync_copy(struct udevice *dev, void *from, void *to)
+-{
+-	return 0;
+-}
+-
+-static inline int video_sync_copy_all(struct udevice *dev)
+-{
+-	return 0;
+-}
+-
+-#endif
+-
+ /**
+  * video_damage() - Notify the video subsystem about screen updates.
+  *
+diff --git a/include/video_console.h b/include/video_console.h
+index 8cc8d21d6e49..9f0a2eea389f 100644
+--- a/include/video_console.h
++++ b/include/video_console.h
+@@ -258,55 +258,6 @@ void vidconsole_position_cursor(struct udevice *dev, unsigned col,
+  */
+ u32 vid_console_color(struct video_priv *priv, unsigned int idx);
+ 
+-#ifdef CONFIG_VIDEO_COPY
+-/**
+- * vidconsole_sync_copy() - Sync back to the copy framebuffer
+- *
+- * This ensures that the copy framebuffer has the same data as the framebuffer
+- * for a particular region. It should be called after the framebuffer is updated
+- *
+- * @from and @to can be in either order. The region between them is synced.
+- *
+- * @dev: Vidconsole device being updated
+- * @from: Start/end address within the framebuffer (->fb)
+- * @to: Other address within the frame buffer
+- * Return: 0 if OK, -EFAULT if the start address is before the start of the
+- *	frame buffer start
+- */
+-int vidconsole_sync_copy(struct udevice *dev, void *from, void *to);
+-
+-/**
+- * vidconsole_memmove() - Perform a memmove() within the frame buffer
+- *
+- * This handles a memmove(), e.g. for scrolling. It also updates the copy
+- * framebuffer.
+- *
+- * @dev: Vidconsole device being updated
+- * @dst: Destination address within the framebuffer (->fb)
+- * @src: Source address within the framebuffer (->fb)
+- * @size: Number of bytes to transfer
+- * Return: 0 if OK, -EFAULT if the start address is before the start of the
+- *	frame buffer start
+- */
+-int vidconsole_memmove(struct udevice *dev, void *dst, const void *src,
+-		       int size);
+-#else
+-static inline int vidconsole_sync_copy(struct udevice *dev, void *from,
+-				       void *to)
+-{
+-	return 0;
+-}
+-
+-static inline int vidconsole_memmove(struct udevice *dev, void *dst,
+-				     const void *src, int size)
+-{
+-	memmove(dst, src, size);
+-
+-	return 0;
+-}
+-
+-#endif
+-
+ /*
+  * Convert an UTF-8 byte into the corresponding character in the CP437
+  * code page. Returns 0 if that character is part of a multi-byte sequence.
+-- 
+2.38.1
+

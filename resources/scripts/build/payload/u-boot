@@ -94,14 +94,6 @@ for board in "$@"; do
 		continue
 	fi
 
-	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
-		export CROSS_COMPILE=x86_64-linux-
-	elif [ "${arch}" = "ARMv7" ]; then
-		export CROSS_COMPILE=arm-linux-gnueabi-
-	elif [ "${arch}" = "AArch64" ]; then
-		export CROSS_COMPILE=aarch64-linux-gnu-
-	fi
-
 	for config in "${board_dir}/config"/*; do
 		if [ ! -f "${config}" ]; then
 			printf "%s: Target %s has no configs to build for. Skipping build.\n" \

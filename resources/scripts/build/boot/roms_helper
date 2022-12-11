@@ -146,12 +146,6 @@ if [ "${payload_uboot}" = "y" ] && \
 	uboot_config="default"
 fi
 
-if [ "${payload_memtest}" = "y" ]; then
-	if [ ! -f "memtest86plus/memtest" ]; then
-		./build module memtest86plus
-	fi
-fi
-
 # Override all payload directives with cmdline args
 if [ ! -z ${payloads} ]; then	
 	echo "setting payloads $payloads"
@@ -159,6 +153,7 @@ if [ ! -z ${payloads} ]; then
 	payload_grub_withseabios="n" # seabios chainloaded from grub
 	payload_seabios="n"
 	payload_seabios_withgrub="n" # i386-coreboot grub accessible from SeaBIOS boot menu
+	payload_uboot="n"
 	seabios_opromloadonly="0"
 	payload_memtest="n"
 
@@ -180,28 +175,41 @@ if [ ! -d "${cbdir}" ]; then
 	./download coreboot ${cbtree}
 fi
 
+cat version > "${cbdir}/.coreboot-version"
+
 if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 	if [ ! -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ]; then
-		(
-			cat version > "${cbdir}/.coreboot-version"
-			cd "${cbdir}"
-			make crossgcc-i386 CPUS=$(nproc) # even for 64-bit machines, coreboot builds
-				# 32-bit ROM images, so we only need to worry about i386-elf
-		)
+		# Even for 64-bit machines, coreboot builds 32-bit ROM
+		# images, so we only need to worry about i386-elf
+		make -C "${cbdir}" crossgcc-i386 CPUS=$(nproc)
 	fi
+	case "$(uname -m)" in
+		x86*|i*86|amd64) : ;;
+		*) export CROSS_COMPILE=i386-elf- ;;
+	esac
 elif [ "${arch}" = "ARMv7" ]; then
-	(
-		cat version > "${cbdir}/.coreboot-version"
-		cd "${cbdir}"
-		make crossgcc-arm CPUS=$(nproc) # This is for armv7, doesn't apply to aarch64
-	)
+	if [ ! -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ]; then
+		make -C "${cbdir}" crossgcc-arm CPUS=$(nproc)
+	fi
+	case "$(uname -m)" in
+		arm|arm32|armv6*|armv7*) : ;;
+		*) export CROSS_COMPILE=arm-eabi- ;;
+	esac
 elif [ "${arch}" = "AArch64" ]; then
-	(
-		cat version > "${cbdir}/.coreboot-version"
-		cd "${cbdir}"
-		make crossgcc-aarch64 CPUS=$(nproc) # This is for aarch64, doesn't apply to armv7
-	)
+	if [ ! -d "${cbdir}/util/crossgcc/xgcc/aarch64-elf/" ]; then
+		make -C "${cbdir}" crossgcc-aarch64 CPUS=$(nproc)
+	fi
+	# aarch64 also needs armv7 toolchain for arm-trusted-firmware
+	if [ ! -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ]; then
+		make -C "${cbdir}" crossgcc-arm CPUS=$(nproc)
+	fi
+	case "$(uname -m)" in
+		arm64|aarch64) : ;;
+		*) export CROSS_COMPILE=aarch64-elf- ;;
+	esac
 fi
+
+export PATH="$(pwd)/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
 
 if [ ! -f "${cbfstool}" ]; then
 	./build module cbutils ${cbtree}
@@ -215,6 +223,12 @@ if [ ! -f "${seavgabiosrom}" ] \
 	elif [ "${payload_grub}" = "y" ] \
 			&& [ "${payload_grub_withseabios}" = "y" ]; then
 		./build payload seabios
+	fi
+fi
+
+if [ "${payload_memtest}" = "y" ]; then
+	if [ ! -f "memtest86plus/memtest" ]; then
+		./build module memtest86plus
 	fi
 fi
 
@@ -254,14 +268,17 @@ if [ "${payload_grub}" = "y" ] || [ "${payload_seabios_withgrub}" = "y" ]; then
 fi
 
 if [ "${payload_uboot}" = "y" ]; then
-	if [ "${uboot_config}" = "default" ] && \
-		[ -f "payload/u-boot/${board}/u-boot.elf" ]; then
-			ubootelf="payload/u-boot/${board}/u-boot.elf"
+	if [ "${uboot_config}" = "default" ]; then
+		ubdir="payload/u-boot/${board}"
 	else
-		ubootelf="payload/u-boot/${board}/${uboot_config}/u-boot.elf"
+		ubdir="payload/u-boot/${board}/${uboot_config}"
 	fi
 
-	if [ ! -f "${ubootelf}" ]; then
+	if [ -f "${ubdir}/u-boot.elf" ]; then
+		ubootelf="${ubdir}/u-boot.elf"
+	elif [ -f "${ubdir}/u-boot" ]; then
+		ubootelf="${ubdir}/u-boot"
+	else
 		printf "Required U-Boot payloads not yet built. Building now:\n"
 		rm -Rf "payload/u-boot/${board}" # just in case
 		./build payload u-boot "${board}"
@@ -383,9 +400,15 @@ make_uboot_payload_rom() {
 	cbfstool_path="${4}"
 
 	if [ "${target_uboot_config}" = "default" ]; then
-		target_ubootelf="payload/u-boot/${board}/u-boot.elf"
+		target_ubdir="payload/u-boot/${board}"
 	else
-		target_ubootelf="payload/u-boot/${board}/${target_uboot_config}/u-boot.elf"
+		target_ubdir="payload/u-boot/${board}/${target_uboot_config}"
+	fi
+
+	if [ -f "${target_ubdir}/u-boot.elf" ]; then
+		target_ubootelf="${target_ubdir}/u-boot.elf"
+	elif [ -f "${target_ubdir}/u-boot" ]; then
+		target_ubootelf="${target_ubdir}/u-boot"
 	fi
 
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
