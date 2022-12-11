@@ -374,18 +374,18 @@ make_seabios_rom() {
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	cp "${target_cbrom}" "${tmprom}"
-	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" -n ${target_seabios_cbfs_path} -c lzma
-	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup
+	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" -n ${target_seabios_cbfs_path} -c lzma || exit 1
+	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup || exit 1
 	if [ "${target_initmode}" = "normal" ] || [ "${target_initmode}" = "libgfxinit" ]; then
-		"${cbfstool}" "${tmprom}" add-int -i 2 -n etc/pci-optionrom-exec
+		"${cbfstool}" "${tmprom}" add-int -i 2 -n etc/pci-optionrom-exec || exit 1
 	elif [ "${target_initmode}" = "vgarom" ]; then
-		"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/pci-optionrom-exec
+		"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/pci-optionrom-exec || exit 1
 	fi # for undefined modes, don't add this integer. rely on SeaBIOS defaults
-	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum
-	"${cbfstool}" "${tmprom}" add-int -i ${target_opromloadonly} -n etc/only-load-option-roms
+	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || exit 1
+	"${cbfstool}" "${tmprom}" add-int -i ${target_opromloadonly} -n etc/only-load-option-roms || exit 1
 
 	if [ "${target_initmode}" = "libgfxinit" ]; then
-		"${cbfstool}" "${tmprom}" add -f "${target_seavgabios_rom}" -n vgaroms/seavgabios.bin -t raw
+		"${cbfstool}" "${tmprom}" add -f "${target_seavgabios_rom}" -n vgaroms/seavgabios.bin -t raw || exit 1
 	fi
 
 	printf "%s\n" "${tmprom}"
@@ -414,7 +414,7 @@ make_uboot_payload_rom() {
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	cp "${target_cbrom}" "${tmprom}"
-	"${cbfstool}" "${tmprom}" add-payload -f "${target_ubootelf}" -n ${target_uboot_cbfs_path} -c lzma
+	"${cbfstool}" "${tmprom}" add-payload -f "${target_ubootelf}" -n ${target_uboot_cbfs_path} -c lzma || exit 1
 
 	printf "%s\n" "${tmprom}"
 }
@@ -429,10 +429,10 @@ make_grubrom_from_keymap() {
 	grubcfg="payload/grub/grub_${target_keymap}.cfg"
 	grubtestcfg="payload/grub/grub_${target_keymap}_test.cfg"
 
-	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
-	cp "${target_cbrom}" "${tmprom}"
+	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX) || exit 1
+	cp "${target_cbrom}" "${tmprom}" || exit 1
 
-	"${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" -n ${target_grubelf_cbfs_path} -c lzma
+	"${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" -n ${target_grubelf_cbfs_path} -c lzma || exit 1
 
 	tmpgrubcfg=$(mktemp -t grub.cfg.XXXXXXXXXX)
 	tmpgrubtestcfg=$(mktemp -t grubtest.cfg.XXXXXXXXXX)
@@ -446,8 +446,8 @@ make_grubrom_from_keymap() {
 		cp "${grubcfg}" "${tmpgrubcfg}"
 		cp "${grubtestcfg}" "${tmpgrubtestcfg}"
 	fi
-	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw
-	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg -t raw
+	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw || exit 1
+	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg -t raw || exit 1
 	rm -f "${tmpgrubcfg}" "${tmpgrubtestcfg}"
 
 	backgroundfile="background1280x800.png"
@@ -456,7 +456,7 @@ make_grubrom_from_keymap() {
 		backgroundfile="background1024x768.png"
 	fi
 	backgroundfile="resources/grub/background/${backgroundfile}"
-	"${cbfstool}" "${tmprom}" add -f ${backgroundfile} -n background.png -t raw
+	"${cbfstool}" "${tmprom}" add -f ${backgroundfile} -n background.png -t raw || exit 1
 
 	printf "%s\n" "${tmprom}"
 }
@@ -523,7 +523,7 @@ mkRoms() {
 	mkCoreboot "${cbdir}" "${cbcfgpath}"
 
 	if [ "${displaymode}" = "txtmode" ] && [ "${payload_memtest}" = "y" ]; then
-		"${cbfstool}" "${corebootrom}" add-payload -f memtest86plus/memtest -n img/memtest -c lzma
+		"${cbfstool}" "${corebootrom}" add-payload -f memtest86plus/memtest -n img/memtest -c lzma || exit 1
 	fi
 
 	if [ "${payload_seabios}" = "y" ]; then
