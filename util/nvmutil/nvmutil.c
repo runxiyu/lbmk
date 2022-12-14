@@ -183,8 +183,8 @@ cmd_setmac(const char *strMac)
 					return;
 				goto invalid_mac_address;
 			} else if ((byte == 0) && (nib == 1)) {
-				val8 &= 0xE;
-				val8 |= 2;
+				if (strMac[o + nib] == '?')
+					val8 = (val8 & 0xE) | 2;
 			}
 
 			val16 = val8;
