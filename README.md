@@ -1,5 +1,5 @@
-Free your BIOS today! GNU GPL style
-===================================
+Libreboot
+=========
 
 Find libreboot documentation at <https://libreboot.org/>
 
