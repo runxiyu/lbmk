@@ -105,7 +105,7 @@ done
     ./build clean all
 
     rm -Rf coreboot/coreboot/
-    rm -Rf .git* */.git* coreboot/*/.git* coreboot/*/3rdparty/*/.git*
+    rm -Rf .git .gitignore */.git* coreboot/*/.git* coreboot/*/3rdparty/*/.git*
     rm -Rf coreboot/*/util/nvidia/cbootimage/.git*
     rm -Rf u-boot/u-boot/ u-boot/*/.git*
 )
