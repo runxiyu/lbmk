@@ -71,7 +71,7 @@ mkdir -p "${srcdir}"/blobs
 # do not copy intel ME etc, but do copy ifd/gbe files
 for i in t440p w541 xx20 xx30; do
 	for j in ifd gbe 16_ifd; do
-		if [ -f "blobs/${i}/${j}.bin"]; then
+		if [ -f "blobs/${i}/${j}.bin" ]; then
 			if [ ! -e "${srcdir}/blobs/${i}" ]; then
 				mkdir -p "${srcdir}/blobs/${i}"
 			fi
