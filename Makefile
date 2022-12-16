@@ -5,6 +5,7 @@
 # See docs/maintain/ and docs/git/ for information about the build system
 #
 # Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
+# Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +21,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.PHONY: all check download modules ich9m-descriptors payloads roms release \
-	clean crossgcc-clean install-dependencies-ubuntu \
-	install-dependencies-debian install-dependencies-arch \
-	install-dependencies-void
+.POSIX:
+
+#.PHONY: all check download modules ich9m-descriptors payloads roms release \
+#	clean crossgcc-clean install-dependencies-ubuntu \
+#	install-dependencies-debian install-dependencies-arch \
+#	install-dependencies-void
 
 all: roms
 

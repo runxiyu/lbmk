@@ -1,9 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # ubuntu2004 script: installs build dependencies for Ubuntu 20.04
 #
 #	Copyright (C) 2014, 2015, 2021 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+#   Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if [ $EUID -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
    printf "This script must be run as root\n" 
    exit 1
 fi

@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #  helper script: create ROM images for a given mainboard
 #
 #	Copyright (C) 2020,2021 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2021 Vitali64 <vitali64pmemail@protonmail.com>
+#	Copyright (C) 2021,2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
@@ -33,16 +33,16 @@ projectname="$(cat projectname)"
 displaymodes=""
 payloads=""
 keyboard_layouts=""
-while [[ $# > 0 ]]; do
+while [ $# -gt 0 ]; do
 	case ${1} in
 		-d)
-		displaymodes+="${2}" 
+		displaymodes="${displaymodes}${2}" 
 		shift ;;
 		-p)
-		payloads+="${2}"
+		payloads="${payloads}${2}"
 		shift ;;
 		-k)
-		keyboard_layouts+="${2}"
+		keyboard_layouts="${keyboard_layouts}${2}"
 		shift ;;
 		*)
 		board=${1} ;;
@@ -79,7 +79,7 @@ payload_memtest="n"
 payload_uboot="n"
 uboot_config="undefined"
 # Override the above defaults using board.cfg
-source "resources/coreboot/${board}/board.cfg"
+. "resources/coreboot/${board}/board.cfg"
 
 if [ "${grub_scan_disk}" = "undefined" ]; then
 	printf "build/roms: Target %s does not define grub_scan_disk. Defaulting to 'both'.\n" "${board}"
@@ -295,7 +295,7 @@ moverom() {
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
 
 	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
-		dd if=${rompath} of=${newrompath} bs=1 skip=$[$(stat -c %s ${rompath}) - 0x400000] count=4194304
+		dd if=${rompath} of=${newrompath} bs=1 skip=$(($(stat -c %s ${rompath}) - 0x400000)) count=4194304
 	else
 		cp ${rompath} ${newrompath}
 	fi
@@ -316,8 +316,8 @@ moverom() {
 			done
 
 			if [ "${cuttype}" = "i945 laptop" ]; then
-				dd if=${newrompath} of=top64k.bin bs=1 skip=$[$(stat -c %s ${newrompath}) - 0x10000] count=64k
-				dd if=top64k.bin of=${newrompath} bs=1 seek=$[$(stat -c %s ${newrompath}) - 0x20000] count=64k conv=notrunc
+				dd if=${newrompath} of=top64k.bin bs=1 skip=$(($(stat -c %s ${newrompath}) - 0x10000)) count=64k
+				dd if=top64k.bin of=${newrompath} bs=1 seek=$(($(stat -c %s ${newrompath}) - 0x20000)) count=64k conv=notrunc
 				rm -f top64k.bin
 				fi
 			}
@@ -479,7 +479,7 @@ mkRomsWithGrub() {
 		keymaps="resources/grub/keymap/*"
 	else
 		for keymapname in ${keyboard_layouts}; do
-			keymaps+="resources/grub/keymap/${keymapname}.gkb"
+			keymaps="${keymaps} resources/grub/keymap/${keymapname}.gkb"
 		done
 	fi
 	for keymapfile in ${keymaps}; do

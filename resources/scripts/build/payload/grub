@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #   generate GRUB ELF files (coreboot payload) and configuration files
 #
@@ -22,7 +22,7 @@
 set -u -e
 
 # This is where GRUB is expected to be (outside of the grub-assemble, instead in main checkout)
-source "resources/grub/modules.list"
+. "resources/grub/modules.list" # source
 
 printf "Creating GRUB payloads and configuration files\n"
 

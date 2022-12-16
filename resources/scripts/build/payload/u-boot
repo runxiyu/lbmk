@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #  helper script: builds U-Boot source code
 #
 #	Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2021 Vitali64 <vitali64pmemail@protonmail.com>
+#	Copyright (C) 2021, 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -63,7 +63,7 @@ for board in "$@"; do
 	fi
 
 	# Override the above defaults using board.cfg
-	source "${board_dir}/board.cfg"
+	. "${board_dir}/board.cfg" # source
 
 	if [ "${ubtree}" = "undefined" ]; then
 		printf "%s: Target %s does not define a U-Boot tree. Skipping build.\n" \
@@ -119,7 +119,8 @@ for board in "$@"; do
 		make -C "${ubdir}" olddefconfig
 		make -C "${ubdir}" -j"$(nproc)" all
 
-		for f in "${ubdir}"/u-boot{,.bin,.dtb,.img,.itb,.elf}; do
+		for f in "${ubdir}"/u-boot "${ubdir}"/u-boot.bin "${ubdir}"/u-boot.dtb \
+			"${ubdir}"/u-boot.img "${ubdir}"/u-boot.itb "${ubdir}"/u-boot.elf; do
 			if [ -f "$f" ]; then
 				mv "$f" "${dest_dir}/"
 			fi
