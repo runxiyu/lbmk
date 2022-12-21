@@ -253,7 +253,8 @@ rhex(void)
 			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
 				err(1, NULL);
 		if (rfd != -1) {
-			close(rfd);
+			if (close(rfd))
+				err(errno, "/dev/urandom");
 			rfd = -1;
 		}
 		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY, BUFSIZ)
@@ -442,7 +443,8 @@ writeGbeFile(int *fd, const char *filename)
 	errno = 0;
 
 	if (pwrite((*fd), gbe, SIZE_8KB, 0) == SIZE_8KB)
-		close((*fd));
+		if (close((*fd)))
+			err(errno, "%s", filename);
 	if (errno != 0)
 		return;
 
