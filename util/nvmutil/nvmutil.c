@@ -178,11 +178,9 @@ cmd_setmac(const char *strMac)
 				goto invalid_mac_address;
 		byte = o / 3;
 		for (nib = 0; nib < 2; nib++, total += val8) {
-			if ((val8 = hextonum(strMac[o + nib])) > 15) {
-				if (errno != 0)
-					return;
+			if ((val8 = hextonum(strMac[o + nib])) > 15)
 				goto invalid_mac_address;
-			} else if ((byte == 0) && (nib == 1)) {
+			if ((byte == 0) && (nib == 1)) {
 				if (strMac[o + nib] == '?')
 					val8 = (val8 & 0xE) | 2;
 			}
@@ -258,12 +256,10 @@ rhex(void)
 			rfd = -1;
 		}
 		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY, BUFSIZ)
-		    != BUFSIZ) {
-			warn("%s", "/dev/urandom");
-			return 16;
-		}
+		    != BUFSIZ)
+			err(errno, "/dev/urandom");
 		if (errno != 0)
-			return 16;
+			err(errno, "/dev/urandom");
 	}
 
 	return rbuf[rindex++] & 0xf;
