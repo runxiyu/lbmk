@@ -81,13 +81,13 @@ main(int argc, char *argv[])
 
 #ifdef HAVE_PLEDGE
 	if (pledge("stdio wpath", NULL) == -1)
-		err(1, "pledge");
+		err(errno, "pledge");
 #endif
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
 #ifdef HAVE_PLEDGE
 			if (pledge("stdio rpath", NULL) == -1)
-				err(1, "pledge");
+				err(errno, "pledge");
 #endif
 			flags = O_RDONLY;
 			cmd = &cmd_dump;
@@ -251,7 +251,7 @@ rhex(void)
 		rindex = 0;
 		if (rbuf == NULL)
 			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
-				err(1, NULL);
+				err(errno, NULL);
 		if (rfd != -1) {
 			if (close(rfd))
 				err(errno, "/dev/urandom");
