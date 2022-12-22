@@ -134,7 +134,7 @@ fi
 
 if [ ! -f "coreboot/default/util/cbfstool/cbfstool" ]; then
 printf "building cbfstool from coreboot\n"
-make -C cd coreboot/default/util/cbfstool || Fail 'could not build ifdtool'
+make -C coreboot/default/util/cbfstool || Fail 'could not build cbfstool'
 fi
 
 ./blobutil download ${board} && Patch
