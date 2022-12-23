@@ -379,16 +379,14 @@ cmd_swap(void)
 void
 cmd_copy(void)
 {
-	int src = (part << 12);
-
-	int destPart = (part ^ 1);
-	int dest = (destPart << 12);
-
 	if (validChecksum(part)) {
-		memcpy((gbe + dest), (gbe + src), SIZE_4KB);
+		if (part)
+			gbe = gbe2;
+		else
+			gbe2 = gbe;
 
 		gbeFileModified = 1;
-		nvmPartModified[destPart] = 1;
+		nvmPartModified[part ^ 1] = 1;
 	}
 }
 
