@@ -57,7 +57,7 @@ void writeGbeFile(int *fd, const char *filename);
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
-uint8_t gbe[SIZE_8KB];
+uint8_t *gbe = NULL, *gbe2 = NULL;
 int part, gbeFileModified = 0;
 uint8_t nvmPartModified[2];
 
@@ -72,6 +72,10 @@ main(int argc, char *argv[])
 	char *strMac = NULL;
 	char *strRMac = "??:??:??:??:??:??";
 	void (*cmd)(void) = NULL;
+
+	if ((gbe = (uint8_t *) malloc(SIZE_8KB)) == NULL)
+		err(errno, NULL);
+	gbe2 = gbe + SIZE_4KB;
 
 	nvmPartModified[0] = 0;
 	nvmPartModified[1] = 0;
@@ -351,16 +355,18 @@ void
 cmd_swap(void)
 {
 	int part0, part1;
+	size_t g1 = (size_t) gbe;
+	size_t g2 = (size_t) gbe2;
 
 	part0 = validChecksum(0);
 	part1 = validChecksum(1);
 
 	if (part0 || part1) {
-		for(part0 = 0; part0 < SIZE_4KB; part0++) {
-			gbe[part0] ^= gbe[part1 = (part0 | SIZE_4KB)];
-			gbe[part1] ^= gbe[part0];
-			gbe[part0] ^= gbe[part1];
-		}
+		g1 ^= g2;
+		g2 ^= g1;
+		g1 ^= g2;
+		gbe = (uint8_t *) g1;
+		gbe2 = (uint8_t *) g2;
 
 		gbeFileModified = 1;
 		nvmPartModified[0] = 1;
@@ -438,9 +444,12 @@ writeGbeFile(int *fd, const char *filename)
 	int partnum;
 	errno = 0;
 
-	if (pwrite((*fd), gbe, SIZE_8KB, 0) == SIZE_8KB)
-		if (close((*fd)))
-			err(errno, "%s", filename);
+	if (pwrite((*fd), gbe, SIZE_4KB, 0) != SIZE_4KB)
+		err(errno, "%s", filename);
+	if (pwrite((*fd), gbe2, SIZE_4KB, SIZE_4KB) != SIZE_4KB)
+		err(errno, "%s", filename);
+	if (close((*fd)))
+		err(errno, "%s", filename);
 	if (errno != 0)
 		return;
 
