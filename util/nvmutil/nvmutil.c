@@ -355,18 +355,16 @@ void
 cmd_swap(void)
 {
 	int part0, part1;
-	size_t g1 = (size_t) gbe;
-	size_t g2 = (size_t) gbe2;
+	size_t ptr;
 
 	part0 = validChecksum(0);
 	part1 = validChecksum(1);
 
 	if (part0 || part1) {
-		g1 ^= g2;
-		g2 ^= g1;
-		g1 ^= g2;
-		gbe = (uint8_t *) g1;
-		gbe2 = (uint8_t *) g2;
+		gbe2 = gbe;
+		ptr = (size_t) gbe;
+		ptr |= SIZE_4KB;
+		gbe = (uint8_t *) ptr;
 
 		gbeFileModified = 1;
 		nvmPartModified[0] = 1;
