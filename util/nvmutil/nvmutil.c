@@ -50,6 +50,7 @@ void setWord(int pos16, int partnum, uint16_t val);
 void byteswap(uint8_t *byte);
 void writeGbeFile(int *fd, const char *filename);
 
+#define PROGNAME argv[0]
 #define FILENAME argv[1]
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
@@ -134,7 +135,7 @@ main(int argc, char *argv[])
 nvmutil_exit:
 	if (!((errno == ECANCELED) && (flags == O_RDONLY)))
 		if (errno != 0)
-			fprintf(stderr, "%s\n", strerror(errno));
+			err(errno, NULL);
 
 	return errno;
 }
@@ -445,7 +446,7 @@ writeGbeFile(int *fd, const char *filename)
 	if (close((*fd)))
 		err(errno, "%s", filename);
 	if (errno != 0)
-		return;
+		err(errno, "%s", filename);
 
 	for (partnum = 0; partnum < 2; partnum++) {
 		if (nvmPartModified[partnum])
