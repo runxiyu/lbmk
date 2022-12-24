@@ -57,7 +57,9 @@ void writeGbeFile(int *fd, const char *filename);
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
-uint8_t *gbe = NULL, *gbe2 = NULL;
+uint8_t *buf = NULL;
+size_t gbe[2];
+
 int part, gbeFileModified = 0;
 uint8_t nvmPartModified[2];
 
@@ -73,9 +75,10 @@ main(int argc, char *argv[])
 	char *strRMac = "??:??:??:??:??:??";
 	void (*cmd)(void) = NULL;
 
-	if ((gbe = (uint8_t *) malloc(SIZE_8KB)) == NULL)
+	if ((buf = (uint8_t *) malloc(SIZE_8KB)) == NULL)
 		err(errno, NULL);
-	gbe2 = gbe + SIZE_4KB;
+	gbe[0] = gbe[1] = (size_t) buf;
+	gbe[1] += SIZE_4KB;
 
 	nvmPartModified[0] = 0;
 	nvmPartModified[1] = 0;
@@ -115,7 +118,7 @@ main(int argc, char *argv[])
 
 	if ((strMac == NULL) && (cmd == NULL))
 		errno = EINVAL;
-	else if (readFromFile(&fd, gbe, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
+	else if (readFromFile(&fd, buf, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
 
 	if (errno == 0) {
@@ -355,16 +358,14 @@ void
 cmd_swap(void)
 {
 	int part0, part1;
-	size_t ptr;
 
 	part0 = validChecksum(0);
 	part1 = validChecksum(1);
 
 	if (part0 || part1) {
-		gbe2 = gbe;
-		ptr = (size_t) gbe;
-		ptr |= SIZE_4KB;
-		gbe = (uint8_t *) ptr;
+		gbe[0] ^= gbe[1];
+		gbe[1] ^= gbe[0];
+		gbe[0] ^= gbe[1];
 
 		gbeFileModified = 1;
 		nvmPartModified[0] = 1;
@@ -378,10 +379,7 @@ void
 cmd_copy(void)
 {
 	if (validChecksum(part)) {
-		if (part)
-			gbe = gbe2;
-		else
-			gbe2 = gbe;
+		gbe[part ^ 1] = gbe[part];
 
 		gbeFileModified = 1;
 		nvmPartModified[part ^ 1] = 1;
@@ -408,7 +406,7 @@ validChecksum(int partnum)
 uint16_t
 word(int pos16, int partnum)
 {
-	uint16_t val16 = ((uint16_t *) gbe)[pos16 + (partnum << 11)];
+	uint16_t val16 = ((uint16_t *) buf)[pos16 + (partnum << 11)];
 	if (!little_endian)
 		byteswap((uint8_t *) &val16);
 
@@ -418,9 +416,9 @@ word(int pos16, int partnum)
 void
 setWord(int pos16, int partnum, uint16_t val)
 {
-	((uint16_t *) gbe)[pos16 + (partnum << 11)] = val;
+	((uint16_t *) buf)[pos16 + (partnum << 11)] = val;
 	if (!little_endian)
-		byteswap(gbe + (pos16 << 1) + (partnum << 12));
+		byteswap(buf + (pos16 << 1) + (partnum << 12));
 
 	gbeFileModified = 1;
 	nvmPartModified[partnum] = 1;
@@ -440,9 +438,9 @@ writeGbeFile(int *fd, const char *filename)
 	int partnum;
 	errno = 0;
 
-	if (pwrite((*fd), gbe, SIZE_4KB, 0) != SIZE_4KB)
+	if (pwrite((*fd), (uint8_t *) gbe[0], SIZE_4KB, 0) != SIZE_4KB)
 		err(errno, "%s", filename);
-	if (pwrite((*fd), gbe2, SIZE_4KB, SIZE_4KB) != SIZE_4KB)
+	if (pwrite((*fd), (uint8_t *) gbe[1], SIZE_4KB, SIZE_4KB) != SIZE_4KB)
 		err(errno, "%s", filename);
 	if (close((*fd)))
 		err(errno, "%s", filename);
