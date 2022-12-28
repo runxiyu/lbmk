@@ -1,9 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #  helper script: download u-boot
 #
 #	Copyright (C) 2021 Denis 'GNUtoo' Carikli  <GNUtoo@cyberdimension.org>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -22,7 +23,7 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-[[ -f build_error ]] && rm -f build_error
+[ -f build_error ] && rm -f build_error
 
 list_supported_boards() {
 	for board in resources/u-boot/*; do
@@ -55,7 +56,7 @@ downloadfor() {
 		fi
 
 		# This is to override $ubrevision and $ubtree
-		source "resources/u-boot/${board}/board.cfg" || touch build_error
+		. "resources/u-boot/${board}/board.cfg" || touch build_error
 		if [ -f build_error ]; then
 			printf "ERROR: %s: problem sourcing %s/board.cfg\n" \
 				"download/u-boot" "${board}"
@@ -239,10 +240,10 @@ if [ $# -eq 0 ] ; then
 		download_uboot_board "${board}"
 	done
 	exit 0
-elif [ $# -eq 1 -a "$1" == "--help" ] ; then
+elif [ $# -eq 1 ] && [ "$1" = "--help" ] ; then
 	usage
 	exit 0
-elif [ $# -eq 1 -a "$1" == "--list-boards" ] ; then
+elif [ $# -eq 1 ] && [ "$1" = "--list-boards" ] ; then
 	list_supported_boards
 	exit 0
 elif [ $# -eq 1 ] ; then

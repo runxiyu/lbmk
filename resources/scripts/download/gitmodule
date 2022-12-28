@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 Print_help(){
@@ -72,8 +73,9 @@ while read -r line ; do
 		bkup_url=${2}
 		;;
 	esac
-done <<< $(eval "awk ' /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/git/revisions")
-
+done << EOF
+$(eval "awk ' /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/git/revisions")
+EOF
 Check_vars
 tmp_dir=$(mktemp -dt "${name}_XXXXX")
 

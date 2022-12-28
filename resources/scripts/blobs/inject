@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 Fail(){
@@ -53,10 +54,10 @@ Detect_board(){
 	filename=$(basename ${rom})
 	case ${filename} in
 		grub_*)
-		board=$(cut -d '_' -f2-3 <<<${filename})
+		board=$(echo "${filename}" | cut -d '_' -f2-3)
 		;;
 		seabios_withgrub_*)
-		board=$(cut -d '_' -f3-4 <<<${filename})
+		board=$(echo "${filename}" | cut -d '_' -f3-4)
 		;;
 		*)
 		return 1
