@@ -27,7 +27,7 @@ Modify_gbe(){
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
 	if [ ! -f util/nvmutil/nvm ]; then
-		make -C /util/nvmutil || Fail 'failed to build nvmutil'
+		make -C util/nvmutil || Fail 'failed to build nvmutil'
 	fi
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
