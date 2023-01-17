@@ -437,8 +437,13 @@ void
 writeGbeFile(int *fd, const char *filename)
 {
 	int p;
+	int tw = 0;
 	int nw = SIZE_4KB;
 	errno = 0;
+
+	/* if copy/swap not performed, write only the nvm part */
+	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1]))
+		nw = 128;
 
 	for (p = 0; p < 2; p++) {
 		if (nvmPartModified[p]) {
@@ -450,11 +455,12 @@ writeGbeFile(int *fd, const char *filename)
 		}
 		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) != nw)
 			err(errno, "%s", filename);
+		tw += nw;
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
 	if (errno != 0)
 		err(errno, "%s", filename);
 
-	printf("File `%s` successfully re-written.\n", filename);
+	printf("%d bytes written to file: `%s`\n", tw, filename);
 }
