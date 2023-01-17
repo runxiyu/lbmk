@@ -439,21 +439,22 @@ writeGbeFile(int *fd, const char *filename)
 	int partnum;
 	errno = 0;
 
-	if (pwrite((*fd), (uint8_t *) gbe[0], SIZE_4KB, 0) != SIZE_4KB)
-		err(errno, "%s", filename);
-	if (pwrite((*fd), (uint8_t *) gbe[1], SIZE_4KB, SIZE_4KB) != SIZE_4KB)
-		err(errno, "%s", filename);
+	for (partnum = 0; partnum < 2; partnum++) {
+		if (nvmPartModified[partnum]) {
+			printf("Part %d modified\n", partnum);
+		} else {
+			fprintf (stderr,
+				"Part %d NOT modified\n", partnum);
+			continue;
+		}
+		if (pwrite((*fd), (uint8_t *) gbe[partnum], SIZE_4KB,
+		    partnum << 12) != SIZE_4KB)
+			err(errno, "%s", filename);
+	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
 	if (errno != 0)
 		err(errno, "%s", filename);
 
-	for (partnum = 0; partnum < 2; partnum++) {
-		if (nvmPartModified[partnum])
-			printf("Part %d modified\n", partnum);
-		else
-			fprintf (stderr,
-				"Part %d NOT modified\n", partnum);
-	}
-	printf("File `%s` successfully modified\n", filename);
+	printf("File `%s` successfully re-written.\n", filename);
 }
