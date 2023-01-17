@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2022 Leah Rowe <info@minifree.org>
+ * Copyright (C) 2022, 2023 Leah Rowe <info@minifree.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
