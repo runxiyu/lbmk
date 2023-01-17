@@ -436,19 +436,19 @@ byteswap(uint8_t *byte)
 void
 writeGbeFile(int *fd, const char *filename)
 {
-	int partnum;
+	int p;
+	int nw = SIZE_4KB;
 	errno = 0;
 
-	for (partnum = 0; partnum < 2; partnum++) {
-		if (nvmPartModified[partnum]) {
-			printf("Part %d modified\n", partnum);
+	for (p = 0; p < 2; p++) {
+		if (nvmPartModified[p]) {
+			printf("Part %d modified\n", p);
 		} else {
 			fprintf (stderr,
-				"Part %d NOT modified\n", partnum);
+				"Part %d NOT modified\n", p);
 			continue;
 		}
-		if (pwrite((*fd), (uint8_t *) gbe[partnum], SIZE_4KB,
-		    partnum << 12) != SIZE_4KB)
+		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) != nw)
 			err(errno, "%s", filename);
 	}
 	if (close((*fd)))
