@@ -8,19 +8,18 @@ Subject: [PATCH 16/17] lenovo/x230: fix the data.vbt path for the EDP variant
  1 file changed, 3 deletions(-)
 
 diff --git a/src/mainboard/lenovo/x230/Kconfig b/src/mainboard/lenovo/x230/Kconfig
-index b8cae24199..d72b6f8aea 100644
+index b8cae24199..409892f3ab 100644
 --- a/src/mainboard/lenovo/x230/Kconfig
 +++ b/src/mainboard/lenovo/x230/Kconfig
-@@ -62,9 +62,6 @@ config MAINBOARD_PART_NUMBER
- config OVERRIDE_DEVICETREE
+@@ -63,7 +63,7 @@ config OVERRIDE_DEVICETREE
  	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
  
--config INTEL_GMA_VBT_FILE
+ config INTEL_GMA_VBT_FILE
 -	default "variants/x230_edp/data.vbt" if BOARD_LENOVO_X230_EDP
--
++       default "src/mainboard/\$(MAINBOARDDIR)/variants/x230_edp/data.vbt" if BOARD_LENOVO_X230_EDP
+ 
  config USBDEBUG_HCD_INDEX
  	int
- 	default 2
 -- 
 2.25.1
 
