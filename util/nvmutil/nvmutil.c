@@ -50,7 +50,6 @@ void setWord(int pos16, int partnum, uint16_t val);
 void byteswap(uint8_t *byte);
 void writeGbeFile(int *fd, const char *filename);
 
-#define PROGNAME argv[0]
 #define FILENAME argv[1]
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
