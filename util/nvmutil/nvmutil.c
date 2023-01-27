@@ -46,7 +46,7 @@ void cmd_swap(void);
 void cmd_copy(void);
 int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
-void setWord(int pos16, int partnum, uint16_t val);
+void setWord(int pos16, int partnum, uint16_t val16);
 void byteswap(uint8_t *byte);
 void writeGbeFile(int *fd, const char *filename);
 
@@ -403,19 +403,21 @@ validChecksum(int partnum)
 uint16_t
 word(int pos16, int partnum)
 {
-	uint16_t val16 = ((uint16_t *) buf)[pos16 + (partnum << 11)];
-	if (!little_endian)
-		byteswap((uint8_t *) &val16);
-
-	return val16;
+	uint8_t *nbuf = (uint8_t *) gbe[partnum];
+	uint16_t pos8 = pos16 << 1;
+	uint16_t val16 = nbuf[pos8 + 1];
+	val16 <<= 8;
+	return val16 |= nbuf[pos8];
 }
 
 void
-setWord(int pos16, int partnum, uint16_t val)
+setWord(int pos16, int partnum, uint16_t val16)
 {
-	((uint16_t *) buf)[pos16 + (partnum << 11)] = val;
-	if (!little_endian)
-		byteswap(buf + (pos16 << 1) + (partnum << 12));
+	uint8_t *nbuf = (uint8_t *) gbe[partnum];
+	uint8_t val8[2] = {(uint8_t) (val16 & 0xff), (uint8_t) (val16 >> 8)};
+	uint16_t pos8 = pos16 << 1;
+	nbuf[pos8] = val8[0];
+	nbuf[pos8 + 1] = val8[1];
 
 	gbeFileModified = 1;
 	nvmPartModified[partnum] = 1;
