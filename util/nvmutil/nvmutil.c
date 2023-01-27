@@ -77,6 +77,11 @@ main(int argc, char *argv[])
 	char *strRMac = "??:??:??:??:??:??";
 	void (*cmd)(void) = NULL;
 
+#ifdef HAVE_PLEDGE
+	if (pledge("stdio wpath", NULL) == -1)
+		err(errno, "pledge");
+#endif
+
 	if ((buf = (uint8_t *) malloc(SIZE_8KB)) == NULL)
 		err(errno, NULL);
 	gbe[0] = gbe[1] = (size_t) buf;
@@ -88,10 +93,6 @@ main(int argc, char *argv[])
 	test = 1;
 	little_endian = ((uint8_t *) &test)[0];
 
-#ifdef HAVE_PLEDGE
-	if (pledge("stdio wpath", NULL) == -1)
-		err(errno, "pledge");
-#endif
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
 #ifdef HAVE_PLEDGE
