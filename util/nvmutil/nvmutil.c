@@ -62,7 +62,7 @@ size_t gbe[2];
 uint8_t skipread[2] = {0, 0};
 
 int part, gbeFileModified = 0;
-uint8_t nvmPartModified[2];
+uint8_t nvmPartModified[2] = {0, 0};
 
 uint16_t test;
 uint8_t little_endian;
@@ -70,11 +70,9 @@ uint8_t little_endian;
 int
 main(int argc, char *argv[])
 {
-	int fd;
 	size_t nr = 128;
-	int flags = O_RDWR;
-	char *strMac = NULL;
-	char *strRMac = "??:??:??:??:??:??";
+	int fd, flags = O_RDWR;
+	char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 	void (*cmd)(void) = NULL;
 
 #ifdef HAVE_PLEDGE
@@ -84,11 +82,7 @@ main(int argc, char *argv[])
 
 	if ((buf = (uint8_t *) malloc(SIZE_8KB)) == NULL)
 		err(errno, NULL);
-	gbe[0] = gbe[1] = (size_t) buf;
-	gbe[1] += SIZE_4KB;
-
-	nvmPartModified[0] = 0;
-	nvmPartModified[1] = 0;
+	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 
 	test = 1;
 	little_endian = ((uint8_t *) &test)[0];
@@ -141,19 +135,17 @@ main(int argc, char *argv[])
 		writeGbeFile(&fd, FILENAME);
 
 nvmutil_exit:
-	if (!((errno == ECANCELED) && (flags == O_RDONLY)))
-		if (errno != 0)
-			err(errno, NULL);
-
-	return errno;
+	if ((errno != 0) && (cmd != &cmd_dump))
+		err(errno, NULL);
+	else
+		return errno;
 }
 
 void
 readGbeFile(int *fd, const char *path, int flags, size_t nr)
 {
 	struct stat st;
-	int r, tr = 0;
-	int p;
+	int p, r, tr = 0;
 
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, path);
@@ -462,8 +454,6 @@ writeGbeFile(int *fd, const char *filename)
 		tw += nw;
 	}
 	if (close((*fd)))
-		err(errno, "%s", filename);
-	if (errno != 0)
 		err(errno, "%s", filename);
 
 	printf("%d bytes written to file: `%s`\n", tw, filename);
