@@ -252,19 +252,20 @@ rhex(void)
 	static int rfd = -1;
 	static uint8_t *rbuf = NULL;
 	static size_t rindex = BUFSIZ;
+	int bsize = BUFSIZ;
 
-	if (rindex == BUFSIZ) {
+	if (rindex == bsize) {
 		rindex = 0;
 		if (rbuf == NULL)
-			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
+			if ((rbuf = (uint8_t *) malloc(bsize)) == NULL)
 				err(errno, NULL);
 		if (rfd != -1) {
 			if (close(rfd))
 				err(errno, "/dev/urandom");
 			rfd = -1;
 		}
-		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY, BUFSIZ)
-		    != BUFSIZ)
+		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY, bsize)
+		    != bsize)
 			err(errno, "/dev/urandom");
 		if (errno != 0)
 			err(errno, "/dev/urandom");
