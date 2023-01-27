@@ -351,12 +351,7 @@ cmd_brick(void)
 void
 cmd_swap(void)
 {
-	int part0, part1;
-
-	part0 = validChecksum(0);
-	part1 = validChecksum(1);
-
-	if (part0 || part1) {
+	if (validChecksum(1) || validChecksum(0)) {
 		gbe[0] ^= gbe[1];
 		gbe[1] ^= gbe[0];
 		gbe[0] ^= gbe[1];
