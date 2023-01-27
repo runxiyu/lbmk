@@ -32,7 +32,7 @@
 #include <dirent.h>
 #include <err.h>
 
-ssize_t readGbeFile(int *fd, uint8_t *buf, const char *path, int flags,
+void readGbeFile(int *fd, const char *path, int flags,
 	size_t nr);
 void cmd_setmac(const char *strMac);
 uint8_t hextonum(char chs);
@@ -60,6 +60,7 @@ void writeGbeFile(int *fd, const char *filename);
 
 uint8_t *buf = NULL;
 size_t gbe[2];
+uint8_t skipread[2] = {0, 0};
 
 int part, gbeFileModified = 0;
 uint8_t nvmPartModified[2];
@@ -71,6 +72,7 @@ int
 main(int argc, char *argv[])
 {
 	int fd;
+	size_t nr = 128;
 	int flags = O_RDWR;
 	char *strMac = NULL;
 	char *strRMac = "??:??:??:??:??:??";
@@ -119,18 +121,24 @@ main(int argc, char *argv[])
 
 	if ((strMac == NULL) && (cmd == NULL))
 		errno = EINVAL;
-	else if (readGbeFile(&fd, buf, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
+	if (errno != 0)
 		goto nvmutil_exit;
 
-	if (errno == 0) {
-		if (strMac != NULL)
-			cmd_setmac(strMac);
-		else if (cmd != NULL)
-			(*cmd)();
+	if ((cmd == &cmd_copy) || (cmd == &cmd_swap))
+		nr = SIZE_4KB;
 
-		if (gbeFileModified)
-			writeGbeFile(&fd, FILENAME);
-	}
+	if ((cmd == &cmd_copy) || (cmd == &cmd_setchecksum) ||
+	    (cmd == &cmd_brick))
+		skipread[part ^ 1] = 1;
+
+	readGbeFile(&fd, FILENAME, flags, nr);
+
+	if (strMac != NULL)
+		cmd_setmac(strMac);
+	else if (cmd != NULL)
+		(*cmd)();
+	if (gbeFileModified)
+		writeGbeFile(&fd, FILENAME);
 
 nvmutil_exit:
 	if (!((errno == ECANCELED) && (flags == O_RDONLY)))
@@ -140,30 +148,38 @@ nvmutil_exit:
 	return errno;
 }
 
-ssize_t
-readGbeFile(int *fd, uint8_t *buf, const char *path, int flags, size_t nr)
+void
+readGbeFile(int *fd, const char *path, int flags, size_t nr)
 {
 	struct stat st;
+	int r, tr = 0;
+	int p;
 
-	if (opendir(path) != NULL) {
-		errno = EISDIR;
-		return -1;
-	}
-	if (((*fd) = open(path, flags)) == -1) {
-		return -1;
-	}
+	if (opendir(path) != NULL)
+		err(errno = EISDIR, path);
+	if (((*fd) = open(path, flags)) == -1)
+		err(errno, path);
 	if (fstat((*fd), &st) == -1)
-		return -1;
+		err(errno, path);
+
 	if ((st.st_size != SIZE_8KB)) {
-		fprintf(stderr, "%s: Bad file size\n", path);
-		errno = ECANCELED;
-		return -1;
+		fprintf(stderr, "%s: Bad file size (must be 8KiB)\n", path);
+		err(errno = ECANCELED, NULL);
 	}
+
 	if (errno == ENOTDIR)
 		errno = 0;
 	if (errno != 0)
-		return -1;
-	return read((*fd), buf, nr);
+		err(errno, path);
+
+	for (p = 0; p < 2; p++) {
+		if (skipread[p])
+			continue;
+		if ((r = pread((*fd), (uint8_t *) gbe[p], nr, p << 12)) == -1)
+			err(errno, path);
+		tr += r;
+	}
+	printf("%d bytes read from file: `%s`\n", tr, path);
 }
 
 void
