@@ -32,8 +32,8 @@
 #include <dirent.h>
 #include <err.h>
 
-ssize_t readFromFile(int *fd, uint8_t *buf, const char *path, int flags,
-	size_t size);
+ssize_t readGbeFile(int *fd, uint8_t *buf, const char *path, int flags,
+	size_t nr);
 void cmd_setmac(const char *strMac);
 uint8_t hextonum(char chs);
 uint8_t rhex(void);
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 
 	if ((strMac == NULL) && (cmd == NULL))
 		errno = EINVAL;
-	else if (readFromFile(&fd, buf, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
+	else if (readGbeFile(&fd, buf, FILENAME, flags, SIZE_8KB) != SIZE_8KB)
 		goto nvmutil_exit;
 
 	if (errno == 0) {
@@ -141,31 +141,29 @@ nvmutil_exit:
 }
 
 ssize_t
-readFromFile(int *fd, uint8_t *buf, const char *path, int flags, size_t size)
+readGbeFile(int *fd, uint8_t *buf, const char *path, int flags, size_t nr)
 {
 	struct stat st;
 
 	if (opendir(path) != NULL) {
 		errno = EISDIR;
 		return -1;
-	} else if (((*fd) = open(path, flags)) == -1) {
-		return -1;
-	} else if (size == SIZE_8KB) {
-		if (fstat((*fd), &st) == -1)
-			return -1;
-		if ((st.st_size != SIZE_8KB) && strcmp(path, "/dev/urandom")) {
-			fprintf(stderr, "Bad file size\n");
-			errno = ECANCELED;
-			return -1;
-		}
 	}
-
+	if (((*fd) = open(path, flags)) == -1) {
+		return -1;
+	}
+	if (fstat((*fd), &st) == -1)
+		return -1;
+	if ((st.st_size != SIZE_8KB)) {
+		fprintf(stderr, "%s: Bad file size\n", path);
+		errno = ECANCELED;
+		return -1;
+	}
 	if (errno == ENOTDIR)
 		errno = 0;
-	else if (errno != 0)
+	if (errno != 0)
 		return -1;
-
-	return read((*fd), buf, size);
+	return read((*fd), buf, nr);
 }
 
 void
@@ -251,23 +249,17 @@ rhex(void)
 {
 	static int rfd = -1;
 	static uint8_t *rbuf = NULL;
-	static size_t rindex = BUFSIZ;
-	int bsize = BUFSIZ;
+	static size_t rindex = 12;
 
-	if (rindex == bsize) {
+	if (rindex == 12) {
 		rindex = 0;
 		if (rbuf == NULL)
-			if ((rbuf = (uint8_t *) malloc(bsize)) == NULL)
+			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
 				err(errno, NULL);
-		if (rfd != -1) {
-			if (close(rfd))
+		if (rfd == -1)
+			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
 				err(errno, "/dev/urandom");
-			rfd = -1;
-		}
-		if (readFromFile(&rfd, rbuf, "/dev/urandom", O_RDONLY, bsize)
-		    != bsize)
-			err(errno, "/dev/urandom");
-		if (errno != 0)
+		if (read(rfd, rbuf, 12) == -1)
 			err(errno, "/dev/urandom");
 	}
 
