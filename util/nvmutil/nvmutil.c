@@ -256,22 +256,19 @@ uint8_t
 rhex(void)
 {
 	static int rfd = -1;
-	static uint8_t *rbuf = NULL;
-	static size_t rindex = 12;
+	static uint64_t rnum = 0;
+	static size_t rindex = 8;
 
-	if (rindex == 12) {
+	if (rindex == 8) {
 		rindex = 0;
-		if (rbuf == NULL)
-			if ((rbuf = (uint8_t *) malloc(BUFSIZ)) == NULL)
-				err(errno, NULL);
 		if (rfd == -1)
 			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
 				err(errno, "/dev/urandom");
-		if (read(rfd, rbuf, 12) == -1)
+		if (read(rfd, (uint8_t *) &rnum, 8) == -1)
 			err(errno, "/dev/urandom");
 	}
 
-	return rbuf[rindex++] & 0xf;
+	return ((uint8_t *) &rnum)[rindex++] & 0xf;
 }
 
 void
