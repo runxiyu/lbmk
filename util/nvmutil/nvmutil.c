@@ -120,7 +120,6 @@ main(int argc, char *argv[])
 
 	if ((cmd == &cmd_copy) || (cmd == &cmd_swap))
 		nr = SIZE_4KB;
-
 	if ((cmd == &cmd_copy) || (cmd == &cmd_setchecksum) ||
 	    (cmd == &cmd_brick))
 		skipread[part ^ 1] = 1;
@@ -131,6 +130,7 @@ main(int argc, char *argv[])
 		cmd_setmac(strMac);
 	else if (cmd != NULL)
 		(*cmd)();
+
 	if (gbeFileModified)
 		writeGbeFile(&fd, FILENAME);
 
@@ -148,12 +148,11 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	int p, r, tr = 0;
 
 	if (opendir(path) != NULL)
-		err(errno = EISDIR, path);
+		err(errno = EISDIR, "%s", path);
 	if (((*fd) = open(path, flags)) == -1)
-		err(errno, path);
+		err(errno, "%s", path);
 	if (fstat((*fd), &st) == -1)
-		err(errno, path);
-
+		err(errno, "%s", path);
 	if ((st.st_size != SIZE_8KB)) {
 		fprintf(stderr, "%s: Bad file size (must be 8KiB)\n", path);
 		err(errno = ECANCELED, NULL);
@@ -162,13 +161,13 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	if (errno == ENOTDIR)
 		errno = 0;
 	if (errno != 0)
-		err(errno, path);
+		err(errno, "%s", path);
 
 	for (p = 0; p < 2; p++) {
 		if (skipread[p])
 			continue;
 		if ((r = pread((*fd), (uint8_t *) gbe[p], nr, p << 12)) == -1)
-			err(errno, path);
+			err(errno, "%s", path);
 		tr += r;
 	}
 	printf("%d bytes read from file: `%s`\n", tr, path);
