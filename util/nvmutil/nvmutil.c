@@ -58,7 +58,7 @@ void writeGbeFile(int *fd, const char *filename);
 #define SIZE_8KB 0x2000
 
 uint8_t buf[SIZE_8KB];
-size_t gbe[2] = {(size_t) buf, ((size_t) buf) + SIZE_4KB};
+size_t gbe[2];
 uint8_t skipread[2] = {0, 0};
 
 int part, gbeWriteAttempted = 0, gbeFileModified = 0;
@@ -70,15 +70,17 @@ uint8_t little_endian;
 int
 main(int argc, char *argv[])
 {
-	size_t nr = 128;
+	size_t nr;
 	int fd, flags = O_RDWR;
-	char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 	void (*cmd)(void) = NULL;
+	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 
 #ifdef HAVE_PLEDGE
 	if (pledge("stdio wpath", NULL) == -1)
 		err(errno, "pledge");
 #endif
+
+	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 
 	test = 1;
 	little_endian = ((uint8_t *) &test)[0];
@@ -92,7 +94,7 @@ main(int argc, char *argv[])
 			flags = O_RDONLY;
 			cmd = &cmd_dump;
 		} else if (strcmp(COMMAND, "setmac") == 0)
-			strMac = strRMac;
+			strMac = (char *) strRMac;
 		else if (strcmp(COMMAND, "swap") == 0)
 			cmd = &cmd_swap;
 	} else if (argc == 4) {
@@ -116,6 +118,9 @@ main(int argc, char *argv[])
 
 	if ((cmd == &cmd_copy) || (cmd == &cmd_swap))
 		nr = SIZE_4KB;
+	else
+		nr = 128;
+
 	if ((cmd == &cmd_copy) || (cmd == &cmd_setchecksum) ||
 	    (cmd == &cmd_brick))
 		skipread[part ^ 1] = 1;
@@ -146,7 +151,7 @@ void
 readGbeFile(int *fd, const char *path, int flags, size_t nr)
 {
 	struct stat st;
-	int p, r, tr = 0;
+	int p, r, tr;
 
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
@@ -164,7 +169,7 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	if (errno != 0)
 		err(errno, "%s", path);
 
-	for (p = 0; p < 2; p++) {
+	for (tr = 0, p = 0; p < 2; p++) {
 		if (skipread[p])
 			continue;
 		if ((r = pread((*fd), (uint8_t *) gbe[p], nr, p << 12)) == -1)
@@ -177,11 +182,10 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 void
 cmd_setmac(const char *strMac)
 {
-	uint8_t o, val8;
-	uint16_t val16;
 	int partnum, byte, nib;
-	uint16_t mac[3] = {0, 0, 0};
-	uint64_t total = 0;
+	uint8_t o, val8;
+	uint16_t val16, mac[3] = {0, 0, 0};
+	uint64_t total;
 
 	if (strnlen(strMac, 20) != 17)
 		goto invalid_mac_address;
@@ -191,7 +195,7 @@ cmd_setmac(const char *strMac)
 			if (strMac[o + 2] != ':')
 				goto invalid_mac_address;
 		byte = o / 3;
-		for (nib = 0; nib < 2; nib++, total += val8) {
+		for (total = 0, nib = 0; nib < 2; nib++, total += val8) {
 			if ((val8 = hextonum(strMac[o + nib])) > 15)
 				goto invalid_mac_address;
 			if ((byte == 0) && (nib == 1)) {
@@ -338,9 +342,9 @@ void
 cmd_setchecksum(void)
 {
 	int c;
-	uint16_t val16 = 0;
+	uint16_t val16;
 
-	for (c = 0; c < 0x3F; c++)
+	for (val16 = 0, c = 0; c < 0x3F; c++)
 		val16 += word(c, part);
 
 	setWord(0x3F, part, 0xBABA - val16);
@@ -384,9 +388,9 @@ int
 validChecksum(int partnum)
 {
 	int w;
-	uint16_t total = 0;
+	uint16_t total;
 
-	for(w = 0; w <= 0x3F; w++)
+	for(total = 0, w = 0; w <= 0x3F; w++)
 		total += word(w, partnum);
 
 	if (total == 0xBABA)
@@ -400,12 +404,16 @@ validChecksum(int partnum)
 uint16_t
 word(int pos16, int partnum)
 {
-	uint8_t *nbuf = (uint8_t *) gbe[partnum];
-	uint16_t pos8 = pos16 << 1;
-	uint16_t val16 = nbuf[pos8 + 1];
+	uint8_t *nbuf;
+	uint16_t pos8, val16;
 
+	nbuf = (uint8_t *) gbe[partnum];
+	pos8 = pos16 << 1;
+	val16 = nbuf[pos8 + 1];
 	val16 <<= 8;
-	return val16 |= nbuf[pos8];
+	val16 |= nbuf[pos8];
+
+	return val16;
 }
 
 void
@@ -441,16 +449,16 @@ byteswap(uint8_t *byte)
 void
 writeGbeFile(int *fd, const char *filename)
 {
-	int p;
-	int tw = 0;
-	int nw = SIZE_4KB;
+	int p, nw, tw;
 	errno = 0;
 
 	/* if copy/swap not performed, write only the nvm part */
 	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1]))
 		nw = 128;
+	else
+		nw = SIZE_4KB;
 
-	for (p = 0; p < 2; p++) {
+	for (tw = 0, p = 0; p < 2; p++) {
 		if (gbe[0] > gbe[1])
 			p ^= 1;
 		if (nvmPartModified[p]) {
