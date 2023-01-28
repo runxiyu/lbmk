@@ -411,13 +411,17 @@ word(int pos16, int partnum)
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
+	uint8_t val8[2], *nbuf;
+	uint16_t pos8;
+
 	gbeWriteAttempted = 1;
 	if (word(pos16, partnum) == val16)
 		return;
 
-	uint8_t *nbuf = (uint8_t *) gbe[partnum];
-	uint8_t val8[2] = {(uint8_t) (val16 & 0xff), (uint8_t) (val16 >> 8)};
-	uint16_t pos8 = pos16 << 1;
+	nbuf = (uint8_t *) gbe[partnum];
+	val8[0] = (uint8_t) (val16 & 0xff);
+	val8[1] = (uint8_t) (val16 >> 8);
+	pos8 = pos16 << 1;
 
 	nbuf[pos8] = val8[0];
 	nbuf[pos8 + 1] = val8[1];
