@@ -438,16 +438,21 @@ writeGbeFile(int *fd, const char *filename)
 		nw = 128;
 
 	for (p = 0; p < 2; p++) {
+		if (gbe[0] > gbe[1])
+			p ^= 1;
 		if (nvmPartModified[p]) {
 			printf("Part %d modified\n", p);
 		} else {
 			fprintf (stderr,
 				"Part %d NOT modified\n", p);
-			continue;
+			goto next_part;
 		}
 		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) != nw)
 			err(errno, "%s", filename);
 		tw += nw;
+next_part:
+		if (gbe[0] > gbe[1])
+			p ^= 1;
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
