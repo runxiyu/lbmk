@@ -57,8 +57,8 @@ void writeGbeFile(int *fd, const char *filename);
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
-uint8_t *buf = NULL;
-size_t gbe[2];
+uint8_t buf[SIZE_8KB];
+size_t gbe[2] = {(size_t) buf, ((size_t) buf) + SIZE_4KB};
 uint8_t skipread[2] = {0, 0};
 
 int part, gbeFileModified = 0;
@@ -79,10 +79,6 @@ main(int argc, char *argv[])
 	if (pledge("stdio wpath", NULL) == -1)
 		err(errno, "pledge");
 #endif
-
-	if ((buf = (uint8_t *) malloc(SIZE_8KB)) == NULL)
-		err(errno, NULL);
-	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 
 	test = 1;
 	little_endian = ((uint8_t *) &test)[0];
@@ -402,6 +398,7 @@ word(int pos16, int partnum)
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
 	uint16_t pos8 = pos16 << 1;
 	uint16_t val16 = nbuf[pos8 + 1];
+
 	val16 <<= 8;
 	return val16 |= nbuf[pos8];
 }
@@ -412,6 +409,7 @@ setWord(int pos16, int partnum, uint16_t val16)
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
 	uint8_t val8[2] = {(uint8_t) (val16 & 0xff), (uint8_t) (val16 >> 8)};
 	uint16_t pos8 = pos16 << 1;
+
 	nbuf[pos8] = val8[0];
 	nbuf[pos8 + 1] = val8[1];
 
