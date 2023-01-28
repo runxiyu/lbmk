@@ -61,7 +61,7 @@ uint8_t buf[SIZE_8KB];
 size_t gbe[2] = {(size_t) buf, ((size_t) buf) + SIZE_4KB};
 uint8_t skipread[2] = {0, 0};
 
-int part, gbeFileModified = 0;
+int part, gbeWriteAttempted = 0, gbeFileModified = 0;
 uint8_t nvmPartModified[2] = {0, 0};
 
 uint16_t test;
@@ -127,10 +127,13 @@ main(int argc, char *argv[])
 	else if (cmd != NULL)
 		(*cmd)();
 
-	if (gbeFileModified)
+	if (gbeFileModified) {
 		writeGbeFile(&fd, FILENAME);
-	else if ((cmd != &cmd_dump))
+	} else if ((cmd != &cmd_dump)) {
 		printf("File `%s` not modified.\n", FILENAME);
+		if (gbeWriteAttempted)
+			errno = 0;
+	}
 
 nvmutil_exit:
 	if ((errno != 0) && (cmd != &cmd_dump))
@@ -408,6 +411,7 @@ word(int pos16, int partnum)
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
+	gbeWriteAttempted = 1;
 	if (word(pos16, partnum) == val16)
 		return;
 
