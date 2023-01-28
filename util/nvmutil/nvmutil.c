@@ -129,6 +129,8 @@ main(int argc, char *argv[])
 
 	if (gbeFileModified)
 		writeGbeFile(&fd, FILENAME);
+	else if ((cmd != &cmd_dump))
+		printf("File `%s` not modified.\n", FILENAME);
 
 nvmutil_exit:
 	if ((errno != 0) && (cmd != &cmd_dump))
@@ -406,6 +408,9 @@ word(int pos16, int partnum)
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
+	if (word(pos16, partnum) == val16)
+		return;
+
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
 	uint8_t val8[2] = {(uint8_t) (val16 & 0xff), (uint8_t) (val16 >> 8)};
 	uint16_t pos8 = pos16 << 1;
