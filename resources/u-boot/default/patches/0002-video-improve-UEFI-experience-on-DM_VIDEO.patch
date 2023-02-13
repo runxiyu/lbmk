@@ -1,9 +1,9 @@
-From 570fae040f95fa313a44154372bd550ad37f6e62 Mon Sep 17 00:00:00 2001
+From 6cbbe8bd43cd672cb8ff26986f8d054b739f4fe5 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:31 +0000
-Subject: [PATCH 1/8] video: Add cursor support for DM_VIDEO consoles
+Subject: [PATCH 1/8] video: Add cursor support for VIDEO consoles
 
-So far the DM_VIDEO console is completely lacking any cursor, which makes
+So far the VIDEO console is completely lacking any cursor, which makes
 typing and correcting quite irritating.
 
 Add a simple cursor display by writing a SPACE glyph in the background
@@ -15,6 +15,8 @@ Link: https://lore.kernel.org/u-boot/20220110005638.21599-2-andre.przywara@arm.c
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
 Reviewed-by: Simon Glass <sjg@chromium.org>
 Tested-by: Simon Glass <sjg@chromium.org>
+[Alper: Replace DM_VIDEO with VIDEO in commit message]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 ---
  drivers/video/console_normal.c    |  1 +
  drivers/video/vidconsole-uclass.c | 42 +++++++++++++++++++++++++++++++
@@ -34,10 +36,10 @@ index 04f022491e52..bfd3aab8d249 100644
  	return 0;
  }
 diff --git a/drivers/video/vidconsole-uclass.c b/drivers/video/vidconsole-uclass.c
-index f42db40d4cde..420fd86f9ac6 100644
+index 6bdfb6e37dd5..f458e637004f 100644
 --- a/drivers/video/vidconsole-uclass.c
 +++ b/drivers/video/vidconsole-uclass.c
-@@ -70,6 +70,26 @@ static int vidconsole_entry_start(struct udevice *dev)
+@@ -61,6 +61,26 @@ static int vidconsole_entry_start(struct udevice *dev)
  	return ops->entry_start(dev);
  }
  
@@ -64,7 +66,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  /* Move backwards one space */
  static int vidconsole_back(struct udevice *dev)
  {
-@@ -77,6 +97,8 @@ static int vidconsole_back(struct udevice *dev)
+@@ -68,6 +88,8 @@ static int vidconsole_back(struct udevice *dev)
  	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
  	int ret;
  
@@ -73,7 +75,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  	if (ops->backspace) {
  		ret = ops->backspace(dev);
  		if (ret != -ENOSYS)
-@@ -103,6 +125,8 @@ static void vidconsole_newline(struct udevice *dev)
+@@ -94,6 +116,8 @@ static void vidconsole_newline(struct udevice *dev)
  	const int rows = CONFIG_CONSOLE_SCROLL_LINES;
  	int i, ret;
  
@@ -82,7 +84,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  	priv->xcur_frac = priv->xstart_frac;
  	priv->ycur += priv->y_charsize;
  
-@@ -342,6 +366,14 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
+@@ -287,6 +311,14 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
  
  		break;
  	}
@@ -97,7 +99,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  	case 'J': {
  		int mode;
  
-@@ -516,6 +548,11 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -461,6 +493,11 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
  	int ret;
  
@@ -109,7 +111,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  	if (priv->escape) {
  		vidconsole_escape_char(dev, ch);
  		return 0;
-@@ -530,6 +567,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -475,6 +512,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		/* beep */
  		break;
  	case '\r':
@@ -117,7 +119,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  		priv->xcur_frac = priv->xstart_frac;
  		break;
  	case '\n':
-@@ -537,6 +575,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -482,6 +520,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		vidconsole_entry_start(dev);
  		break;
  	case '\t':	/* Tab (8 chars alignment) */
@@ -125,7 +127,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  		priv->xcur_frac = ((priv->xcur_frac / priv->tab_width_frac)
  				+ 1) * priv->tab_width_frac;
  
-@@ -554,6 +593,8 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -499,6 +538,8 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		break;
  	}
  
@@ -134,7 +136,7 @@ index f42db40d4cde..420fd86f9ac6 100644
  	return 0;
  }
  
-@@ -620,6 +661,7 @@ static int vidconsole_pre_probe(struct udevice *dev)
+@@ -565,6 +606,7 @@ static int vidconsole_pre_probe(struct udevice *dev)
  	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
  
  	priv->xsize_frac = VID_TO_POS(vid_priv->xsize);
@@ -143,10 +145,10 @@ index f42db40d4cde..420fd86f9ac6 100644
  	return 0;
  }
 diff --git a/include/video_console.h b/include/video_console.h
-index 5921767fbf06..688ea6ae119c 100644
+index d755eb73cf20..e186e1a0492c 100644
 --- a/include/video_console.h
 +++ b/include/video_console.h
-@@ -83,6 +83,7 @@ struct vidconsole_priv {
+@@ -59,6 +59,7 @@ struct vidconsole_priv {
  	int escape_len;
  	int row_saved;
  	int col_saved;
@@ -155,15 +157,15 @@ index 5921767fbf06..688ea6ae119c 100644
  };
  
 -- 
-2.37.2
+2.39.1
 
 
-From bfb9b202a30736d97c63500bca7845978fe338a7 Mon Sep 17 00:00:00 2001
+From 61e5d76965cf4d2c3ef7a1b801844268e996adb0 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:32 +0000
 Subject: [PATCH 2/8] video: vidconsole: Support wider bitmap fonts
 
-Currently the DM_VIDEO console only supports bitmap fonts with up to
+Currently the VIDEO console only supports bitmap fonts with up to
 8 pixels wide glyphs. Add support for fonts with glyphs up to 32 pixels
 wide, as those might prove useful on high resolution screens.
 
@@ -174,6 +176,8 @@ should optimise away any unneeded accesses for narrower fonts.
 Link: https://lore.kernel.org/u-boot/20220110005638.21599-3-andre.przywara@arm.com/
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
 Reviewed-by: Simon Glass <sjg@chromium.org>
+[Alper: Replace DM_VIDEO with VIDEO in commit message]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 ---
  drivers/video/console_normal.c | 25 ++++++++++++++++++++-----
  1 file changed, 20 insertions(+), 5 deletions(-)
@@ -243,10 +247,10 @@ index bfd3aab8d249..9f552d02b308 100644
  						vid_priv->colour_bg;
  					bits <<= 1;
 -- 
-2.37.2
+2.39.1
 
 
-From 7d40e39093073ad514822321fa5f5febddd03c28 Mon Sep 17 00:00:00 2001
+From 3e96384f40c1e7b479b363096dff54a6adf9a0ec Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:33 +0000
 Subject: [PATCH 3/8] video: Kconfig: convert CONFIG_VIDEO_FONT_4X6 to Kconfig
@@ -305,15 +309,15 @@ index c7e6351b64c0..65dd5e8c1d9f 100644
  	/*{*/
  		/*   Char 0: ' '  */
 -- 
-2.37.2
+2.39.1
 
 
-From 874e8ea69fa26882ef4f6e21897fef87b953db92 Mon Sep 17 00:00:00 2001
+From adb8e44be1a94fc3a2223228d1fbed24cf23df22 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:34 +0000
 Subject: [PATCH 4/8] video: Add sun12x22 framebuffer front
 
-Now that the dm_video console can cope with fonts wider than 8 pixels,
+Now that the video console can cope with fonts wider than 8 pixels,
 let's add the neat 12x22 font mimicing the one used on the boot console of
 of older Sun workstations. This should be more readable on high resolution
 screens.
@@ -324,6 +328,8 @@ been added.
 Link: https://lore.kernel.org/u-boot/20220110005638.21599-5-andre.przywara@arm.com/
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
 Reviewed-by: Simon Glass <sjg@chromium.org>
+[Alper: Replace dm_video with video in commit message]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 ---
  drivers/video/fonts/Kconfig   |    3 +
  include/video_font.h          |    2 +
@@ -6530,15 +6536,15 @@ index 000000000000..3c4da4d80554
 +
 +#endif
 -- 
-2.37.2
+2.39.1
 
 
-From f70962081ca5fd5513ce1bf741be8f83d626f238 Mon Sep 17 00:00:00 2001
+From 504665cb560a2945f05f3b790b2d11f48bb7c2d6 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:35 +0000
 Subject: [PATCH 5/8] video: Add Terminus 16x32 font
 
-The dm_video console can now cope with fonts wider than 8 pixels, so
+The video console can now cope with fonts wider than 8 pixels, so
 let's include a rather large 16x32 font, well suited for HiDPI displays
 found on modern laptops.
 
@@ -6548,6 +6554,8 @@ have been added.
 Link: https://lore.kernel.org/u-boot/20220110005638.21599-6-andre.przywara@arm.com/
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
 Reviewed-by: Simon Glass <sjg@chromium.org>
+[Alper: Replace dm_video with video in commit message]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 ---
  drivers/video/fonts/Kconfig   |    3 +
  include/video_font.h          |    2 +
@@ -8658,10 +8666,10 @@ index 000000000000..22c440c8f968
 +
 +#endif
 -- 
-2.37.2
+2.39.1
 
 
-From 61d75d902d43292dbcaa543b8a487f00f1c90f6c Mon Sep 17 00:00:00 2001
+From beb8cc044dd137fbaba24d407b3e3fb73234a1e5 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:36 +0000
 Subject: [PATCH 6/8] efi-selftest: Add international characters test
@@ -8697,10 +8705,10 @@ index cc44b38bc23a..175731ae96b6 100644
  
  	return EFI_ST_SUCCESS;
 -- 
-2.37.2
+2.39.1
 
 
-From 464a63d9a7aa628d688fe62c3b99dd690bfe6ca9 Mon Sep 17 00:00:00 2001
+From aaeacbd370940635de39cdec8d03ebd9566464db Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:37 +0000
 Subject: [PATCH 7/8] efi_selftest: Add box drawing character selftest
@@ -8743,10 +8751,10 @@ index 175731ae96b6..3c6870f74241 100644
  
  	return EFI_ST_SUCCESS;
 -- 
-2.37.2
+2.39.1
 
 
-From 58f5993ba5a4772b11d8e5fb9476a0eb1ce22969 Mon Sep 17 00:00:00 2001
+From fbb9e26d8c01cf30b8e33bb590bbc0b8cd0e074a Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:38 +0000
 Subject: [PATCH 8/8] video: Convert UTF-8 input stream to the 437 code page
@@ -8763,6 +8771,8 @@ characters, which are used by UEFI applications.
 
 Link: https://lore.kernel.org/u-boot/20220110005638.21599-9-andre.przywara@arm.com/
 Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+[Alper: Replace CONFIG_DM_VIDEO with CONFIG_VIDEO]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 ---
  drivers/video/Makefile            |   1 +
  drivers/video/utf8_cp437.c        | 169 ++++++++++++++++++++++++++++++
@@ -8772,16 +8782,16 @@ Signed-off-by: Andre Przywara <andre.przywara@arm.com>
  create mode 100644 drivers/video/utf8_cp437.c
 
 diff --git a/drivers/video/Makefile b/drivers/video/Makefile
-index 259658074bc1..0caee92b7ff0 100644
+index 40a871d638e9..8a09b1be7adb 100644
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
 @@ -14,6 +14,7 @@ obj-$(CONFIG_DISPLAY) += display-uclass.o
  obj-$(CONFIG_VIDEO_MIPI_DSI) += dsi-host-uclass.o
- obj-$(CONFIG_DM_VIDEO) += video-uclass.o vidconsole-uclass.o
- obj-$(CONFIG_DM_VIDEO) += video_bmp.o
-+obj-$(CONFIG_DM_VIDEO) += utf8_cp437.o
+ obj-$(CONFIG_VIDEO) += video-uclass.o vidconsole-uclass.o
+ obj-$(CONFIG_VIDEO) += video_bmp.o
++obj-$(CONFIG_VIDEO) += utf8_cp437.o
  obj-$(CONFIG_PANEL) += panel-uclass.o
- obj-$(CONFIG_DM_PANEL_HX8238D) += hx8238d.o
+ obj-$(CONFIG_PANEL_HX8238D) += hx8238d.o
  obj-$(CONFIG_SIMPLE_PANEL) += simple_panel.o
 diff --git a/drivers/video/utf8_cp437.c b/drivers/video/utf8_cp437.c
 new file mode 100644
@@ -8959,10 +8969,10 @@ index 000000000000..cab68b92b6e3
 +	return 0;
 +}
 diff --git a/drivers/video/vidconsole-uclass.c b/drivers/video/vidconsole-uclass.c
-index 420fd86f9ac6..ca6e1a2620cc 100644
+index f458e637004f..f590ab39d5d6 100644
 --- a/drivers/video/vidconsole-uclass.c
 +++ b/drivers/video/vidconsole-uclass.c
-@@ -546,6 +546,7 @@ static int vidconsole_output_glyph(struct udevice *dev, char ch)
+@@ -491,6 +491,7 @@ static int vidconsole_output_glyph(struct udevice *dev, char ch)
  int vidconsole_put_char(struct udevice *dev, char ch)
  {
  	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
@@ -8970,7 +8980,7 @@ index 420fd86f9ac6..ca6e1a2620cc 100644
  	int ret;
  
  	/*
-@@ -587,7 +588,10 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -532,7 +533,10 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		priv->last_ch = 0;
  		break;
  	default:
@@ -8983,10 +8993,10 @@ index 420fd86f9ac6..ca6e1a2620cc 100644
  			return ret;
  		break;
 diff --git a/include/video_console.h b/include/video_console.h
-index 688ea6ae119c..8cc8d21d6e49 100644
+index e186e1a0492c..1ef7b442fcca 100644
 --- a/include/video_console.h
 +++ b/include/video_console.h
-@@ -83,6 +83,7 @@ struct vidconsole_priv {
+@@ -59,6 +59,7 @@ struct vidconsole_priv {
  	int escape_len;
  	int row_saved;
  	int col_saved;
@@ -9008,5 +9018,5 @@ index 688ea6ae119c..8cc8d21d6e49 100644
 +
  #endif
 -- 
-2.37.2
+2.39.1
 
