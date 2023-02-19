@@ -76,6 +76,10 @@ apt-get -y install build-essential python
 
 apt-get -y install build-essential perl
 
+# u-boot needed this
+
+apt-get -y install python3-setuptools
+
 # Coreboot build dependencies (also requires build-essential and git)
 # ------------------------------------------------------------
 
