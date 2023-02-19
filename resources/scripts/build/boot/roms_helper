@@ -212,7 +212,7 @@ fi
 export PATH="$(pwd)/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
 
 if [ ! -f "${cbfstool}" ]; then
-	./build module cbutils ${cbtree}
+	./build module cbutils ${cbtree} || exit 1
 fi
 
 if [ ! -f "${seavgabiosrom}" ] \
@@ -346,7 +346,7 @@ mkCoreboot() {
 		fi
 	)
 	cp "${cbcfgpath}" "${cbdir}"/.config
-	./build module cbutils ${cbdir#coreboot/}
+	./build module cbutils ${cbdir#coreboot/} || exit 1
 	(
 		cd "${cbdir}"
 		make -j$(nproc)
