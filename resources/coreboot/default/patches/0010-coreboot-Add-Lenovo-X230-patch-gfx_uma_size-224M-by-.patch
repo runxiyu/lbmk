@@ -1,7 +1,7 @@
-From 990717f4bed5ff0bcf89e7f583251c76f6cf5559 Mon Sep 17 00:00:00 2001
+From 92f474ae7d67c82ce6defd7612a6c3a8d2923cb7 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 20 Dec 2021 01:29:31 +0000
-Subject: [PATCH 10/17] coreboot: Add Lenovo X230 patch: gfx_uma_size 224M by
+Subject: [PATCH 10/16] coreboot: Add Lenovo X230 patch: gfx_uma_size 224M by
  default
 
 ---
@@ -18,5 +18,5 @@ index 7314066c2b..2e315d4521 100644
  me_state=Normal
 +gfx_uma_size=224M
 -- 
-2.25.1
+2.30.2
 

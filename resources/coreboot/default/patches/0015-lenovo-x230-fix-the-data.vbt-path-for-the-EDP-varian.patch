@@ -1,14 +1,14 @@
-From 27f963913d9afc6da15043c6e8b224c9b1a727ac Mon Sep 17 00:00:00 2001
+From 5a8cdbc26de8c07aaa53d3aad6251af391a1591e Mon Sep 17 00:00:00 2001
 From: Alexei Sorokin <sor.alexei@meowr.ru>
 Date: Sun, 27 Nov 2022 18:36:26 +0300
-Subject: [PATCH 16/17] lenovo/x230: fix the data.vbt path for the EDP variant
+Subject: [PATCH 15/16] lenovo/x230: fix the data.vbt path for the EDP variant
 
 ---
- src/mainboard/lenovo/x230/Kconfig | 3 ---
- 1 file changed, 3 deletions(-)
+ src/mainboard/lenovo/x230/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/lenovo/x230/Kconfig b/src/mainboard/lenovo/x230/Kconfig
-index b8cae24199..409892f3ab 100644
+index 4d8325ea43..409892f3ab 100644
 --- a/src/mainboard/lenovo/x230/Kconfig
 +++ b/src/mainboard/lenovo/x230/Kconfig
 @@ -63,7 +63,7 @@ config OVERRIDE_DEVICETREE
@@ -21,5 +21,5 @@ index b8cae24199..409892f3ab 100644
  config USBDEBUG_HCD_INDEX
  	int
 -- 
-2.25.1
+2.30.2
 

@@ -1,7 +1,7 @@
-From 967ef36a3f3cf5efaf92235905ab4a6b5a878d01 Mon Sep 17 00:00:00 2001
+From df73b53d684f0714f137a76f26a2816b81eb7bce Mon Sep 17 00:00:00 2001
 From: persmule <persmule@gmail.com>
 Date: Sun, 31 Oct 2021 23:33:26 +0000
-Subject: [PATCH 09/17] lenovo/t400: Enable all SATA ports
+Subject: [PATCH 09/16] lenovo/t400: Enable all SATA ports
 
 There are 2 SATA ports on the chassis of t400(s), but at least one dock for
 t400 contains a port for (P/S)ATA device, and t400s has a eSATA port on its
@@ -15,10 +15,10 @@ This patch unmasked all SATA ports found within t400s with factory firmware.
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/mainboard/lenovo/t400/devicetree.cb b/src/mainboard/lenovo/t400/devicetree.cb
-index 670b4883f3..1fc60d9b24 100644
+index 1df350ab67..21c8e2c9a1 100644
 --- a/src/mainboard/lenovo/t400/devicetree.cb
 +++ b/src/mainboard/lenovo/t400/devicetree.cb
-@@ -59,8 +59,8 @@ chip northbridge/intel/gm45
+@@ -46,8 +46,8 @@ chip northbridge/intel/gm45
  			register "gpe0_en" = "0x01000000"
  			register "gpi1_routing"  = "2"
  
@@ -30,5 +30,5 @@ index 670b4883f3..1fc60d9b24 100644
  			register "sata_traffic_monitor"		= "0"
  
 -- 
-2.25.1
+2.30.2
 

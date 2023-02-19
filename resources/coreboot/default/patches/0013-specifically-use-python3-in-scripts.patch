@@ -1,7 +1,7 @@
-From 45c2ae2e2885aedd8a75de077bf4cbbcf5b87a87 Mon Sep 17 00:00:00 2001
+From edaeb3774764fe6698653fc7fcc38bbda6c69bb9 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 13 Mar 2022 18:04:55 +0000
-Subject: [PATCH 13/17] specifically use python3, in scripts
+Subject: [PATCH 13/16] specifically use python3, in scripts
 
 ---
  src/drivers/intel/fsp2_0/Makefile.inc | 2 +-
@@ -9,10 +9,10 @@ Subject: [PATCH 13/17] specifically use python3, in scripts
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/drivers/intel/fsp2_0/Makefile.inc b/src/drivers/intel/fsp2_0/Makefile.inc
-index eaf99d1492..9e82172c9e 100644
+index f11ebee102..e4b151b524 100644
 --- a/src/drivers/intel/fsp2_0/Makefile.inc
 +++ b/src/drivers/intel/fsp2_0/Makefile.inc
-@@ -84,7 +84,7 @@ endif
+@@ -88,7 +88,7 @@ endif
  
  ifeq ($(CONFIG_FSP_FULL_FD),y)
  $(obj)/Fsp_M.fd: $(call strip_quotes,$(CONFIG_FSP_FD_PATH)) $(DOTCONFIG)
@@ -32,5 +32,5 @@ index 89976eac59..2cd7027377 100644
  # SPDX-License-Identifier: GPL-3.0-or-later
  #
 -- 
-2.25.1
+2.30.2
 
