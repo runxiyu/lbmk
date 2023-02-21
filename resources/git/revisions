@@ -7,7 +7,7 @@
 # 'loc', and the git url 'url'. Bkup_url is optional.
 
 {grub}{
-	rev: 1514678888595ef41a968a0c69b7ff769edd1e9c
+	rev: f7564844f82b57078d601befadc438b5bc1fa01b
 	loc: grub
 	url: git://git.savannah.gnu.org/grub.git
 	bkup_url: http://git.savannah.gnu.org/r/grub.git
