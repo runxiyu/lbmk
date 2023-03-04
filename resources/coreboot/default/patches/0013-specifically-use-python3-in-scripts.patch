@@ -1,7 +1,7 @@
-From edaeb3774764fe6698653fc7fcc38bbda6c69bb9 Mon Sep 17 00:00:00 2001
+From 52acb9071bda297e9520107a0d0f996e9cba28fb Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 13 Mar 2022 18:04:55 +0000
-Subject: [PATCH 13/16] specifically use python3, in scripts
+Subject: [PATCH 13/18] specifically use python3, in scripts
 
 ---
  src/drivers/intel/fsp2_0/Makefile.inc | 2 +-
@@ -32,5 +32,5 @@ index 89976eac59..2cd7027377 100644
  # SPDX-License-Identifier: GPL-3.0-or-later
  #
 -- 
-2.30.2
+2.39.2
 

@@ -1,0 +1,56 @@
+From 30d8dd45ab489bed21398b04bd03a54e08eafaf2 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 4 Mar 2023 23:55:41 +0000
+Subject: [PATCH 18/18] ich9m boards: set 256MB VRAM instead
+
+352MB causes some stability issues reported by a few people
+---
+ src/mainboard/acer/g43t-am3/cmos.default         | 2 +-
+ src/mainboard/gigabyte/ga-g41m-es2l/cmos.default | 2 +-
+ src/mainboard/lenovo/t400/cmos.default           | 2 +-
+ src/mainboard/lenovo/x200/cmos.default           | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/mainboard/acer/g43t-am3/cmos.default b/src/mainboard/acer/g43t-am3/cmos.default
+index 98899e8bf5..e8b45ea22c 100644
+--- a/src/mainboard/acer/g43t-am3/cmos.default
++++ b/src/mainboard/acer/g43t-am3/cmos.default
+@@ -3,4 +3,4 @@ debug_level=Debug
+ power_on_after_fail=Disable
+ nmi=Enable
+ sata_mode=AHCI
+-gfx_uma_size=352M
++gfx_uma_size=256M
+diff --git a/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default b/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default
+index 3a9a8e2d72..bedad54d2a 100644
+--- a/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default
++++ b/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default
+@@ -2,4 +2,4 @@ boot_option=Fallback
+ debug_level=Debug
+ power_on_after_fail=Enable
+ nmi=Enable
+-gfx_uma_size=352M
++gfx_uma_size=256M
+diff --git a/src/mainboard/lenovo/t400/cmos.default b/src/mainboard/lenovo/t400/cmos.default
+index e74d15d030..b907a3e2df 100644
+--- a/src/mainboard/lenovo/t400/cmos.default
++++ b/src/mainboard/lenovo/t400/cmos.default
+@@ -13,4 +13,4 @@ power_management_beeps=Enable
+ low_battery_beep=Enable
+ sata_mode=AHCI
+ hybrid_graphics_mode=Integrated Only
+-gfx_uma_size=352M
++gfx_uma_size=256M
+diff --git a/src/mainboard/lenovo/x200/cmos.default b/src/mainboard/lenovo/x200/cmos.default
+index 33a6a69f59..458b3f19c5 100644
+--- a/src/mainboard/lenovo/x200/cmos.default
++++ b/src/mainboard/lenovo/x200/cmos.default
+@@ -12,4 +12,4 @@ sticky_fn=Disable
+ power_management_beeps=Enable
+ low_battery_beep=Enable
+ sata_mode=AHCI
+-gfx_uma_size=352M
++gfx_uma_size=256M
+-- 
+2.39.2
+

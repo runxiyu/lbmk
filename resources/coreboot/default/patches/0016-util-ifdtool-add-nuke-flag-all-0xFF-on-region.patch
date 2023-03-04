@@ -1,7 +1,7 @@
-From 4d78ee1f99fe49585eeb1afe6792ddfe8ddcccb1 Mon Sep 17 00:00:00 2001
+From 32a961895ed41cd2bb1f9ae00ab0200c4bfb0bf3 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
-Subject: [PATCH 16/16] util/ifdtool: add --nuke flag (all 0xFF on region)
+Subject: [PATCH 16/18] util/ifdtool: add --nuke flag (all 0xFF on region)
 
 When this option is used, the region's contents are overwritten
 with all ones (0xFF).
@@ -201,5 +201,5 @@ index 98afa4bbcf..5509721018 100644
  		fpsba_t *fpsba = find_fpsba(image, size);
  		fmsba_t *fmsba = find_fmsba(image, size);
 -- 
-2.30.2
+2.39.2
 
