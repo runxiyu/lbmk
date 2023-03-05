@@ -74,13 +74,13 @@ for romdir in bin/*; do
 		ifdtooldir="coreboot/default/util/ifdtool"
 		ifdtool="${ifdtooldir}/ifdtool"
 		if [ ! -f "${ifdtool}" ]; then
-			make -BC "${ifdtooldir}" || exit 1
+			./build module cbutils default || exit 1
 		fi
 
 		cbfstooldir="coreboot/default/util/cbfstool"
 		cbfstool="${cbfstooldir}/cbfstool"
 		if [ ! -f "${cbfstool}" ]; then
-			make -BC "${cbfstooldir}" || exit 1
+			./build module cbutils default || exit 1
 		fi
 
 		rm -Rf "${romdir}_tmp" # dirty hack, to reduce  disk io later
