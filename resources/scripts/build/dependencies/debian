@@ -19,6 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+set -e
+
 if [ "$(id -u)" -ne 0 ]; then
    printf "This script must be run as root\n" 
    exit 1
@@ -69,7 +71,7 @@ fi
 # Memtest86+ build dependencies
 # ------------------------------------------------------------
 
-apt-get -y install build-essential python
+apt-get -y install build-essential python3
 
 # i945-pwm build dependencies
 # ------------------------------------------------------------
@@ -92,6 +94,8 @@ apt-get -y install libncurses5-dev doxygen iasl gdb flex bison build-essential g
 # ------------------------------------------------------------
 
 apt-get -y install fonts-unifont libopts25 libselinux1-dev autogen m4 autoconf help2man libopts25-dev libfont-freetype-perl automake autotools-dev build-essential bison flex libfuse-dev liblzma-dev gawk libdevmapper-dev libtool libfreetype6-dev
+
+apt-get -y install unifont
 
 # U-Boot build dependencies
 # -------------------------
