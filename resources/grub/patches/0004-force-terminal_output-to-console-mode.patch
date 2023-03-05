@@ -1,0 +1,34 @@
+From 1969f8ff40ac1190a3a2e406d835f7abb098eb9e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 5 Mar 2023 20:04:20 +0000
+Subject: [PATCH 1/1] force terminal_output to console mode
+
+---
+ grub-core/lib/legacy_parse.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/grub-core/lib/legacy_parse.c b/grub-core/lib/legacy_parse.c
+index fa0131a1e..5c2473130 100644
+--- a/grub-core/lib/legacy_parse.c
++++ b/grub-core/lib/legacy_parse.c
+@@ -579,6 +579,9 @@ grub_legacy_parse (const char *buf, char **entryname, char **suffix)
+ 		}
+ 	    }
+ 
++          console = 1; /* force console mode, for coreboot purposes, and
++                          the old code below is disabled by commenting */
++/*
+ 	  if (grub_memcmp (ptr, "console", sizeof ("console") - 1) == 0)
+ 	    console = 1;
+ 
+@@ -588,6 +591,7 @@ grub_legacy_parse (const char *buf, char **entryname, char **suffix)
+ 	    hercules = 1;
+ 	  if (grub_memcmp (ptr, "graphics", sizeof ("graphics") - 1) == 0)
+ 	    graphics = 1;
++*/
+ 	  while (*ptr && !grub_isspace (*ptr))
+ 	    ptr++;
+ 	  while (*ptr && grub_isspace (*ptr))
+-- 
+2.39.2
+
