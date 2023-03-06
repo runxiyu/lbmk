@@ -18,8 +18,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-. .revisions
-
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
