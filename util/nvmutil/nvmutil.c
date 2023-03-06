@@ -261,10 +261,9 @@ rhex(void)
 {
 	static int rfd = -1;
 	static uint64_t rnum = 0;
-	static size_t rindex = 8;
+	uint8_t rval;
 
-	if (rindex == 8) {
-		rindex = 0;
+	if (rnum == 0) {
 		if (rfd == -1)
 			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
 				err(errno, "/dev/urandom");
@@ -272,7 +271,10 @@ rhex(void)
 			err(errno, "/dev/urandom");
 	}
 
-	return ((uint8_t *) &rnum)[rindex++] & 0xf;
+	rval = (uint8_t) (rnum & 0xf);
+	rnum >>= 4;
+
+	return rval;
 }
 
 void
