@@ -21,4 +21,4 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-./download gitmodule flashrom
+./gitclone flashrom

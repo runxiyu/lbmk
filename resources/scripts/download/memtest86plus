@@ -29,4 +29,4 @@ set -u -e
 # ------------------------------------------------------------------------------
 
 printf "Downloading MemTest86+\n"
-./download gitmodule memtest86plus 
+./gitclone memtest86plus 

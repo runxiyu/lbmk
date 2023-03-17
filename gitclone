@@ -6,7 +6,7 @@
 
 Print_help(){
 	cat <<- EOF
-	Usage: ./download gitmodule [name]
+	Usage: ./gitclone [name]
 
 	Options:
 	name: The name of the module as specified in resources/git/revisions file

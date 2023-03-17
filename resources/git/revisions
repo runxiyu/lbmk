@@ -3,7 +3,7 @@
 # Project name is enclosed by curly braces '{}' information about the
 # project relevant to osbmk is stored between the subsequent curly
 # braces. This file is used by the gitcheck script as well as the
-# gitmodule script. Each entry must include: revision 'rev', location
+# gitclone script. Each entry must include: revision 'rev', location
 # 'loc', and the git url 'url'. Bkup_url is optional.
 
 {grub}{

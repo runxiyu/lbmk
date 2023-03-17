@@ -26,4 +26,4 @@ set -u -e
 
 printf "Downloading SeaBIOS\n"
 
-./download gitmodule seabios
+./gitclone seabios

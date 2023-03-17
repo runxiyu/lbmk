@@ -22,4 +22,4 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-./download gitmodule me_cleaner
+./gitclone me_cleaner

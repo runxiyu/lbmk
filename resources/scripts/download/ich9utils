@@ -22,4 +22,4 @@
 set -u -e
 
 printf "Downloading ich9utils\n"
-./download gitmodule ich9utils
+./gitclone ich9utils
