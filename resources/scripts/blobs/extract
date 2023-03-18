@@ -48,11 +48,6 @@ Extract_blobs(){
 	. ${1} 2>/dev/null
 	. "resources/coreboot/${board}/board.cfg"
 
-	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
-		printf 'haswell board detected, downloading mrc\n'
-		./download mrc || Fail 'could not download mrc, check network connection'
-	fi
-
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 	_gbe_destination=${CONFIG_GBE_BIN_PATH#../../}
 	_ifd_destination=${CONFIG_IFD_BIN_PATH#../../}
