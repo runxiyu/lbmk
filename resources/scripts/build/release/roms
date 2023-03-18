@@ -60,10 +60,12 @@ for romdir in bin/*; do
 	    continue
 	fi
 
+	CONFIG_HAVE_MRC="y"
 	CONFIG_HAVE_ME_BIN="y"
 	grep "CONFIG_HAVE_ME_BIN=y" "resources/coreboot/${target}/config/"* || CONFIG_HAVE_ME_BIN="n"
+	grep "CONFIG_HAVE_MRC=y" "resources/coreboot/${target}/config/"* || CONFIG_HAVE_MRC="n"
 
-	# remove ME from ROM images
+	# remove ME/MRC from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
 		if [ ! -d coreboot/default ]; then
 			./download coreboot default || exit 1
@@ -94,6 +96,12 @@ for romdir in bin/*; do
 			${ifdtool} --nuke me "${romfile}" || exit 1
 			mv "${romfile}" "${romdir}_tmp"/
 			mv "${romfile}.new" "${romfile}"
+
+			if [ "${CONFIG_HAVE_MRC}" = "y" ]
+			then
+				${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
+				${cbfstool} "${romfile}" print
+			fi
 		done
 	fi
 

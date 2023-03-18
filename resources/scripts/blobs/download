@@ -19,6 +19,9 @@ Download_needed(){
 			*ME*)
 				Extract_me || _failed="${_failed} me"
 				;;
+			*MRC*)
+				./download mrc || _failed="${_failed} mrc"
+				;;
 	esac
 	done
 	
@@ -91,6 +94,11 @@ Build_deps(){
 set -- "resources/coreboot/${board}/config/*"
 . ${1} 2>/dev/null
 . "resources/coreboot/${board}/board.cfg"
+
+if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
+	printf 'haswell board detected, downloading mrc\n'
+	needs="${needs} MRC"
+fi
 
 if [ "${CONFIG_HAVE_IFD_BIN}" = "y" ]; then
 	printf 'board needs intel firmware descriptor\n'

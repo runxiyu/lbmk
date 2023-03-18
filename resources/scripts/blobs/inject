@@ -75,6 +75,11 @@ set -- "resources/coreboot/${board}/config/*"
 . ${1} 2>/dev/null
 . "resources/coreboot/${board}/board.cfg"
 
+	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
+		printf 'adding mrc\n'
+		./coreboot/default/util/cbfstool/cbfstool ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc || exit 1
+	fi
+
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
 		_me_location=${CONFIG_ME_BIN_PATH#../../}
 		printf 'adding intel management engine\n'
