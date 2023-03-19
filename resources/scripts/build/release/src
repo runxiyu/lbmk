@@ -54,7 +54,7 @@ mkdir -p "${srcdir}/"
 printf "%s" "${version}" > "${srcdir}"/version
 
 modlist="coreboot flashrom grub memtest86plus seabios ich9utils me_cleaner u-boot"
-dirlist="resources" # do not add blobs directory here. it is handled below
+dirlist="resources util" # do not add blobs directory here. it is handled below
 filelist="blobutil modify download build README.md COPYING Makefile update version versiondate projectname .gitcheck"
 
 for modname in ${modlist}; do
@@ -103,6 +103,7 @@ done
 (
     cd "${srcdir}/"
     ./build clean all
+    make clean -BC util/nvmutil
 
     rm -Rf coreboot/coreboot/
     rm -Rf .git .gitignore */.git* coreboot/*/.git* coreboot/*/3rdparty/*/.git*
