@@ -77,7 +77,7 @@ set -- "resources/coreboot/${board}/config/*"
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		printf 'adding mrc\n'
-		./coreboot/default/util/cbfstool/cbfstool ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc || exit 1
+		./coreboot/default/util/cbfstool/cbfstool ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc -b 0x78fe00 || exit 1
 	fi
 
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
