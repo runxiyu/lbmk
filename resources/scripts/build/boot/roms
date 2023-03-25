@@ -29,6 +29,7 @@
 set -u -e
 
 projectname="$(cat projectname)"
+opts=""
 
 listboards() {
 	for boarddir in resources/coreboot/*; do
