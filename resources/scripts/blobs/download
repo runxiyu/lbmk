@@ -179,48 +179,48 @@ Extract_me(){
 
 # cursed, carcinogenic code. TODO rewrite it better
 Bruteforce_extract_me() {
-       _me_destination="${1}"
-       cdir="${2}" # must be an absolute path, not relative
+	_me_destination="${1}"
+	cdir="${2}" # must be an absolute path, not relative
 
 	if [ -f "${_me_destination}" ]; then
 		return 0
 	fi
 
-       (
-       printf "Entering %s\n" "${cdir}"
-       cd "${cdir}" || exit 1
-       for i in *; do
-               if [ -f "${_me_destination}" ]; then
-                       # me.bin found, so avoid needless further traversal
-                       break
-               elif [ -L "${i}" ]; then
-                       # symlinks are a security risk, in this context
-                       continue
-               elif [ -f "${i}" ]; then
-                       "${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
-                               && break # (we found me.bin)
+	(
+	printf "Entering %s\n" "${cdir}"
+	cd "${cdir}" || exit 1
+	for i in *; do
+		if [ -f "${_me_destination}" ]; then
+			# me.bin found, so avoid needless further traversal
+			break
+		elif [ -L "${i}" ]; then
+			# symlinks are a security risk, in this context
+			continue
+		elif [ -f "${i}" ]; then
+			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
+				&& break # (we found me.bin)
 			"${me7updateparser}" -O ${_me_destination} "${i}" \
 				&& break
-                       _7ztest="${_7ztest}a"
-                       7z x "${i}" -o${_7ztest} || continue
-                       Bruteforce_extract_me "${_me_destination}" "${cdir}/${_7ztest}"
-                       cdir="${1}"
-                       cd "${cdir}"
-               elif [ -d "$i" ]; then
-                       Bruteforce_extract_me "${_me_destination}" "${cdir}/${i}"
-                       cdir="${1}"
-                       cd "${cdir}"
-               else
-                       printf "SKIPPING: %s\n" "${i}"
-               fi
-       done
-       )
-       if [ ! -f "${_me_destination}" ]; then
-               printf "me.bin not found in vendor update for board: `%s`\n" ${board}
-               return 1
-       else
-               return 0
-       fi
+			_7ztest="${_7ztest}a"
+			7z x "${i}" -o${_7ztest} || continue
+			Bruteforce_extract_me "${_me_destination}" "${cdir}/${_7ztest}"
+			cdir="${1}"
+			cd "${cdir}"
+		elif [ -d "$i" ]; then
+			Bruteforce_extract_me "${_me_destination}" "${cdir}/${i}"
+			cdir="${1}"
+			cd "${cdir}"
+		else
+			printf "SKIPPING: %s\n" "${i}"
+		fi
+	done
+	)
+	if [ ! -f "${_me_destination}" ]; then
+		printf "me.bin not found in vendor update for board: `%s`\n" ${board}
+		return 1
+	else
+		return 0
+	fi
 }
 
 Main
