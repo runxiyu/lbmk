@@ -4,7 +4,7 @@ Libreboot
 Find libreboot documentation at <https://libreboot.org/>
 
 The `libreboot` project provides
-[libre](https://en.wikipedia.org/wiki/Open_source) *boot
+[libre](https://libreboot.org/freedom-status.html) *boot
 firmware* that initializes the hardware (e.g. memory controller, CPU,
 peripherals) on specific Intel/AMD x86 and ARM targets, which
 then starts a bootloader for your operating system. Linux/BSD are
