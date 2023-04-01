@@ -8,6 +8,55 @@ board="${1}"
 # A shorthand for each board, to avoid duplicating configs per flash size
 board_short=${board%%_*mb}
 
+set -- "resources/coreboot/${board}/config/*"
+. ${1} 2>/dev/null
+. "resources/coreboot/${board}/board.cfg"
+
+if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
+	printf 'haswell board detected, downloading mrc\n'
+	needs="${needs} MRC"
+fi
+
+if [ "${CONFIG_HAVE_IFD_BIN}" = "y" ]; then
+	printf 'board needs intel firmware descriptor\n'
+	needs="${needs} IFD"
+fi
+
+if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+	printf 'board needs intel management engine\n'
+	needs="${needs} ME"
+fi
+
+if [ "${CONFIG_HAVE_GBE_BIN}" = "y" ]; then
+	printf 'board needs gigabit ethernet firmware\n'
+	needs="${needs} GBE"
+fi
+
+# Quickly exit without wasting more time if there are no blobs needed (GM45)
+if [ -z ${needs+x} ]; then
+	printf 'No binary blobs needed for this board\n'
+	exit 0
+fi
+
+while read -r line ; do
+	case ${line} in
+		DL_hash*)
+		set ${line}
+		dl_hash=${2}
+		;;
+		DL_url*)
+		set ${line}
+		dl_url=${2}
+		;;
+		DL_url_bkup*)
+		set ${line}
+		dl_url_bkup=${2}
+		;;
+	esac
+done << EOF
+$(eval "awk ' /\{.*${board_short}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/blobs/sources")
+EOF
+
 Fail(){
 	printf "\nERROR: $@\n"
 	exit 1
@@ -91,54 +140,5 @@ Extract_me(){
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
 }
 
-set -- "resources/coreboot/${board}/config/*"
-. ${1} 2>/dev/null
-. "resources/coreboot/${board}/board.cfg"
-
-if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
-	printf 'haswell board detected, downloading mrc\n'
-	needs="${needs} MRC"
-fi
-
-if [ "${CONFIG_HAVE_IFD_BIN}" = "y" ]; then
-	printf 'board needs intel firmware descriptor\n'
-	needs="${needs} IFD"
-fi
-
-if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-	printf 'board needs intel management engine\n'
-	needs="${needs} ME"
-fi
-
-if [ "${CONFIG_HAVE_GBE_BIN}" = "y" ]; then
-	printf 'board needs gigabit ethernet firmware\n'
-	needs="${needs} GBE"
-fi
-
-# Quickly exit without wasting more time if there are no blobs needed (GM45)
-if [ -z ${needs+x} ]; then
-	printf 'No binary blobs needed for this board\n'
-	exit 0
-fi
-
 Build_deps
-
-while read -r line ; do
-	case ${line} in
-		DL_hash*)
-		set ${line}
-		dl_hash=${2}
-		;;
-		DL_url*)
-		set ${line}
-		dl_url=${2}
-		;;
-		DL_url_bkup*)
-		set ${line}
-		dl_url_bkup=${2}
-		;;
-	esac
-done << EOF
-$(eval "awk ' /\{.*${board_short}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/blobs/sources")
-EOF
 Download_needed
