@@ -13,6 +13,23 @@ Fail(){
 	exit 1
 }
 
+Build_deps(){
+	if [ ! -d me_cleaner ]; then
+		printf "downloading me_cleaner\n"
+		./download me_cleaner || Fail 'could not download me_cleaner'
+	fi
+
+	if [ ! -d coreboot/default ]; then
+		printf "downloading coreboot\n"
+		./download coreboot default || Fail 'could not download coreboot'
+	fi
+	
+	if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
+		printf "building ifdtool from coreboot\n"
+		make -C coreboot/default/util/ifdtool || Fail 'could not build ifdtool'
+	fi
+}
+
 Download_needed(){
 	for need in ${needs}; do
 		case ${need} in
@@ -72,23 +89,6 @@ Extract_me(){
 	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} blobs/app/ME7*.bin \
 	|| return 1
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
-}
-
-Build_deps(){
-	if [ ! -d me_cleaner ]; then
-		printf "downloading me_cleaner\n"
-		./download me_cleaner || Fail 'could not download me_cleaner'
-	fi
-
-	if [ ! -d coreboot/default ]; then
-		printf "downloading coreboot\n"
-		./download coreboot default || Fail 'could not download coreboot'
-	fi
-	
-	if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
-		printf "building ifdtool from coreboot\n"
-		make -C coreboot/default/util/ifdtool || Fail 'could not build ifdtool'
-	fi
 }
 
 set -- "resources/coreboot/${board}/config/*"
