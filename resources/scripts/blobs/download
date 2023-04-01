@@ -4,6 +4,7 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
+needs=""
 board="${1}"
 # A shorthand for each board, to avoid duplicating configs per flash size
 board_short=${board%%_*mb}
@@ -56,6 +57,11 @@ while read -r line ; do
 done << EOF
 $(eval "awk ' /\{.*${board_short}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/blobs/sources")
 EOF
+
+Main() {
+	Build_deps
+	Download_needed
+}
 
 Fail(){
 	printf "\nERROR: $@\n"
@@ -140,5 +146,4 @@ Extract_me(){
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
 }
 
-Build_deps
-Download_needed
+Main
