@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 board="${1}"
-# A shorthand for each board so as not to duplicate blobs for boards of different sizes
+# A shorthand for each board, to avoid duplicating configs per flash size
 board_short=${board%%_*mb}
 
 Fail(){
