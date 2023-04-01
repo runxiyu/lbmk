@@ -106,4 +106,4 @@ apt-get -y install libpci-dev pciutils zlib1g-dev libftdi-dev build-essential li
 # Blobs building dependencies (for me)
 # ------------------------------------------------------------
 
-apt-get -y install innoextract
+apt-get -y install innoextract p7zip p7zip-full

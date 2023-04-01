@@ -91,4 +91,4 @@ dnf -y install pciutils-devel zlib-devel libftdi-devel gcc libusb-devel
 
 # For extracting IntelME from lenovo updates (X230 etc)
 
-dnf -y install innoextract
+dnf -y install innoextract p7zip p7zip-plugins

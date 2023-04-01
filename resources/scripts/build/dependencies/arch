@@ -88,7 +88,7 @@ pacman -S --needed --noconfirm libpciaccess pciutils zlib libftdi base-devel lib
 # Management engine extraction dependencies
 # ------------------------------------------------------------
 
-pacman -S --needed --noconfirm innoextract
+pacman -S --needed --noconfirm innoextract p7zip
 
 # U-Boot build dependencies
 # ------------------------------------------------------------

@@ -85,4 +85,4 @@ xbps-install -y libpciaccess pciutils zlib libftdi1 base-devel libusb
 # Management engine extraction dependencies
 # ------------------------------------------------------------
 
-xbps-install -y innoextract
+xbps-install -y innoextract p7zip
