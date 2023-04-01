@@ -5,6 +5,9 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+_7ztest="a"
+mecleaner="$(pwd)/me_cleaner/me_cleaner.py"
+me7updateparser="$(pwd)/resources/blobs/me7_update_parser.py"
 board="${1}"
 # A shorthand for each board, to avoid duplicating configs per flash size
 board_short=${board%%_*mb}
@@ -114,8 +117,6 @@ Download_me() {
 Fetch_update() {
 	printf "Fetching vendor update for board: `%s`\n" ${board}
 
-	_me_destination=${CONFIG_ME_BIN_PATH#../../}
-
 	if [ -z "${dl_url+x}" ]; then
 		printf "No vendor update specified for board: `%s`\n" ${board}
 		return 1
@@ -146,6 +147,8 @@ Vendor_checksum() {
 Extract_me(){
 	printf "Extracting neutered ME for ${board}\n"
 
+	_me_destination=${CONFIG_ME_BIN_PATH#../../}
+
 	if [ ! -d "${_me_destination%/*}" ]; then
 		mkdir -p ${_me_destination%/*}
 	fi
@@ -160,11 +163,61 @@ Extract_me(){
 	fi
 
 	printf 'extracting and stripping intel management engine\n'
-	innoextract blobs/me.exe -d blobs || Fail 'could not extract me executable with innoextract' 
-	./me_cleaner/me_cleaner.py -r -t -O ${_me_destination} blobs/app/*ME*.bin \
-	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} blobs/app/ME7*.bin \
-	|| return 1
+	innoextract blobs/me.exe -d blobs \
+		|| 7z x blobs/me.exe -oblobs/app \
+		|| Fail 'could not extract me executable with innoextract' 
+
+	Bruteforce_extract_me "$(pwd)/${_me_destination}" "$(pwd)/blobs/app" \
+		|| return 1
+
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
+	return 0
+}
+
+# cursed, carcinogenic code. TODO rewrite it better
+Bruteforce_extract_me() {
+       _me_destination="${1}"
+       cdir="${2}" # must be an absolute path, not relative
+
+	if [ -f "${_me_destination}" ]; then
+		return 0
+	fi
+
+       (
+       printf "Entering %s\n" "${cdir}"
+       cd "${cdir}" || exit 1
+       for i in *; do
+               if [ -f "${_me_destination}" ]; then
+                       # me.bin found, so avoid needless further traversal
+                       break
+               elif [ -L "${i}" ]; then
+                       # symlinks are a security risk, in this context
+                       continue
+               elif [ -f "${i}" ]; then
+                       "${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
+                               && break # (we found me.bin)
+			"${me7updateparser}" -O ${_me_destination} "${i}" \
+				&& break
+                       _7ztest="${_7ztest}a"
+                       7z x "${i}" -o${_7ztest} || continue
+                       Bruteforce_extract_me "${_me_destination}" "${cdir}/${_7ztest}"
+                       cdir="${1}"
+                       cd "${cdir}"
+               elif [ -d "$i" ]; then
+                       Bruteforce_extract_me "${_me_destination}" "${cdir}/${i}"
+                       cdir="${1}"
+                       cd "${cdir}"
+               else
+                       printf "SKIPPING: %s\n" "${i}"
+               fi
+       done
+       )
+       if [ ! -f "${_me_destination}" ]; then
+               printf "me.bin not found in vendor update for board: `%s`\n" ${board}
+               return 1
+       else
+               return 0
+       fi
 }
 
 Main
