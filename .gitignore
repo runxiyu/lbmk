@@ -30,9 +30,7 @@
 /version
 /versiondate
 /blobs/app/
-/blobs/me.exe
-/blobs/t440p/me.bin
-/blobs/xx20/me.bin
-/blobs/xx30/me.bin
+/blobs/vendorupdate
+*me.bin
 /mrc/
 /util/nvmutil/nvm
