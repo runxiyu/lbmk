@@ -5,6 +5,9 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+blobdir="blobs"
+dl_path="${blobdir}/vendorupdate"
+appdir="${blobdir}/app"
 _7ztest="a"
 mecleaner="$(pwd)/me_cleaner/me_cleaner.py"
 me7updateparser="$(pwd)/resources/blobs/me7_update_parser.py"
@@ -122,23 +125,23 @@ Fetch_update() {
 		return 1
 	fi
 
-	Vendor_checksum blobs/me.exe || \
-		curl ${dl_url} > blobs/me.exe || curl ${dl_url_bkup} > blobs/me.exe
+	Vendor_checksum ${dl_path} || \
+		curl ${dl_url} > ${dl_path} || curl ${dl_url_bkup} > ${dl_path}
 
-	Vendor_checksum blobs/me.exe || Fail \
+	Vendor_checksum ${dl_path} || Fail \
 		"Cannot guarantee intergity of vendor update for board: `${board}`"
 
 	return 0
 }
 
 Vendor_checksum() {
-	if [ ! -f "blobs/me.exe" ]; then
+	if [ ! -f "${dl_path}" ]; then
 		printf "Vendor update not found on disk for board: `%s`\n" ${board}
 		return 1
 	fi
-	if [ "$(sha1sum blobs/me.exe | awk '{print $1}')" != "${dl_hash}" ]; then
+	if [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${dl_hash}" ]; then
 		printf "Bad checksum on vendor update for board: `%s`\n" ${board}
-		rm blobs/me.exe
+		rm ${dl_path}
 		return 1
 	fi
 	return 0
@@ -153,8 +156,8 @@ Extract_me(){
 		mkdir -p ${_me_destination%/*}
 	fi
 	
-	if [ -d "blobs/app" ]; then
-		rm -r blobs/app
+	if [ -d "${appdir}" ]; then
+		rm -r ${appdir}
 	fi
 
 	if [ -f "${_me_destination}" ]; then
@@ -163,11 +166,11 @@ Extract_me(){
 	fi
 
 	printf 'extracting and stripping intel management engine\n'
-	innoextract blobs/me.exe -d blobs \
-		|| 7z x blobs/me.exe -oblobs/app \
+	innoextract ${dl_path} -d ${blobdir} \
+		|| 7z x ${dl_path} -o${appdir} \
 		|| Fail 'could not extract me executable with innoextract' 
 
-	Bruteforce_extract_me "$(pwd)/${_me_destination}" "$(pwd)/blobs/app" \
+	Bruteforce_extract_me "$(pwd)/${_me_destination}" "$(pwd)/${appdir}" \
 		|| return 1
 
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
