@@ -38,7 +38,7 @@ Extract_me(){
 		return 0
 	fi
 
-	if [ -z "${me_dl+x}" ]; then
+	if [ -z "${dl_url+x}" ]; then
 		printf 'no me download available for this board\n'
 		return 1
 	fi
@@ -58,9 +58,9 @@ Extract_me(){
 		rm -r blobs/app
 	fi
 
-	curl ${me_dl} > blobs/me.exe || curl ${me_dl_bkup} > blobs/me.exe
+	curl ${dl_url} > blobs/me.exe || curl ${dl_url_bkup} > blobs/me.exe
 
-	if [ "$(sha1sum blobs/me.exe | awk '{print $1}')" != "${me_hash}" ]; then
+	if [ "$(sha1sum blobs/me.exe | awk '{print $1}')" != "${dl_hash}" ]; then
 		printf 'checksum of downloaded me did not mactch\ncorrupted me downloaded or wrong me for board\n'
 		rm blobs/me.exe
 		return 1
@@ -125,17 +125,17 @@ Build_deps
 
 while read -r line ; do
 	case ${line} in
-		ME_hash*)
+		DL_hash*)
 		set ${line}
-		me_hash=${2}
+		dl_hash=${2}
 		;;
-		ME_dl*)
+		DL_url*)
 		set ${line}
-		me_dl=${2}
+		dl_url=${2}
 		;;
-		ME_bkup_dl*)
+		DL_url_bkup*)
 		set ${line}
-		me_dl_bkup=${2}
+		dl_url_bkup=${2}
 		;;
 	esac
 done << EOF
