@@ -86,6 +86,15 @@ for romdir in bin/*; do
 		rm -Rf "${romdir}_tmp" # dirty hack, to reduce  disk io later
 		# rather than using /tmp, which might not be tmpfs
 		mkdir "${romdir}_tmp"
+		
+		if [ ! -f "${romdir}/blobhashes" ]; then
+			printf "%s\n" "The roms in this archive should match the following hashes AFTER blobs are inserted" > "${romdir}/blobhashes"
+		fi
+
+		# Hash the rom before removing blobs
+		( cd ${romdir}
+		sha1sum *.rom >> blobhashes
+		)
 
 		for romfile in "${romdir}"/*.rom
 		do
@@ -93,6 +102,7 @@ for romdir in bin/*; do
 			then
 				continue
 			fi
+
 			${ifdtool} --nuke me "${romfile}" || exit 1
 			mv "${romfile}" "${romdir}_tmp"/
 			mv "${romfile}.new" "${romfile}"
@@ -102,6 +112,7 @@ for romdir in bin/*; do
 				${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
 				${cbfstool} "${romfile}" print
 			fi
+			
 		done
 	fi
 
