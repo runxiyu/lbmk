@@ -23,6 +23,7 @@ Fail(){
 }
 
 Modify_gbe(){
+	rom=${1}
 	printf "changing mac address in gbe to ${new_mac}\n"
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
@@ -42,7 +43,7 @@ Modify_gbe(){
 listboards() {
 	for boarddir in resources/coreboot/*; do
 		if [ ! -d "${boarddir}" ]; then continue; fi
-		board="${boarddir##resources/coreboot/}"
+		board="${boarddir/##resources/coreboot/}"
 		board="${board%/}"
 		printf '%s\n' "${board##*/}"
 	done
@@ -51,13 +52,18 @@ listboards() {
 # This function tries to determine the board from the filename of the rom.
 # It will only succeed if the filename is not changed from the build/download
 Detect_board(){
-	filename=$(basename ${rom})
+	path=${1}
+	filename=$(basename ${path})
 	case ${filename} in
 		grub_*)
 		board=$(echo "${filename}" | cut -d '_' -f2-3)
 		;;
 		seabios_withgrub_*)
 		board=$(echo "${filename}" | cut -d '_' -f3-4)
+		;;
+		*.tar.xz)
+		_stripped_prefix=${filename#*_}
+		board="${_stripped_prefix%.tar.xz}"
 		;;
 		*)
 		return 1
@@ -71,6 +77,7 @@ Detect_board(){
 }
 
 Patch(){
+rom="${1}"
 set -- "resources/coreboot/${board}/config/*"
 . ${1} 2>/dev/null
 . "resources/coreboot/${board}/board.cfg"
@@ -86,9 +93,56 @@ set -- "resources/coreboot/${board}/config/*"
 		./coreboot/default/util/ifdtool/ifdtool -i me:${_me_location} ${rom} -O ${rom} || exit 1
 	fi
 
-	if [ "${modifygbe}" = "true" ]; then
-		Modify_gbe
+	if [ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ]; then
+		Modify_gbe ${rom}
 	fi
+}
+
+Patch_release(){
+	_tmpdir=$(mktemp -d "/tmp/${board}_tmpXXXX")
+	tar xf "${releasearchive}" -C "${_tmpdir}" || \
+	Fail 'could not extract release archive'
+	
+	for rom in ${_tmpdir}/bin/*/*.rom ; do
+		echo "patching rom $rom"
+		Patch ${rom} || \
+		Fail "could not patch ${rom}"
+	done
+
+	( cd ${_tmpdir}/bin/*
+	sha1sum --status -c blobhashes || \
+	Fail 'ROMs did not match expected hashes'
+	)
+	
+
+	if [ "${modifygbe}" = "true" ]; then
+		for rom in ${_tmpdir}/bin/*/*.rom ; do
+			Modify_gbe ${rom}
+		done
+	fi
+
+	if ! [ -d bin/release ]; then
+		mkdir -p bin/release
+	fi
+
+	mv ${_tmpdir}/bin/* bin/release/ && \
+	printf '%s\n' 'Success! Your ROMs are in bin/release'
+
+	rm -r "${_tmpdir}"
+}
+
+Check_release(){
+if ! [ -f ${1} ]; then
+	return 1
+fi
+
+_filetype=$(file -b "${1}")
+
+if [ "${_filetype%%,*}" = "XZ compressed data" ]; then
+	printf "%s\n" "Release archive ${1} detected"
+else
+	return 1
+fi
 }
 
 if [ "${1}" = "listboards" ]; then
@@ -110,14 +164,24 @@ do
     esac
 done
 
-if [ -z ${rom+x} ]; then
-	Fail 'no rom specified'
-elif [ ! -f "${rom}" ]; then
-	Fail "${rom} is not a valid path"
-elif [ -z ${board+x} ]; then
-	board=$(Detect_board) || \
-	Fail 'no board specified'
+
+
+if ! Check_release ${1} ; then
+	if [ ! -f "${rom}" ]; then
+		Fail "${rom} is not a valid path"
+	elif [ -z ${rom+x} ]; then
+		Fail 'no rom specified'
+	elif [ -z ${board+x} ]; then
+		board=$(Detect_board ${rom}) || \
+		Fail 'no board specified'
+	fi
+else
+	release=true
+	releasearchive="${1}"
+	board=$(Detect_board ${1}) || \
+	Fail 'Could not detect board type'
 fi
+
 
 if [ ! -d "resources/coreboot/${board}/" ]; then
 	Fail "board ${board} not found"
@@ -138,4 +202,12 @@ printf "building cbfstool from coreboot\n"
 ./build module cbutils default || Fail 'could not build cbfstool'
 fi
 
-./blobutil download ${board} && Patch
+./blobutil download ${board} || \
+Fail "Could not download blobs for ${board}, check network connection"
+
+if [ "${release}" = "true" ]; then
+	echo 'patching release file'
+	Patch_release
+else
+	Patch ${rom}
+fi
