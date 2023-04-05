@@ -48,17 +48,19 @@ void cmd_copy(void);
 int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
-void byteswap(uint8_t *byte);
+void byteswap(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTNUM argv[3]
+#define SIZE_2KB 0x800
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
-uint8_t buf[SIZE_8KB];
+uint16_t buf16[SIZE_4KB];
+uint8_t *buf;
 size_t gbe[2];
 uint8_t skipread[2] = {0, 0};
 
@@ -66,7 +68,7 @@ int part, gbeWriteAttempted = 0, gbeFileModified = 0;
 uint8_t nvmPartModified[2] = {0, 0};
 
 uint16_t test;
-uint8_t little_endian;
+uint8_t big_endian;
 
 int
 main(int argc, char *argv[])
@@ -81,10 +83,11 @@ main(int argc, char *argv[])
 		err(errno, "pledge");
 #endif
 
+	buf = (uint8_t *) &buf16;
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 
 	test = 1;
-	little_endian = ((uint8_t *) &test)[0];
+	big_endian = ((uint8_t *) &test)[0] ^ 1;
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
@@ -176,6 +179,8 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 		if ((r = pread((*fd), (uint8_t *) gbe[p], nr, p << 12)) == -1)
 			err(errno, "%s", path);
 		tr += r;
+		if (big_endian)
+			byteswap(nr, p);
 	}
 	printf("%d bytes read from file: `%s`\n", tr, path);
 }
@@ -183,17 +188,25 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 void
 cmd_setmac(const char *strMac)
 {
-	int i, partnum;
+	uint8_t *b;
 	uint16_t mac[3] = {0, 0, 0};
 
 	if (parseMacAddress(strMac, mac) == -1)
 		err(errno = ECANCELED, "Bad MAC address");
 
-	for (partnum = 0; partnum < 2; partnum++) {
+	/* nvm words are little endian, *except* the mac address. swap bytes */
+	for (int w = 0; w < 3; w++) {
+		b = (uint8_t *) &mac[w];
+		b[0] ^= b[1];
+		b[1] ^= b[0];
+		b[0] ^= b[1];
+	}
+
+	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!validChecksum(partnum))
 			continue;
-		for (i = 0; i < 3; i++)
-			setWord(i, partnum, mac[i]);
+		for (int w = 0; w < 3; w++)
+			setWord(w, partnum, mac[w]);
 		part = partnum;
 		cmd_setchecksum();
 	}
@@ -202,53 +215,38 @@ cmd_setmac(const char *strMac)
 int
 parseMacAddress(const char *strMac, uint16_t *mac)
 {
-	int i, nib, byte;
-	uint8_t val8;
-	uint16_t val16;
+	int nib, byte;
+	uint8_t h;
 	uint64_t total = 0;
 
 	if (strnlen(strMac, 20) != 17)
 		return -1;
 
-	for (i = 0; i < 16; i += 3) {
+	for (int i = 0; i < 16; i += 3) {
 		if (i != 15)
 			if (strMac[i + 2] != ':')
 				return -1;
 		byte = i / 3;
-		for (nib = 0; nib < 2; nib++, total += val8) {
-			if ((val8 = hextonum(strMac[i + nib])) > 15)
+		for (nib = 0; nib < 2; nib++, total += h) {
+			if ((h = hextonum(strMac[i + nib])) > 15)
 				return -1;
 			if ((byte == 0) && (nib == 1))
 				if (strMac[i + nib] == '?')
-					val8 = (val8 & 0xE) | 2;
-
-			val16 = val8;
-			if ((byte % 2) ^ 1)
-				val16 <<= 8;
-			val16 <<= 4 * (nib ^ 1);
-			mac[byte >> 1] |= val16;
+					h = (h & 0xE) | 2;
+			mac[byte >> 1] |= ((uint16_t ) h)
+				<< ((8 * ((byte % 2) ^ 1)) + (4 * (nib ^ 1)));
 		}
 	}
 
 	/* Disallow multicast and all-zero MAC addresses */
-	test = mac[0];
-	if (little_endian)
-		byteswap((uint8_t *) &test);
-	if (total == 0 || (((uint8_t *) &test)[0] & 1))
-		return -1;
-
-	if (little_endian)
-		for (i = 0; i < 3; i++)
-			byteswap((uint8_t *) &mac[i]);
-
-	return 0;
+	return ((total == 0) || (mac[0] & 0x100))
+		? -1 : 0;
 }
 
 uint8_t
 hextonum(char chs)
 {
-	uint8_t val8, ch;
-	ch = (uint8_t) chs;
+	uint8_t val8, ch = (uint8_t) chs;
 
 	if ((ch >= '0') && (ch <= '9'))
 		val8 = ch - '0';
@@ -288,9 +286,8 @@ rhex(void)
 void
 cmd_dump(void)
 {
-	int numInvalid, partnum;
+	int partnum, numInvalid = 0;
 
-	numInvalid = 0;
 	for (partnum = 0; (partnum < 2); partnum++) {
 		if (!validChecksum(partnum))
 			++numInvalid;
@@ -307,18 +304,11 @@ cmd_dump(void)
 void
 showmac(int partnum)
 {
-	int c;
 	uint16_t val16;
-	uint8_t *byte;
 
-	for (c = 0; c < 3; c++) {
+	for (int c = 0; c < 3; c++) {
 		val16 = word(c, partnum);
-		byte = (uint8_t *) &val16;
-
-		if (!little_endian)
-			byteswap(byte);
-
-		printf("%02x:%02x", byte[0], byte[1]);
+		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
 		if (c == 2)
 			printf("\n");
 		else
@@ -329,20 +319,13 @@ showmac(int partnum)
 void
 hexdump(int partnum)
 {
-	int row, c;
 	uint16_t val16;
-	uint8_t *byte;
 
-	for (row = 0; row < 8; row++) {
+	for (int row = 0; row < 8; row++) {
 		printf("%07x ", row << 4);
-		for (c = 0; c < 8; c++) {
+		for (int c = 0; c < 8; c++) {
 			val16 = word((row << 3) + c, partnum);
-			byte = (uint8_t *) &val16;
-
-			if (!little_endian)
-				byteswap(byte);
-
-			printf("%02x%02x ", byte[1], byte[0]);
+			printf("%02x%02x ", val16 >> 8, val16 & 0xff);
 		}
 		printf("\n");
 	}
@@ -351,10 +334,9 @@ hexdump(int partnum)
 void
 cmd_setchecksum(void)
 {
-	int c;
-	uint16_t val16;
+	uint16_t val16 = 0;
 
-	for (val16 = 0, c = 0; c < 0x3F; c++)
+	for (int c = 0; c < 0x3F; c++)
 		val16 += word(c, part);
 
 	setWord(0x3F, part, 0xBABA - val16);
@@ -397,10 +379,9 @@ cmd_copy(void)
 int
 validChecksum(int partnum)
 {
-	int w;
-	uint16_t total;
+	uint16_t total = 0;
 
-	for(total = 0, w = 0; w <= 0x3F; w++)
+	for(int w = 0; w <= 0x3F; w++)
 		total += word(w, partnum);
 
 	if (total == 0xBABA)
@@ -414,46 +395,34 @@ validChecksum(int partnum)
 uint16_t
 word(int pos16, int partnum)
 {
-	uint8_t *nbuf;
-	uint16_t pos8, val16;
-
-	nbuf = (uint8_t *) gbe[partnum];
-	pos8 = pos16 << 1;
-	val16 = nbuf[pos8 + 1];
-	val16 <<= 8;
-	val16 |= nbuf[pos8];
-
-	return val16;
+	return buf16[pos16 + (partnum << 11)];
 }
 
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
-	uint8_t val8[2], *nbuf;
-	uint16_t pos8;
-
 	gbeWriteAttempted = 1;
 	if (word(pos16, partnum) == val16)
 		return;
 
-	nbuf = (uint8_t *) gbe[partnum];
-	val8[0] = (uint8_t) (val16 & 0xff);
-	val8[1] = (uint8_t) (val16 >> 8);
-	pos8 = pos16 << 1;
-
-	nbuf[pos8] = val8[0];
-	nbuf[pos8 + 1] = val8[1];
+	buf16[pos16 + (partnum << 11)] = val16;
 
 	gbeFileModified = 1;
 	nvmPartModified[partnum] = 1;
 }
 
 void
-byteswap(uint8_t *byte)
+byteswap(int n, int partnum)
 {
-	byte[0] ^= byte[1];
-	byte[1] ^= byte[0];
-	byte[0] ^= byte[1];
+	int b1, b2, wcount = n >> 1;
+	uint8_t *nbuf = (uint8_t *) gbe[partnum];
+
+	for (int w = 0; w < wcount; w++) {
+		b1 = b2 = w << 1;
+		nbuf[b1] ^= nbuf[++b2];
+		nbuf[b2] ^= nbuf[b1];
+		nbuf[b1] ^= nbuf[b2];
+	}
 }
 
 void
@@ -478,6 +447,8 @@ writeGbeFile(int *fd, const char *filename)
 				"Part %d NOT modified\n", p);
 			goto next_part;
 		}
+		if (big_endian)
+			byteswap(nw, p);
 		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) != nw)
 			err(errno, "%s", filename);
 		tw += nw;
