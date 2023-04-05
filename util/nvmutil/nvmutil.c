@@ -205,7 +205,7 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 	int i, nib, byte;
 	uint8_t val8;
 	uint16_t val16;
-	uint64_t total;
+	uint64_t total = 0;
 
 	if (strnlen(strMac, 20) != 17)
 		return -1;
@@ -215,7 +215,7 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 			if (strMac[i + 2] != ':')
 				return -1;
 		byte = i / 3;
-		for (total = 0, nib = 0; nib < 2; nib++, total += val8) {
+		for (nib = 0; nib < 2; nib++, total += val8) {
 			if ((val8 = hextonum(strMac[i + nib])) > 15)
 				return -1;
 			if ((byte == 0) && (nib == 1))
