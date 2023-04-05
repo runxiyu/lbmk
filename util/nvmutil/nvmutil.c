@@ -205,7 +205,7 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 	int i, nib, byte;
 	uint8_t val8;
 	uint16_t val16;
-	uint64_t total = 0;
+	uint64_t total;
 
 	if (strnlen(strMac, 20) != 17)
 		return -1;
@@ -224,7 +224,7 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 
 			val16 = val8;
 			if ((byte % 2) ^ 1)
-				byteswap((uint8_t *) &val16);
+				val16 <<= 8;
 			val16 <<= 4 * (nib ^ 1);
 			mac[byte >> 1] |= val16;
 		}
