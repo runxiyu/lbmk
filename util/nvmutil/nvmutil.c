@@ -164,8 +164,7 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	if (fstat((*fd), &st) == -1)
 		err(errno, "%s", path);
 	if ((st.st_size != SIZE_8KB)) {
-		fprintf(stderr, "%s: Bad file size (must be 8KiB)\n", path);
-		err(errno = ECANCELED, NULL);
+		err(errno = ECANCELED, "File \"%s\" not of size 8KiB", path);
 	}
 
 	if (errno == ENOTDIR)
