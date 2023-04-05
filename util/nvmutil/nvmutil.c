@@ -35,6 +35,7 @@
 void readGbeFile(int *fd, const char *path, int flags,
 	size_t nr);
 void cmd_setmac(const char *strMac);
+int parseMacAddress(const char *strMac, uint16_t *mac);
 uint8_t hextonum(char chs);
 uint8_t rhex(void);
 void cmd_dump(void);
@@ -182,26 +183,44 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 void
 cmd_setmac(const char *strMac)
 {
-	int partnum, byte, nib;
-	uint8_t o, val8;
-	uint16_t val16, mac[3] = {0, 0, 0};
-	uint64_t total;
+	int i, partnum;
+	uint16_t mac[3] = {0, 0, 0};
+
+	if (parseMacAddress(strMac, mac) == -1)
+		err(errno = ECANCELED, "Bad MAC address");
+
+	for (partnum = 0; partnum < 2; partnum++) {
+		if (!validChecksum(partnum))
+			continue;
+		for (i = 0; i < 3; i++)
+			setWord(i, partnum, mac[i]);
+		part = partnum;
+		cmd_setchecksum();
+	}
+}
+
+int
+parseMacAddress(const char *strMac, uint16_t *mac)
+{
+	int i, nib, byte;
+	uint8_t val8;
+	uint16_t val16;
+	uint64_t total = 0;
 
 	if (strnlen(strMac, 20) != 17)
-		goto invalid_mac_address;
+		return -1;
 
-	for (o = 0; o < 16; o += 3) {
-		if (o != 15)
-			if (strMac[o + 2] != ':')
-				goto invalid_mac_address;
-		byte = o / 3;
+	for (i = 0; i < 16; i += 3) {
+		if (i != 15)
+			if (strMac[i + 2] != ':')
+				return -1;
+		byte = i / 3;
 		for (total = 0, nib = 0; nib < 2; nib++, total += val8) {
-			if ((val8 = hextonum(strMac[o + nib])) > 15)
-				goto invalid_mac_address;
-			if ((byte == 0) && (nib == 1)) {
-				if (strMac[o + nib] == '?')
+			if ((val8 = hextonum(strMac[i + nib])) > 15)
+				return -1;
+			if ((byte == 0) && (nib == 1))
+				if (strMac[i + nib] == '?')
 					val8 = (val8 & 0xE) | 2;
-			}
 
 			val16 = val8;
 			if ((byte % 2) ^ 1)
@@ -211,29 +230,18 @@ cmd_setmac(const char *strMac)
 		}
 	}
 
+	/* Disallow multicast and all-zero MAC addresses */
 	test = mac[0];
 	if (little_endian)
 		byteswap((uint8_t *) &test);
 	if (total == 0 || (((uint8_t *) &test)[0] & 1))
-		goto invalid_mac_address;
+		return -1;
 
 	if (little_endian)
-		for (o = 0; o < 3; o++)
-			byteswap((uint8_t *) &mac[o]);
+		for (i = 0; i < 3; i++)
+			byteswap((uint8_t *) &mac[i]);
 
-	for (partnum = 0; partnum < 2; partnum++) {
-		if (!validChecksum(partnum))
-			continue;
-		for (o = 0; o < 3; o++)
-			setWord(o, partnum, mac[o]);
-		part = partnum;
-		cmd_setchecksum();
-	}
-
-	return;
-invalid_mac_address:
-	fprintf(stderr, "Bad MAC address\n");
-	errno = ECANCELED;
+	return 0;
 }
 
 uint8_t
