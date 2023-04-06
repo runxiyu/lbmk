@@ -55,7 +55,6 @@ void writeGbeFile(int *fd, const char *filename);
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTNUM argv[3]
-#define SIZE_2KB 0x800
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
@@ -120,14 +119,13 @@ main(int argc, char *argv[])
 	if (errno != 0)
 		goto nvmutil_exit;
 
-	if ((cmd == &cmd_copy) || (cmd == &cmd_swap))
-		nr = SIZE_4KB;
-	else
-		nr = 128;
+	nr = SIZE_4KB; /* copy/swap commands need everything to be read */
+	if ((cmd != &cmd_copy) && (cmd != &cmd_swap))
+		nr = 128; /* read only the nvm part */
 
 	if ((cmd == &cmd_copy) || (cmd == &cmd_setchecksum) ||
 	    (cmd == &cmd_brick))
-		skipread[part ^ 1] = 1;
+		skipread[part ^ 1] = 1; /* skip reading the unused part */
 
 	readGbeFile(&fd, FILENAME, flags, nr);
 
@@ -147,8 +145,7 @@ main(int argc, char *argv[])
 nvmutil_exit:
 	if ((errno != 0) && (cmd != &cmd_dump))
 		err(errno, NULL);
-	else
-		return errno;
+	return errno;
 }
 
 void
@@ -159,17 +156,15 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
-	if (((*fd) = open(path, flags)) == -1)
+	else if (((*fd) = open(path, flags)) == -1)
 		err(errno, "%s", path);
-	if (fstat((*fd), &st) == -1)
+	else if (fstat((*fd), &st) == -1)
 		err(errno, "%s", path);
-	if ((st.st_size != SIZE_8KB)) {
+	else if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File \"%s\" not of size 8KiB", path);
-	}
-
-	if (errno == ENOTDIR)
+	else if (errno == ENOTDIR)
 		errno = 0;
-	if (errno != 0)
+	else if (errno != 0)
 		err(errno, "%s", path);
 
 	for (tr = 0, p = 0; p < 2; p++) {
@@ -187,15 +182,13 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 void
 cmd_setmac(const char *strMac)
 {
-	uint8_t *b;
 	uint16_t mac[3] = {0, 0, 0};
-
 	if (parseMacAddress(strMac, mac) == -1)
 		err(errno = ECANCELED, "Bad MAC address");
 
 	/* nvm words are little endian, *except* the mac address. swap bytes */
 	for (int w = 0; w < 3; w++) {
-		b = (uint8_t *) &mac[w];
+		uint8_t *b = (uint8_t *) &mac[w];
 		b[0] ^= b[1];
 		b[1] ^= b[0];
 		b[0] ^= b[1];
@@ -214,7 +207,6 @@ cmd_setmac(const char *strMac)
 int
 parseMacAddress(const char *strMac, uint16_t *mac)
 {
-	int nib, byte;
 	uint8_t h;
 	uint64_t total = 0;
 
@@ -225,8 +217,8 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 		if (i != 15)
 			if (strMac[i + 2] != ':')
 				return -1;
-		byte = i / 3;
-		for (nib = 0; nib < 2; nib++, total += h) {
+		int byte = i / 3;
+		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
 				return -1;
 			if ((byte == 0) && (nib == 1))
@@ -243,22 +235,18 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 }
 
 uint8_t
-hextonum(char chs)
+hextonum(char ch)
 {
-	uint8_t val8, ch = (uint8_t) chs;
-
 	if ((ch >= '0') && (ch <= '9'))
-		val8 = ch - '0';
+		return ch - '0';
 	else if ((ch >= 'A') && (ch <= 'F'))
-		val8 = ch - 'A' + 10;
+		return ch - 'A' + 10;
 	else if ((ch >= 'a') && (ch <= 'f'))
-		val8 = ch - 'a' + 10;
+		return ch - 'a' + 10;
 	else if (ch == '?')
-		val8 = rhex();
+		return rhex();
 	else
 		return 16;
-
-	return val8;
 }
 
 uint8_t
@@ -266,8 +254,6 @@ rhex(void)
 {
 	static int rfd = -1;
 	static uint64_t rnum = 0;
-	uint8_t rval;
-
 	if (rnum == 0) {
 		if (rfd == -1)
 			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
@@ -275,10 +261,8 @@ rhex(void)
 		if (read(rfd, (uint8_t *) &rnum, 8) == -1)
 			err(errno, "/dev/urandom");
 	}
-
-	rval = (uint8_t) (rnum & 0xf);
+	uint8_t rval = (uint8_t) (rnum & 0xf);
 	rnum >>= 4;
-
 	return rval;
 }
 
@@ -286,14 +270,11 @@ void
 cmd_dump(void)
 {
 	int partnum, numInvalid = 0;
-
-	for (partnum = 0; (partnum < 2); partnum++) {
+	for (partnum = 0; partnum < 2; partnum++) {
 		if (!validChecksum(partnum))
 			++numInvalid;
-
 		printf("MAC (part %d): ", partnum);
 		showmac(partnum);
-
 		hexdump(partnum);
 	}
 	if (numInvalid < 2)
@@ -304,7 +285,6 @@ void
 showmac(int partnum)
 {
 	uint16_t val16;
-
 	for (int c = 0; c < 3; c++) {
 		val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
@@ -319,7 +299,6 @@ void
 hexdump(int partnum)
 {
 	uint16_t val16;
-
 	for (int row = 0; row < 8; row++) {
 		printf("%07x ", row << 4);
 		for (int c = 0; c < 8; c++) {
@@ -334,10 +313,8 @@ void
 cmd_setchecksum(void)
 {
 	uint16_t val16 = 0;
-
 	for (int c = 0; c < 0x3F; c++)
 		val16 += word(c, part);
-
 	setWord(0x3F, part, 0xBABA - val16);
 }
 
@@ -355,11 +332,9 @@ cmd_swap(void)
 		gbe[0] ^= gbe[1];
 		gbe[1] ^= gbe[0];
 		gbe[0] ^= gbe[1];
-
 		gbeFileModified = 1;
 		nvmPartModified[0] = 1;
 		nvmPartModified[1] = 1;
-
 		errno = 0;
 	}
 }
@@ -369,7 +344,6 @@ cmd_copy(void)
 {
 	if (validChecksum(part)) {
 		gbe[part ^ 1] = gbe[part];
-
 		gbeFileModified = 1;
 		nvmPartModified[part ^ 1] = 1;
 	}
@@ -379,10 +353,8 @@ int
 validChecksum(int partnum)
 {
 	uint16_t total = 0;
-
 	for(int w = 0; w <= 0x3F; w++)
 		total += word(w, partnum);
-
 	if (total == 0xBABA)
 		return 1;
 
@@ -403,9 +375,7 @@ setWord(int pos16, int partnum, uint16_t val16)
 	gbeWriteAttempted = 1;
 	if (word(pos16, partnum) == val16)
 		return;
-
 	buf16[pos16 + (partnum << 11)] = val16;
-
 	gbeFileModified = 1;
 	nvmPartModified[partnum] = 1;
 }
@@ -415,7 +385,6 @@ byteswap(int n, int partnum)
 {
 	int b1, b2, wcount = n >> 1;
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
-
 	for (int w = 0; w < wcount; w++) {
 		b1 = b2 = w << 1;
 		nbuf[b1] ^= nbuf[++b2];
@@ -429,10 +398,8 @@ writeGbeFile(int *fd, const char *filename)
 {
 	int p, nw, tw;
 	errno = 0;
-
-	/* if copy/swap not performed, write only the nvm part */
 	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1]))
-		nw = 128;
+		nw = 128; /* copy/swap command, so only write the nvm part */
 	else
 		nw = SIZE_4KB;
 
@@ -457,6 +424,6 @@ next_part:
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
-
-	printf("%d bytes written to file: `%s`\n", tw, filename);
+	else
+		printf("%d bytes written to file: `%s`\n", tw, filename);
 }
