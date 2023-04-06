@@ -225,9 +225,10 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
 				return -1;
+			/* ensure local, unicast mac address if random: */
 			if ((byte == 0) && (nib == 1))
 				if (strMac[i + nib] == '?')
-					h = (h & 0xE) | 2;
+					h = (h & 0xE) | 2; /* local, unicast */
 			mac[byte >> 1] |= ((uint16_t ) h)
 				<< ((8 * ((byte % 2) ^ 1)) + (4 * (nib ^ 1)));
 		}
