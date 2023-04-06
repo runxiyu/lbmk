@@ -91,13 +91,13 @@ main(int argc, char *argv[])
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 
 	test = 1;
-	big_endian = ((uint8_t *) &test)[0] ^ 1; /* check host endianness */
+	big_endian = ((uint8_t *) &test)[0] ^ 1;
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
 #ifdef HAVE_PLEDGE
-			if (pledge("stdio rpath", NULL) == -1)
-				err(errno, "pledge"); /* not very puffy */
+			if (pledge("stdio rpath", NULL) == -1) /* openbsd */
+				err(errno, "pledge");
 #endif
 			flags = O_RDONLY;
 			cmd = &cmd_dump;
@@ -126,19 +126,18 @@ main(int argc, char *argv[])
 
 	nr = SIZE_4KB; /* copy/swap commands need everything to be read */
 	if ((cmd != &cmd_copy) && (cmd != &cmd_swap))
-		nr = 128; /* read only the nvm part */
+		nr = 128; /* speedhack: read only the nvm part */
 
 	if ((cmd == &cmd_copy) || (cmd == &cmd_setchecksum) ||
 	    (cmd == &cmd_brick))
-		skipread[part ^ 1] = 1; /* skip reading the unused part */
+		skipread[part ^ 1] = 1; /* speedhack: don't read unused part */
 
 	readGbeFile(&fd, FILENAME, flags, nr);
 
-	/* perform operation specified by the user */
 	if (strMac != NULL)
-		cmd_setmac(strMac);
+		cmd_setmac(strMac); /* nvm gbe.bin setmac */
 	else if (cmd != NULL)
-		(*cmd)();
+		(*cmd)(); /* all other commands except setmac */
 
 	if (gbeFileModified)
 		writeGbeFile(&fd, FILENAME);
@@ -151,7 +150,6 @@ nvmutil_exit:
 	return errno;
 }
 
-/* load the gbe file into memory */
 void
 readGbeFile(int *fd, const char *path, int flags, size_t nr)
 {
@@ -181,7 +179,6 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	}
 }
 
-/* set mac address on valid nvm parts, per user input */
 void
 cmd_setmac(const char *strMac)
 {
@@ -193,20 +190,18 @@ cmd_setmac(const char *strMac)
 		if (!validChecksum(partnum))
 			continue;
 		for (int w = 0; w < 3; w++)
-			setWord(w, partnum, mac[w]); /* do not use memcpy! */
+			setWord(w, partnum, mac[w]);
 		byteswap(6, partnum); /* mac words are stored big-endian */
 		part = partnum;
 		cmd_setchecksum();
 	}
 }
 
-/* read mac address from user input */
 int
 parseMacAddress(const char *strMac, uint16_t *mac)
 {
 	uint8_t h;
 	uint64_t total = 0;
-
 	if (strnlen(strMac, 20) != 17)
 		return -1;
 
@@ -226,10 +221,8 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 				<< ((8 * ((byte % 2) ^ 1)) + (4 * (nib ^ 1)));
 		}
 	}
-
-	/* Disallow multicast and all-zero MAC addresses */
 	return ((total == 0) || (mac[0] & 0x100))
-		? -1 : 0;
+		? -1 : 0; /* disallow multicast/zero mac addresses */
 }
 
 uint8_t
@@ -247,7 +240,6 @@ hextonum(char ch)
 		return 16;
 }
 
-/* generate a random number from 0 to 15, the unix way */
 uint8_t
 rhex(void)
 {
@@ -265,7 +257,6 @@ rhex(void)
 	return rval;
 }
 
-/* show mac address and hexdump of each nvm part */
 void
 cmd_dump(void)
 {
@@ -281,7 +272,6 @@ cmd_dump(void)
 		errno = 0;
 }
 
-/* show formatted mac address contained within the nvm part */
 void
 showmac(int partnum)
 {
@@ -296,7 +286,6 @@ showmac(int partnum)
 	}
 }
 
-/* output a hexdump of both nvm parts, bytes reversed to big-endian order */
 void
 hexdump(int partnum)
 {
@@ -311,7 +300,6 @@ hexdump(int partnum)
 	}
 }
 
-/* set a valid checksum on a given part */
 void
 cmd_setchecksum(void)
 {
@@ -321,7 +309,6 @@ cmd_setchecksum(void)
 	setWord(0x3F, part, 0xBABA - val16);
 }
 
-/* set invalid checksum, intentionally */
 void
 cmd_brick(void)
 {
@@ -329,12 +316,11 @@ cmd_brick(void)
 		setWord(0x3F, part, (word(0x3F, part)) ^ 0xFF);
 }
 
-/* swap the words of each part with each other */
 void
 cmd_swap(void)
 {
 	if (validChecksum(1) || validChecksum(0)) {
-		gbe[0] ^= gbe[1]; /* speed hack: xorswap pointers, not words */
+		gbe[0] ^= gbe[1]; /* speedhack: xorswap pointers, not words */
 		gbe[1] ^= gbe[0];
 		gbe[0] ^= gbe[1];
 		gbeFileModified = 1; /* not using setWord, so must set these */
@@ -344,12 +330,11 @@ cmd_swap(void)
 	}
 }
 
-/* overwrite one part with the other */
 void
 cmd_copy(void)
 {
 	if (validChecksum(part)) {
-		gbe[part ^ 1] = gbe[part]; /* pointer-based speed hack */
+		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
 		gbeFileModified = 1; /* not using setWord, so must set these */
 		nvmPartModified[part ^ 1] = 1;
 	}
@@ -369,14 +354,12 @@ validChecksum(int partnum)
 	return 0;
 }
 
-/* fetch a word from gbe buffer */
 uint16_t
 word(int pos16, int partnum)
 {
 	return buf16[pos16 + (partnum << 11)];
 }
 
-/* write a word to gbe buffer, and record that a write has occured */
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
@@ -388,7 +371,6 @@ setWord(int pos16, int partnum, uint16_t val16)
 	nvmPartModified[partnum] = 1;
 }
 
-/* big-endian host compatibility: called post-read and again pre-write */
 void
 byteswap(int n, int partnum)
 {
@@ -396,28 +378,25 @@ byteswap(int n, int partnum)
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
 	for (int w = 0; w < wcount; w++) {
 		b1 = b2 = w << 1;
-
-		/* xor-based swap method */
-		nbuf[b1] ^= nbuf[++b2];
+		nbuf[b1] ^= nbuf[++b2]; /* xor swap */
 		nbuf[b2] ^= nbuf[b1];
 		nbuf[b1] ^= nbuf[b2];
 	}
 }
 
-/* called after all operations are done, if gbe was modified */
 void
 writeGbeFile(int *fd, const char *filename)
 {
 	int p, nw;
 	errno = 0;
 	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1]))
-		nw = 128; /* write only the nvm part */
+		nw = 128; /* speedhack: write only the nvm part */
 	else
 		nw = SIZE_4KB; /* copy/swap, so only write everything */
 
 	for (p = 0; p < 2; p++) {
-		if (gbe[0] > gbe[1]) /* write sequentially on-disk */
-			p ^= 1;
+		if (gbe[0] > gbe[1])
+			p ^= 1; /* speedhack: write sequentially on-disk */
 		if (!nvmPartModified[p])
 			goto next_part;
 		if (big_endian)
@@ -426,7 +405,7 @@ writeGbeFile(int *fd, const char *filename)
 			err(errno, "%s", filename);
 next_part:
 		if (gbe[0] > gbe[1])
-			p ^= 1;
+			p ^= 1; /* speedhack: write sequentially on-disk */
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
