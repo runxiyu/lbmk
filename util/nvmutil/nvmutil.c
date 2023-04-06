@@ -189,19 +189,12 @@ cmd_setmac(const char *strMac)
 	if (parseMacAddress(strMac, mac) == -1)
 		err(errno = ECANCELED, "Bad MAC address");
 
-	/* nvm words are little endian, *except* the mac address. swap bytes */
-	for (int w = 0; w < 3; w++) {
-		uint8_t *b = (uint8_t *) &mac[w];
-		b[0] ^= b[1];
-		b[1] ^= b[0];
-		b[0] ^= b[1];
-	}
-
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!validChecksum(partnum))
 			continue;
 		for (int w = 0; w < 3; w++)
 			setWord(w, partnum, mac[w]); /* do not use memcpy! */
+		byteswap(6, partnum); /* mac words are stored big-endian */
 		part = partnum;
 		cmd_setchecksum();
 	}
