@@ -22,7 +22,7 @@
  */
 
 /*
- * This file is part of the Libreboot project. Documentation available here:
+ * This file is part of Libreboot. See:
  * https://libreboot.org/docs/install/nvmutil.html
  */
 
@@ -82,9 +82,9 @@ main(int argc, char *argv[])
 	void (*cmd)(void) = NULL;
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 
-#ifdef HAVE_PLEDGE
-	if (pledge("stdio wpath", NULL) == -1) /* only used on openbsd */
-		err(errno, "pledge"); /* https://man.openbsd.org/pledge.2 */
+#ifdef HAVE_PLEDGE /* openbsd */
+	if (pledge("stdio wpath", NULL) == -1)
+		err(errno, "pledge");
 #endif
 
 	buf = (uint8_t *) &buf16;
@@ -95,8 +95,8 @@ main(int argc, char *argv[])
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
-#ifdef HAVE_PLEDGE
-			if (pledge("stdio rpath", NULL) == -1) /* openbsd */
+#ifdef HAVE_PLEDGE /* openbsd */
+			if (pledge("stdio rpath", NULL) == -1)
 				err(errno, "pledge");
 #endif
 			flags = O_RDONLY;
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 	if ((strMac == NULL) && (cmd == NULL))
 		errno = EINVAL;
 	if (errno != 0)
-		goto nvmutil_exit;
+		err(errno, NULL);
 
 	nr = SIZE_4KB; /* copy/swap commands need everything to be read */
 	if ((cmd != &cmd_copy) && (cmd != &cmd_swap))
@@ -144,7 +144,6 @@ main(int argc, char *argv[])
 	else if (gbeWriteAttempted && (cmd != &cmd_dump))
 		errno = 0;
 
-nvmutil_exit:
 	if ((errno != 0) && (cmd != &cmd_dump))
 		err(errno, NULL);
 	return errno;
@@ -154,8 +153,6 @@ void
 readGbeFile(int *fd, const char *path, int flags, size_t nr)
 {
 	struct stat st;
-	int p, r;
-
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
 	else if (((*fd) = open(path, flags)) == -1)
@@ -166,13 +163,9 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 		err(errno = ECANCELED, "File \"%s\" not of size 8KiB", path);
 	else if (errno == ENOTDIR)
 		errno = 0;
-	else if (errno != 0)
-		err(errno, "%s", path);
 
-	for (p = 0; p < 2; p++) {
-		if (skipread[p])
-			continue;
-		if ((r = pread((*fd), (uint8_t *) gbe[p], nr, p << 12)) == -1)
+	for (int p = 0; (p < 2) && (!skipread[p]); p++) {
+		if (pread((*fd), (uint8_t *) gbe[p], nr, p << 12) == -1)
 			err(errno, "%s", path);
 		if (big_endian)
 			byteswap(nr, p);
@@ -213,7 +206,6 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
 				return -1;
-			/* ensure local, unicast mac address if random: */
 			if ((byte == 0) && (nib == 1))
 				if (strMac[i + nib] == '?')
 					h = (h & 0xE) | 2; /* local, unicast */
@@ -222,7 +214,7 @@ parseMacAddress(const char *strMac, uint16_t *mac)
 		}
 	}
 	return ((total == 0) || (mac[0] & 0x100))
-		? -1 : 0; /* disallow multicast/zero mac addresses */
+		? -1 : 0; /* multicast/all-zero not permitted */
 }
 
 uint8_t
@@ -279,10 +271,7 @@ showmac(int partnum)
 	for (int c = 0; c < 3; c++) {
 		val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
-		if (c == 2)
-			printf("\n");
-		else
-			printf(":");
+		printf(c == 2 ? "\n" : ":");
 	}
 }
 
@@ -323,9 +312,7 @@ cmd_swap(void)
 		gbe[0] ^= gbe[1]; /* speedhack: xorswap pointers, not words */
 		gbe[1] ^= gbe[0];
 		gbe[0] ^= gbe[1];
-		gbeFileModified = 1; /* not using setWord, so must set these */
-		nvmPartModified[0] = 1;
-		nvmPartModified[1] = 1;
+		gbeFileModified = nvmPartModified[0] = nvmPartModified[1] = 1;
 		errno = 0;
 	}
 }
@@ -335,8 +322,7 @@ cmd_copy(void)
 {
 	if (validChecksum(part)) {
 		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
-		gbeFileModified = 1; /* not using setWord, so must set these */
-		nvmPartModified[part ^ 1] = 1;
+		gbeFileModified = nvmPartModified[part ^ 1] = 1;
 	}
 }
 
@@ -348,10 +334,8 @@ validChecksum(int partnum)
 		total += word(w, partnum);
 	if (total == 0xBABA)
 		return 1;
-
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	errno = ECANCELED;
-	return 0;
+	return (errno = ECANCELED) & 0;
 }
 
 uint16_t
@@ -367,8 +351,7 @@ setWord(int pos16, int partnum, uint16_t val16)
 	if (word(pos16, partnum) == val16)
 		return;
 	buf16[pos16 + (partnum << 11)] = val16;
-	gbeFileModified = 1;
-	nvmPartModified[partnum] = 1;
+	gbeFileModified = nvmPartModified[partnum] = 1;
 }
 
 void
@@ -399,7 +382,7 @@ writeGbeFile(int *fd, const char *filename)
 			goto next_part;
 		if (big_endian)
 			byteswap(nw, p);
-		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) != nw)
+		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) == -1)
 			err(errno, "%s", filename);
 next_part:
 		if (gbe[0] > gbe[1])
