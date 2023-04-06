@@ -387,12 +387,10 @@ byteswap(int n, int partnum)
 void
 writeGbeFile(int *fd, const char *filename)
 {
-	int p, nw;
+	int p, nw = SIZE_4KB; /* copy/swap need all 4KB written */
 	errno = 0;
-	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1]))
+	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1])) /* not copy/swap */
 		nw = 128; /* speedhack: write only the nvm part */
-	else
-		nw = SIZE_4KB; /* copy/swap, so only write everything */
 
 	for (p = 0; p < 2; p++) {
 		if (gbe[0] > gbe[1])
