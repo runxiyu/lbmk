@@ -134,13 +134,10 @@ main(int argc, char *argv[])
 	else if (cmd != NULL)
 		(*cmd)();
 
-	if (gbeFileModified) {
+	if (gbeFileModified)
 		writeGbeFile(&fd, FILENAME);
-	} else if ((cmd != &cmd_dump)) {
-		printf("File `%s` not modified.\n", FILENAME);
-		if (gbeWriteAttempted)
-			errno = 0;
-	}
+	else if (gbeWriteAttempted && (cmd != &cmd_dump))
+		errno = 0;
 
 nvmutil_exit:
 	if ((errno != 0) && (cmd != &cmd_dump))
@@ -152,7 +149,7 @@ void
 readGbeFile(int *fd, const char *path, int flags, size_t nr)
 {
 	struct stat st;
-	int p, r, tr;
+	int p, r;
 
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
@@ -167,16 +164,14 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	else if (errno != 0)
 		err(errno, "%s", path);
 
-	for (tr = 0, p = 0; p < 2; p++) {
+	for (p = 0; p < 2; p++) {
 		if (skipread[p])
 			continue;
 		if ((r = pread((*fd), (uint8_t *) gbe[p], nr, p << 12)) == -1)
 			err(errno, "%s", path);
-		tr += r;
 		if (big_endian)
 			byteswap(nr, p);
 	}
-	printf("%d bytes read from file: `%s`\n", tr, path);
 }
 
 void
@@ -396,34 +391,26 @@ byteswap(int n, int partnum)
 void
 writeGbeFile(int *fd, const char *filename)
 {
-	int p, nw, tw;
+	int p, nw;
 	errno = 0;
 	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1]))
 		nw = 128; /* copy/swap command, so only write the nvm part */
 	else
 		nw = SIZE_4KB;
 
-	for (tw = 0, p = 0; p < 2; p++) {
+	for (p = 0; p < 2; p++) {
 		if (gbe[0] > gbe[1])
 			p ^= 1;
-		if (nvmPartModified[p]) {
-			printf("Part %d modified\n", p);
-		} else {
-			fprintf (stderr,
-				"Part %d NOT modified\n", p);
+		if (!nvmPartModified[p])
 			goto next_part;
-		}
 		if (big_endian)
 			byteswap(nw, p);
 		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) != nw)
 			err(errno, "%s", filename);
-		tw += nw;
 next_part:
 		if (gbe[0] > gbe[1])
 			p ^= 1;
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
-	else
-		printf("%d bytes written to file: `%s`\n", tw, filename);
 }
