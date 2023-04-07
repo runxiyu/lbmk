@@ -77,7 +77,7 @@ uint8_t big_endian;
 int
 main(int argc, char *argv[])
 {
-	size_t nr;
+	size_t nr = 128;
 	int fd, flags = O_RDWR;
 	void (*cmd)(void) = NULL;
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
@@ -101,45 +101,41 @@ main(int argc, char *argv[])
 #endif
 			flags = O_RDONLY;
 			cmd = &cmd_dump;
-		} else if (strcmp(COMMAND, "setmac") == 0)
+		} else if (strcmp(COMMAND, "setmac") == 0) {
 			strMac = (char *) strRMac; /* random mac address */
-		else if (strcmp(COMMAND, "swap") == 0)
+		} else if (strcmp(COMMAND, "swap") == 0) {
 			cmd = &cmd_swap;
+			nr = SIZE_4KB;
+		}
 	} else if (argc == 4) {
-		if (strcmp(COMMAND, "setmac") == 0)
+		if (strcmp(COMMAND, "setmac") == 0) {
 			strMac = MAC_ADDRESS; /* user-supplied mac address */
-		else if ((!((part = PARTNUM[0] - '0') == 0 || part == 1))
-				|| PARTNUM[1]) /* only allow '1' or '0' */
+		} else if ((!((part = PARTNUM[0] - '0') == 0 || part == 1))
+		|| PARTNUM[1]) { /* only allow '1' or '0' */
 			errno = EINVAL;
-		else if (strcmp(COMMAND, "setchecksum") == 0)
+		} else if (strcmp(COMMAND, "setchecksum") == 0) {
 			cmd = &cmd_setchecksum;
-		else if (strcmp(COMMAND, "brick") == 0)
+		} else if (strcmp(COMMAND, "brick") == 0) {
 			cmd = &cmd_brick;
-		else if (strcmp(COMMAND, "copy") == 0)
+		} else if (strcmp(COMMAND, "copy") == 0) {
 			cmd = &cmd_copy;
+			nr = SIZE_4KB;
+		}
 	}
 
 	if ((strMac == NULL) && (cmd == NULL))
 		errno = EINVAL;
-	if (errno != 0)
-		err(errno, NULL);
 
-	nr = SIZE_4KB; /* copy/swap commands need everything to be read */
-	if ((cmd != &cmd_copy) && (cmd != &cmd_swap))
-		nr = 128; /* speedhack: read only the nvm part */
-
-	if ((cmd == &cmd_copy) || (cmd == &cmd_setchecksum) ||
-	    (cmd == &cmd_brick))
-		skipread[part ^ 1] = 1; /* speedhack: don't read unused part */
-
-	readGbeFile(&fd, FILENAME, flags, nr);
-
-	if (strMac != NULL)
-		cmd_setmac(strMac); /* nvm gbe.bin setmac */
-	else if (cmd != NULL)
-		(*cmd)(); /* all other commands except setmac */
-
-	writeGbeFile(&fd, FILENAME, nr);
+	if (errno == 0) {
+		skipread[part ^ 1] = (cmd == &cmd_copy) |
+			(cmd == &cmd_setchecksum) | (cmd == &cmd_brick);
+		readGbeFile(&fd, FILENAME, flags, nr);
+		if (strMac != NULL)
+			cmd_setmac(strMac); /* nvm gbe.bin setmac */
+		else if (cmd != NULL)
+			(*cmd)(); /* all other commands except setmac */
+		writeGbeFile(&fd, FILENAME, nr);
+	}
 
 	if ((errno != 0) && (cmd != &cmd_dump))
 		err(errno, NULL);
