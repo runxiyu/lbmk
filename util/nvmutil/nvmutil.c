@@ -54,7 +54,7 @@ int validChecksum(int partnum);
 uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
 void byteswap(int n, int partnum);
-void writeGbeFile(int *fd, const char *filename);
+void writeGbeFile(int *fd, const char *filename, size_t nw);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 	else if (cmd != NULL)
 		(*cmd)(); /* all other commands except setmac */
 
-	writeGbeFile(&fd, FILENAME);
+	writeGbeFile(&fd, FILENAME, nr);
 
 	if ((errno != 0) && (cmd != &cmd_dump))
 		err(errno, NULL);
@@ -357,15 +357,11 @@ byteswap(int n, int partnum)
 }
 
 void
-writeGbeFile(int *fd, const char *filename)
+writeGbeFile(int *fd, const char *filename, size_t nw)
 {
-	int p, nw = SIZE_4KB; /* copy/swap need all 4KB written */
-	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1])) /* not copy/swap */
-		nw = 128; /* speedhack: write only the nvm part */
 	if (gbeFileModified)
 		errno = 0;
-
-	for (p = 0; p < 2; p++) {
+	for (int p = 0; p < 2; p++) {
 		if (gbe[0] > gbe[1])
 			p ^= 1; /* speedhack: write sequentially on-disk */
 		if (!nvmPartModified[p])
