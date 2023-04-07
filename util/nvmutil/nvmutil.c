@@ -68,7 +68,7 @@ uint8_t *buf;
 size_t gbe[2];
 uint8_t skipread[2] = {0, 0};
 
-int part, gbeWriteAttempted = 0, gbeFileModified = 0;
+int part, gbeFileModified = 0;
 uint8_t nvmPartModified[2] = {0, 0};
 
 uint16_t test;
@@ -139,10 +139,7 @@ main(int argc, char *argv[])
 	else if (cmd != NULL)
 		(*cmd)(); /* all other commands except setmac */
 
-	if (gbeFileModified)
-		writeGbeFile(&fd, FILENAME);
-	else if (gbeWriteAttempted && (cmd != &cmd_dump))
-		errno = 0;
+	writeGbeFile(&fd, FILENAME);
 
 	if ((errno != 0) && (cmd != &cmd_dump))
 		err(errno, NULL);
@@ -275,11 +272,10 @@ showmac(int partnum)
 void
 hexdump(int partnum)
 {
-	uint16_t val16;
 	for (int row = 0; row < 8; row++) {
 		printf("%07x ", row << 4);
 		for (int c = 0; c < 8; c++) {
-			val16 = word((row << 3) + c, partnum);
+			uint16_t val16 = word((row << 3) + c, partnum);
 			printf("%02x%02x ", val16 >> 8, val16 & 0xff);
 		}
 		printf("\n");
@@ -340,11 +336,11 @@ word(int pos16, int partnum)
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
-	gbeWriteAttempted = 1;
+	gbeFileModified = 1;
 	if (word(pos16, partnum) == val16)
 		return;
 	buf16[pos16 + (partnum << 11)] = val16;
-	gbeFileModified = nvmPartModified[partnum] = 1;
+	nvmPartModified[partnum] = 1;
 }
 
 void
@@ -366,8 +362,10 @@ writeGbeFile(int *fd, const char *filename)
 	int p, nw = SIZE_4KB; /* copy/swap need all 4KB written */
 	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1])) /* not copy/swap */
 		nw = 128; /* speedhack: write only the nvm part */
+	if (gbeFileModified)
+		errno = 0;
 
-	for (p = errno = 0; p < 2; p++) {
+	for (p = 0; p < 2; p++) {
 		if (gbe[0] > gbe[1])
 			p ^= 1; /* speedhack: write sequentially on-disk */
 		if (!nvmPartModified[p])
