@@ -164,7 +164,9 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	else if (errno == ENOTDIR)
 		errno = 0;
 
-	for (int p = 0; (p < 2) && (!skipread[p]); p++) {
+	for (int p = 0; p < 2; p++) {
+		if (skipread[p])
+			continue;
 		if (pread((*fd), (uint8_t *) gbe[p], nr, p << 12) == -1)
 			err(errno, "%s", path);
 		if (big_endian)
