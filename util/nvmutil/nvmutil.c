@@ -40,7 +40,7 @@
 void readGbeFile(int *fd, const char *path, int flags,
 	size_t nr);
 void cmd_setmac(const char *strMac);
-int parseMacAddress(const char *strMac, uint16_t *mac);
+int invalidMacAddress(const char *strMac, uint16_t *mac);
 uint8_t hextonum(char chs);
 uint8_t rhex(void);
 void cmd_dump(void);
@@ -160,7 +160,7 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	else if (fstat((*fd), &st) == -1)
 		err(errno, "%s", path);
 	else if ((st.st_size != SIZE_8KB))
-		err(errno = ECANCELED, "File \"%s\" not of size 8KiB", path);
+		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	else if (errno == ENOTDIR)
 		errno = 0;
 
@@ -178,45 +178,40 @@ void
 cmd_setmac(const char *strMac)
 {
 	uint16_t mac[3] = {0, 0, 0};
-	if (parseMacAddress(strMac, mac) == -1)
+	if (invalidMacAddress(strMac, mac))
 		err(errno = ECANCELED, "Bad MAC address");
 
 	for (int partnum = 0; partnum < 2; partnum++) {
-		if (!validChecksum(partnum))
-			continue;
-		for (int w = 0; w < 3; w++)
-			setWord(w, partnum, mac[w]);
-		byteswap(6, partnum); /* mac words are stored big-endian */
-		part = partnum;
-		cmd_setchecksum();
+		if (validChecksum(part = partnum)) {
+			for (int w = 0; w < 3; w++)
+				setWord(w, partnum, mac[w]);
+			cmd_setchecksum();
+		}
 	}
 }
 
 int
-parseMacAddress(const char *strMac, uint16_t *mac)
+invalidMacAddress(const char *strMac, uint16_t *mac)
 {
 	uint8_t h;
 	uint64_t total = 0;
-	if (strnlen(strMac, 20) != 17)
-		return -1;
-
+	if (strnlen(strMac, 20) == 17) {
 	for (int i = 0; i < 16; i += 3) {
 		if (i != 15)
 			if (strMac[i + 2] != ':')
-				return -1;
+				return 1;
 		int byte = i / 3;
 		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
-				return -1;
+				return 1;
 			if ((byte == 0) && (nib == 1))
 				if (strMac[i + nib] == '?')
 					h = (h & 0xE) | 2; /* local, unicast */
 			mac[byte >> 1] |= ((uint16_t ) h)
-				<< ((8 * ((byte % 2) ^ 1)) + (4 * (nib ^ 1)));
+				<< ((8 * (byte % 2)) + (4 * (nib ^ 1)));
 		}
-	}
-	return ((total == 0) || (mac[0] & 0x100))
-		? -1 : 0; /* multicast/all-zero not permitted */
+	}}
+	return ((total == 0) | (mac[0] & 1)); /* multicast/all-zero banned */
 }
 
 uint8_t
@@ -310,22 +305,18 @@ cmd_brick(void)
 void
 cmd_swap(void)
 {
-	if (validChecksum(1) || validChecksum(0)) {
-		gbe[0] ^= gbe[1]; /* speedhack: xorswap pointers, not words */
-		gbe[1] ^= gbe[0];
-		gbe[0] ^= gbe[1];
-		gbeFileModified = nvmPartModified[0] = nvmPartModified[1] = 1;
-		errno = 0;
-	}
+	gbe[0] ^= gbe[1]; /* speedhack: swap ptr, not words */
+	gbe[1] ^= gbe[0];
+	gbe[0] ^= gbe[1];
+	gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
+		= validChecksum(1) | validChecksum(0);
 }
 
 void
 cmd_copy(void)
 {
-	if (validChecksum(part)) {
-		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
-		gbeFileModified = nvmPartModified[part ^ 1] = 1;
-	}
+	gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
+	gbeFileModified = nvmPartModified[part ^ 1] = validChecksum(part);
 }
 
 int
@@ -373,11 +364,10 @@ void
 writeGbeFile(int *fd, const char *filename)
 {
 	int p, nw = SIZE_4KB; /* copy/swap need all 4KB written */
-	errno = 0;
 	if ((gbe[0] != gbe[1]) && (gbe[0] < gbe[1])) /* not copy/swap */
 		nw = 128; /* speedhack: write only the nvm part */
 
-	for (p = 0; p < 2; p++) {
+	for (p = errno = 0; p < 2; p++) {
 		if (gbe[0] > gbe[1])
 			p ^= 1; /* speedhack: write sequentially on-disk */
 		if (!nvmPartModified[p])
