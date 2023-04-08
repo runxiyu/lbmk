@@ -19,12 +19,6 @@
 	url: git://git.sv.gnu.org/gnulib 
 }
 
-{ich9utils}{
-	rev: 53749b0c6f7c5778bdd1ec2b91cd230626752579
-	loc: ich9utils
-	url: https://notabug.org/libreboot/ich9utils.git
-}
-
 {me_cleaner}{
 	rev: 43612a630c79f3bc6f2653bfe90dfe0b7b137e08
 	loc: me_cleaner

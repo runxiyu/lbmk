@@ -22,22 +22,14 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-if [ ! -d ich9utils ]; then
-	./download ich9utils
-fi
-if [ ! -d ich9utils ]; then
-	printf "build/descriptors/ich9m: no ich9utils directory. Exiting\n"
-	exit 1
-fi
-
-if [ ! -f "ich9utils/ich9gen" ]; then
+if [ ! -f "util/ich9utils/ich9gen" ]; then
     (
-    cd ich9utils/
+    cd util/ich9utils/
     make clean
     make -j$(nproc)
     )
 fi
-if [ ! -f "ich9utils/ich9gen" ]; then
+if [ ! -f "util/ich9utils/ich9gen" ]; then
 	printf "build/descriptors/ich9m: ich9gen wasn't compiled. Exiting\n"
 	exit 1
 fi
@@ -48,5 +40,5 @@ rm -f descriptors/ich9m/*
 
 (
     cd descriptors/ich9m/
-    ../../ich9utils/ich9gen
+    ../../util/ich9utils/ich9gen
 )

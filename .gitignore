@@ -1,6 +1,11 @@
 *~
+*.o
+/util/ich9utils/*.bin
+/util/ich9utils/demefactory
+/util/ich9utils/ich9deblob
+/util/ich9utils/ich9show
+/util/ich9utils/ich9gen
 /TODO
-/ich9utils/
 /tmp/
 /payload/
 /me_cleaner/

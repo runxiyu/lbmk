@@ -24,17 +24,9 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-if [ ! -d ich9utils ]; then
-	./download ich9utils
-fi
-if [ ! -d ich9utils ]; then
-	printf "build/module/ich9utils: ich9utils not found. Exiting\n"
-	exit 1
-fi
-
 printf "Build ich9utils\n"
 (
-cd "ich9utils/"
+cd "util/ich9utils/"
 make -j$(nproc)
 )
 printf "\n\n"
