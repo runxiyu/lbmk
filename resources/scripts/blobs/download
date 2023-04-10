@@ -109,7 +109,7 @@ Download_needed(){
 }
 
 Download_me() {
-	printf "Downloading neutered ME for board: `%s`\n" ${board}
+	printf "Downloading neutered ME for board: %s\n" ${board}
 
 	Fetch_update || return 1
 	Extract_me || return 1
@@ -118,10 +118,10 @@ Download_me() {
 }
 
 Fetch_update() {
-	printf "Fetching vendor update for board: `%s`\n" ${board}
+	printf "Fetching vendor update for board: %s\n" ${board}
 
 	if [ -z "${dl_url+x}" ]; then
-		printf "No vendor update specified for board: `%s`\n" ${board}
+		printf "No vendor update specified for board: %s\n" ${board}
 		return 1
 	fi
 
@@ -129,18 +129,18 @@ Fetch_update() {
 		curl ${dl_url} > ${dl_path} || curl ${dl_url_bkup} > ${dl_path}
 
 	Vendor_checksum ${dl_path} || Fail \
-		"Cannot guarantee intergity of vendor update for board: `${board}`"
+		"Cannot guarantee intergity of vendor update for board: ${board}"
 
 	return 0
 }
 
 Vendor_checksum() {
 	if [ ! -f "${dl_path}" ]; then
-		printf "Vendor update not found on disk for board: `%s`\n" ${board}
+		printf "Vendor update not found on disk for board: %s\n" ${board}
 		return 1
 	fi
 	if [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${dl_hash}" ]; then
-		printf "Bad checksum on vendor update for board: `%s`\n" ${board}
+		printf "Bad checksum on vendor update for board: %s\n" ${board}
 		rm ${dl_path}
 		return 1
 	fi
@@ -216,7 +216,7 @@ Bruteforce_extract_me() {
 	done
 	)
 	if [ ! -f "${_me_destination}" ]; then
-		printf "me.bin not found in vendor update for board: `%s`\n" ${board}
+		printf "me.bin not found in vendor update for board: %s\n" ${board}
 		return 1
 	else
 		return 0
