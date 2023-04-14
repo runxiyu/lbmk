@@ -22,3 +22,10 @@
 	DL_url https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
 	DL_url_bkup https://web.archive.org/web/20211120031520/https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
 }
+
+{hp8200sff}{
+	DL_hash c59e693effc1862c38cc4caa15be0a6a92557e0b
+	DL_url https://ftp.ext.hp.com/pub/softpaq/sp96001-96500/sp96026.exe
+	DL_url_bkup https://web.archive.org/web/20220708171920/https://ftp.ext.hp.com/pub/softpaq/sp96001-96500/sp96026.exe
+}
+
