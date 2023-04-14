@@ -186,6 +186,9 @@ Bruteforce_extract_me() {
 		return 0
 	fi
 
+	sdir="$(mktemp -d)"
+	mkdir -p "${sdir}" || return 1
+
 	(
 	printf "Entering %s\n" "${cdir}"
 	cd "${cdir}" || exit 1
@@ -197,6 +200,8 @@ Bruteforce_extract_me() {
 			# symlinks are a security risk, in this context
 			continue
 		elif [ -f "${i}" ]; then
+			"${mecleaner}" -r -t -O "${sdir}/vendorfile" -M "${_me_destination}" "${i}" \
+				&& break # (we found me.bin)	
 			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
 				&& break # (we found me.bin)
 			"${me7updateparser}" -O ${_me_destination} "${i}" \
@@ -215,6 +220,9 @@ Bruteforce_extract_me() {
 		fi
 	done
 	)
+
+	rm -Rf "${sdir}"
+
 	if [ ! -f "${_me_destination}" ]; then
 		printf "me.bin not found in vendor update for board: %s\n" ${board}
 		return 1
