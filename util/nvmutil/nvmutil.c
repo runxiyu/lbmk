@@ -26,16 +26,17 @@
  * https://libreboot.org/docs/install/nvmutil.html
  */
 
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
+
 #include <dirent.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 void readGbeFile(int *fd, const char *path, int flags,
 	size_t nr);
