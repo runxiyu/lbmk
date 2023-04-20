@@ -97,6 +97,7 @@ done
             cd "${i}/"
             make distclean
         )
+    make clean -BC default/util/kbc1126/
     done
 )
 

@@ -5,12 +5,17 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+ec_url=""
+ec_url_bkup=""
+ec_hash=""
+
 blobdir="blobs"
 dl_path="${blobdir}/vendorupdate"
 appdir="${blobdir}/app"
 _7ztest="a"
 mecleaner="$(pwd)/me_cleaner/me_cleaner.py"
 me7updateparser="$(pwd)/resources/blobs/me7_update_parser.py"
+kbc1126_ec_dump="$(pwd)/coreboot/default/util/kbc1126/kbc1126_ec_dump"
 board="${1}"
 # A shorthand for each board, to avoid duplicating configs per flash size
 board_short=${board%%_*mb}
@@ -39,6 +44,11 @@ if [ "${CONFIG_HAVE_GBE_BIN}" = "y" ]; then
 	needs="${needs} GBE"
 fi
 
+if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
+	printf "HP board with KBC1126 EC detected, downloading ec\n"
+	needs="${needs} EC"
+fi
+
 # Quickly exit without wasting more time if there are no blobs needed (GM45)
 if [ -z ${needs+x} ]; then
 	printf 'No binary blobs needed for this board\n'
@@ -47,6 +57,18 @@ fi
 
 while read -r line ; do
 	case ${line} in
+		EC_url*)
+		set ${line}
+		ec_url=${2}
+		;;
+		EC_url_bkup*)
+		set ${line}
+		ec_url_bkup=${2}
+		;;
+		EC_hash*)
+		set ${line}
+		ec_hash=${2}
+		;;
 		DL_hash*)
 		set ${line}
 		dl_hash=${2}
@@ -84,6 +106,12 @@ Build_deps(){
 		printf "downloading coreboot\n"
 		./download coreboot default || Fail 'could not download coreboot'
 	fi
+
+	if [ ! -f coreboot/default/util/kbc1126/kbc1126_ec_dump ]; then
+		printf "Building kbc1126_ec_dump from coreboot\n"
+		make -BC coreboot/default/util/kbc1126 || Fail \
+			"could not build kbc1126_ec_dump"
+	fi
 	
 	if [ ! -f "coreboot/default/util/ifdtool/ifdtool" ]; then
 		printf "building ifdtool from coreboot\n"
@@ -100,6 +128,9 @@ Download_needed(){
 			*MRC*)
 				./download mrc || _failed="${_failed} mrc"
 				;;
+			*EC*)
+				Download_ec || _failed="${_failed} ec"
+				;;
 	esac
 	done
 	
@@ -111,39 +142,9 @@ Download_needed(){
 Download_me() {
 	printf "Downloading neutered ME for board: %s\n" ${board}
 
-	Fetch_update || return 1
+	Fetch_update me || return 1
 	Extract_me || return 1
 
-	return 0
-}
-
-Fetch_update() {
-	printf "Fetching vendor update for board: %s\n" ${board}
-
-	if [ -z "${dl_url+x}" ]; then
-		printf "No vendor update specified for board: %s\n" ${board}
-		return 1
-	fi
-
-	Vendor_checksum ${dl_path} || \
-		curl ${dl_url} > ${dl_path} || curl ${dl_url_bkup} > ${dl_path}
-
-	Vendor_checksum ${dl_path} || Fail \
-		"Cannot guarantee intergity of vendor update for board: ${board}"
-
-	return 0
-}
-
-Vendor_checksum() {
-	if [ ! -f "${dl_path}" ]; then
-		printf "Vendor update not found on disk for board: %s\n" ${board}
-		return 1
-	fi
-	if [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${dl_hash}" ]; then
-		printf "Bad checksum on vendor update for board: %s\n" ${board}
-		rm ${dl_path}
-		return 1
-	fi
 	return 0
 }
 
@@ -229,6 +230,104 @@ Bruteforce_extract_me() {
 	else
 		return 0
 	fi
+}
+
+Download_ec() {
+	printf "Downloading KBC1126 EC firmware for HP laptop\n"
+
+	Fetch_update ec || return 1
+	Extract_ec || return 1
+
+	return 0
+}
+
+Extract_ec() {
+	printf "Extracting KBC1126 EC firmware for board: %s\n" ${board}
+
+	_ec_destination=${CONFIG_KBC1126_FW1#../../}
+
+	if [ ! -d "${_ec_destination%/*}" ]; then
+		mkdir -p "${_ec_destination%/*}"
+	fi
+
+	if [ -d "${appdir}" ]; then
+		rm -Rf "${appdir}"
+	fi
+
+	if [ -f "${_ec_destination}" ]; then
+		printf "ec already downloaded\n"
+		return 0
+	fi
+
+	unar "${dl_path}" -o "${appdir}"
+
+	(
+	cd "${appdir}/${dl_path##*/}"
+
+	mv Rompaq/68*.BIN ec.bin
+	"${kbc1126_ec_dump}" ec.bin
+	)
+
+	for i in 1 2; do
+		if [ ! -f "${appdir}/${dl_path##*/}/ec.bin.fw${i}" ]; then
+			printf "Not found: %s/%s/ec.bin.fw%s\n" \
+				${appdir} ${dl_path##*/} ${i}
+			printf "Could not extract EC firmware for board: %s\n" \
+				${board}
+			return 1
+		fi
+	done
+
+	cp "${appdir}/${dl_path##*/}"/ec.bin.fw* "${_ec_destination%/*}/"
+}
+
+Fetch_update() {
+	printf "Fetching vendor update for board: %s\n" ${board}
+
+	fw_type="${1}"
+	dl=""
+	dl_bkup=""
+	dlsum=""
+	if [ "${fw_type}" = "me" ]; then
+		dl=${dl_url}
+		dl_bkup=${dl_url_bkup}
+		dlsum=${dl_hash}
+	elif [ "${fw_type}" = "ec" ]; then
+		dl=${ec_url}
+		dl_bkup=${ec_url_bkup}
+		dlsum=${ec_hash}
+	else
+		printf "Unsupported download type: %s\n" ${fw_type}
+		return 1
+	fi
+
+	if [ -z "${dl_url+x}" ]; then
+		printf "No vendor update specified for board: %s\n" ${board}
+		return 1
+	fi
+
+	Vendor_checksum ${dlsum} || \
+		curl ${dl} > ${dl_path} || curl ${dl_bkup} > ${dl_path}
+
+	Vendor_checksum ${dlsum} || Fail \
+		"Cannot guarantee intergity of vendor update for board: ${board}"
+
+	return 0
+}
+
+Vendor_checksum() {
+	sha1=$1
+
+	if [ ! -f "${dl_path}" ]; then
+		printf "Vendor update not found on disk for board: %s\n" ${board}
+		return 1
+	fi
+	if [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${sha1}" ]; then
+		printf "Bad checksum on vendor update for board: %s\n" ${board}
+		rm ${dl_path}
+		return 1
+	fi
+	return 0
 }
 
 Main
