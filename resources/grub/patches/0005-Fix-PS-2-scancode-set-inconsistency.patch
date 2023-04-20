@@ -1,0 +1,39 @@
+From 14090113f9e0fd67e46de33dad609c1406373ff0 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Wed, 19 Apr 2023 13:59:38 -0600
+Subject: [PATCH] Fix PS/2 scancode set inconsistency
+
+GRUB seems to be expecting set 2 scancodes when built as a coreboot
+payload, but PS/2 controllers outputting using set 1 will lead to an
+unusable keyboard. Disable the coreboot specific logic which hard codes
+the translated set 2 keyboard configuration and let GRUB handle
+keyboard init the same way as i386-pc, which did not have this issue.
+---
+ grub-core/term/at_keyboard.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/grub-core/term/at_keyboard.c b/grub-core/term/at_keyboard.c
+index 597111077..bb251e222 100644
+--- a/grub-core/term/at_keyboard.c
++++ b/grub-core/term/at_keyboard.c
+@@ -87,7 +87,7 @@ grub_keyboard_controller_write (grub_uint8_t c)
+   grub_outb (c, KEYBOARD_REG_DATA);
+ }
+ 
+-#if defined (GRUB_MACHINE_MIPS_LOONGSON) || defined (GRUB_MACHINE_QEMU) || defined (GRUB_MACHINE_COREBOOT) || defined (GRUB_MACHINE_MIPS_QEMU_MIPS)
++#if defined (GRUB_MACHINE_MIPS_LOONGSON) || defined (GRUB_MACHINE_QEMU) || defined (GRUB_MACHINE_MIPS_QEMU_MIPS)
+ #define USE_SCANCODE_SET 1
+ #else
+ #define USE_SCANCODE_SET 0
+@@ -260,7 +260,7 @@ grub_keyboard_controller_init (void)
+ #if defined (GRUB_MACHINE_MIPS_LOONGSON) || defined (GRUB_MACHINE_MIPS_QEMU_MIPS)
+   grub_keyboard_controller_orig = 0;
+   grub_keyboard_orig_set = 2;
+-#elif defined (GRUB_MACHINE_QEMU) || defined (GRUB_MACHINE_COREBOOT)
++#elif defined (GRUB_MACHINE_QEMU)
+   /* *BSD relies on those settings.  */
+   grub_keyboard_controller_orig = KEYBOARD_AT_TRANSLATE;
+   grub_keyboard_orig_set = 2;
+-- 
+2.40.0
+
