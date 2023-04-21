@@ -29,3 +29,13 @@
 	DL_url_bkup https://web.archive.org/web/20220708171920/https://ftp.ext.hp.com/pub/softpaq/sp96001-96500/sp96026.exe
 }
 
+{hp2560p}{
+	DL_hash fa0f96c8f36646492fb8c57ad3296bf5f647d9c5
+	DL_url https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
+	DL_url_bkup https://web.archive.org/web/20220202201637/https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
+
+	EC_hash c1b1fb0a525cf90459bf024f407e302314bd981b
+	EC_url https://ftp.hp.com/pub/softpaq/sp85501-86000/sp85526.exe
+	EC_url_bkup https://web.archive.org/web/20230416125725/https://ftp.hp.com/pub/softpaq/sp85501-86000/sp85526.exe
+}
+

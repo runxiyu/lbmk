@@ -1,0 +1,36 @@
+From 674002256247a01f4969a3795a5aceca68792a55 Mon Sep 17 00:00:00 2001
+From: Riku Viitanen <riku.viitanen@protonmail.com>
+Date: Fri, 21 Apr 2023 21:41:07 +0300
+Subject: [PATCH] at_keyboard.c: add timeout to fix hang on hp elitebooks
+
+This fixes GRUB on Coreboot on HP EliteBooks by implementing
+a 200ms timeout. GRUB used to hang. see: https://ticket.coreboot.org/issues/141
+---
+ grub-core/term/at_keyboard.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/grub-core/term/at_keyboard.c b/grub-core/term/at_keyboard.c
+index 597111077..28d1d0a77 100644
+--- a/grub-core/term/at_keyboard.c
++++ b/grub-core/term/at_keyboard.c
+@@ -42,7 +42,16 @@ keyboard_controller_wait_until_ready (void)
+ {
+   /* 50 us would be enough but our current time resolution is 1ms.  */
+   grub_millisleep (1);
+-  while (! KEYBOARD_COMMAND_ISREADY (grub_inb (KEYBOARD_REG_STATUS)));
++
++  unsigned i = 200;
++  while (! KEYBOARD_COMMAND_ISREADY (grub_inb (KEYBOARD_REG_STATUS))) {
++    grub_millisleep (1);
++
++    /* Timeout */
++    if (! i--) {
++      break;
++    }
++  }
+ }
+ 
+ static grub_uint8_t
+-- 
+2.40.0
+
