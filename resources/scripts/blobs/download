@@ -265,6 +265,11 @@ Extract_ec() {
 	cd "${appdir}/${dl_path##*/}"
 
 	mv Rompaq/68*.BIN ec.bin
+	if [ ! -f ec.bin ]; then
+		unar -D ROM.CAB Rom.bin
+		mv Rom.bin ec.bin
+	fi
+
 	"${kbc1126_ec_dump}" ec.bin
 	)
 
