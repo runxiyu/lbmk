@@ -44,7 +44,7 @@ Modify_gbe(){
 listboards() {
 	for boarddir in resources/coreboot/*; do
 		if [ ! -d "${boarddir}" ]; then continue; fi
-		board="${boarddir/##resources/coreboot/}"
+		board="${boarddir##resources/coreboot/}"
 		board="${board%/}"
 		printf '%s\n' "${board##*/}"
 	done
