@@ -69,7 +69,7 @@ done
 
 mkdir -p "${srcdir}"/blobs
 # do not copy intel ME etc, but do copy ifd/gbe files
-for i in t440p w541 xx20 xx30; do
+for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge; do
 	for j in ifd gbe 16_ifd; do
 		if [ -f "blobs/${i}/${j}.bin" ]; then
 			if [ ! -e "${srcdir}/blobs/${i}" ]; then
