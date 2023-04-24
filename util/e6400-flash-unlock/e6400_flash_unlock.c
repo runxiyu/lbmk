@@ -63,9 +63,7 @@ volatile uint8_t *rcba_mmio;
 int
 main(int argc, char *argv[])
 {
-	int devmemfd;
-	(void)argc;
-	(void)argv;
+	int devmemfd; (void)argc; (void)argv;
 
 	if ((ioperm(EC_INDEX, 2, 1) == -1) || (ioperm(SMI_EN_REG, 4, 1) == -1))
 		err(errno, "Could not access IO ports");
@@ -92,6 +90,7 @@ main(int argc, char *argv[])
 		set_gbl_smi_en(1);
 		printf("SMIs enabled, you can now shutdown the system.\n");
 	}
+
 	return errno;
 }
 
