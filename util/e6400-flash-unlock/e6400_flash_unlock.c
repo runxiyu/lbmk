@@ -38,7 +38,7 @@ EC_FDO_CMD {
 };
 
 int get_fdo_status(void);
-uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
+void ec_fdo_command(enum EC_FDO_CMD arg);
 void write_ec_reg(uint8_t index, uint8_t data);
 void send_ec_cmd(uint8_t cmd);
 void wait_ec(void);
@@ -106,12 +106,11 @@ get_fdo_status(void)
  * 2 = Enable FDO for next boot
  * 3 = Disable FDO for next boot - TODO
  */
-uint8_t
+void
 ec_fdo_command(enum EC_FDO_CMD arg)
 {
 	write_ec_reg(0x12, arg);
 	send_ec_cmd(0xb8);
-	return 1;
 }
 
 void
