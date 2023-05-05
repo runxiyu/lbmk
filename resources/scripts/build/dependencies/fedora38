@@ -77,7 +77,7 @@ dnf -y install gcc-gnat ncurses-devel doxygen acpica-tools gdb flex bison gcc gi
 # GRUB build dependencies (also requires build-essential, bison and flex)
 # ------------------------------------------------------------
 
-dnf -y install unifont-fonts autogen help2man gcc bison flex dejavu-fonts-all texinfo rsync python3 libusb xz gawk device-mapper fuse gettext freetype-devel intltool libselinux-devel
+dnf -y install unifont-fonts unifont unifont-ttf-fonts autogen help2man gcc bison flex dejavu-fonts-all texinfo rsync python3 libusb xz gawk device-mapper fuse gettext freetype-devel intltool libselinux-devel
 
 # BucTS build dependencies (external script)
 # ------------------------------------------------------------
