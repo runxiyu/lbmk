@@ -48,3 +48,13 @@
 	EC_url https://ftp.hp.com/pub/softpaq/sp96001-96500/sp96090.exe
 	EC_url_bkup http://web.archive.org/web/20220504072602/https://ftp.ext.hp.com/pub/softpaq/sp96001-96500/sp96090.exe
 }
+
+# nvidia vga option rom for dgpu models of Dell Latitude E6400
+# for downloading the nvidia rom to pciroms/pci0x10de,0x06eb.rom
+{e6400nvidia}{
+	E6400_VGA_DL_hash a24ed919e80287b281e407d525af31f307746250
+	E6400_VGA_DL_url https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe
+	E6400_VGA_DL_url_bkup https://web.archive.org/web/20230506014903/https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe
+	E6400_VGA_offset 274451
+	E6400_VGA_romname mod_21.bin
+}

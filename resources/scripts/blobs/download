@@ -9,11 +9,18 @@ ec_url=""
 ec_url_bkup=""
 ec_hash=""
 
+e6400_vga_dl_hash=""
+e6400_vga_dl_url=""
+e6400_vga_dl_url_bkup=""
+e6400_vga_offset=""
+e6400_vga_romname=""
+
 blobdir="blobs"
 dl_path="${blobdir}/vendorupdate"
 appdir="${blobdir}/app"
 _7ztest="a"
 mecleaner="$(pwd)/me_cleaner/me_cleaner.py"
+e6400_unpack="$(pwd)/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$(pwd)/resources/blobs/me7_update_parser.py"
 kbc1126_ec_dump="$(pwd)/coreboot/default/util/kbc1126/kbc1126_ec_dump"
 board="${1}"
@@ -49,6 +56,12 @@ if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
 	needs="${needs} EC"
 fi
 
+if [ "${CONFIG_BOARD_DELL_E6400}" = "y" ] \
+			&& [ "${CONFIG_VGA_BIOS_FILE}" != "" ]; then
+	printf "Dell E6400 with Nvidia GPU detected, downloading VGA ROM\n"
+	needs="${needs} E6400VGA"
+fi
+
 # Quickly exit without wasting more time if there are no blobs needed (GM45)
 if [ -z ${needs+x} ]; then
 	printf 'No binary blobs needed for this board\n'
@@ -81,6 +94,26 @@ while read -r line ; do
 		set ${line}
 		dl_url_bkup=${2}
 		;;
+		E6400_VGA_DL_hash*)
+		set ${line}
+		e6400_vga_dl_hash=${2}
+		;;
+		E6400_VGA_DL_url*)
+		set ${line}
+		e6400_vga_dl_url=${2}
+		;;
+		E6400_VGA_DL_url_bkup*)
+		set ${line}
+		e6400_vga_dl_url_bkup=${2}
+		;;
+		E6400_VGA_offset*)
+		set ${line}
+		e6400_vga_offset=${2}
+		;;
+		E6400_VGA_romname*)
+		set ${line}
+		e6400_vga_romname=${2}
+		;;
 	esac
 done << EOF
 $(eval "awk ' /\{.*${board_short}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/blobs/sources")
@@ -107,6 +140,11 @@ Build_deps(){
 		./download coreboot default || Fail 'could not download coreboot'
 	fi
 
+	if [ ! -d bios_extract ]; then
+		printf "downloading bios_extract\n"
+		./download bios_extract || Fail 'could not download bios_extract'
+	fi
+
 	if [ ! -f coreboot/default/util/kbc1126/kbc1126_ec_dump ]; then
 		printf "Building kbc1126_ec_dump from coreboot\n"
 		make -BC coreboot/default/util/kbc1126 || Fail \
@@ -130,6 +168,9 @@ Download_needed(){
 				;;
 			*EC*)
 				Download_ec || _failed="${_failed} ec"
+				;;
+			*E6400VGA*)
+				Download_e6400vga || _failed="${_failed} e6400vga"
 				;;
 	esac
 	done
@@ -286,6 +327,62 @@ Extract_ec() {
 	cp "${appdir}/${dl_path##*/}"/ec.bin.fw* "${_ec_destination%/*}/"
 }
 
+Download_e6400vga() {
+	printf "Downloading Nvidia VGA ROM for Dell Latitude E6400\n"
+
+	Fetch_update e6400vga || return 1
+	Extract_e6400vga || return 1
+
+	return 0
+}
+
+Extract_e6400vga() {
+	printf "Extracting Nvidia VGA ROM for ${board}\n"
+
+	_vga_destination=${CONFIG_VGA_BIOS_FILE#../../}
+
+	if [ -f "${_vga_destination}" ]; then
+		printf 'vga rom already downloaded\n'
+		return 0
+	fi
+
+	if [ ! -d "${_vga_destination%/*}" ]; then
+		mkdir -p ${_vga_destination%/*}
+	fi	
+	if [ -d "${appdir}" ]; then
+		rm -r ${appdir}
+	fi
+	mkdir -p "${appdir}"
+	mv "${dl_path}" "${appdir}"
+
+	if [ "${e6400_vga_offset}" = "" ]; then
+		printf "E6400 VGA offset not defined\n"
+		return 1
+	fi
+	if [ "${e6400_vga_romname}" = "" ]; then
+		printf "E6400 VGA ROM name not defined\n"
+		return 1
+	fi
+
+	(
+	cd "${appdir}"
+	tail -c +${e6400_vga_offset} "${dl_path##*/}" \
+			| gunzip > bios.bin
+	if [ ! -f "bios.bin" ]; then
+		Fail 'Could not extract bios.bin from Dell E6400 update'
+	fi
+	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
+	if [ ! -f "${e6400_vga_romname}" ]; then
+		Fail 'Could not extract VGA ROM from Dell E6400 BIOS update'
+	fi
+	)
+
+	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}"
+
+	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
+	return 0
+}
+
 Fetch_update() {
 	printf "Fetching vendor update for board: %s\n" ${board}
 
@@ -301,18 +398,22 @@ Fetch_update() {
 		dl=${ec_url}
 		dl_bkup=${ec_url_bkup}
 		dlsum=${ec_hash}
+	elif [ "${fw_type}" = "e6400vga" ]; then
+		dl=${e6400_vga_dl_url}
+		dl_bkup=${e6400_vga_dl_url_bkup}
+		dlsum=${e6400_vga_dl_hash}
 	else
 		printf "Unsupported download type: %s\n" ${fw_type}
 		return 1
 	fi
 
-	if [ -z "${dl_url+x}" ]; then
+	if [ -z "${dl_url+x}" ] && [ "${fw_type}" != "e6400vga" ]; then
 		printf "No vendor update specified for board: %s\n" ${board}
 		return 1
 	fi
 
 	Vendor_checksum ${dlsum} || \
-		curl ${dl} > ${dl_path} || curl ${dl_bkup} > ${dl_path}
+		wget ${dl} -O ${dl_path} || wget ${dl_bkup} -O ${dl_path}
 
 	Vendor_checksum ${dlsum} || Fail \
 		"Cannot guarantee intergity of vendor update for board: ${board}"
@@ -329,7 +430,7 @@ Vendor_checksum() {
 	fi
 	if [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${sha1}" ]; then
 		printf "Bad checksum on vendor update for board: %s\n" ${board}
-		rm ${dl_path}
+#		rm ${dl_path}
 		return 1
 	fi
 	return 0

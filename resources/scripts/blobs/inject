@@ -121,6 +121,26 @@ set -- "resources/coreboot/${board}/config/*"
 		./coreboot/default/util/cbfstool/cbfstool "${rom}" add -f ${_ec2_location} -n ecfw2.bin -b ${_ec2_offset} -t raw || exit 1
 	fi
 
+	if [ "${CONFIG_VGA_BIOS_FILE}" != "" ] \
+				&& [ "${CONFIG_VGA_BIOS_ID}" != "" ]; then
+		_vga_location="${CONFIG_VGA_BIOS_FILE#../../}"
+		_vga_dir="${_vga_location%/*}"
+		_vga_filename="${_vga_location##*/}"
+		printf "adding pci option rom\n"
+		if [ "${_vga_dir}" != "pciroms" ]; then
+			printf "Invalid PCI ROM directory: %s\n" ${_vga_dir}
+			exit 1
+		fi
+		if [ ! -f "${_vga_location}" ]; then
+			printf "No such file exists: %s\n" ${_vga_location}
+			exit 1
+		fi
+		./coreboot/default/util/cbfstool/cbfstool ${rom} \
+			add -f "${_vga_location}" \
+			-n "pci${CONFIG_VGA_BIOS_ID}.rom" \
+			-t optionrom || exit 1
+	fi
+
 	if [ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ]; then
 		Modify_gbe ${rom}
 	fi
