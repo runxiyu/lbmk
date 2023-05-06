@@ -53,7 +53,7 @@ mkdir -p "${srcdir}/"
 
 printf "%s" "${version}" > "${srcdir}"/version
 
-modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot"
+modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot bios_extract"
 dirlist="resources util" # do not add blobs directory here. it is handled below
 filelist="blobutil modify download build README.md COPYING Makefile update version versiondate projectname .gitcheck gitclone"
 

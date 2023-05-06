@@ -4,6 +4,8 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
+name=""
+
 Print_help(){
 	cat <<- EOF
 	Usage: ./gitclone [name]

@@ -43,3 +43,9 @@
 	loc: flashrom 
 	url: https://review.coreboot.org/flashrom.git
 }
+
+{bios_extract}{
+	rev: effb120babde7e351c253f7c485848c8ce455dc0
+	loc: bios_extract
+	url: https://review.coreboot.org/bios_extract
+}
