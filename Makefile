@@ -1,10 +1,12 @@
 # 
-# Makefile for compatibility purposes
-# You can use this, but it's recommended to run build system commands directly
+# Makefile for meme purposes
+# You can use this, but it just runs lbmk commands.
 #
-# See docs/maintain/ and docs/git/ for information about the build system
+# See docs/maintain/ and docs/git/ for information about the build system:
+# https://libreboot.org/docs/maintain/
+# https://libreboot.org/docs/build/
 #
-# Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
+# Copyright (C) 2020, 2021, 2023 Leah Rowe <info@minifree.org>
 # Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +28,8 @@
 #.PHONY: all check download modules ich9m-descriptors payloads roms release \
 #	clean crossgcc-clean install-dependencies-ubuntu \
 #	install-dependencies-debian install-dependencies-arch \
-#	install-dependencies-void
+#	install-dependencies-void install-dependencies-fedora38 \
+#	install-dependencies-parabola
 
 all: roms
 
@@ -58,6 +61,8 @@ clean:
 	./build clean grub
 	./build clean memtest86plus
 	./build clean rom_images
+	./build clean u-boot
+	./build clean bios_extract
 
 crossgcc-clean:
 	./build clean crossgcc
@@ -73,3 +78,9 @@ install-dependencies-arch:
 
 install-dependencies-void:
 	./build dependencies void
+
+install-dependencies-fedora38:
+	./build dependencies fedora38
+
+install-dependencies-parabola:
+	./build dependencies parabola
