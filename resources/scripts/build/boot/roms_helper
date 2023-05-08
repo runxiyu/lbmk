@@ -217,7 +217,8 @@ fi
 
 if [ ! -f "${seavgabiosrom}" ] \
 		|| [ ! -f payload/seabios/seabios_libgfxinit.elf ] \
-		|| [ ! -f payload/seabios/seabios_vgarom.elf ]; then
+		|| [ ! -f payload/seabios/seabios_vgarom.elf ] \
+		|| [ ! -f payload/seabios/seabios_normal.elf ]; then
 	if [ "${payload_seabios}" = "y" ]; then
 		./build payload seabios
 	elif [ "${payload_grub}" = "y" ] \
@@ -361,14 +362,7 @@ make_seabios_rom() {
 	target_opromloadonly="${3}" # 0 or 1. if 1, only load but don't execute oproms
 	target_initmode="${4}" # e.g. libgfxinit
 
-	if [ "${target_initmode}" = "normal" ]; then
-		target_seabioself="payload/seabios/seabios_vgarom.elf"
-		# if normal, etc/pci-optionrom-exec will be set to 2
-	else
-		target_seabioself="payload/seabios/seabios_${target_initmode}.elf"
-		# if libgfxinit, etc/pci-optionrom-exec will be set to 2
-		# if vgarom, etc/pci-optionrom-exec will be set to 0
-	fi
+	target_seabioself="payload/seabios/seabios_${target_initmode}.elf"
 	target_seavgabios_rom="payload/seabios/seavgabios.bin"
 
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
@@ -378,7 +372,7 @@ make_seabios_rom() {
 	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup || exit 1
 	if [ "${target_initmode}" = "normal" ] || [ "${target_initmode}" = "libgfxinit" ]; then
 		"${cbfstool}" "${tmprom}" add-int -i 2 -n etc/pci-optionrom-exec || exit 1
-	elif [ "${target_initmode}" = "vgarom" ]; then
+	elif [ "${target_initmode}" = "vgarom" ]; then # coreboot executes the rom
 		"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/pci-optionrom-exec || exit 1
 	fi # for undefined modes, don't add this integer. rely on SeaBIOS defaults
 	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || exit 1

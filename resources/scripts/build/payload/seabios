@@ -2,7 +2,7 @@
 
 #  helper script: builds SeaBIOS source code
 #
-#	Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2020, 2021, 2023 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -53,6 +53,14 @@ cp ../resources/seabios/config/vgarom .config
 make silentoldconfig -j$(nproc)
 make -j$(nproc)
 mv out/bios.bin.elf ../payload/seabios/seabios_vgarom.elf
+rm .config
+
+# for normal setup:
+[ -f Makefile ] && make distclean
+cp ../resources/seabios/config/normal .config
+make silentoldconfig -j$(nproc)
+make -j$(nproc)
+mv out/bios.bin.elf ../payload/seabios/seabios_normal.elf
 rm .config
 
 # clean it again. gotta keep it clean!
