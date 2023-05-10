@@ -86,14 +86,14 @@ uboot_config="undefined"
 
 if [ "${grub_scan_disk}" = "undefined" ]; then
 	printf "build/roms: Target '%s' does not define grub_scan_disk. " \
-		${board}
+			${board}
 	printf "Defaulting to 'both'.\n"
 	grub_scan_disk="both"
 fi
 
 if [ "${grub_scan_disk}" != "both" ] && \
-	[ "${grub_scan_disk}" != "ata" ] && \
-	[ "${grub_scan_disk}" != "ahci" ]; then
+		[ "${grub_scan_disk}" != "ata" ] && \
+		[ "${grub_scan_disk}" != "ahci" ]; then
 	printf "build/roms: Target '%s' defines bad grub_scan_disk option. " \
 			${board}
 	printf "Defaulting to 'both'.\n"
@@ -266,7 +266,6 @@ if [ "${payload_grub}" = "y" ] \
 		rm -Rf payload/grub/ # just in case
 	fi
 	for keymapfile in ${kmapdir}/*; do
-
 		if [ ! -f "${keymapfile}" ]; then
 			continue
 		fi
@@ -305,19 +304,20 @@ fi
 
 # it is assumed that no other work will be done on the ROM
 # after calling this function. therefore this function is "final"
-moverom() {
+moverom()
+{
 	rompath="$1"
-	newrompath="$2"
+	_newrom="$2"
 	cuttype="$3"
 
-	printf "\nCreating new ROM image: %s\n" "${newrompath}"
+	printf "\nCreating new ROM image: %s\n" "${_newrom}"
 
 	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
-		dd if=${rompath} of=${newrompath} bs=1 \
+		dd if=${rompath} of=${_newrom} bs=1 \
 				skip=$(($(stat -c %s ${rompath}) - 0x400000)) \
 				count=4194304
 	else
-		cp ${rompath} ${newrompath}
+		cp ${rompath} ${_newrom}
 	fi
 
 	for romsize in 4 8 16; do
@@ -326,7 +326,7 @@ moverom() {
 			if [ ! -f "${ifdgbe}" ]; then
 				./build descriptors ich9m
 			fi
-			dd if=${ifdgbe} of=${newrompath} bs=1 count=12k \
+			dd if=${ifdgbe} of=${_newrom} bs=1 count=12k \
 					conv=notrunc
 		fi
 		cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
@@ -335,24 +335,25 @@ moverom() {
 			if [ ! -f "${ifdgbe}" ]; then
 				./build descriptors ich9m
 			fi
-			dd if=${ifdgbe} of=${newrompath} bs=1 count=4k \
+			dd if=${ifdgbe} of=${_newrom} bs=1 count=4k \
 					conv=notrunc
 		fi
 	done
 
 	if [ "${cuttype}" = "i945 laptop" ]; then
-		dd if=${newrompath} of=top64k.bin bs=1 \
-			skip=$(($(stat -c %s ${newrompath}) - 0x10000)) \
-			count=64k
-		dd if=top64k.bin of=${newrompath} bs=1 \
-			seek=$(($(stat -c %s ${newrompath}) - 0x20000)) \
-			count=64k conv=notrunc
+		dd if=${_newrom} of=top64k.bin bs=1 \
+				skip=$(($(stat -c %s ${_newrom}) - 0x10000)) \
+				count=64k
+		dd if=top64k.bin of=${_newrom} bs=1 \
+				seek=$(($(stat -c %s ${_newrom}) - 0x20000)) \
+				count=64k conv=notrunc
 		rm -f top64k.bin
 	fi
 }
 
 # expected: configs must not specify a payload
-mkCoreboot() {
+mkCoreboot()
+{
 	cbdir="${1}" # eg. coreboot/default
 	cbcfgpath="${2}" # eg. resources/coreboot/e6400nvidia_4mb/config/normal
 	if [ ! -f "${cbcfgpath}" ]; then
@@ -385,7 +386,8 @@ mkCoreboot() {
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
-mkSeabiosRom() {
+mkSeabiosRom()
+{
 	target_cbrom="${1}" # rom to insert seabios in. will not be touched
 		# (a tmpfile will be made instead)
 	target_seabios_cbfs_path="${2}" # e.g. fallback/payload
@@ -401,24 +403,22 @@ mkSeabiosRom() {
 
 	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" \
 			-n ${target_seabios_cbfs_path} -c lzma || exit 1
-
 	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup \
 			|| exit 1
 
 	if [ "${target_initmode}" = "normal" ] \
 			|| [ "${target_initmode}" = "libgfxinit" ]; then
 		"${cbfstool}" "${tmprom}" add-int -i 2 \
-					-n etc/pci-optionrom-exec || exit 1
+				-n etc/pci-optionrom-exec || exit 1
 	elif [ "${target_initmode}" = "vgarom" ]; then # coreboot executes it
 		"${cbfstool}" "${tmprom}" add-int -i 0 \
-					-n etc/pci-optionrom-exec || exit 1
+				-n etc/pci-optionrom-exec || exit 1
 	fi # for undefined modes, don't add this integer. use SeaBIOS defaults
 
 	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum \
-				|| exit 1
-
+			|| exit 1
 	"${cbfstool}" "${tmprom}" add-int -i ${target_opromloadonly} \
-				-n etc/only-load-option-roms || exit 1
+			-n etc/only-load-option-roms || exit 1
 
 	if [ "${target_initmode}" = "libgfxinit" ]; then
 		"${cbfstool}" "${tmprom}" add -f "${target_seavgabios_rom}" \
@@ -429,7 +429,8 @@ mkSeabiosRom() {
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
-mkUbootRom() {
+mkUbootRom()
+{
 	target_cbrom="${1}" # rom to insert u-boot in. it won't be touched
 		# (a tmpfile will be made instead)
 	target_uboot_cbfs_path="${2}" # e.g. fallback/payload
@@ -458,7 +459,8 @@ mkUbootRom() {
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
-mkGrubRom() {
+mkGrubRom()
+{
 	target_keymap="${1}"
 	target_cbrom="${2}"
 	target_grubelf_cbfs_path="${3}" # e.g. fallback/payload
@@ -496,7 +498,6 @@ mkGrubRom() {
 
 	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw \
 			|| exit 1
-
 	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg \
 			-t raw || exit 1
 	rm -f "${tmpgrubcfg}" "${tmpgrubtestcfg}"
@@ -514,7 +515,8 @@ mkGrubRom() {
 }
 
 # Make separate ROM images with GRUB payload, for each supported keymap
-mkRomsWithGrub() {
+mkRomsWithGrub()
+{
 	tmprompath="${1}"
 	initmode="${2}"
 	displaymode="${3}"
@@ -524,19 +526,18 @@ mkRomsWithGrub() {
 	y=${seabios_opromloadonly}
 	z=${initmode}
 	if [ "${payload_grub_withseabios}" = "y" ] \
-				&& [ "${firstpayloadname}" = "grub" ]; then
+			&& [ "${firstpayloadname}" = "grub" ]; then
 		mv "$(mkSeabiosRom "${x}" "seabios.elf" "${y}" "${z}")" \
 				"${tmprompath}"
 	elif [ "${payload_seabios_withgrub}" ] \
-				&& [ "${firstpayloadname}" != "grub" ]; then
+			&& [ "${firstpayloadname}" != "grub" ]; then
 		mv "$(mkSeabiosRom "${x}" "fallback/payload" "$y" "$z")" \
 				"${tmprompath}"
 	fi	
 
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
-		for kmapfile in "${kmapdir}"/*
-		do
+		for kmapfile in "${kmapdir}"/*; do
 			keymaps="${keymaps} ${kmapfile}"
 		done
 	else
@@ -545,8 +546,6 @@ mkRomsWithGrub() {
 		done
 	fi
 	for keymapfile in ${keymaps}; do
-		echo "keymaps is $keymaps, keymapfile is $keymapfile"
-
 		if [ ! -f "${keymapfile}" ]; then
 			continue
 		fi
@@ -563,24 +562,22 @@ mkRomsWithGrub() {
 		x=${keymap}
 		y=${tmprompath}
 		z=${grub_path_in_cbfs}
-
 		tmpgrubrom="$(mkGrubRom "${x}" "${y}" "${z}")"
 
+		_newrom="${romdir}/${firstpayloadname}_${board}_${initmode}_"
 		if [ "${initmode}" = "normal" ]; then
-			newrompath="${romdir}/${firstpayloadname}_${board}_"
-			newrompath="${newrompath}${initmode}_${keymap}.rom"
+			_newrom="${_newrom}${keymap}.rom"
 		else
-			newrompath="${romdir}/${firstpayloadname}_${board}_"
-			newrompath="${newrompath}${initmode}_${displaymode}_"
-			newrompath="${newrompath}${keymap}.rom"
+			_newrom="${_newrom}${displaymode}_${keymap}.rom"
 		fi
-		moverom "${tmpgrubrom}" "${newrompath}" "${romtype}"
+		moverom "${tmpgrubrom}" "${_newrom}" "${romtype}"
 		rm -f "${tmpgrubrom}"
 	done
 }
 
 # Main ROM building function. This calls all other functions
-mkRoms() {
+mkRoms()
+{
 	cbcfgpath="${1}"
 	displaymode="${2}"
 	initmode="${3}"
@@ -607,16 +604,13 @@ mkRoms() {
 			y=${seabios_opromloadonly}
 			z=${initmode}
 			t=$(mkSeabiosRom "$x" "fallback/payload" "$y" "$z")
-			if [ "${initmode}" = "normal" ]; then
-				newrompath="${romdir}/seabios_${board}_"
-				newrompath="${newrompath}${initmode}.rom"
-			else
-				newrompath="${romdir}/seabios_${board}_"
-				newrompath="${newrompath}${initmode}_"
-				newrompath="${newrompath}${displaymode}.rom"
+
+			_newrom="${romdir}/seabios_${board}_${initmode}.rom"
+			if [ "${initmode}" != "normal" ]; then
+				_newrom="${_newrom%.rom}_${displaymode}.rom"
 			fi
 
-			moverom "${t}" "${newrompath}" "${romtype}"
+			moverom "${t}" "${_newrom}" "${romtype}"
 			rm -f "${t}"
 		else
 			tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
@@ -638,13 +632,13 @@ mkRoms() {
 		z=${cbfstool}
 		tmpubootrom="$(mkUbootRom "$x" "fallback/payload" "$y" "$z")"
 		if [ "${initmode}" = "normal" ]; then
-			newrompath="${romdir}/uboot_payload_${board}_"
-			newrompath="${newrompath}${initmode}.rom"
+			_newrom="${romdir}/uboot_payload_${board}_"
+			_newrom="${_newrom}${initmode}.rom"
 		else
-			newrompath="${romdir}/uboot_payload_${board}_"
-			newrompath="${newrompath}${initmode}_${displaymode}.rom"
+			_newrom="${romdir}/uboot_payload_${board}_"
+			_newrom="${_newrom}${initmode}_${displaymode}.rom"
 		fi
-		moverom "${tmpubootrom}" "${newrompath}" "${romtype}"
+		moverom "${tmpubootrom}" "${_newrom}" "${romtype}"
 		rm -f "${tmpubootrom}"
 	fi
 }
