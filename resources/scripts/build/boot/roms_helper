@@ -535,7 +535,10 @@ mkRomsWithGrub() {
 
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
-		keymaps="${kmapdir}/*"
+		for kmapfile in "${kmapdir}"/*
+		do
+			keymaps="${keymaps} ${kmapfile}"
+		done
 	else
 		for keymapname in ${keyboard_layouts}; do
 			keymaps="${keymaps} ${kmapdir}/${keymapname}.gkb"
