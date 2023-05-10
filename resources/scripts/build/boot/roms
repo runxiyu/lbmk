@@ -31,17 +31,65 @@ set -u -e
 
 projectname="$(cat projectname)"
 opts=""
+boards=
+firstoption="${1}"
 
-listboards() {
-	for boarddir in resources/coreboot/*; do
-		if [ ! -d "${boarddir}" ]; then continue; fi
-		board="${boarddir##resources/coreboot/}"
-		board="${board%/}"
-		printf '%s\n' "${board##*/}"
-	done
+main()
+{
+	if [ $# -gt 0 ]; then
+		if [ "${firstoption}" = "help" ]; then
+			usage
+			exit 0
+		fi
+		if [ "${firstoption}" = "list" ]; then
+			listboards
+			exit 0
+		fi
+
+		while [ $# -gt 0 ]; do
+			case ${1} in
+				-d)
+				opts="${opts} -d ${2}"
+				shift ;;
+				-p)
+				opts="${opts} -p ${2}"
+				shift ;;
+				-k)
+				opts="${opts} -k ${2}"
+				shift ;;
+				*)
+				boards="${boards} ${1} " ;;
+			esac
+			shift
+		done
+
+	if [ -z ${opts+x} ]; then
+		opts=""
+	fi
+
+		printf "Building %s ROM images\n" "${projectname}"
+
+		if [ "${firstoption}" = "all" ]; then
+			for boardname in $(listboards); do
+				buildrom "${boardname}" \
+						|| die "build/roms: error"
+			done
+		else
+			for board in ${boards}; do
+				buildrom "${board}" \
+						|| die "build/roms: error"
+			done
+		fi
+	else
+		usage
+		exit 1
+	fi
+
+	printf "\n\nDone! Your ROMs are in bin/\n\n"
 }
 
-help() {
+usage()
+{
 	cat <<- EOF
 	USAGE:	./build boot roms boardname
 	To build *all* boards, do this: ./build boot roms all
@@ -64,9 +112,16 @@ help() {
 	EOF
 }
 
-die() {
-	printf 'Error: %s\n' "${@}" 1>&2
-	exit 1
+listboards()
+{
+	for boarddir in resources/coreboot/*; do
+		if [ ! -d "${boarddir}" ]; then
+			continue
+		fi
+		board="${boarddir##resources/coreboot/}"
+		board="${board%/}"
+		printf '%s\n' "${board##*/}"
+	done
 }
 
 # Build ROM images for supported boards
@@ -85,53 +140,9 @@ buildrom() {
 	fi
 }
 
-if [ $# -gt 0 ]; then
-	boards=
-	firstoption="${1}"
-	if [ "${firstoption}" = "help" ]; then
-		help
-		exit 0
-	fi
-	if [ "${firstoption}" = "list" ]; then
-		listboards
-		exit 0
-	fi
-	
-	while [ $# -gt 0 ]; do
-		case ${1} in
-			-d)
-			opts="${opts} -d ${2}" 
-			shift ;;
-			-p)
-			opts="${opts} -p ${2}"
-			shift ;;
-			-k)
-			opts="${opts} -k ${2}"
-			shift ;;
-			*)
-			boards="${boards} ${1} " ;;
-		esac
-		shift
-	done
-
-if [ -z ${opts+x} ]; then
-	opts=""
-fi
-
-	printf "Building %s ROM images\n" "${projectname}"
-
-	if [ "${firstoption}" = "all" ]; then
-		for boardname in $(listboards); do
-			buildrom "${boardname}" || die "build/roms: error"
-		done
-	else
-		for board in ${boards}; do
-			buildrom "${board}" || die "build/roms: error"
-		done
-	fi
-else
-	help
+die() {
+	printf 'Error: %s\n' "${@}" 1>&2
 	exit 1
-fi
+}
 
-printf "\n\nDone! Your ROMs are in bin/\n\n"
+main $@
