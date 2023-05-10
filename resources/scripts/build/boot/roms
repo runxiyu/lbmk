@@ -3,7 +3,8 @@
 #
 #  helper script: build coreboot images with various payloads
 #
-#	Copyright (C) 2014, 2015, 2016, 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2014,2015,2016,2020,2021,2023 Leah Rowe
+#							<info@minifree.org>
 #	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
@@ -51,9 +52,10 @@ help() {
 	-p: payload
 	-k: keyboard layout
 
-	Example:	./build boot roms x60
-	Example:	./build boot roms x200_8mb x60
-	Example:	./build boot roms x230_12mb -p grub -d corebootfb -k usqwerty
+	Example commands:
+		./build boot roms x60
+		./build boot roms x200_8mb x60
+		./build boot roms x60 -p grub -d corebootfb -k usqwerty
 
 	possible values for 'boardname':
 	$(listboards)
@@ -71,13 +73,15 @@ die() {
 buildrom() {
 	board="$1"
 
-	# Start by building blobs and placing them in the coreboot tree only for boards that need them
+	# Start by building blobs and placing them in the
+	# coreboot tree only for boards that need them
 	./blobutil download ${board} || exit 1
 
 	if [ -d "resources/coreboot/${board}/" ]; then
 		./build boot roms_helper "${board}${opts}"
 	else
-		die "\nbuild/roms: target not defined in the build system: %s\n" "${board}"
+		printf "\nbuild/roms: target not defined: %s\n" ${board}
+		die "Run: ./build boot roms list"
 	fi
 }
 
@@ -118,11 +122,11 @@ fi
 
 	if [ "${firstoption}" = "all" ]; then
 		for boardname in $(listboards); do
-			buildrom "${boardname}" || die "build/roms: something went wrong"
+			buildrom "${boardname}" || die "build/roms: error"
 		done
 	else
 		for board in ${boards}; do
-			buildrom "${board}" || die "build/roms: something went wrong"
+			buildrom "${board}" || die "build/roms: error"
 		done
 	fi
 else
@@ -130,6 +134,4 @@ else
 	exit 1
 fi
 
-
 printf "\n\nDone! Your ROMs are in bin/\n\n"
-

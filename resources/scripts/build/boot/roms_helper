@@ -2,8 +2,9 @@
 
 #  helper script: create ROM images for a given mainboard
 #
-#	Copyright (C) 2020,2021 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2021,2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
+#	Copyright (C) 2020,2021,2023 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2021,2022 Ferass El Hafidi
+#				<vitali64pmemail@protonmail.com>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
@@ -30,6 +31,7 @@ set -u -e
 
 projectname="$(cat projectname)"
 
+kmapdir="resources/grub/keymap"
 displaymodes=""
 payloads=""
 keyboard_layouts=""
@@ -50,30 +52,31 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-echo "board is $board , kb is ${keyboard_layouts} , displaymode is ${displaymodes} , payloads is ${payloads}"
+printf "board is %s , kb is %s , displaymode is %s , payloads is %s\n" \
+		${board} ${keyboard_layouts} ${displaymodes} ${payloads}
+
 if [ ! -d "resources/coreboot/${board}" ]; then
-	printf "build/roms: Target %s does not exist in the %s build system. Skipping build.\n" "${projectname}" "${board}"
+	printf "build/roms: Target not defined: %s\n" ${board}
 	exit 1
 fi
 
 if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
-	printf "build/roms: Target %s does not have a board.cfg. Skipping build.\n" "${board}"
+	printf "build/roms: Missing board.cfg for target: %s\n" ${board}
 	exit 1
 fi
 
 
-# Workaround to grub's slow boot
-grub_scan_disk="undefined" # both: scan ata and ahci (slow), there is ata and ahci too
-                      # as an option
+grub_scan_disk="undefined"
 cbtree="undefined"
 romtype="normal" # optional parameter in board.cfg. "normal" is default
 arch="undefined"
+
 # Disable all payloads by default.
 # board.cfg files have to specifically enable [a] payload(s)
 payload_grub="n"
 payload_grub_withseabios="n" # seabios chainloaded from grub
 payload_seabios="n"
-payload_seabios_withgrub="n" # i386-coreboot grub accessible from SeaBIOS boot menu
+payload_seabios_withgrub="n" # i386-coreboot grub from SeaBIOS boot menu
 seabios_opromloadonly="0"
 payload_memtest="n"
 payload_uboot="n"
@@ -82,24 +85,32 @@ uboot_config="undefined"
 . "resources/coreboot/${board}/board.cfg"
 
 if [ "${grub_scan_disk}" = "undefined" ]; then
-	printf "build/roms: Target %s does not define grub_scan_disk. Defaulting to 'both'.\n" "${board}"
+	printf "build/roms: Target '%s' does not define grub_scan_disk. " \
+		${board}
+	printf "Defaulting to 'both'.\n"
 	grub_scan_disk="both"
 fi
 
 if [ "${grub_scan_disk}" != "both" ] && \
 	[ "${grub_scan_disk}" != "ata" ] && \
 	[ "${grub_scan_disk}" != "ahci" ]; then
-	printf "build/roms: Target %s defines an invalid grub_scan_disk setting. Defaulting to 'both'.\n" "${board}"
+	printf "build/roms: Target '%s' defines bad grub_scan_disk option. " \
+			${board}
+	printf "Defaulting to 'both'.\n"
 	grub_scan_disk="both"
 	# erroring out would be silly. just use the default
 fi
 
 if [ "${cbtree}" = "undefined" ]; then
-	printf "build/roms: Target %s does not define a coreboot tree. Skipping build.\n" "${board}"
+	printf "build/roms: Target '%s' does not define a coreboot tree. " \
+			${board}
+	printf "Skipping build.\n"
 	exit 1
 fi
 if [ "${arch}" = "undefined" ]; then
-	printf "build/roms: Target %s does not define a CPU type. Skipping build.\n" "${board}"
+	printf "build/roms: Target '%s' does not define a CPU type. " \
+			${board}
+	printf "Skipping build.\n"
 	exit 1
 fi
 
@@ -116,23 +127,24 @@ if [ "${payload_grub_withseabios}" = "y" ]; then
 fi
 if [ "${payload_grub_withseabios}" = "y" ]; then
 	payload_seabios="y"
-	payload_seabios_withgrub="y" # if grub-first works, then seabios-with-grub will also work
+	payload_seabios_withgrub="y"
 fi
 if [ "${payload_seabios_withgrub}" = "y" ]; then
-	payload_seabios="y" # if seabios-with-grub works, then SeaBIOS-alone should also work
+	payload_seabios="y"
 fi
-# NOTE: reverse logic must not be applied. If SeaBIOS-with-GRUB works, that doesn't
-# necessarily mean GRUB-with-SeaBIOS will work nicely. for example, the board might
-# only have an add-on GPU available, where it's recommended to boot SeaBIOS first
-if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] && [ "${payload_uboot}" != "y" ]; then
-	while true; do
-		for configfile in "resources/coreboot/${board}/config/"*; do
-			if [ -f "${configfile}" ]; then
-				printf "ERROR build/roms: Target '%s' does not define a payload. Exiting.\n" "${board}"
-				exit 1
-			fi
-		done
-		break
+# NOTE: reverse logic must NOT be applied. If SeaBIOS-with-GRUB works, that
+# doesn't necessarily mean GRUb-with-SeaBIOS will. For example, the board
+# might have an external GPU, where it's recommended to boot SeaBIOS first
+if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] \
+			&& [ "${payload_uboot}" != "y" ]; then
+	for configfile in "resources/coreboot/${board}/config/"*; do
+		if [ ! -e "${configfile}" ]; then
+			continue
+		fi
+		printf "ERROR build/roms: Target '%s' defines no payload. " \
+				${board}
+		printf "Exiting.\n"
+		exit 1
 	done
 fi
 
@@ -152,7 +164,7 @@ if [ ! -z ${payloads} ]; then
 	payload_grub="n"
 	payload_grub_withseabios="n" # seabios chainloaded from grub
 	payload_seabios="n"
-	payload_seabios_withgrub="n" # i386-coreboot grub accessible from SeaBIOS boot menu
+	payload_seabios_withgrub="n" # i386-coreboot grub from SeaBIOS menu
 	payload_uboot="n"
 	seabios_opromloadonly="0"
 	payload_memtest="n"
@@ -236,10 +248,15 @@ fi
 [ -d "${romdir}/" ] || mkdir -p "${romdir}/"
 rm -f "${romdir}"/*
 
-if [ "${payload_grub}" = "y" ] || [ "${payload_seabios_withgrub}" = "y" ]; then
+if [ "${payload_grub}" = "y" ] \
+			|| [ "${payload_seabios_withgrub}" = "y" ]; then
 	if [ -f "payload/grub/grub_usqwerty.cfg" ]; then
-		grubrefchecksum="$(sha1sum resources/grub/config/grub.cfg | awk '{print $1}')"
-		grubbuildchecksum="$(sha1sum payload/grub/grub_usqwerty.cfg | awk '{print $1}')"
+		sha1sumcmd="sha1sum resources/grub/config/grub.cfg"
+		grubrefchecksum="$(${sha1sumcmd} | awk '{print $1}')"
+
+		sha1sumcmd="sha1sum payload/grub/grub_usqwerty.cfg"
+		grubbuildchecksum="$(${sha1sumcmd} | awk '{print $1}')"
+
 		if [ "${grubrefchecksum}" != "${grubbuildchecksum}" ]; then
 			rm -Rf payload/grub/
 			printf "Changes detected to GRUB. Re-building now:\n"
@@ -248,7 +265,7 @@ if [ "${payload_grub}" = "y" ] || [ "${payload_seabios_withgrub}" = "y" ]; then
 		printf "Required GRUB payloads not yet built. Building now:\n"
 		rm -Rf payload/grub/ # just in case
 	fi
-	for keymapfile in resources/grub/keymap/*; do
+	for keymapfile in ${kmapdir}/*; do
 
 		if [ ! -f "${keymapfile}" ]; then
 			continue
@@ -280,7 +297,7 @@ if [ "${payload_uboot}" = "y" ]; then
 	elif [ -f "${ubdir}/u-boot" ]; then
 		ubootelf="${ubdir}/u-boot"
 	else
-		printf "Required U-Boot payloads not yet built. Building now:\n"
+		printf "Required U-Boot payload not yet built. Building now\n"
 		rm -Rf "payload/u-boot/${board}" # just in case
 		./build payload u-boot "${board}"
 	fi
@@ -296,43 +313,56 @@ moverom() {
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
 
 	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
-		dd if=${rompath} of=${newrompath} bs=1 skip=$(($(stat -c %s ${rompath}) - 0x400000)) count=4194304
+		dd if=${rompath} of=${newrompath} bs=1 \
+				skip=$(($(stat -c %s ${rompath}) - 0x400000)) \
+				count=4194304
 	else
 		cp ${rompath} ${newrompath}
 	fi
 
 	for romsize in 4 8 16; do
+		ifdgbe="descriptors/ich9m/ich9fdgbe_${romsize}m.bin"
 		if [ "${cuttype}" = "${romsize}MiB ICH9 IFD NOR flash" ]; then
-			if [ ! -f "descriptors/ich9m/ich9fdgbe_${romsize}m.bin" ]; then
+			if [ ! -f "${ifdgbe}" ]; then
 				./build descriptors ich9m
 			fi
-			dd if=descriptors/ich9m/ich9fdgbe_${romsize}m.bin of=${newrompath} bs=1 count=12k conv=notrunc
+			dd if=${ifdgbe} of=${newrompath} bs=1 count=12k \
+					conv=notrunc
+		fi
+		cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
+		ifdgbe="descriptors/ich9m/ich9fdnogbe_${romsize}m.bin"
+		if [ "${cuttype}" = "${cmpstr}" ]; then
+			if [ ! -f "${ifdgbe}" ]; then
+				./build descriptors ich9m
 			fi
-			if [ "${cuttype}" = "${romsize}MiB ICH9 IFD NOGBE NOR flash" ]; then
-				if [ ! -f "descriptors/ich9m/ich9fdnogbe_${romsize}m.bin" ]; then
-					./build descriptors ich9m
-				fi
-				dd if=descriptors/ich9m/ich9fdnogbe_${romsize}m.bin of=${newrompath} bs=1 count=4k conv=notrunc
-				fi
-			done
+			dd if=${ifdgbe} of=${newrompath} bs=1 count=4k \
+					conv=notrunc
+		fi
+	done
 
-			if [ "${cuttype}" = "i945 laptop" ]; then
-				dd if=${newrompath} of=top64k.bin bs=1 skip=$(($(stat -c %s ${newrompath}) - 0x10000)) count=64k
-				dd if=top64k.bin of=${newrompath} bs=1 seek=$(($(stat -c %s ${newrompath}) - 0x20000)) count=64k conv=notrunc
-				rm -f top64k.bin
-				fi
-			}
+	if [ "${cuttype}" = "i945 laptop" ]; then
+		dd if=${newrompath} of=top64k.bin bs=1 \
+			skip=$(($(stat -c %s ${newrompath}) - 0x10000)) \
+			count=64k
+		dd if=top64k.bin of=${newrompath} bs=1 \
+			seek=$(($(stat -c %s ${newrompath}) - 0x20000)) \
+			count=64k conv=notrunc
+		rm -f top64k.bin
+	fi
+}
 
 # expected: configs must not specify a payload
 mkCoreboot() {
-	cbdir="${1}" # e.g. coreboot/default
-	cbcfgpath="${2}" # e.g. resources/coreboot/x200_8mb/config/libgfxinit_txtmode
+	cbdir="${1}" # eg. coreboot/default
+	cbcfgpath="${2}" # eg. resources/coreboot/e6400nvidia_4mb/config/normal
 	if [ ! -f "${cbcfgpath}" ]; then
-		printf "\nmkCoreboot: Coreboot config '%s' does not exist. Skipping build.\n" \
-			"${cbcfgpath}"
+		printf "\nmkCoreboot: coreboot config '%s' does not exist. " \
+				${cbcfgpath}
+		printf "Skipping build.\n"
 		return 0
 	fi
-	printf "%s-%s\n" "$(cat projectname)" "$(cat version)" > "${cbdir}/.coreboot-version"
+	printf "%s-%s\n" "$(cat projectname)" "$(cat version)" \
+			> "${cbdir}/.coreboot-version"
 	(
 		if [ -f "${cbfstool}" ]; then
 			mv "${cbfstool}" "${cbdir}/cbfstool"
@@ -355,11 +385,11 @@ mkCoreboot() {
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
-make_seabios_rom() {
-	target_cbrom="${1}" # rom to insert seabios in. this rom won't be touched
-		# a tmpfile will be made instead
+mkSeabiosRom() {
+	target_cbrom="${1}" # rom to insert seabios in. will not be touched
+		# (a tmpfile will be made instead)
 	target_seabios_cbfs_path="${2}" # e.g. fallback/payload
-	target_opromloadonly="${3}" # 0 or 1. if 1, only load but don't execute oproms
+	target_opromloadonly="${3}" # TODO: purge (useless setting)
 	target_initmode="${4}" # e.g. libgfxinit
 
 	target_seabioself="payload/seabios/seabios_${target_initmode}.elf"
@@ -368,27 +398,40 @@ make_seabios_rom() {
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	cp "${target_cbrom}" "${tmprom}"
-	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" -n ${target_seabios_cbfs_path} -c lzma || exit 1
-	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup || exit 1
-	if [ "${target_initmode}" = "normal" ] || [ "${target_initmode}" = "libgfxinit" ]; then
-		"${cbfstool}" "${tmprom}" add-int -i 2 -n etc/pci-optionrom-exec || exit 1
-	elif [ "${target_initmode}" = "vgarom" ]; then # coreboot executes the rom
-		"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/pci-optionrom-exec || exit 1
-	fi # for undefined modes, don't add this integer. rely on SeaBIOS defaults
-	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || exit 1
-	"${cbfstool}" "${tmprom}" add-int -i ${target_opromloadonly} -n etc/only-load-option-roms || exit 1
+
+	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" \
+			-n ${target_seabios_cbfs_path} -c lzma || exit 1
+
+	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup \
+			|| exit 1
+
+	if [ "${target_initmode}" = "normal" ] \
+			|| [ "${target_initmode}" = "libgfxinit" ]; then
+		"${cbfstool}" "${tmprom}" add-int -i 2 \
+					-n etc/pci-optionrom-exec || exit 1
+	elif [ "${target_initmode}" = "vgarom" ]; then # coreboot executes it
+		"${cbfstool}" "${tmprom}" add-int -i 0 \
+					-n etc/pci-optionrom-exec || exit 1
+	fi # for undefined modes, don't add this integer. use SeaBIOS defaults
+
+	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum \
+				|| exit 1
+
+	"${cbfstool}" "${tmprom}" add-int -i ${target_opromloadonly} \
+				-n etc/only-load-option-roms || exit 1
 
 	if [ "${target_initmode}" = "libgfxinit" ]; then
-		"${cbfstool}" "${tmprom}" add -f "${target_seavgabios_rom}" -n vgaroms/seavgabios.bin -t raw || exit 1
+		"${cbfstool}" "${tmprom}" add -f "${target_seavgabios_rom}" \
+				-n vgaroms/seavgabios.bin -t raw || exit 1
 	fi
 
 	printf "%s\n" "${tmprom}"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
-make_uboot_payload_rom() {
-	target_cbrom="${1}" # rom to insert u-boot in. this rom won't be touched
-		# a tmpfile will be made instead
+mkUbootRom() {
+	target_cbrom="${1}" # rom to insert u-boot in. it won't be touched
+		# (a tmpfile will be made instead)
 	target_uboot_cbfs_path="${2}" # e.g. fallback/payload
 	target_uboot_config="${3}"
 	cbfstool_path="${4}"
@@ -408,13 +451,14 @@ make_uboot_payload_rom() {
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	cp "${target_cbrom}" "${tmprom}"
-	"${cbfstool}" "${tmprom}" add-payload -f "${target_ubootelf}" -n ${target_uboot_cbfs_path} -c lzma || exit 1
+	"${cbfstool}" "${tmprom}" add-payload -f "${target_ubootelf}" \
+			-n ${target_uboot_cbfs_path} -c lzma || exit 1
 
 	printf "%s\n" "${tmprom}"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
-make_grubrom_from_keymap() {
+mkGrubRom() {
 	target_keymap="${1}"
 	target_cbrom="${2}"
 	target_grubelf_cbfs_path="${3}" # e.g. fallback/payload
@@ -426,31 +470,45 @@ make_grubrom_from_keymap() {
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX) || exit 1
 	cp "${target_cbrom}" "${tmprom}" || exit 1
 
-	"${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" -n ${target_grubelf_cbfs_path} -c lzma || exit 1
+	"${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" \
+			-n ${target_grubelf_cbfs_path} -c lzma || exit 1
 
 	tmpgrubcfg=$(mktemp -t grub.cfg.XXXXXXXXXX)
 	tmpgrubtestcfg=$(mktemp -t grubtest.cfg.XXXXXXXXXX)
 	if [ "${grub_scan_disk}" = "ahci" ]; then
-		sed 's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ahci\"/' "${grubcfg}" > "${tmpgrubcfg}"
-		sed 's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ahci\"/' "${grubtestcfg}" > "${tmpgrubtestcfg}"
+		sed \
+		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ahci\"/' \
+				"${grubcfg}" > "${tmpgrubcfg}"
+		sed \
+		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ahci\"/' \
+				"${grubtestcfg}" > "${tmpgrubtestcfg}"
 	elif [ "${grub_scan_disk}" = "ata" ]; then
-		sed 's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ata\"/' "${grubcfg}" > "${tmpgrubcfg}"
-		sed 's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ata\"/' "${grubtestcfg}" > "${tmpgrubtestcfg}"
+		sed \
+		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ata\"/' \
+				"${grubcfg}" > "${tmpgrubcfg}"
+		sed \
+		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ata\"/' \
+				"${grubtestcfg}" > "${tmpgrubtestcfg}"
 	else
 		cp "${grubcfg}" "${tmpgrubcfg}"
 		cp "${grubtestcfg}" "${tmpgrubtestcfg}"
 	fi
-	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw || exit 1
-	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg -t raw || exit 1
+
+	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw \
+			|| exit 1
+
+	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg \
+			-t raw || exit 1
 	rm -f "${tmpgrubcfg}" "${tmpgrubtestcfg}"
 
 	backgroundfile="background1280x800.png"
 	if [ "${board}" = "x60" ] || [ "${board}" = "t60_intelgpu" ]; then
-		# TODO: don't hardcode this check. do it in board.cfg per board
+		# TODO: don't hardcode this. do it in board.cfg per board
 		backgroundfile="background1024x768.png"
 	fi
 	backgroundfile="resources/grub/background/${backgroundfile}"
-	"${cbfstool}" "${tmprom}" add -f ${backgroundfile} -n background.png -t raw || exit 1
+	"${cbfstool}" "${tmprom}" add -f ${backgroundfile} -n background.png \
+			-t raw || exit 1
 
 	printf "%s\n" "${tmprom}"
 }
@@ -462,18 +520,25 @@ mkRomsWithGrub() {
 	displaymode="${3}"
 	firstpayloadname="${4}" # allow values: grub, seabios, seabios_withgrub
 
-	if [ "${payload_grub_withseabios}" = "y" ] && [ "${firstpayloadname}" = "grub" ]; then
-		mv "$(make_seabios_rom "${tmprompath}" "seabios.elf" "${seabios_opromloadonly}" "${initmode}")" "${tmprompath}"
-	elif [ "${payload_seabios_withgrub}" ] && [ "${firstpayloadname}" != "grub" ]; then
-		mv "$(make_seabios_rom "${tmprompath}" "fallback/payload" "${seabios_opromloadonly}" "${initmode}")" "${tmprompath}"
+	x=${tmprompath}
+	y=${seabios_opromloadonly}
+	z=${initmode}
+	if [ "${payload_grub_withseabios}" = "y" ] \
+				&& [ "${firstpayloadname}" = "grub" ]; then
+		mv "$(mkSeabiosRom "${x}" "seabios.elf" "${y}" "${z}")" \
+				"${tmprompath}"
+	elif [ "${payload_seabios_withgrub}" ] \
+				&& [ "${firstpayloadname}" != "grub" ]; then
+		mv "$(mkSeabiosRom "${x}" "fallback/payload" "$y" "$z")" \
+				"${tmprompath}"
 	fi	
 
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
-		keymaps="resources/grub/keymap/*"
+		keymaps="${kmapdir}/*"
 	else
 		for keymapname in ${keyboard_layouts}; do
-			keymaps="${keymaps} resources/grub/keymap/${keymapname}.gkb"
+			keymaps="${keymaps} ${kmapdir}/${keymapname}.gkb"
 		done
 	fi
 	for keymapfile in ${keymaps}; do
@@ -491,11 +556,20 @@ mkRomsWithGrub() {
 			grub_path_in_cbfs="img/grub2"
 		fi
 
-		tmpgrubrom="$(make_grubrom_from_keymap "${keymap}" "${tmprompath}" "${grub_path_in_cbfs}")"
+		# evil bofh rfc 2646 compliance hack
+		x=${keymap}
+		y=${tmprompath}
+		z=${grub_path_in_cbfs}
+
+		tmpgrubrom="$(mkGrubRom "${x}" "${y}" "${z}")"
+
 		if [ "${initmode}" = "normal" ]; then
-			newrompath="${romdir}/${firstpayloadname}_${board}_${initmode}_${keymap}.rom"
+			newrompath="${romdir}/${firstpayloadname}_${board}_"
+			newrompath="${newrompath}${initmode}_${keymap}.rom"
 		else
-			newrompath="${romdir}/${firstpayloadname}_${board}_${initmode}_${displaymode}_${keymap}.rom"
+			newrompath="${romdir}/${firstpayloadname}_${board}_"
+			newrompath="${newrompath}${initmode}_${displaymode}_"
+			newrompath="${newrompath}${keymap}.rom"
 		fi
 		moverom "${tmpgrubrom}" "${newrompath}" "${romtype}"
 		rm -f "${tmpgrubrom}"
@@ -510,45 +584,62 @@ mkRoms() {
 
 	if [ ! -f "${cbcfgpath}" ]; then
 		printf "'%s' does not exist. Skipping build for %s %s %s\n" \
-			"${cbcfgpath}" "${board}" "${displaymode}" "${initmode}"
+				${cbcfgpath} ${board} \
+				${displaymode} ${initmode}
 		return 0
 	fi
 
 	mkCoreboot "${cbdir}" "${cbcfgpath}"
 
-	if [ "${displaymode}" = "txtmode" ] && [ "${payload_memtest}" = "y" ]; then
-		"${cbfstool}" "${corebootrom}" add-payload -f memtest86plus/memtest -n img/memtest -c lzma || exit 1
+	if [ "${displaymode}" = "txtmode" ] \
+				&& [ "${payload_memtest}" = "y" ]; then
+		"${cbfstool}" "${corebootrom}" add-payload \
+				-f memtest86plus/memtest -n img/memtest \
+				-c lzma || exit 1
 	fi
 
 	if [ "${payload_seabios}" = "y" ]; then
 		if [ "${payload_seabios_withgrub}" = "n" ]; then
-			tmpseabiosrom="$(make_seabios_rom "${corebootrom}" "fallback/payload" "${seabios_opromloadonly}" "${initmode}")"
+			x=${corebootrom}
+			y=${seabios_opromloadonly}
+			z=${initmode}
+			t=$(mkSeabiosRom "$x" "fallback/payload" "$y" "$z")
 			if [ "${initmode}" = "normal" ]; then
-				newrompath="${romdir}/seabios_${board}_${initmode}.rom"
+				newrompath="${romdir}/seabios_${board}_"
+				newrompath="${newrompath}${initmode}.rom"
 			else
-				newrompath="${romdir}/seabios_${board}_${initmode}_${displaymode}.rom"
+				newrompath="${romdir}/seabios_${board}_"
+				newrompath="${newrompath}${initmode}_"
+				newrompath="${newrompath}${displaymode}.rom"
 			fi
 
-			moverom "${tmpseabiosrom}" "${newrompath}" "${romtype}"
-			rm -f "${tmpseabiosrom}"
+			moverom "${t}" "${newrompath}" "${romtype}"
+			rm -f "${t}"
 		else
 			tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 			cp "${corebootrom}" "${tmprom}"
-			mkRomsWithGrub "${tmprom}" "${initmode}" "${displaymode}" "seabios_withgrub"
+			mkRomsWithGrub "${tmprom}" "${initmode}" \
+					"${displaymode}" "seabios_withgrub"
 			rm -f "${tmprom}"
 		fi
 	fi
 
 	if [ "${payload_grub}" = "y" ]; then
-		mkRomsWithGrub "${corebootrom}" "${initmode}" "${displaymode}" "grub"
+		mkRomsWithGrub "${corebootrom}" "${initmode}" \
+				"${displaymode}" "grub"
 	fi
 
 	if [ "${payload_uboot}" = "y" ]; then
-		tmpubootrom="$(make_uboot_payload_rom "${corebootrom}" "fallback/payload" "${uboot_config}" "${cbfstool}")"
+		x=${corebootrom}
+		y=${uboot_config}
+		z=${cbfstool}
+		tmpubootrom="$(mkUbootRom "$x" "fallback/payload" "$y" "$z")"
 		if [ "${initmode}" = "normal" ]; then
-			newrompath="${romdir}/uboot_payload_${board}_${initmode}.rom"
+			newrompath="${romdir}/uboot_payload_${board}_"
+			newrompath="${newrompath}${initmode}.rom"
 		else
-			newrompath="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
+			newrompath="${romdir}/uboot_payload_${board}_"
+			newrompath="${newrompath}${initmode}_${displaymode}.rom"
 		fi
 		moverom "${tmpubootrom}" "${newrompath}" "${romtype}"
 		rm -f "${tmpubootrom}"
@@ -558,13 +649,15 @@ mkRoms() {
 if [ -z ${displaymodes} ]; then
 	initmode="libgfxinit"
 	for displaymode in corebootfb txtmode; do
-		cbcfgpath="resources/coreboot/${board}/config/${initmode}_${displaymode}"
+		cbcfgpath="resources/coreboot/${board}/config/${initmode}_"
+		cbcfgpath="${cbcfgpath}${displaymode}"
 		mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 	done
 	
 	initmode="vgarom"
 	for displaymode in vesafb txtmode; do	
-		cbcfgpath="resources/coreboot/${board}/config/${initmode}_${displaymode}"
+		cbcfgpath="resources/coreboot/${board}/config/${initmode}_"
+		cbcfgpath="${cbcfgpath}${displaymode}"
 		mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 	done
 	
@@ -577,13 +670,15 @@ else
 	echo "special displaymode defined as $displaymodes"
 	initmode="libgfxinit"
 	for displaymode in ${displaymodes}; do
-		cbcfgpath="resources/coreboot/${board}/config/${initmode}_${displaymode}"
+		cbcfgpath="resources/coreboot/${board}/config/${initmode}_"
+		cbcfgpath="${cbcfgpath}${displaymode}"
 		mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 	done
 
 	initmode="vgarom"
 	for displaymode in ${displaymodes}; do
-		cbcfgpath="resources/coreboot/${board}/config/${initmode}_${displaymode}"
+		cbcfgpath="resources/coreboot/${board}/config/${initmode}_"
+		cbcfgpath="${cbcfgpath}${displaymode}"
 		mkRoms "${cbcfgpath}" "${displaymode}" "${initmode}"
 	done
 fi
