@@ -180,19 +180,21 @@ load_config()
 load_config_overrides()
 {
 	# Override all payload directives with cmdline args
-	if [ ! -z ${payloads} ]; then	
-		echo "setting payloads $payloads"
-		payload_grub="n"
-		payload_grub_withseabios="n" # seabios chainloaded from grub
-		payload_seabios="n"
-		payload_seabios_withgrub="n" # grub from SeaBIOS menu
-		payload_uboot="n"
-		payload_memtest="n"
+	if [ -z ${payloads} ]; then
+		return 0
+	fi
 
-		for payload in ${payloads} ; do
-			eval "payload_${payload}=y"
-		done
-	fi 
+	echo "setting payloads $payloads"
+	payload_grub="n"
+	payload_grub_withseabios="n" # seabios chainloaded from grub
+	payload_seabios="n"
+	payload_seabios_withgrub="n" # grub from SeaBIOS menu
+	payload_uboot="n"
+	payload_memtest="n"
+
+	for payload in ${payloads} ; do
+		eval "payload_${payload}=y"
+	done
 }
 
 die_if_cbconfig_and_nopayload()
@@ -201,17 +203,20 @@ die_if_cbconfig_and_nopayload()
 	# defined in the lbmk config, exit with error
 	# if no configs exist, this won't fail. this way, cbtrees
 	# like "default" can exist which just contain patches
-	if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] \
-				&& [ "${payload_uboot}" != "y" ]; then
-		for configfile in "${boardcfgdir}/config/"*; do
-			if [ ! -e "${configfile}" ]; then
-				continue
-			fi
-			printf "build/roms %s: Payload undefined. Exiting.\n" \
-					${board}
-			exit 1
-		done
+
+	if [ "${payload_grub}" = "y" ] || [ "${payload_seabios}" = "y" ] \
+				|| [ "${payload_uboot}" = "y" ]; then
+		return 0
 	fi
+
+	for configfile in "${boardcfgdir}/config/"*; do
+		if [ ! -e "${configfile}" ]; then
+			continue
+		fi
+		printf "build/roms %s: Payload undefined. Exiting.\n" \
+				${board}
+		exit 1
+	done
 }
 
 build_dependencies()
@@ -282,72 +287,74 @@ build_dependency_seabios()
 			./build payload seabios
 		fi
 	fi
-	if [ "${payload_memtest}" = "y" ]; then
-		if [ ! -f "memtest86plus/memtest" ]; then
-			./build module memtest86plus
-		fi
+	if [ "${payload_memtest}" = "y" ] && [ ! -f "memtest86plus/memtest" ]
+	then
+		./build module memtest86plus
 	fi
 }
 
 build_dependency_grub()
 {
-	if [ "${payload_grub}" = "y" ] \
-				|| [ "${payload_seabios_withgrub}" = "y" ]
-	then
-		if [ -f "payload/grub/grub_usqwerty.cfg" ]; then
-			sha1cmd="sha1sum resources/grub/config/grub.cfg"
-			grubrefchecksum="$(${sha1cmd} | awk '{print $1}')"
-
-			sha1cmd="sha1sum payload/grub/grub_usqwerty.cfg"
-			grubsha1="$(${sha1cmd} | awk '{print $1}')"
-
-			if [ "${grubrefchecksum}" != "${grubsha1}" ]; then
-				rm -Rf payload/grub/
-				printf "GRUB change detected. Rebuilding:\n"
-			fi
-		else
-			printf "GRUB payloads needed. Building:\n"
-			rm -Rf payload/grub/ # just in case
-		fi
-		for keymapfile in ${kmapdir}/*; do
-			if [ ! -f "${keymapfile}" ]; then
-				continue
-			fi
-
-			keymap="${keymapfile##*/}"
-			keymap="${keymap%.gkb}"
-
-			grubelf="payload/grub/grub_${keymap}.elf"
-			grubcfg="payload/grub/grub_${keymap}.cfg"
-			grubtestcfg="payload/grub/grub_${keymap}_test.cfg"
-
-			if [ ! -f "${grubelf}" ] || [ ! -f "${grubcfg}" ] || \
-					[ ! -f "${grubtestcfg}" ]; then
-				./build payload grub
-			fi
-		done
+	if [ "${payload_grub}" != "y" ] \
+			&& [ "${payload_seabios_withgrub}" != "y" ]; then
+		return 0
 	fi
+
+	if [ -f "payload/grub/grub_usqwerty.cfg" ]; then
+		sha1cmd="sha1sum resources/grub/config/grub.cfg"
+		grubrefchecksum="$(${sha1cmd} | awk '{print $1}')"
+
+		sha1cmd="sha1sum payload/grub/grub_usqwerty.cfg"
+		grubsha1="$(${sha1cmd} | awk '{print $1}')"
+
+		if [ "${grubrefchecksum}" != "${grubsha1}" ]; then
+			rm -Rf payload/grub/
+			printf "GRUB change detected. Rebuilding:\n"
+		fi
+	else
+		printf "GRUB payloads needed. Building:\n"
+		rm -Rf payload/grub/ # just in case
+	fi
+	for keymapfile in ${kmapdir}/*; do
+		if [ ! -f "${keymapfile}" ]; then
+			continue
+		fi
+
+		keymap="${keymapfile##*/}"
+		keymap="${keymap%.gkb}"
+
+		grubelf="payload/grub/grub_${keymap}.elf"
+		grubcfg="payload/grub/grub_${keymap}.cfg"
+		grubtestcfg="payload/grub/grub_${keymap}_test.cfg"
+
+		if [ ! -f "${grubelf}" ] || [ ! -f "${grubcfg}" ] || \
+				[ ! -f "${grubtestcfg}" ]; then
+			./build payload grub
+		fi
+	done
 }
 
 build_dependency_uboot()
 {
-	if [ "${payload_uboot}" = "y" ]; then
-		ubdir=""
-		if [ "${uboot_config}" = "default" ]; then
-			ubdir="payload/u-boot/${board}"
-		else
-			ubdir="payload/u-boot/${board}/${uboot_config}"
-		fi
+	if [ "${payload_uboot}" != "y" ]; then
+		return 0
+	fi
 
-		if [ -f "${ubdir}/u-boot.elf" ]; then
-			ubootelf="${ubdir}/u-boot.elf"
-		elif [ -f "${ubdir}/u-boot" ]; then
-			ubootelf="${ubdir}/u-boot"
-		else
-			printf "U-Boot needed. Building:\n"
-			rm -Rf "payload/u-boot/${board}" # just in case
-			./build payload u-boot "${board}"
-		fi
+	ubdir=""
+	if [ "${uboot_config}" = "default" ]; then
+		ubdir="payload/u-boot/${board}"
+	else
+		ubdir="payload/u-boot/${board}/${uboot_config}"
+	fi
+
+	if [ -f "${ubdir}/u-boot.elf" ]; then
+		ubootelf="${ubdir}/u-boot.elf"
+	elif [ -f "${ubdir}/u-boot" ]; then
+		ubootelf="${ubdir}/u-boot"
+	else
+		printf "U-Boot needed. Building:\n"
+		rm -Rf "payload/u-boot/${board}" # just in case
+		./build payload u-boot "${board}"
 	fi
 }
 

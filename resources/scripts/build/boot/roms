@@ -36,53 +36,53 @@ firstoption="${1}"
 
 main()
 {
-	if [ $# -gt 0 ]; then
-		if [ "${firstoption}" = "help" ]; then
-			usage
-			exit 0
-		fi
-		if [ "${firstoption}" = "list" ]; then
-			listboards
-			exit 0
-		fi
+	if [ $# -lt 1 ]; then
+		usage
+		exit 1
+	fi
 
-		while [ $# -gt 0 ]; do
-			case ${1} in
-				-d)
-				opts="${opts} -d ${2}"
-				shift ;;
-				-p)
-				opts="${opts} -p ${2}"
-				shift ;;
-				-k)
-				opts="${opts} -k ${2}"
-				shift ;;
-				*)
-				boards="${boards} ${1} " ;;
-			esac
-			shift
-		done
+	if [ "${firstoption}" = "help" ]; then
+		usage
+		exit 0
+	fi
+	if [ "${firstoption}" = "list" ]; then
+		listboards
+		exit 0
+	fi
+
+	while [ $# -gt 0 ]; do
+		case ${1} in
+			-d)
+			opts="${opts} -d ${2}"
+			shift ;;
+			-p)
+			opts="${opts} -p ${2}"
+			shift ;;
+			-k)
+			opts="${opts} -k ${2}"
+			shift ;;
+			*)
+			boards="${boards} ${1} " ;;
+		esac
+		shift
+	done
 
 	if [ -z ${opts+x} ]; then
 		opts=""
 	fi
 
-		printf "Building %s ROM images\n" "${projectname}"
+	printf "Building %s ROM images\n" "${projectname}"
 
-		if [ "${firstoption}" = "all" ]; then
-			for boardname in $(listboards); do
-				buildrom "${boardname}" \
-						|| die "build/roms: error"
-			done
-		else
-			for board in ${boards}; do
-				buildrom "${board}" \
-						|| die "build/roms: error"
-			done
-		fi
+	if [ "${firstoption}" = "all" ]; then
+		for boardname in $(listboards); do
+			buildrom "${boardname}" \
+					|| die "build/roms: error"
+		done
 	else
-		usage
-		exit 1
+		for board in ${boards}; do
+			buildrom "${board}" \
+					|| die "build/roms: error"
+		done
 	fi
 
 	printf "\n\nDone! Your ROMs are in bin/\n\n"
