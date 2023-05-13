@@ -386,10 +386,7 @@ build_rom_images()
 		done
 	done
 
-	(
-	cd "${cbdir}"
-	make distclean # TODO: do make clean instead (avoid re-building utils)
-	)
+	make distclean -BC "${cbdir}"
 }
 
 # Main ROM building function. This calls all other functions
@@ -481,26 +478,19 @@ mkCoreboot()
 	printf "%s-%s\n" "$(cat projectname)" "$(cat version)" \
 			> "${cbdir}/.coreboot-version"
 
-	(
 	if [ -f "${cbfstool}" ]; then
 		mv "${cbfstool}" "${cbdir}/cbfstool"
 	fi
-	cd "${cbdir}"
-	make distclean
-	cd -
+	make clean -BC "${cbdir}"
 
 	if [ -f "${cbdir}/cbfstool" ]; then
 		mv "${cbdir}/cbfstool" "${cbfstool}"
 	fi
-	)
 
 	cp "${_cbcfg}" "${cbdir}"/.config
 	./build module cbutils ${cbdir#coreboot/} || exit 1
 
-	(
-	cd "${cbdir}"
-	make -j$(nproc)
-	)
+	make -j$(nproc) -BC "${cbdir}"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
