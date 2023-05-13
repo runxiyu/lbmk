@@ -404,7 +404,7 @@ mkRoms()
 	fi
 
 	# make coreboot ROM without a payload in it
-	mkCoreboot "${cbdir}" "${_cbcfg}"
+	mkCoreboot "${_cbcfg}"
 
 	# now add payloads, per user config:
 
@@ -465,8 +465,7 @@ mkRoms()
 # expected: configs must not specify a payload
 mkCoreboot()
 {
-	cbdir="${1}" # eg. coreboot/default
-	_cbcfg="${2}" # eg. resources/coreboot/e6400nvidia_4mb/config/normal
+	_cbcfg="${1}" # eg. resources/coreboot/e6400nvidia_4mb/config/normal
 
 	if [ ! -f "${_cbcfg}" ]; then
 		printf "\nmkCoreboot: coreboot config '%s' does not exist. " \
