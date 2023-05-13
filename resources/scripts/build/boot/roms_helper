@@ -736,7 +736,9 @@ moverom()
 			c=12
 			ifdgbe="descriptors/ich9m/ich9fdgbe_${romsize}m.bin"
 			fi
-			./build descriptors ich9m
+			if [ ! -f "${ifdgbe}" ]; then
+				./build descriptors ich9m
+			fi
 			dd if=${ifdgbe} of=${_newrom} bs=1 count=${c}k \
 					conv=notrunc
 		done
