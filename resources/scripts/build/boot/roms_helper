@@ -739,7 +739,7 @@ moverom()
 			if [ ! -f "${ifdgbe}" ]; then
 				./build descriptors ich9m
 			fi
-			dd if=${ifdgbe} of=${_newrom} bs=1 count=${c}k \
+			dd if=${ifdgbe} of=${_newrom} bs=${c}k count=1 \
 					conv=notrunc
 		done
 	done
