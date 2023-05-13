@@ -372,7 +372,6 @@ build_rom_images()
 		if [ ! -z ${displaymodes} ]; then
 			modes="${displaymodes}"
 		fi
-		echo "MODES: ${modes}"
 		for displaymode in ${modes}; do
 			if [ "${initmode}" = "normal" ] \
 					&& [ "$displaymode" != "txtmode" ]; then
