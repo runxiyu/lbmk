@@ -713,26 +713,6 @@ moverom()
 
 	cp ${rompath} ${_newrom}
 
-	for romsize in 4 8 16; do
-		ifdgbe="descriptors/ich9m/ich9fdgbe_${romsize}m.bin"
-		if [ "${cuttype}" = "${romsize}MiB ICH9 IFD NOR flash" ]; then
-			if [ ! -f "${ifdgbe}" ]; then
-				./build descriptors ich9m
-			fi
-			dd if=${ifdgbe} of=${_newrom} bs=1 count=12k \
-					conv=notrunc
-		fi
-		cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
-		ifdgbe="descriptors/ich9m/ich9fdnogbe_${romsize}m.bin"
-		if [ "${cuttype}" = "${cmpstr}" ]; then
-			if [ ! -f "${ifdgbe}" ]; then
-				./build descriptors ich9m
-			fi
-			dd if=${ifdgbe} of=${_newrom} bs=1 count=4k \
-					conv=notrunc
-		fi
-	done
-
 	if [ "${cuttype}" = "i945 laptop" ]; then
 		dd if=${_newrom} of=top64k.bin bs=1 \
 				skip=$(($(stat -c %s ${_newrom}) - 0x10000)) \
@@ -741,7 +721,26 @@ moverom()
 				seek=$(($(stat -c %s ${_newrom}) - 0x20000)) \
 				count=64k conv=notrunc
 		rm -f top64k.bin
+		return 0
 	fi
+
+	for romsize in 4 8 16; do
+		for x in "IFD" "IFD NOGBE"; do
+			if [ "${romsize}MiB ICH9 ${x} NOR flash" \
+					!= "${cuttype}" ]; then
+				continue
+			fi
+			c=4
+			ifdgbe="descriptors/ich9m/ich9fdnogbe_${romsize}m.bin"
+			if [ "${x}" = "IFD" ]; then
+			c=12
+			ifdgbe="descriptors/ich9m/ich9fdgbe_${romsize}m.bin"
+			fi
+			./build descriptors ich9m
+			dd if=${ifdgbe} of=${_newrom} bs=1 count=${c}k \
+					conv=notrunc
+		done
+	done
 }
 
 main $@
