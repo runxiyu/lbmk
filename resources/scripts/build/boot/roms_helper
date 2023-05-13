@@ -711,13 +711,7 @@ moverom()
 
 	printf "\nCreating new ROM image: %s\n" "${_newrom}"
 
-	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
-		dd if=${rompath} of=${_newrom} bs=1 \
-				skip=$(($(stat -c %s ${rompath}) - 0x400000)) \
-				count=4194304
-	else
-		cp ${rompath} ${_newrom}
-	fi
+	cp ${rompath} ${_newrom}
 
 	for romsize in 4 8 16; do
 		ifdgbe="descriptors/ich9m/ich9fdgbe_${romsize}m.bin"
