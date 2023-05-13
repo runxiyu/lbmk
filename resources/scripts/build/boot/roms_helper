@@ -363,37 +363,29 @@ build_rom_images()
 	[ -d "${romdir}/" ] || mkdir -p "${romdir}/"
 	rm -f "${romdir}"/*
 
-	if [ -z ${displaymodes} ]; then
-		initmode="libgfxinit"
-		for displaymode in corebootfb txtmode; do
-			_cbcfg="${boardcfgdir}/config/${initmode}"
-			_cbcfg="${_cbcfg}_${displaymode}"
-			mkRoms "${_cbcfg}" "${displaymode}" "${initmode}"
+	for initmode in "normal" "vgarom" "libgfxinit"; do
+		hmode="vesafb"
+		if [ "${initmode}" != "vgarom" ]; then
+			hmode="corebootfb"
+		fi
+		modes="${hmode} txtmode"
+		if [ ! -z ${displaymodes} ]; then
+			modes="${displaymodes}"
+		fi
+		echo "MODES: ${modes}"
+		for displaymode in ${modes}; do
+			if [ "${initmode}" = "normal" ] \
+					&& [ "$displaymode" != "txtmode" ]; then
+				continue
+			fi
+			cbcfg="${boardcfgdir}/config/${initmode}"
+			cbcfg="${cbcfg}_${displaymode}"
+			if [ "${initmode}" = "normal" ]; then
+				cbcfg="${cbcfg%_*}"
+			fi
+			mkRoms "${cbcfg}" "${displaymode}" "${initmode}"
 		done
-		
-		initmode="vgarom"
-		for displaymode in vesafb txtmode; do	
-			_cbcfg="${boardcfgdir}/config/${initmode}"
-			_cbcfg="${_cbcfg}_${displaymode}"
-			mkRoms "${_cbcfg}" "${displaymode}" "${initmode}"
-		done
-		
-		initmode="normal"
-		displaymode="txtmode"
-		_cbcfg="${boardcfgdir}/config/${initmode}"
-		mkRoms "${_cbcfg}" "${displaymode}" "${initmode}"
-
-	else
-		echo "special displaymode defined as $displaymodes"
-		for initmode in vgarom libgfxinit; do
-			for displaymode in ${displaymodes}; do
-				_cbcfg="${boardcfgdir}/config/"
-				_cbcfg="${_cbcfg}${initmode}_${displaymode}"
-				mkRoms "${_cbcfg}" "${displaymode}" \
-						"${initmode}"
-			done
-		done
-	fi
+	done
 
 	(
 	cd "${cbdir}"
