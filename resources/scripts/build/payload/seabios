@@ -22,53 +22,39 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-# Build SeaBIOS
-# ---------------------------------------------------------------------
-
 printf "Building SeaBIOS payloads and SeaVGABIOS\n"
 
-[ ! -d "payload/" ] && mkdir -p payload/
-[ ! -d "payload/seabios" ] && mkdir -p payload/seabios/
-
-rm -f payload/seabios/*
-
-if [ ! -d "seabios/" ]; then
-    ./download seabios
+if [ ! -d "payload/seabios" ]; then
+	mkdir -p payload/seabios/ || exit 1
 fi
 
-cd seabios/
+rm -f payload/seabios/* || exit 1
 
-# for libgfxinit setup:
-[ -f Makefile ] && make distclean
-cp ../resources/seabios/config/libgfxinit .config
-make silentoldconfig -j$(nproc)
-make -j$(nproc)
-mv out/bios.bin.elf ../payload/seabios/seabios_libgfxinit.elf
-mv out/vgabios.bin ../payload/seabios/seavgabios.bin
-rm .config
+if [ ! -d "seabios/" ]; then
+    ./download seabios || exit 1
+fi
 
-# for vgarom setup:
-[ -f Makefile ] && make distclean
-cp ../resources/seabios/config/vgarom .config
-make silentoldconfig -j$(nproc)
-make -j$(nproc)
-mv out/bios.bin.elf ../payload/seabios/seabios_vgarom.elf
-rm .config
-
-# for normal setup:
-[ -f Makefile ] && make distclean
-cp ../resources/seabios/config/normal .config
-make silentoldconfig -j$(nproc)
-make -j$(nproc)
-mv out/bios.bin.elf ../payload/seabios/seabios_normal.elf
-rm .config
+for x in normal vgarom libgfxinit; do
+	if [ ! -f seabios/Makefile ]; then
+		printf "SeaBIOS not properly downloaded.\n"
+		exit 1
+	fi
+	make distclean -BC seabios || exit 1
+	cp "resources/seabios/config/${x}" seabios/.config
+	make silentoldconfig -j$(nproc) -BC seabios || exit 1
+	make -j$(nproc) -BC seabios || exit 1
+	cp seabios/out/bios.bin.elf "payload/seabios/seabios_${x}.elf" \
+			|| exit 1
+	if [ "${x}" = "libgfxinit" ]; then
+		cp seabios/out/vgabios.bin payload/seabios/seavgabios.bin \
+				|| exit 1
+	fi
+	rm -f seabios/.config || exit 1
+done
 
 # clean it again. gotta keep it clean!
-[ -f Makefile ] && make distclean
+if [ -f seabios/Makefile ]; then
+	make distclean -BC seabios || exit 1
+fi
 
 printf "Done! SeaBIOS files are in payload/seabios/\n\n"
-
-# done. go back to main directory
-cd ../
-
-# ------------------- DONE ----------------------
