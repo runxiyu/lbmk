@@ -35,6 +35,9 @@ Check_vars(){
 
 Patch(){
 	for patchfile in ${PWD}/${patchdir}/*.patch ; do
+		if [ ! -f "${patchfile}" ]; then
+			continue
+		fi
 		( cd ${tmp_dir}
 		git am ${patchfile} || return 1
 		)
