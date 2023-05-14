@@ -5,6 +5,7 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+sname=""
 archive=""
 _filetype=""
 rom=""
@@ -36,6 +37,8 @@ CONFIG_GBE_BIN_PATH=""
 
 main()
 {
+	sname="${0}"
+
 	if [ $# -lt 1 ]; then
 		fail "No options specified."
 	elif [ "${1}" = "listboards" ]; then
@@ -373,7 +376,7 @@ listboards()
 fail()
 {
 	if [ ! -z ${@+x} ]; then
-		printf "\nERROR: ${@}\n"
+		printf "\n%s: ERROR: ${@}\n" ${sname}
 	fi
 
 	usage
