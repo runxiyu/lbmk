@@ -9,68 +9,77 @@ sname=""
 board=""
 vendor_rom=""
 
+cbdir="coreboot/default"
+cbcfgsdir="resources/coreboot"
+ifdtool="${cbdir}/util/ifdtool/ifdtool"
+boarddir=""
+
 main()
 {
 	sname=${0}
 	if [ $# -lt 2 ]; then
-		Fail "Missing arguments (less than two)."
+		fail "Missing arguments (less than two)."
 	fi
 
 	board="${1}"
 	vendor_rom="${2}"
 
-	Check_board
-	Build_deps
-	Extract_blobs
+	boarddir="${cbcfgsdir}/${board}"
+
+	check_board
+	build_dependencies
+	extract_blobs
 }
 
-Check_board()
+check_board()
 {
 	if [ ! -f "${vendor_rom}" ] ; then
-		Fail "file does not exist: ${vendor_rom}"
-	elif [ ! -d "resources/coreboot/${board}" ]; then
-		Fail "build/roms ${board}: target not defined"
-	elif [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
-		Fail "build/roms ${board}: missing board.cfg"
+		fail "file does not exist: ${vendor_rom}"
+	elif [ ! -d "${boarddir}" ]; then
+		fail "build/roms ${board}: target not defined"
+	elif [ ! -f "${boarddir}/board.cfg" ]; then
+		fail "build/roms ${board}: missing board.cfg"
 	fi
 }
 
-Build_deps(){
+build_dependencies()
+{
 	if [ ! -d me_cleaner ]; then
 		printf "downloading me_cleaner\n"
-		./download me_cleaner || Fail 'could not download me_cleaner'
+		./download me_cleaner || fail 'could not download me_cleaner'
 	else
 		printf "me_cleaner already downloaded. Skipping.\n"
 		printf "run ./download me_cleaner to manually overwrite\n"
 	fi
 
-	if [ ! -d coreboot/default ]; then
+	if [ ! -d ${cbdir} ]; then
 		printf "downloading coreboot\n"
 		./download coreboot default \
-				|| Fail "could not download coreboot"
+				|| fail "could not download coreboot"
 	else
 		printf "coreboot already downloaded. Skipping.\n"
 		printf "run ./download coreboot to manually overwrite\n"
 	fi
 
-	if ! [ -f coreboot/default/util/ifdtool/ifdtool ]; then
+	if ! [ -f ${ifdtool} ]; then
 		printf "building ifdtool from coreboot\n"
-		make -C coreboot/default/util/ifdtool \
-				|| Fail "could not build ifdtool"
+		make -C "${ifdtool%/ifdtool}" \
+				|| fail "could not build ifdtool"
 	fi
 }
 
-Extract_blobs(){
+extract_blobs()
+{
+	# TODO: split up this function, it's a mess
 	printf "extracting blobs for %s from %s\n" ${board} ${vendor_rom}
 
-	# TODO: find a better way to know which coreboot config to source
-	set -- "resources/coreboot/${board}/config/"*
+	set -- "${boarddir}/config/"*
 	. ${1} 2>/dev/null
-	. "resources/coreboot/${board}/board.cfg"
+	. "${boarddir}/board.cfg"
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		printf 'haswell board detected, downloading mrc\n'
-		./download mrc || Fail "could not download mrc"
+		./download mrc || fail "could not download mrc"
 	fi
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
@@ -82,12 +91,12 @@ Extract_blobs(){
 			-M ${_me_destination} ${vendor_rom} -t -r -S || \
 		./resources/blobs/me7_update_parser.py
 				-O ${_me_destination} ${vendor_rom} \
-			|| Fail 'me_cleaner failed to extract blobs from rom'
+			|| fail 'me_cleaner failed to extract blobs from rom'
 
 	printf "extracting gigabit ethernet firmware"
-	./coreboot/default/util/ifdtool/ifdtool -x ${vendor_rom}
+	./${ifdtool} -x ${vendor_rom}
 	mv flashregion*gbe.bin ${_gbe_destination} \
-			|| Fail 'could not extract gbe'
+			|| fail 'could not extract gbe'
 	
 	# Cleans up other files extracted with ifdtool
 	rm flashregion*.bin 2> /dev/null
@@ -100,13 +109,16 @@ Extract_blobs(){
 	fi
 }
 
-Fail(){
-	Print_help
+fail()
+{
+	print_help
+
 	printf "\n%s: ERROR: %s\n" ${sname} $@
 	exit 1 
 }
 
-Print_help(){
+print_help()
+{
 	printf "Usage: ./blobutil extract {boardname} {path/to/vendor_rom}\n"
 	printf "Example: ./blobutil extract x230 12mb_flash.bin\n"
 	printf "\nYou need to specify exactly 2 arguments\n"
