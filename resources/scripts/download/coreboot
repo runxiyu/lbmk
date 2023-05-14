@@ -34,21 +34,21 @@ usage()
 {
 	progname="./download coreboot"
 	printf "Usage:\n"
-	printf "\t%s                     # %s\n" \
-	       "${progname}" \
-	       "Download coreboot for all the boards"
+	printf "\t%s\t\t\t# %s\n" \
+			"${progname}" \
+			"Download coreboot for all the boards"
 	printf "\t%s [board [board] ...] # %s\n" \
-	       "${progname}" \
-	       "Download coreboot for the given boards"
-	printf "\t%s --list-boards       # %s\n" \
-	       "${progname}" \
-	       "Prints this help"
-	printf "\t%s --help              # %s\n" \
-	       "${progname}" \
-	       "List supported boards"
-	printf "\t%s --help              # %s\n" \
-	       "${progname}" \
-	       "Prints this help"
+			"${progname}" \
+			"Download coreboot for the given boards"
+	printf "\t%s --list-boards\t# %s\n" \
+			"${progname}" \
+			"Prints this help"
+	printf "\t%s --help\t\t# %s\n" \
+			"${progname}" \
+			"List supported boards"
+	printf "\t%s --help\t\t# %s\n" \
+			"${progname}" \
+			"Prints this help"
 }
 
 # In this script, set -u is used to check for undefined variables, and
@@ -197,7 +197,7 @@ downloadfor() {
 	# extra.sh on a per-board basis
 	# In fact, extra.sh can be used for anything you want.
 	if [ -f "../../resources/coreboot/${board}/extra.sh" ]; then
-		"../../resources/coreboot/${board}/extra.sh" || touch ../../build_error
+			"../../resources/coreboot/${board}/extra.sh" || touch ../../build_error
 		if [ -f ../../build_error ]; then
 			cd ../../; return 1
 		fi
