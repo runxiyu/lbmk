@@ -19,26 +19,20 @@ main()
 	board="${1}"
 	vendor_rom="${2}"
 
-	if [ ! -f "${vendor_rom}" ] ; then
-		Print_help
-		exit 1
-	fi
-
-	if [ ! -d "resources/coreboot/${board}" ]; then
-		Print_help
-		printf "build/roms %s: target not defined.\n" \
-				"${projectname}" ${board}
-		exit 1
-	fi
-
-	if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
-		Print_help
-		printf "build/roms %s: missing board.cfg.\n" ${board}
-		exit 1
-	fi
-
+	Check_board
 	Build_deps
 	Extract_blobs
+}
+
+Check_board()
+{
+	if [ ! -f "${vendor_rom}" ] ; then
+		Fail "file does not exist: ${vendor_rom}"
+	elif [ ! -d "resources/coreboot/${board}" ]; then
+		Fail "build/roms ${board}: target not defined"
+	elif [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
+		Fail "build/roms ${board}: missing board.cfg"
+	fi
 }
 
 Build_deps(){
@@ -106,16 +100,16 @@ Extract_blobs(){
 	fi
 }
 
-Print_help(){
-	printf "Usage: ./blobutil extract {boardname} {path/to/vendor_rom}\n"
-	printf "Example: ./blobutil extract x230 12mb_flash.bin\n"
-	printf "\nYou need to specify exactly 2 arguments\n"
-}
-
 Fail(){
 	Print_help
 	printf "\n%s: ERROR: %s\n" ${sname} $@
 	exit 1 
+}
+
+Print_help(){
+	printf "Usage: ./blobutil extract {boardname} {path/to/vendor_rom}\n"
+	printf "Example: ./blobutil extract x230 12mb_flash.bin\n"
+	printf "\nYou need to specify exactly 2 arguments\n"
 }
 
 main $@
