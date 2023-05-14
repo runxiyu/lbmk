@@ -334,9 +334,16 @@ modify_gbe()
 	printf "changing mac address in gbe to ${new_mac}\n"
 
 	rom=${1}
-	# TODO: check if CONFIG_GBE_BIN_PATH is empty
-	# TODO: check that the gbe file actually exists
+
+	if [ -z ${CONFIG_GBE_BIN_PATH} ]; then
+		fail "CONFIG_GBE_BIN_PATH not set"
+	fi
+
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
+
+	if [ ! -f "${_gbe_location}" ]; then
+		fail "CONFIG_GBE_BIN_PATH points to missing file"
+	fi
 
 	if [ ! -f ${nvmutil} ]; then
 		make -C util/nvmutil || fail 'failed to build nvmutil'
