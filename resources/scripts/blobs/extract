@@ -2,6 +2,7 @@
 # script to automate extracting blobs from an existing vendor bios
 
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
 board="${1}"
@@ -29,7 +30,8 @@ Build_deps(){
 
 	if [ ! -d coreboot/default ]; then
 		printf "downloading coreboot\n"
-		./download coreboot default || Fail 'could not download coreboot'
+		./download coreboot default \
+				|| Fail "could not download coreboot"
 	else
 		printf "coreboot already downloaded. Skipping.\n"
 		printf "run ./download coreboot to manually overwrite\n"
@@ -37,20 +39,21 @@ Build_deps(){
 
 	if ! [ -f coreboot/default/util/ifdtool/ifdtool ]; then
 		printf "building ifdtool from coreboot\n"
-		make -C coreboot/default/util/ifdtool || Fail 'could not build ifdtool'
+		make -C coreboot/default/util/ifdtool \
+				|| Fail "could not build ifdtool"
 	fi
 }
 
 
 Extract_blobs(){
 	# TODO: find a better way to know which coreboot config to source
-	set -- "resources/coreboot/${board}/config/*"
+	set -- "resources/coreboot/${board}/config/"*
 	. ${1} 2>/dev/null
 	. "resources/coreboot/${board}/board.cfg"
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		printf 'haswell board detected, downloading mrc\n'
-		./download mrc || Fail 'could not download mrc, check network connection'
+		./download mrc || Fail "could not download mrc"
 	fi
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
@@ -58,13 +61,16 @@ Extract_blobs(){
 	_ifd_destination=${CONFIG_IFD_BIN_PATH#../../}
 
 	printf "extracting clean ime and modified ifd\n"
-	./me_cleaner/me_cleaner.py -D ${_ifd_destination} -M ${_me_destination} ${vendor_rom} -t -r -S \
-	|| ./resources/blobs/me7_update_parser.py -O ${_me_destination} ${vendor_rom} \
-	|| Fail 'me_cleaner failed to extract blobs from rom'
+	./me_cleaner/me_cleaner.py -D ${_ifd_destination} \
+			-M ${_me_destination} ${vendor_rom} -t -r -S || \
+		./resources/blobs/me7_update_parser.py
+				-O ${_me_destination} ${vendor_rom} \
+			|| Fail 'me_cleaner failed to extract blobs from rom'
 
 	printf "extracting gigabit ethernet firmware"
 	./coreboot/default/util/ifdtool/ifdtool -x ${vendor_rom}
-	mv flashregion*gbe.bin ${_gbe_destination} || Fail 'could not extract gbe'
+	mv flashregion*gbe.bin ${_gbe_destination} \
+			|| Fail 'could not extract gbe'
 	
 	# Cleans up other files extracted with ifdtool
 	rm flashregion*.bin 2> /dev/null
@@ -72,7 +78,8 @@ Extract_blobs(){
 	if [ -f ${_ifd_destination} ]; then
 		printf "gbe, ifd, and me extracted to ${_me_destination%/*}\n"
 	else
-		printf "WARNING: Intel firmware descriptor could not be extracted with modified me\n"
+		printf "WARNING: Intel firmware descriptor could not "
+		printf "be extracted with modified me\n"
 	fi
 }
 
@@ -83,13 +90,14 @@ fi
 
 if [ ! -d "resources/coreboot/${board}" ]; then
 	Print_help
-        printf "build/roms: Target %s does not exist in the %s build system. Skipping build.\n" "${projectname}" "${board}"
+        printf "build/roms %s: target not defined. Skipping extraction.\n" \
+			"${projectname}" ${board}
         exit 1
 fi
 
 if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
 	Print_help
-        printf "build/roms: Target %s does not have a board.cfg. Skipping build.\n" "${board}"
+        printf "build/roms %s: missing board.cfg. Skipping build.\n" ${board}
         exit 1
 fi
 
