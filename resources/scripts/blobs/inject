@@ -170,7 +170,6 @@ patch_release_roms()
 	fail 'could not extract release archive'
 
 	for x in ${_tmpdir}/bin/*/*.rom ; do
-		echo "TEST"
 		echo "patching rom $x"
 		patch_rom ${x} || fail "could not patch ${x}"
 	done
