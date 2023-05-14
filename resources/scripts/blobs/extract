@@ -5,18 +5,40 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
-board="${1}"
-vendor_rom="${2}"
+sname=""
+board=""
+vendor_rom=""
 
-Print_help(){
-	printf "Usage: ./blobutil extract {boardname} {path/to/vendor_rom}\n"
-	printf "Example: ./blobutil extract x230 12mb_flash.bin\n"
-	printf "\nYou need to specify exactly 2 arguments\n"
-}
+main()
+{
+	sname=${0}
+	if [ $# -lt 2 ]; then
+		Fail "Missing arguments (less than two)."
+	fi
 
-Fail(){
-	printf "\nERROR: $@\n"
-	exit 1
+	board="${1}"
+	vendor_rom="${2}"
+
+	if [ ! -f "${vendor_rom}" ] ; then
+		Print_help
+		exit 1
+	fi
+
+	if [ ! -d "resources/coreboot/${board}" ]; then
+		Print_help
+		printf "build/roms %s: target not defined.\n" \
+				"${projectname}" ${board}
+		exit 1
+	fi
+
+	if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
+		Print_help
+		printf "build/roms %s: missing board.cfg.\n" ${board}
+		exit 1
+	fi
+
+	Build_deps
+	Extract_blobs
 }
 
 Build_deps(){
@@ -44,8 +66,9 @@ Build_deps(){
 	fi
 }
 
-
 Extract_blobs(){
+	printf "extracting blobs for %s from %s\n" ${board} ${vendor_rom}
+
 	# TODO: find a better way to know which coreboot config to source
 	set -- "resources/coreboot/${board}/config/"*
 	. ${1} 2>/dev/null
@@ -83,24 +106,16 @@ Extract_blobs(){
 	fi
 }
 
-if [ ! -f "${vendor_rom}" ] ; then
-	Print_help
-	exit 1
-fi
+Print_help(){
+	printf "Usage: ./blobutil extract {boardname} {path/to/vendor_rom}\n"
+	printf "Example: ./blobutil extract x230 12mb_flash.bin\n"
+	printf "\nYou need to specify exactly 2 arguments\n"
+}
 
-if [ ! -d "resources/coreboot/${board}" ]; then
+Fail(){
 	Print_help
-        printf "build/roms %s: target not defined. Skipping extraction.\n" \
-			"${projectname}" ${board}
-        exit 1
-fi
+	printf "\n%s: ERROR: %s\n" ${sname} $@
+	exit 1 
+}
 
-if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
-	Print_help
-        printf "build/roms %s: missing board.cfg. Skipping build.\n" ${board}
-        exit 1
-fi
-
-printf "extracting blobs for ${board} from ${vendor_rom}\n"
-Build_deps
-Extract_blobs
+main $@
