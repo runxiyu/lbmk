@@ -26,6 +26,54 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+main()
+{
+	# In this script, set -u is used to check for undefined variables, and
+	# the test command doesn't do any lazy evaluation, so we can't use
+	# a syntax like that: [ $# -eq 1 -a "$1" = "--help" ].
+
+	if [ $# -eq 1 ] && [ "$1" = "--help" ] ; then
+		usage
+		exit 0
+	elif [ $# -eq 1 ] && [ "$1" = "--list-boards" ] ; then
+		list_supported_boards
+		exit 0
+	fi
+
+	[ -f build_error ] && rm -f build_error
+
+	rm -f resources/coreboot/*/seen
+
+	printf "Downloading coreboot and (if available) applying patches\n"
+
+	if [ $# -gt 0 ]; then
+		for board in "${@}"; do
+			rm -f resources/coreboot/*/seen
+			downloadfor "${board}"
+			if [ -f build_error ]; then
+				break
+			fi
+		done
+	else
+		for board in resources/coreboot/*; do
+			rm -f resources/coreboot/*/seen
+			if [ ! -d "${board}/" ]; then
+				continue
+			fi
+			downloadfor "${board##*/}"
+			if [ -f build_error ]; then
+				break
+			fi
+		done
+	fi
+
+	rm -f resources/coreboot/*/seen
+
+	rm -f "build_error"
+	printf "\n\n"
+	exit 0
+}
+
 list_supported_boards()
 {
 	for board in resources/coreboot/*; do
@@ -44,22 +92,6 @@ usage()
 	printf "\t%s --help\t\t# List supported boards\n" ${progname}
 	printf "\t%s --help\t\t# Prints this help\n" ${progname}
 }
-
-# In this script, set -u is used to check for undefined variables, and
-# the test command doesn't do any lazy evaluation, so we can't use
-# a syntax like that: [ $# -eq 1 -a "$1" = "--help" ].
-
-if [ $# -eq 1 ] && [ "$1" = "--help" ] ; then
-	usage
-	exit 0
-elif [ $# -eq 1 ] && [ "$1" = "--list-boards" ] ; then
-	list_supported_boards
-	exit 0
-fi
-
-[ -f build_error ] && rm -f build_error
-
-rm -f resources/coreboot/*/seen
 
 downloadfor() {
 
@@ -235,31 +267,4 @@ downloadfor() {
 	fi
 }
 
-printf "Downloading coreboot and (if exist in build system) applying patches\n"
-
-if [ $# -gt 0 ]; then
-	for board in "${@}"; do
-		rm -f resources/coreboot/*/seen
-		downloadfor "${board}"
-		if [ -f build_error ]; then
-			break
-		fi
-	done
-else
-	for board in resources/coreboot/*; do
-		rm -f resources/coreboot/*/seen
-		if [ ! -d "${board}/" ]; then
-			continue
-		fi
-		downloadfor "${board##*/}"
-		if [ -f build_error ]; then
-			break
-		fi
-	done
-fi
-
-rm -f resources/coreboot/*/seen
-
-rm -f "build_error"
-printf "\n\n"
-exit 0
+main $@
