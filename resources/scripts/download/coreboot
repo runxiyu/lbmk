@@ -68,8 +68,8 @@ fetch_coreboot_trees()
 	rm -f resources/coreboot/*/seen
 }
 
-download_for_board() {
-
+download_for_board()
+{
 	_board="${1}"
 	cbtree="undefined"
 	cbrevision="undefined"
