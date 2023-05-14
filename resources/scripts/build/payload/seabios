@@ -22,39 +22,61 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-printf "Building SeaBIOS payloads and SeaVGABIOS\n"
+payloaddir="payload/seabios"
+seabios_elf="seabios/out/bios.bin.elf"
+seavgabios="seabios/out/vgabios.bin"
 
-if [ ! -d "payload/seabios" ]; then
-	mkdir -p payload/seabios/ || exit 1
-fi
+main()
+{
+	printf "Building SeaBIOS payloads and SeaVGABIOS\n"
 
-rm -f payload/seabios/* || exit 1
+	check_dependencies
+	build_seabios_payloads
 
-if [ ! -d "seabios/" ]; then
-    ./download seabios || exit 1
-fi
-
-for x in normal vgarom libgfxinit; do
-	if [ ! -f seabios/Makefile ]; then
-		printf "SeaBIOS not properly downloaded.\n"
-		exit 1
+	# clean it again. gotta keep it clean!
+	if [ -f seabios/Makefile ]; then
+		make distclean -BC seabios || exit 1
 	fi
-	make distclean -BC seabios || exit 1
-	cp "resources/seabios/config/${x}" seabios/.config
-	make silentoldconfig -j$(nproc) -BC seabios || exit 1
-	make -j$(nproc) -BC seabios || exit 1
-	cp seabios/out/bios.bin.elf "payload/seabios/seabios_${x}.elf" \
-			|| exit 1
-	if [ "${x}" = "libgfxinit" ]; then
-		cp seabios/out/vgabios.bin payload/seabios/seavgabios.bin \
-				|| exit 1
+
+	printf "Done! SeaBIOS files are in %s/\n\n" ${payloaddir}
+}
+
+check_dependencies()
+{
+	if [ ! -d "${payloaddir}" ]; then
+		mkdir -p ${payloaddir}/ || exit 1
 	fi
-	rm -f seabios/.config || exit 1
-done
 
-# clean it again. gotta keep it clean!
-if [ -f seabios/Makefile ]; then
-	make distclean -BC seabios || exit 1
-fi
+	rm -f ${payloaddir}/* || exit 1
 
-printf "Done! SeaBIOS files are in payload/seabios/\n\n"
+	if [ ! -d "seabios/" ]; then
+	    ./download seabios || exit 1
+	fi
+}
+
+build_seabios_payloads()
+{
+	for x in normal vgarom libgfxinit; do
+		if [ ! -f seabios/Makefile ]; then
+			printf "SeaBIOS not properly downloaded.\n"
+			exit 1
+		fi
+
+		make distclean -BC seabios || exit 1
+
+		cp "resources/seabios/config/${x}" seabios/.config
+		make silentoldconfig -j$(nproc) -BC seabios || exit 1
+		make -j$(nproc) -BC seabios || exit 1
+
+		seabios_elf_dst="${payloaddir}/seabios_${x}.elf"
+		cp ${seabios_elf} "${seabios_elf_dst}" || exit 1
+
+		if [ "${x}" = "libgfxinit" ]; then
+			cp ${seavgabios} ${payloaddir}/seavgabios.bin \
+					|| exit 1
+		fi
+		rm -f seabios/.config || exit 1
+	done
+}
+
+main $@
