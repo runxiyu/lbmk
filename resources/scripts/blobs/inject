@@ -256,13 +256,20 @@ inject_blob_intel_mrc()
 
 inject_blob_intel_me()
 {
+	printf 'adding intel management engine\n'
+
 	rom="${1}"
 
 	if [ -z ${CONFIG_ME_BIN_PATH} ]; then
 		fail "CONFIG_ME_BIN_PATH not set"
 	fi
+
 	_me_location=${CONFIG_ME_BIN_PATH#../../}
-	printf 'adding intel management engine\n'
+
+	if [ ! -f "${_me_location}" ]; then
+		fail "CONFIG_ME_BIN_PATH points to missing file"
+	fi
+
 	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || exit 1
 }
 
