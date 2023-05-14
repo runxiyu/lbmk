@@ -70,7 +70,7 @@ main()
 
 downloadfor() {
 
-	board="${1}"
+	_board="${1}"
 	cbtree="undefined"
 	cbrevision="undefined"
 
@@ -82,46 +82,46 @@ downloadfor() {
 		cbrevision="undefined"
 		cbtree="undefined"
 
-		if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
+		if [ ! -f "resources/coreboot/${_board}/board.cfg" ]; then
 			printf "ERROR: download/coreboot: board.cfg does not"
-			printf " exist for '%s'\n" ${board}
+			printf " exist for '%s'\n" ${_board}
 			return 1
 		fi
 
-		if [ -f "resources/coreboot/${board}/seen" ]; then
+		if [ -f "resources/coreboot/${_board}/seen" ]; then
 			printf "ERROR: download/coreboot: logical loop:"
 			printf " '%s' board.cfg refers to another tree," \
-					${board}
+					${_board}
 			printf " which ultimately refers back to '%s'." \
-					${board}
+					${_board}
 			return 1
 		fi
 
 		# This is to override $cbrevision and $cbtree
-		. "resources/coreboot/${board}/board.cfg" \
+		. "resources/coreboot/${_board}/board.cfg" \
 				|| touch ../build_error
 
 		if [ -f build_error ]; then
 			printf "ERROR: download/coreboot:"
-			printf " problem sourcing %s/board.cfg\n" "${board}"
+			printf " problem sourcing %s/board.cfg\n" ${_board}
 			return 1
 		fi
-		touch "resources/coreboot/${board}/seen"
+		touch "resources/coreboot/${_board}/seen"
 
-		if [ "${board}" != "${cbtree}" ]; then
+		if [ "${_board}" != "${cbtree}" ]; then
 			board="${cbtree}"
 		else
 			if [ "${cbtree}" = "undefined" ]; then
 				printf "ERROR: download/coreboot:"
 				printf " tree name undefined for '%s\n'" \
-						${board}
+						${_board}
 				return 1
 			fi
 
 			if [ "${cbrevision}" = "undefined" ]; then
 				printf "ERROR: download/coreboot:"
 				printf " commit ID undefined for '%s'\n" \
-						${board}
+						${_board}
 				return 1
 			fi
 			break
@@ -227,8 +227,8 @@ downloadfor() {
 	# it's rare that you'd want to patch them, so this is handled by
 	# extra.sh on a per-board basis
 	# In fact, extra.sh can be used for anything you want.
-	if [ -f "../../resources/coreboot/${board}/extra.sh" ]; then
-		"../../resources/coreboot/${board}/extra.sh" \
+	if [ -f "../../resources/coreboot/${_board}/extra.sh" ]; then
+		"../../resources/coreboot/${_board}/extra.sh" \
 				|| touch ../../build_error
 		if [ -f ../../build_error ]; then
 			cd ../../; return 1
@@ -254,8 +254,8 @@ usage()
 
 list_supported_boards()
 {
-	for board in resources/coreboot/*; do
-		echo $board | sed 's#resources/coreboot/##'
+	for _board in resources/coreboot/*; do
+		echo ${_board} | sed 's#resources/coreboot/##'
 	done
 }
 
