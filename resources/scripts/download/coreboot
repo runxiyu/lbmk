@@ -39,9 +39,17 @@ main()
 		list_supported_boards
 		exit 0
 	fi
-
 	[ -f build_error ] && rm -f build_error
 
+	fetch_coreboot_trees
+
+	rm -f "build_error"
+	printf "\n\n"
+	exit 0
+}
+
+fetch_coreboot_trees()
+{
 	rm -f resources/coreboot/*/seen
 
 	printf "Downloading coreboot and (if available) applying patches\n"
@@ -62,10 +70,6 @@ main()
 	done
 
 	rm -f resources/coreboot/*/seen
-
-	rm -f "build_error"
-	printf "\n\n"
-	exit 0
 }
 
 downloadfor() {
