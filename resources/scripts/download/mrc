@@ -43,8 +43,11 @@ _mrc_complete="mrc/haswell/mrc.bin"
 cbdir="coreboot/default"
 cbfstool="${cbdir}/util/cbfstool/cbfstool"
 
+sname=""
+
 main()
 {
+	sname=${0}
 	printf "Downloading Intel MRC blobs\n"
 
 	check_existing && exit 0
@@ -90,9 +93,7 @@ fetch_mrc()
 		download_image ${_url2} ${_file} ${_sha1sum}
 	fi
 	if [ ! -f $_file ]; then
-		printf "%s not downloaded / verification failed. Exiting.\n" \
-				${_file}
-		exit 1
+		fail "%{_file} not downloaded / verification failed."
 	fi
 
 	extract_partition ROOT-A ${_file} root-a.ext2
@@ -171,6 +172,13 @@ extract_coreboot()
 
 	cp ${_unpacked}/bios.bin coreboot-${_version}.bin
 	rm -r "${_unpacked}"
+}
+
+fail()
+{
+	printf "%s: ERROR: %s\n"
+			${sname} ${1}
+	exit 1
 }
 
 main $@
