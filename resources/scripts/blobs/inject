@@ -44,7 +44,6 @@ main()
 	fi
 
 	archive="${1}"
-	echo "TEST: $archive"
 
 	while getopts r:b:m: option
 	do
@@ -174,7 +173,6 @@ patch_release_roms()
 		echo "TEST"
 		echo "patching rom $x"
 		patch_rom ${x} || fail "could not patch ${x}"
-		echo "FOO"
 	done
 
 	(
