@@ -105,7 +105,7 @@ download_for_board()
 		touch "resources/coreboot/${_board}/seen"
 
 		if [ "${_board}" != "${cbtree}" ]; then
-			board="${cbtree}"
+			_board="${cbtree}"
 		else
 			if [ "${cbtree}" = "undefined" ]; then
 				printf "ERROR: download/coreboot:"
