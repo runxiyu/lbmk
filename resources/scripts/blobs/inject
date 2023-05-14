@@ -233,9 +233,26 @@ inject_blob_intel_mrc()
 
 	printf 'adding mrc\n'
 
-	# TODO: use offset defined in coreboot configs (don't hardcode)
+	# mrc.bin must be inserted at a specific offset. the only
+	# libreboot platform that needs it, at present, is haswell
+
+	# in cbfstool, -b values above 0x80000000 are interpreted as
+	# top-aligned x86 memory locations. this is converted into an
+	# absolute offset within the flash, and inserted accordingly
+	# at that offset into the ROM image file
+
+	# coreboot's own build system hardcodes the mrc.bin offset
+	# because there is only one correct location in memory, but
+	# it would be useful for lbmk if it could be easily scanned
+	# from Kconfig, with the option to change it where in practise
+	# it is not changed
+
+	# the hardcoded offset below is based upon reading of the coreboot
+	# source code, and it is *always* correct for haswell platform.
+	# TODO: this logic should be tweaked to handle more platforms
+
 	${cbfstool} ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc \
-		-b 0x78fe00 || exit 1
+		-b 0xfffa0000 || exit 1
 }
 
 inject_blob_intel_me()
