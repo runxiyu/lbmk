@@ -12,6 +12,9 @@ vendor_rom=""
 cbdir="coreboot/default"
 cbcfgsdir="resources/coreboot"
 ifdtool="${cbdir}/util/ifdtool/ifdtool"
+mecleaner="me_cleaner/me_cleaner.py"
+me7updateparser="resources/blobs/me7_update_parser.py"
+
 boarddir=""
 
 CONFIG_HAVE_MRC=""
@@ -101,7 +104,8 @@ extract_blobs()
 	rm -f flashregion*.bin 2> /dev/null
 
 	if [ -f ${_ifd_destination} ]; then
-		printf "gbe, ifd, and me extracted to ${_me_destination%/*}\n"
+		printf "gbe, ifd, and me extracted to %s\n" \
+				${_me_destination%/*}
 	else
 		printf "WARNING: Intel firmware descriptor could not "
 		printf "be extracted with modified me\n"
@@ -111,11 +115,13 @@ extract_blobs()
 extract_blob_intel_me()
 {
 	printf "extracting clean ime and modified ifd\n"
-	./me_cleaner/me_cleaner.py -D ${_ifd_destination} \
-			-M ${_me_destination} ${vendor_rom} -t -r -S || \
-		./resources/blobs/me7_update_parser.py
-				-O ${_me_destination} ${vendor_rom} \
-			|| fail 'me_cleaner failed to extract blobs from rom'
+
+	${mecleaner} -D ${_ifd_destination} \
+			-M ${_me_destination} ${vendor_rom} -t -r -S \
+	|| ${me7updateparser} \
+			-O ${_me_destination} ${vendor_rom} \
+	|| fail \
+			"me_cleaner failed to extract blobs from rom"
 }
 
 extract_blob_intel_gbe_nvm()
