@@ -6,18 +6,18 @@
 #	Copyright (C) 2021 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 # This script assumes that the working directory is the root
@@ -26,58 +26,57 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-printf "Updating coreboot configs\n"
+cbcfgsdir="resources/coreboot"
 
-# Build ROM images for supported boards
-updateconf() {
-	board="$1"
-	if [ -f "resources/coreboot/${board}/board.cfg" ]; then
-        cbtree="undefined"
-        . "resources/coreboot/${board}/board.cfg" # source
-        if [ "${cbtree}" = "undefined" ]; then
-            return 0
-        fi
-        if [ ! -d "coreboot/${cbtree}" ]; then
-            ./download coreboot ${cbtree}
-        fi
-        for cbcfg in resources/coreboot/${board}/config/*; do
-            if [ ! -f ${cbcfg} ]; then
-                continue
-            fi
-            (
-                cd coreboot/${cbtree}/
-                rm -f .config*
-                make distclean
-            )
-            mv $cbcfg coreboot/${cbtree}/.config
-            (
-                cd coreboot/${cbtree}/
-                make oldconfig
-            )
-            mv coreboot/${cbtree}/.config $cbcfg
-            rm -f coreboot/${cbtree}/.config*
-            (
-                cd coreboot/${cbtree}/
-                make distclean
-            )
-        done
-    else
-        printf "\nupdate/config/coreboot: no board.cfg for: %s\n" "${board}"
-    fi
+main()
+{
+	printf "Updating coreboot configs\n"
+
+	if [ $# -gt 0 ]; then
+		for board in "${@}"; do
+			updateconf "${board}"
+		done
+	else
+		for board in ${cbcfgsdir}/*; do
+		if [ ! -d "${board}" ]; then
+			continue
+		fi
+			updateconf "${board##*/}"
+		done
+	fi
 }
 
-if [ $# -gt 0 ]; then
-	for board in "${@}"; do
-	    updateconf "${board}"
-	done
-else
-	for board in resources/coreboot/*; do
-        if [ ! -d "${board}" ]; then
-            continue
-        fi
-	    updateconf "${board##*/}"
-	done
-fi
+# Build ROM images for supported boards
+updateconf()
+{
+	board=${1}
 
-printf "\n\n"
+	boarddir="${cbcfgsdir}/${board}"
 
+	if [ -f "${boarddir}/board.cfg" ]; then
+		cbtree="undefined"
+		. "${boarddir}/board.cfg" # source
+		if [ "${cbtree}" = "undefined" ]; then
+			return 0
+		fi
+		cbdir="coreboot/${cbtree}"
+		if [ ! -d "${cbdir}" ]; then
+			./download coreboot ${cbtree}
+		fi
+		for cbcfg in "${boarddir}/config/"*; do
+			if [ ! -f "${cbcfg}" ]; then
+				continue
+			fi
+			make distclean -BC "${cbdir}"
+			mv $cbcfg ${cbdir}/.config
+			make oldconfig -BC "${cbdir}"
+			mv ${cbdir}/.config $cbcfg
+			make distclean -BC "${cbdir}"
+		done
+	else
+		printf "\nupdate/config/coreboot: no board.cfg for: %s\n" \
+				${board}
+	fi
+}
+
+main $@
