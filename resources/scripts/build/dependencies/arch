@@ -68,12 +68,15 @@ pacman -S --needed --noconfirm base-devel perl
 # Coreboot build dependencies (also requires build-essential and git)
 # ------------------------------------------------------------
 
-pacman -S --needed --noconfirm ncurses doxygen acpica gdb flex bison base-devel git openssl gcc-ada
+pacman -S --needed --noconfirm ncurses doxygen acpica gdb flex bison \
+		base-devel git openssl gcc-ada
 
 # GRUB build dependencies (also requires build-essential, bison and flex)
 # ------------------------------------------------------------
 
-pacman -S --needed --noconfirm autogen help2man base-devel bison flex ttf-dejavu texinfo rsync python libusb xz gawk device-mapper fuse2 gettext freetype2
+pacman -S --needed --noconfirm autogen help2man base-devel bison flex \
+		ttf-dejavu texinfo rsync python libusb xz gawk device-mapper \
+		fuse2 gettext freetype2
 
 # BucTS build dependencies (external script)
 # ------------------------------------------------------------
@@ -83,7 +86,8 @@ pacman -S --needed --noconfirm base-devel
 # Flashrom build dependencies (also requires build-essential)
 # ------------------------------------------------------------
 
-pacman -S --needed --noconfirm libpciaccess pciutils zlib libftdi base-devel libusb
+pacman -S --needed --noconfirm libpciaccess pciutils zlib libftdi \
+		base-devel libusb
 
 # Management engine extraction dependencies
 # ------------------------------------------------------------

@@ -79,7 +79,8 @@ apt-get -y install build-essential perl
 # Coreboot build dependencies (also requires build-essential and git)
 # ------------------------------------------------------------
 
-apt-get -y install libncurses5-dev doxygen iasl gdb flex bison build-essential git libssl-dev gnat
+apt-get -y install libncurses5-dev doxygen iasl gdb flex bison \
+		build-essential git libssl-dev gnat
 
 # For cross-compiling i686 target on x86_64 host.
 [ "${arch}" -eq 0 ] && apt-get -y install lib32ncurses5-dev
@@ -87,7 +88,11 @@ apt-get -y install libncurses5-dev doxygen iasl gdb flex bison build-essential g
 # GRUB build dependencies (also requires build-essential, bison and flex)
 # ------------------------------------------------------------
 
-apt-get -y install ttf-unifont libopts25 libselinux1-dev autogen m4 autoconf help2man libopts25-dev libfont-freetype-perl automake autotools-dev build-essential bison flex libfuse-dev liblzma-dev gawk libdevmapper-dev libtool libfreetype6-dev gettext
+apt-get -y install ttf-unifont libopts25 libselinux1-dev autogen m4 autoconf \
+		help2man libopts25-dev libfont-freetype-perl automake \
+		autotools-dev build-essential bison flex libfuse-dev \
+		liblzma-dev gawk libdevmapper-dev libtool \
+		libfreetype6-dev gettext
 
 # BucTS build dependencies (external script)
 # ------------------------------------------------------------
@@ -97,7 +102,9 @@ apt-get -y install build-essential
 # Flashrom build dependencies (also requires build-essential)
 # ------------------------------------------------------------
 
-apt-get -y install libpci-dev pciutils zlib1g-dev libftdi-dev build-essential libusb-1.0-0-dev libusb-1.0 libusb-1.0-0-dev libusb-dev
+apt-get -y install libpci-dev pciutils zlib1g-dev libftdi-dev \
+		build-essential libusb-1.0-0-dev libusb-1.0 \
+		libusb-1.0-0-dev libusb-dev
 
 # For cross-compiling i686 target on x86_64 host.
 [ "${arch}" -eq 0 ] && apt-get -y install lib32z1-dev
