@@ -28,10 +28,6 @@ set -u -e
 
 main()
 {
-	# In this script, set -u is used to check for undefined variables, and
-	# the test command doesn't do any lazy evaluation, so we can't use
-	# a syntax like that: [ $# -eq 1 -a "$1" = "--help" ].
-
 	if [ $# -eq 1 ] && [ "$1" = "--help" ] ; then
 		usage
 		exit 0
@@ -77,10 +73,6 @@ downloadfor() {
 	_board="${1}"
 	cbtree="undefined"
 	cbrevision="undefined"
-
-	# The loop will always exit, but this while loop is crafted
-	# such that a tree referencing a tree that references another
-	# tree is possible (and so on and so forth)
 
 	while true; do
 		cbrevision="undefined"
@@ -226,11 +218,8 @@ downloadfor() {
 		fi
 	done
 
-	# extra.sh could be used to patch submodules, if you wanted to
-	# It's impossible to predict what submodules will be available, and
-	# it's rare that you'd want to patch them, so this is handled by
-	# extra.sh on a per-board basis
-	# In fact, extra.sh can be used for anything you want.
+	# extra.sh can be used for anything
+	# but should *only* be a last resort
 	if [ -f "../../resources/coreboot/${_board}/extra.sh" ]; then
 		"../../resources/coreboot/${_board}/extra.sh" \
 				|| touch ../../build_error
