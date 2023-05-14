@@ -258,7 +258,9 @@ inject_blob_intel_me()
 {
 	rom="${1}"
 
-	# TODO: check if CONFIG_ME_BIN_PATH is empty
+	if [ -z ${CONFIG_ME_BIN_PATH} ]; then
+		fail "CONFIG_ME_BIN_PATH not set"
+	fi
 	_me_location=${CONFIG_ME_BIN_PATH#../../}
 	printf 'adding intel management engine\n'
 	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || exit 1
