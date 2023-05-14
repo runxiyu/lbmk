@@ -46,26 +46,20 @@ main()
 
 	printf "Downloading coreboot and (if available) applying patches\n"
 
+	boards=""
 	if [ $# -gt 0 ]; then
-		for board in "${@}"; do
-			rm -f resources/coreboot/*/seen
-			downloadfor "${board}"
-			if [ -f build_error ]; then
-				break
-			fi
-		done
+		boards=$@
 	else
 		for board in resources/coreboot/*; do
-			rm -f resources/coreboot/*/seen
-			if [ ! -d "${board}/" ]; then
-				continue
-			fi
-			downloadfor "${board##*/}"
-			if [ -f build_error ]; then
-				break
-			fi
+			[ ! -d "${board}" ] && continue
+			boards="${boards} ${board}"
 		done
 	fi
+	for board in ${boards}; do
+		rm -f resources/coreboot/*/seen
+		downloadfor "${board}"
+		[ -f build_error ] && break
+	done
 
 	rm -f resources/coreboot/*/seen
 
@@ -234,9 +228,7 @@ downloadfor() {
 	fi
 
 	for patch in ../../resources/coreboot/${cbtree}/patches/*.patch; do
-		if [ ! -f "${patch}" ]; then
-			continue
-		fi
+		[ ! -f "${patch}" ] && continue
 
 		git am "${patch}" || touch ../../build_error
 		if [ -f ../../build_error ]; then
