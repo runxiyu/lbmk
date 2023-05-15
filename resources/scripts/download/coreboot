@@ -89,75 +89,10 @@ download_coreboot_for_board()
 		return 0
 	fi
 
-	[ ! -d coreboot ] && \
-		mkdir -p coreboot
-	[ ! -d coreboot ] && \
-		exit 1
-	[ -d coreboot/coreboot ] && \
-		rm -Rf coreboot/coreboot
-	[ -d coreboot/coreboot ] && \
-		exit 1
-	./gitclone coreboot || \
-		exit 1
+	gitclone_coreboot_from_upstream || exit 1
 
-	cd "coreboot/"
-
-	cp -R coreboot "${cbtree}" || touch ../build_error
-	if [ -d ../build_error ]; then
-		printf "ERROR: download/coreboot: Unable to copy directory."
-		printf " Check file system permissions or free space.\n"
-		rm -Rf "${cbtree}/"
-		cd ../
-		return 1
-	fi
-
-	cd ${cbtree}/
-
-	git reset --hard ${cbrevision} || touch ../../build_error
-	if [ -f ../../build_error ]; then
-		printf "ERROR: download/coreboot: Unable to reset to commit"
-		printf " ID/tag '%s' for board '%s' on tree '%s'\n" \
-				${cbrevision} ${1} ${cbtree}
-		cd ../../
-		return 1
-	fi
-
-	git submodule update --init --checkout || touch ../../build_error
-	if [ -f ../../build_error ]; then
-		printf "ERROR: download/coreboot:"
-		printf " Unable to update submodules for tree '%s'\n" \
-				${cbtree}
-		cd ../../
-		return 1
-	fi
-
-	for patch in ../../resources/coreboot/${cbtree}/patches/*.patch; do
-		[ ! -f "${patch}" ] && continue
-
-		git am "${patch}" || touch ../../build_error
-		if [ -f ../../build_error ]; then
-			printf "ERROR: download/coreboot: Unable to apply"
-			printf " patch '%s' for board '%s' on tree '%s'" \
-					${patch} ${1} ${cbtree}
-			git am --abort
-			cd ../../
-			return 1
-		fi
-	done
-
-	# extra.sh can be used for anything
-	# but should *only* be a last resort
-	if [ -f "../../resources/coreboot/${_board}/extra.sh" ]; then
-		"../../resources/coreboot/${_board}/extra.sh" \
-				|| touch ../../build_error
-		if [ -f ../../build_error ]; then
-			cd ../../; return 1
-		fi
-		return 0
-	else
-		cd ../../
-		return 0
-	fi
+	prepare_new_coreboot_tree "${1}" "${cbtree}" "${cbrevision}" \
+			|| exit 1
 }
 
 fetch_coreboot_config()
@@ -209,6 +144,55 @@ check_config_for_board()
 	fi
 	touch "resources/coreboot/${1}/seen"
 	return 0
+}
+
+gitclone_coreboot_from_upstream()
+{
+	[ ! -d coreboot ] && \
+		mkdir -p coreboot
+	[ ! -d coreboot ] && \
+		return 1
+	[ -d coreboot/coreboot ] && \
+		rm -Rf coreboot/coreboot
+	[ -d coreboot/coreboot ] && \
+		return 1
+	./gitclone coreboot || \
+		return 1
+	return 0
+}
+
+prepare_new_coreboot_tree()
+{
+	board=${1}
+	cbtree=${2}
+	cbrevision=${3}
+
+	printf "Preparing coreboot tree: %s\n" ${cbtree}
+	[ "${cbtree}" != "${board}" ] && \
+		printf "(for board: %s)\n" "${board}"
+
+	cp -R coreboot/coreboot "coreboot/${cbtree}" || exit 1
+	(
+	cd "coreboot/${cbtree}" || exit 1
+	git reset --hard ${cbrevision} || exit 1
+	git submodule update --init --checkout || exit 1
+
+	for patch in ../../resources/coreboot/${cbtree}/patches/*.patch; do
+		[ ! -f "${patch}" ] && \
+			continue
+		if ! git am "${patch}"; then
+			git am --abort
+			exit 1
+		fi
+	done
+
+	# extra.sh can be used for anything
+	# but should *only* be a last resort
+	if [ -f "../../resources/coreboot/${_board}/extra.sh" ]; then
+		"../../resources/coreboot/${_board}/extra.sh" || \
+			exit 1
+	fi
+	)
 }
 
 usage()
