@@ -38,12 +38,9 @@ main()
 	elif [ $# -eq 1 ] && [ "$1" = "--list-boards" ] ; then
 		list_supported_boards
 		exit 0
+	else
+		fetch_coreboot_trees $@
 	fi
-
-	fetch_coreboot_trees $@
-
-	printf "\n\n"
-	exit 0
 }
 
 fetch_coreboot_trees()
