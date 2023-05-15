@@ -89,38 +89,18 @@ download_coreboot_for_board()
 		return 0
 	fi
 
-	[ ! -d coreboot ] && mkdir "coreboot/"
-	[ ! -d coreboot ] && return 1
+	[ ! -d coreboot ] && \
+		mkdir -p coreboot
+	[ ! -d coreboot ] && \
+		exit 1
+	[ -d coreboot/coreboot ] && \
+		rm -Rf coreboot/coreboot
+	[ -d coreboot/coreboot ] && \
+		exit 1
+	./gitclone coreboot || \
+		exit 1
 
 	cd "coreboot/"
-
-	[ ! -d coreboot/.git ] && [ -d coreboot ] && \
-		rm -Rf coreboot/
-
-	if [ ! -d coreboot ]; then
-		printf "Download coreboot from upstream:\n"
-		git clone https://review.coreboot.org/coreboot \
-				|| rm -Rf coreboot
-		if [ ! -d coreboot ]; then
-			printf "WARNING: Upstream failed. Trying backup:\n"
-			git clone https://github.com/coreboot/coreboot.git \
-					|| rm -Rf coreboot
-		fi
-		if [ ! -d coreboot ]; then 
-			printf "ERROR: download/coreboot:"
-			printf " Problem with git-clone. Network issue?\n"
-			cd ../
-			return 1
-		fi
-	else
-		( cd coreboot/; git pull || touch ../build_error )
-		if [ -f ../build_error ]; then
-			printf "ERROR: download/coreboot:"
-			printf " Problem with git-pull. Network issue?\n"
-			cd ../
-			return 1
-		fi
-	fi
 
 	cp -R coreboot "${cbtree}" || touch ../build_error
 	if [ -d ../build_error ]; then

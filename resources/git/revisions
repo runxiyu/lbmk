@@ -6,6 +6,13 @@
 # gitclone script. Each entry must include: revision 'rev', location
 # 'loc', and the git url 'url'. Bkup_url is optional.
 
+{coreboot}{
+	rev: HEAD
+	loc: coreboot/coreboot
+	url: https://review.coreboot.org/coreboot
+	bkup_url: https://github.com/coreboot/coreboot.git
+}
+
 {grub}{
 	rev: f7564844f82b57078d601befadc438b5bc1fa01b
 	loc: grub
