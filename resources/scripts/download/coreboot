@@ -39,11 +39,9 @@ main()
 		list_supported_boards
 		exit 0
 	fi
-	[ -f build_error ] && rm -f build_error
 
 	fetch_coreboot_trees $@
 
-	rm -f "build_error"
 	printf "\n\n"
 	exit 0
 }
@@ -66,7 +64,6 @@ fetch_coreboot_trees()
 	for board in ${boards}; do
 		rm -f ${cbcfgsdir}/*/seen
 		download_coreboot_for_board "${board}"
-		[ -f build_error ] && break
 	done
 
 	rm -f ${cbcfgsdir}/*/seen
@@ -78,8 +75,9 @@ download_coreboot_for_board()
 	cbtree="undefined"
 	cbrevision="undefined"
 
-	fetch_coreboot_config "${_board}"; rm -f ${cbcfgsdir}/*/seen
-	[ -f build_error ] && return 1
+	fetch_coreboot_config "${_board}" || exit 1
+
+	rm -f ${cbcfgsdir}/*/seen
 
 	if [ -d "coreboot/${cbtree}" ]; then
 		printf "REMARK: download/coreboot %s: exists. Skipping.\n" \
@@ -106,13 +104,9 @@ fetch_coreboot_config()
 		check_config_for_board "${_board}" || return 1
 
 		# This is to override $cbrevision and $cbtree
-		. "${cbcfgsdir}/${_board}/board.cfg" \
-				|| touch ../build_error
-		if [ -f build_error ]; then
-			printf "ERROR: download/coreboot:"
-			printf " problem sourcing %s/board.cfg\n" ${_board}
-			return 1
-		elif [ "${_board}" != "${cbtree}" ]; then
+		. "${cbcfgsdir}/${_board}/board.cfg" || exit 1
+
+		if [ "${_board}" != "${cbtree}" ]; then
 			_board="${cbtree}"
 			continue
 		elif [ "${cbtree}" = "undefined" ]; then
