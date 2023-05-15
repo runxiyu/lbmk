@@ -78,38 +78,8 @@ download_coreboot_for_board()
 	cbtree="undefined"
 	cbrevision="undefined"
 
-	while true; do
-		cbrevision="undefined"
-		cbtree="undefined"
-
-		check_config_for_board "${_board}" || return 1
-
-		# This is to override $cbrevision and $cbtree
-		. "resources/coreboot/${_board}/board.cfg" \
-				|| touch ../build_error
-		if [ -f build_error ]; then
-			printf "ERROR: download/coreboot:"
-			printf " problem sourcing %s/board.cfg\n" ${_board}
-			return 1
-		elif [ "${_board}" != "${cbtree}" ]; then
-			_board="${cbtree}"
-			continue
-		elif [ "${cbtree}" = "undefined" ]; then
-			printf "ERROR: download/coreboot:"
-			printf " tree name undefined for '%s\n'" \
-					${_board}
-			return 1
-		elif [ "${cbrevision}" = "undefined" ]; then
-			printf "ERROR: download/coreboot:"
-			printf " commit ID undefined for '%s'\n" \
-					${_board}
-			return 1
-		else
-			break
-		fi
-	done
-
-	rm -f resources/coreboot/*/seen
+	fetch_coreboot_config "${_board}"; rm -f resources/coreboot/*/seen
+	[ -f build_error ] && return 1
 
 	if [ -d "coreboot/${cbtree}" ]; then
 		printf "REMARK: download/coreboot %s: exists. Skipping.\n" \
@@ -216,6 +186,41 @@ download_coreboot_for_board()
 		cd ../../
 		return 0
 	fi
+}
+
+fetch_coreboot_coreboot()
+{
+	while true; do
+		cbrevision="undefined"
+		cbtree="undefined"
+
+		check_config_for_board "${_board}" || return 1
+
+		# This is to override $cbrevision and $cbtree
+		. "resources/coreboot/${_board}/board.cfg" \
+				|| touch ../build_error
+		if [ -f build_error ]; then
+			printf "ERROR: download/coreboot:"
+			printf " problem sourcing %s/board.cfg\n" ${_board}
+			return 1
+		elif [ "${_board}" != "${cbtree}" ]; then
+			_board="${cbtree}"
+			continue
+		elif [ "${cbtree}" = "undefined" ]; then
+			printf "ERROR: download/coreboot:"
+			printf " tree name undefined for '%s\n'" \
+					${_board}
+			return 1
+		elif [ "${cbrevision}" = "undefined" ]; then
+			printf "ERROR: download/coreboot:"
+			printf " commit ID undefined for '%s'\n" \
+					${_board}
+			return 1
+		else
+			break
+		fi
+	done
+	return 0
 }
 
 check_config_for_board()
