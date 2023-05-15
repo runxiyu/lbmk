@@ -89,11 +89,8 @@ download_coreboot_for_board()
 		return 0
 	fi
 
-	[ ! -d coreboot ] && \
-		mkdir "coreboot/"
-	[ ! -d coreboot ] && \
-		printf "ERROR: download/coreboot: directory not created\n" && \
-		return 1
+	[ ! -d coreboot ] && mkdir "coreboot/"
+	[ ! -d coreboot ] && return 1
 
 	cd "coreboot/"
 
