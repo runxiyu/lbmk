@@ -60,7 +60,7 @@ fetch_coreboot_trees()
 	else
 		for board in resources/coreboot/*; do
 			[ ! -d "${board}" ] && continue
-			boards="${boards} ${board}"
+			boards="${boards} ${board##*/}"
 		done
 	fi
 	for board in ${boards}; do
