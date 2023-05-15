@@ -87,24 +87,20 @@ download_for_board()
 			printf "ERROR: download/coreboot:"
 			printf " problem sourcing %s/board.cfg\n" ${_board}
 			return 1
-		fi
-
-		if [ "${_board}" != "${cbtree}" ]; then
+		elif [ "${_board}" != "${cbtree}" ]; then
 			_board="${cbtree}"
+			continue
+		elif [ "${cbtree}" = "undefined" ]; then
+			printf "ERROR: download/coreboot:"
+			printf " tree name undefined for '%s\n'" \
+					${_board}
+			return 1
+		elif [ "${cbrevision}" = "undefined" ]; then
+			printf "ERROR: download/coreboot:"
+			printf " commit ID undefined for '%s'\n" \
+					${_board}
+			return 1
 		else
-			if [ "${cbtree}" = "undefined" ]; then
-				printf "ERROR: download/coreboot:"
-				printf " tree name undefined for '%s\n'" \
-						${_board}
-				return 1
-			fi
-
-			if [ "${cbrevision}" = "undefined" ]; then
-				printf "ERROR: download/coreboot:"
-				printf " commit ID undefined for '%s'\n" \
-						${_board}
-				return 1
-			fi
 			break
 		fi
 	done
