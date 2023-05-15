@@ -78,31 +78,16 @@ download_for_board()
 		cbrevision="undefined"
 		cbtree="undefined"
 
-		if [ ! -f "resources/coreboot/${_board}/board.cfg" ]; then
-			printf "ERROR: download/coreboot: board.cfg does not"
-			printf " exist for '%s'\n" ${_board}
-			return 1
-		fi
-
-		if [ -f "resources/coreboot/${_board}/seen" ]; then
-			printf "ERROR: download/coreboot: logical loop:"
-			printf " '%s' board.cfg refers to another tree," \
-					${_board}
-			printf " which ultimately refers back to '%s'." \
-					${_board}
-			return 1
-		fi
+		check_config_for_board "${_board}" || return 1
 
 		# This is to override $cbrevision and $cbtree
 		. "resources/coreboot/${_board}/board.cfg" \
 				|| touch ../build_error
-
 		if [ -f build_error ]; then
 			printf "ERROR: download/coreboot:"
 			printf " problem sourcing %s/board.cfg\n" ${_board}
 			return 1
 		fi
-		touch "resources/coreboot/${_board}/seen"
 
 		if [ "${_board}" != "${cbtree}" ]; then
 			_board="${cbtree}"
@@ -231,6 +216,22 @@ download_for_board()
 		cd ../../
 		return 0
 	fi
+}
+
+check_config_for_board()
+{
+	if [ ! -f "resources/coreboot/${1}/board.cfg" ]; then
+		printf "ERROR: download/coreboot: board.cfg does not"
+		printf " exist for '%s'\n" ${1}
+		return 1
+	elif [ -f "resources/coreboot/${1}/seen" ]; then
+		printf "ERROR: download/coreboot: logical loop:"
+		printf " '%s' board.cfg refers to another tree," ${1}
+		printf " which ultimately refers back to '%s'." ${1}
+		return 1
+	fi
+	touch "resources/coreboot/${1}/seen"
+	return 0
 }
 
 usage()
