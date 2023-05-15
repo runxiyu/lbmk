@@ -37,7 +37,7 @@ main()
 	fi
 	[ -f build_error ] && rm -f build_error
 
-	fetch_coreboot_trees
+	fetch_coreboot_trees $@
 
 	rm -f "build_error"
 	printf "\n\n"
