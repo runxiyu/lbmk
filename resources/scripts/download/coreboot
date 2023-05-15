@@ -163,13 +163,13 @@ gitclone_coreboot_from_upstream()
 
 prepare_new_coreboot_tree()
 {
-	board=${1}
+	target=${1}
 	cbtree=${2}
 	cbrevision=${3}
 
 	printf "Preparing coreboot tree: %s\n" ${cbtree}
-	[ "${cbtree}" != "${board}" ] && \
-		printf "(for board: %s)\n" "${board}"
+	[ "${cbtree}" != "${target}" ] && \
+		printf "(for board: %s)\n" "${target}"
 
 	cp -R coreboot/coreboot "coreboot/${cbtree}" || exit 1
 	(
