@@ -188,8 +188,8 @@ prepare_new_coreboot_tree()
 
 	# extra.sh can be used for anything
 	# but should *only* be a last resort
-	if [ -f "../../resources/coreboot/${_board}/extra.sh" ]; then
-		"../../resources/coreboot/${_board}/extra.sh" || \
+	if [ -f "../../resources/coreboot/${cbtree}/extra.sh" ]; then
+		"../../resources/coreboot/${cbtree}/extra.sh" || \
 			exit 1
 	fi
 	)
