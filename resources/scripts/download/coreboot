@@ -183,7 +183,7 @@ download_coreboot_for_board()
 	fi
 }
 
-fetch_coreboot_coreboot()
+fetch_coreboot_config()
 {
 	while true; do
 		cbrevision="undefined"
