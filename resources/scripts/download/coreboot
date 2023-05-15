@@ -84,26 +84,21 @@ download_coreboot_for_board()
 	if [ -d "coreboot/${cbtree}" ]; then
 		printf "REMARK: download/coreboot %s: exists. Skipping.\n" \
 				${cbtree}
-		if [ "${cbtree}" != "${1}" ]; then
-			printf "(for board: '${1}')\n"
-		fi
+		[ "${cbtree}" != "${1}" ] && \
+			printf "(for board: '%s}')\n" ${1}
 		return 0
 	fi
 
-	if [ ! -d coreboot ]; then
+	[ ! -d coreboot ] && \
 		mkdir "coreboot/"
-	fi
-	if [ ! -d coreboot ]; then
-		printf "ERROR: download/coreboot: directory not created."
-		printf " Check file system permissions\n"
+	[ ! -d coreboot ] && \
+		printf "ERROR: download/coreboot: directory not created\n" && \
 		return 1
-	fi
 
 	cd "coreboot/"
 
-	if [ ! -d coreboot/.git ] && [ -d coreboot ]; then
+	[ ! -d coreboot/.git ] && [ -d coreboot ] && \
 		rm -Rf coreboot/
-	fi
 
 	if [ ! -d coreboot ]; then
 		printf "Download coreboot from upstream:\n"
