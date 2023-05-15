@@ -61,14 +61,14 @@ fetch_coreboot_trees()
 	fi
 	for board in ${boards}; do
 		rm -f resources/coreboot/*/seen
-		download_for_board "${board}"
+		download_coreboot_for_board "${board}"
 		[ -f build_error ] && break
 	done
 
 	rm -f resources/coreboot/*/seen
 }
 
-download_for_board()
+download_coreboot_for_board()
 {
 	_board="${1}"
 	cbtree="undefined"
