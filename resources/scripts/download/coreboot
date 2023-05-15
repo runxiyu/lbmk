@@ -21,14 +21,14 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# TODO: purge this entire file. it's terrible. re-write it more cleanly.
-
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
 _board=""
 cbtree=""
 cbrevision=""
+
+cbcfgsdir="resources/coreboot"
 
 main()
 {
@@ -50,7 +50,7 @@ main()
 
 fetch_coreboot_trees()
 {
-	rm -f resources/coreboot/*/seen
+	rm -f ${cbcfgsdir}/*/seen
 
 	printf "Downloading coreboot and (if available) applying patches\n"
 
@@ -58,18 +58,18 @@ fetch_coreboot_trees()
 	if [ $# -gt 0 ]; then
 		boards=$@
 	else
-		for board in resources/coreboot/*; do
+		for board in ${cbcfgsdir}/*; do
 			[ ! -d "${board}" ] && continue
 			boards="${boards} ${board##*/}"
 		done
 	fi
 	for board in ${boards}; do
-		rm -f resources/coreboot/*/seen
+		rm -f ${cbcfgsdir}/*/seen
 		download_coreboot_for_board "${board}"
 		[ -f build_error ] && break
 	done
 
-	rm -f resources/coreboot/*/seen
+	rm -f ${cbcfgsdir}/*/seen
 }
 
 download_coreboot_for_board()
@@ -78,7 +78,7 @@ download_coreboot_for_board()
 	cbtree="undefined"
 	cbrevision="undefined"
 
-	fetch_coreboot_config "${_board}"; rm -f resources/coreboot/*/seen
+	fetch_coreboot_config "${_board}"; rm -f ${cbcfgsdir}/*/seen
 	[ -f build_error ] && return 1
 
 	if [ -d "coreboot/${cbtree}" ]; then
@@ -97,6 +97,8 @@ download_coreboot_for_board()
 
 fetch_coreboot_config()
 {
+	_board=${1}
+
 	while true; do
 		cbrevision="undefined"
 		cbtree="undefined"
@@ -104,7 +106,7 @@ fetch_coreboot_config()
 		check_config_for_board "${_board}" || return 1
 
 		# This is to override $cbrevision and $cbtree
-		. "resources/coreboot/${_board}/board.cfg" \
+		. "${cbcfgsdir}/${_board}/board.cfg" \
 				|| touch ../build_error
 		if [ -f build_error ]; then
 			printf "ERROR: download/coreboot:"
@@ -132,17 +134,19 @@ fetch_coreboot_config()
 
 check_config_for_board()
 {
-	if [ ! -f "resources/coreboot/${1}/board.cfg" ]; then
+	_board=${1}
+
+	if [ ! -f "${cbcfgsdir}/${_board}/board.cfg" ]; then
 		printf "ERROR: download/coreboot: board.cfg does not"
-		printf " exist for '%s'\n" ${1}
+		printf " exist for '%s'\n" ${_board}
 		return 1
-	elif [ -f "resources/coreboot/${1}/seen" ]; then
+	elif [ -f "${cbcfgsdir}/${_board}/seen" ]; then
 		printf "ERROR: download/coreboot: logical loop:"
-		printf " '%s' board.cfg refers to another tree," ${1}
-		printf " which ultimately refers back to '%s'." ${1}
+		printf " '%s' board.cfg refers to another tree," ${_board}
+		printf " which ultimately refers back to '%s'." ${_board}
 		return 1
 	fi
-	touch "resources/coreboot/${1}/seen"
+	touch "${cbcfgsdir}/${_board}/seen"
 	return 0
 }
 
@@ -177,7 +181,7 @@ prepare_new_coreboot_tree()
 	git reset --hard ${cbrevision} || exit 1
 	git submodule update --init --checkout || exit 1
 
-	for patch in ../../resources/coreboot/${cbtree}/patches/*.patch; do
+	for patch in ../../${cbcfgsdir}/${cbtree}/patches/*.patch; do
 		[ ! -f "${patch}" ] && \
 			continue
 		if ! git am "${patch}"; then
@@ -188,8 +192,8 @@ prepare_new_coreboot_tree()
 
 	# extra.sh can be used for anything
 	# but should *only* be a last resort
-	if [ -f "../../resources/coreboot/${cbtree}/extra.sh" ]; then
-		"../../resources/coreboot/${cbtree}/extra.sh" || \
+	if [ -f "../../${cbcfgsdir}/${cbtree}/extra.sh" ]; then
+		"../../${cbcfgsdir}/${cbtree}/extra.sh" || \
 			exit 1
 	fi
 	)
@@ -209,8 +213,8 @@ usage()
 
 list_supported_boards()
 {
-	for _board in resources/coreboot/*; do
-		echo ${_board} | sed 's#resources/coreboot/##'
+	for _board in ${cbcfgsdir}/*; do
+		echo ${_board} | sed 's#${cbcfgsdir}/##'
 	done
 }
 
