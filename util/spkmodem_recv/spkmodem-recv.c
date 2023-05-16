@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Compilation:	gcc -o spkmodem-recv spkmodem-recv  */
 /* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
@@ -33,7 +34,17 @@ void fetch_sample(void);
 int
 main(int argc, char *argv[])
 {
-	(void)argc; (void)argv;
+	int c;
+
+	while ((c = getopt(argc, argv, "u")) != -1) {
+		switch (c) {
+		case 'u':
+			setvbuf(stdout, NULL, _IONBF, 0);
+			break;
+		default:
+			err(errno = EINVAL, NULL);
+		}
+	}
 
 	while (!feof(stdin))
 		handle_audio();
