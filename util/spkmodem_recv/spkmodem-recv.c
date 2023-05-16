@@ -1,6 +1,8 @@
 /* spkmodem-recv.c - decode spkmodem signals */
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +56,8 @@ print_chars(void)
 		llp++;
 	}
 	if (llp == FLUSH_TIMEOUT)
-		fflush(stdout);
+		if (fflush(stdout) == EOF)
+			err(errno, NULL);
 
 	if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
 			|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
@@ -62,8 +65,11 @@ print_chars(void)
 		return;
 	}
 #if DEBUG
+	long stdin_pos = 0;
+	if ((stdin_pos = ftell(stdin)) == -1)
+		err(errno, NULL);
 	printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
-			ftell(stdin) - sizeof(frame));
+			stdin_pos - sizeof(frame));
 #endif
 	if (f1 < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
@@ -90,7 +96,9 @@ read_sample(void)
 	f1 -= pulse[ringpos];
 	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
 	f2 -= pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
-	fread(frame + ringpos, 1, sizeof(frame[0]), stdin);
+	if (fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
+			!= sizeof(frame[0]))
+		err(errno = ECANCELED, "Could not read frame.");
 	amplitude += abs(frame[ringpos]);
 
 	if (abs(frame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
