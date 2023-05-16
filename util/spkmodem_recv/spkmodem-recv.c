@@ -28,8 +28,8 @@ int pos, f1, f2;
 int amplitude = 0;
 int lp = 0;
 
-void fetch_sample(void);
 void handle_audio(void);
+void fetch_sample(void);
 
 int
 main(int argc, char *argv[])
