@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	while (!feof(stdin))
 		print_chars();
 
-	return 0;
+	return errno;
 }
 
 void
