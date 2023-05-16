@@ -23,9 +23,7 @@
 
 signed short frame[2 * SAMPLES_PER_FRAME];
 signed short pulse[2 * SAMPLES_PER_FRAME];
-int f1, f2;
-int lp = 0;
-int ascii_bit = 7;
+int f1, f2, lp, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
