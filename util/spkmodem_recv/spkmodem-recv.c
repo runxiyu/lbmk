@@ -32,7 +32,7 @@ int
 main(int argc, char *argv[])
 {
 	int bitn = 7;
-	char c = 0;
+	char ascii = 0;
 	int i;
 	int llp = 0;
 
@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 	while (!feof(stdin)) {
 		if (lp > 3 * SAMPLES_PER_FRAME) {
 			bitn = 7;
-			c = 0;
+			ascii = 0;
 			lp = 0;
 			llp++;
 		}
@@ -58,16 +58,16 @@ main(int argc, char *argv[])
 				ftell(stdin) - sizeof(frame));
 #endif
 		if (f1 < FREQ_DATA_THRESHOLD)
-			c |= (1 << bitn);
+			ascii |= (1 << bitn);
 		bitn--;
 		if (bitn < 0) {
 #if DEBUG
-			printf("<%c, %x>", c, c);
+			printf("<%c, %x>", ascii, ascii);
 #else
-			printf("%c", c);
+			printf("%c", ascii);
 #endif
 			bitn = 7;
-			c = 0;
+			ascii = 0;
 		}
 		lp = 0;
 		llp = 0;
