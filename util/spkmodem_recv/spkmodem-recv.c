@@ -27,54 +27,60 @@ int amplitude = 0;
 int lp = 0;
 
 void read_sample(void);
+void print_chars(void);
 
 int
 main(int argc, char *argv[])
 {
-	int ascii_bit = 7;
-	char ascii = 0;
-	int i;
-	int llp = 0;
-
 	(void)argc; (void)argv;
 
-	while (!feof(stdin)) {
-		if (lp > 3 * SAMPLES_PER_FRAME) {
-			ascii_bit = 7;
-			ascii = 0;
-			lp = 0;
-			llp++;
-		}
-		if (llp == FLUSH_TIMEOUT)
-			fflush(stdout);
+	while (!feof(stdin))
+		print_chars();
 
-		if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
-				|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
-			read_sample();
-			continue;
-		}
-#if DEBUG
-		printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
-				ftell(stdin) - sizeof(frame));
-#endif
-		if (f1 < FREQ_DATA_THRESHOLD)
-			ascii |= (1 << ascii_bit);
-		ascii_bit--;
-		if (ascii_bit < 0) {
-#if DEBUG
-			printf("<%c, %x>", ascii, ascii);
-#else
-			printf("%c", ascii);
-#endif
-			ascii_bit = 7;
-			ascii = 0;
-		}
-		lp = 0;
-		llp = 0;
-		for (i = 0; i < SAMPLES_PER_FRAME; i++)
-			read_sample();
-	}
 	return 0;
+}
+
+void
+print_chars(void)
+{
+	static int ascii_bit = 7;
+	static char ascii = 0;
+	static int llp = 0;
+
+	if (lp > 3 * SAMPLES_PER_FRAME) {
+		ascii_bit = 7;
+		ascii = 0;
+		lp = 0;
+		llp++;
+	}
+	if (llp == FLUSH_TIMEOUT)
+		fflush(stdout);
+
+	if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
+			|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
+		read_sample();
+		return;
+	}
+#if DEBUG
+	printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
+			ftell(stdin) - sizeof(frame));
+#endif
+	if (f1 < FREQ_DATA_THRESHOLD)
+		ascii |= (1 << ascii_bit);
+	ascii_bit--;
+	if (ascii_bit < 0) {
+#if DEBUG
+		printf("<%c, %x>", ascii, ascii);
+#else
+		printf("%c", ascii);
+#endif
+		ascii_bit = 7;
+		ascii = 0;
+	}
+	lp = 0;
+	llp = 0;
+	for (int i = 0; i < SAMPLES_PER_FRAME; i++)
+		read_sample();
 }
 
 void
