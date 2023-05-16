@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Compilation:  gcc -o spkmodem-recv spkmodem-recv  */
+/* Compilation:	gcc -o spkmodem-recv spkmodem-recv  */
 /* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
 
 #define SAMPLES_PER_TRAME 240
@@ -29,72 +29,69 @@ static int lp = 0;
 static void
 read_sample (void)
 {
-  amplitude -= abs (trame[ringpos]);
-  f1 -= pulse[ringpos];
-  f1 += pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
-  f2 -= pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
-  fread (trame + ringpos, 1, sizeof (trame[0]), stdin);
-  amplitude += abs (trame[ringpos]);
+	amplitude -= abs (trame[ringpos]);
+	f1 -= pulse[ringpos];
+	f1 += pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
+	f2 -= pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
+	fread (trame + ringpos, 1, sizeof (trame[0]), stdin);
+	amplitude += abs (trame[ringpos]);
 
-  if (pos ? (trame[ringpos] < -THRESHOLD)
-      : (trame[ringpos] > +THRESHOLD))
-    {
-      pulse[ringpos] = 1;
-      pos = !pos;
-      f2++;
-    }
-  else
-    pulse[ringpos] = 0;
-  ringpos++;
-  ringpos %= 2 * SAMPLES_PER_TRAME;
-  lp++;
+	if (pos ? (trame[ringpos] < -THRESHOLD)
+		: (trame[ringpos] > +THRESHOLD)) {
+		pulse[ringpos] = 1;
+		pos = !pos;
+		f2++;
+	} else {
+		pulse[ringpos] = 0;
+	}
+
+	ringpos++;
+	ringpos %= 2 * SAMPLES_PER_TRAME;
+	lp++;
 }
 
 int
 main ()
 {
-  int bitn = 7;
-  char c = 0;
-  int i;
-  int llp = 0;
-  while (!feof (stdin))
-    {
-      if (lp > 3 * SAMPLES_PER_TRAME)
-	{
-	  bitn = 7;
-	  c = 0;
-	  lp = 0;
-	  llp++;
-	}
-      if (llp == FLUSH_TIMEOUT)
-	fflush (stdout);
-      if (f2 > FREQ_SEP_MIN && f2 < FREQ_SEP_MAX
-	  && f1 > FREQ_DATA_MIN && f1 < FREQ_DATA_MAX)
-	{
+	int bitn = 7;
+	char c = 0;
+	int i;
+	int llp = 0;
+	while (!feof (stdin)) {
+		if (lp > 3 * SAMPLES_PER_TRAME) {
+			bitn = 7;
+			c = 0;
+			lp = 0;
+			llp++;
+		}
+		if (llp == FLUSH_TIMEOUT)
+			fflush (stdout);
+
+		if (f2 > FREQ_SEP_MIN && f2 < FREQ_SEP_MAX
+				&& f1 > FREQ_DATA_MIN && f1 < FREQ_DATA_MAX) {
 #if DEBUG
-	  printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
-		  ftell (stdin) - sizeof (trame));
+			printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
+					ftell (stdin) - sizeof (trame));
 #endif
-	  if (f1 < FREQ_DATA_THRESHOLD)
-	    c |= (1 << bitn);
-	  bitn--;
-	  if (bitn < 0)
-	    {
+			if (f1 < FREQ_DATA_THRESHOLD)
+				c |= (1 << bitn);
+			bitn--;
+			if (bitn < 0) {
 #if DEBUG
-	      printf ("<%c, %x>", c, c);
+				printf ("<%c, %x>", c, c);
 #else
-	      printf ("%c", c);
+				printf ("%c", c);
 #endif
-	      bitn = 7;
-	      c = 0;
-	    }
-	  lp = 0;
-	  llp = 0;
-	  for (i = 0; i < SAMPLES_PER_TRAME; i++)
-	    read_sample ();
-	  continue;
+				bitn = 7;
+				c = 0;
+			}
+			lp = 0;
+			llp = 0;
+			for (i = 0; i < SAMPLES_PER_TRAME; i++)
+				read_sample ();
+			continue;
+		}
+		read_sample ();
 	}
-      read_sample ();
-    }
-  return 0;
+	return 0;
 }
