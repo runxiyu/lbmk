@@ -36,8 +36,7 @@ read_sample (void)
 	fread (trame + ringpos, 1, sizeof (trame[0]), stdin);
 	amplitude += abs (trame[ringpos]);
 
-	if (pos ? (trame[ringpos] < -THRESHOLD)
-		: (trame[ringpos] > +THRESHOLD)) {
+	if (abs(trame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
 		pulse[ringpos] = 1;
 		pos = !pos;
 		f2++;
