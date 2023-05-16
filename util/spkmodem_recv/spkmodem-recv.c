@@ -26,28 +26,7 @@ static int pos, f1, f2;
 static int amplitude = 0;
 static int lp = 0;
 
-static void
-read_sample (void)
-{
-	amplitude -= abs (trame[ringpos]);
-	f1 -= pulse[ringpos];
-	f1 += pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
-	f2 -= pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
-	fread (trame + ringpos, 1, sizeof (trame[0]), stdin);
-	amplitude += abs (trame[ringpos]);
-
-	if (abs(trame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
-		pulse[ringpos] = 1;
-		pos = !pos;
-		f2++;
-	} else {
-		pulse[ringpos] = 0;
-	}
-
-	ringpos++;
-	ringpos %= 2 * SAMPLES_PER_TRAME;
-	lp++;
-}
+static void read_sample (void);
 
 int
 main (int argc, char *argv[])
@@ -96,4 +75,27 @@ main (int argc, char *argv[])
 			read_sample ();
 	}
 	return 0;
+}
+
+static void
+read_sample (void)
+{
+	amplitude -= abs (trame[ringpos]);
+	f1 -= pulse[ringpos];
+	f1 += pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
+	f2 -= pulse[(ringpos + SAMPLES_PER_TRAME) % (2 * SAMPLES_PER_TRAME)];
+	fread (trame + ringpos, 1, sizeof (trame[0]), stdin);
+	amplitude += abs (trame[ringpos]);
+
+	if (abs(trame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
+		pulse[ringpos] = 1;
+		pos = !pos;
+		f2++;
+	} else {
+		pulse[ringpos] = 0;
+	}
+
+	ringpos++;
+	ringpos %= 2 * SAMPLES_PER_TRAME;
+	lp++;
 }
