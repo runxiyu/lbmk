@@ -28,8 +28,8 @@ int pos, f1, f2;
 int amplitude = 0;
 int lp = 0;
 
-void read_sample(void);
-void print_chars(void);
+void fetch_sample(void);
+void handle_audio(void);
 
 int
 main(int argc, char *argv[])
@@ -37,13 +37,13 @@ main(int argc, char *argv[])
 	(void)argc; (void)argv;
 
 	while (!feof(stdin))
-		print_chars();
+		handle_audio();
 
 	return errno;
 }
 
 void
-print_chars(void)
+handle_audio(void)
 {
 	static int ascii_bit = 7;
 	static char ascii = 0;
@@ -61,7 +61,7 @@ print_chars(void)
 
 	if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
 			|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
-		read_sample();
+		fetch_sample();
 		return;
 	}
 #if DEBUG
@@ -86,11 +86,11 @@ print_chars(void)
 	lp = 0;
 	llp = 0;
 	for (int i = 0; i < SAMPLES_PER_FRAME; i++)
-		read_sample();
+		fetch_sample();
 }
 
 void
-read_sample(void)
+fetch_sample(void)
 {
 	amplitude -= abs(frame[ringpos]);
 	f1 -= pulse[ringpos];
