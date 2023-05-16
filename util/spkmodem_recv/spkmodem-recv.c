@@ -47,7 +47,7 @@ handle_audio(void)
 {
 	static int llp = 0;
 
-	if (lp > 3 * SAMPLES_PER_FRAME) {
+	if (lp > (3 * SAMPLES_PER_FRAME)) {
 		ascii_bit = 7;
 		ascii = 0;
 		lp = 0;
@@ -57,8 +57,8 @@ handle_audio(void)
 		if (fflush(stdout) == EOF)
 			err(errno, NULL);
 
-	if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
-			|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
+	if ((f2 <= FREQ_SEP_MIN) || (f2 >= FREQ_SEP_MAX)
+			|| (f1 <= FREQ_DATA_MIN) || (f1 >= FREQ_DATA_MAX)) {
 		fetch_sample();
 		return;
 	}
