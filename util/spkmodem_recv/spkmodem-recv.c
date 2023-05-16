@@ -23,9 +23,7 @@
 
 signed short frame[2 * SAMPLES_PER_FRAME];
 signed short pulse[2 * SAMPLES_PER_FRAME];
-int ringpos = 0;
 int f1, f2;
-int amplitude = 0;
 int lp = 0;
 int ascii_bit = 7;
 char ascii = 0;
@@ -77,14 +75,14 @@ handle_audio(void)
 void
 fetch_sample(void)
 {
-	amplitude -= abs(frame[ringpos]);
+	static int ringpos = 0;
+
 	f1 -= pulse[ringpos];
 	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
 	f2 -= pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
 	if (fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
 			!= sizeof(frame[0]))
 		err(errno = ECANCELED, "Could not read frame.");
-	amplitude += abs(frame[ringpos]);
 
 	if (abs(frame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
 		pulse[ringpos] = 1;
