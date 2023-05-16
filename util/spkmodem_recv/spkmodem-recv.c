@@ -67,31 +67,31 @@ main ()
 		if (llp == FLUSH_TIMEOUT)
 			fflush (stdout);
 
-		if (f2 > FREQ_SEP_MIN && f2 < FREQ_SEP_MAX
-				&& f1 > FREQ_DATA_MIN && f1 < FREQ_DATA_MAX) {
-#if DEBUG
-			printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
-					ftell (stdin) - sizeof (trame));
-#endif
-			if (f1 < FREQ_DATA_THRESHOLD)
-				c |= (1 << bitn);
-			bitn--;
-			if (bitn < 0) {
-#if DEBUG
-				printf ("<%c, %x>", c, c);
-#else
-				printf ("%c", c);
-#endif
-				bitn = 7;
-				c = 0;
-			}
-			lp = 0;
-			llp = 0;
-			for (i = 0; i < SAMPLES_PER_TRAME; i++)
-				read_sample ();
+		if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
+				|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
+			read_sample ();
 			continue;
 		}
-		read_sample ();
+#if DEBUG
+		printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
+				ftell (stdin) - sizeof (trame));
+#endif
+		if (f1 < FREQ_DATA_THRESHOLD)
+			c |= (1 << bitn);
+		bitn--;
+		if (bitn < 0) {
+#if DEBUG
+			printf ("<%c, %x>", c, c);
+#else
+			printf ("%c", c);
+#endif
+			bitn = 7;
+			c = 0;
+		}
+		lp = 0;
+		llp = 0;
+		for (i = 0; i < SAMPLES_PER_TRAME; i++)
+			read_sample ();
 	}
 	return 0;
 }
