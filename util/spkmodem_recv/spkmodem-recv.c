@@ -19,14 +19,14 @@
 #define DEBUG 0
 #define FLUSH_TIMEOUT 1
 
-static signed short frame[2 * SAMPLES_PER_FRAME];
-static signed short pulse[2 * SAMPLES_PER_FRAME];
-static int ringpos = 0;
-static int pos, f1, f2;
-static int amplitude = 0;
-static int lp = 0;
+signed short frame[2 * SAMPLES_PER_FRAME];
+signed short pulse[2 * SAMPLES_PER_FRAME];
+int ringpos = 0;
+int pos, f1, f2;
+int amplitude = 0;
+int lp = 0;
 
-static void read_sample(void);
+void read_sample(void);
 
 int
 main(int argc, char *argv[])
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-static void
+void
 read_sample(void)
 {
 	amplitude -= abs(frame[ringpos]);
