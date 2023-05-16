@@ -27,8 +27,11 @@ int ringpos = 0;
 int pos, f1, f2;
 int amplitude = 0;
 int lp = 0;
+int ascii_bit = 7;
+char ascii = 0;
 
 void handle_audio(void);
+void print_char(void);
 void fetch_sample(void);
 
 int
@@ -45,8 +48,6 @@ main(int argc, char *argv[])
 void
 handle_audio(void)
 {
-	static int ascii_bit = 7;
-	static char ascii = 0;
 	static int llp = 0;
 
 	if (lp > 3 * SAMPLES_PER_FRAME) {
@@ -64,6 +65,18 @@ handle_audio(void)
 		fetch_sample();
 		return;
 	}
+
+	print_char();
+
+	lp = 0;
+	llp = 0;
+	for (int i = 0; i < SAMPLES_PER_FRAME; i++)
+		fetch_sample();
+}
+
+void
+print_char(void)
+{
 #if DEBUG
 	long stdin_pos = 0;
 	if ((stdin_pos = ftell(stdin)) == -1)
@@ -83,10 +96,6 @@ handle_audio(void)
 		ascii_bit = 7;
 		ascii = 0;
 	}
-	lp = 0;
-	llp = 0;
-	for (int i = 0; i < SAMPLES_PER_FRAME; i++)
-		fetch_sample();
 }
 
 void
