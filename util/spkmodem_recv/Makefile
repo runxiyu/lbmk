@@ -9,3 +9,5 @@ spkmodem-recv:
 install: spkmodem-recv
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin/
 	$(INSTALL) $< -t $(DESTDIR)$(PREFIX)/bin/
+clean:
+	rm -f spkmodem-recv
