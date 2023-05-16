@@ -68,7 +68,7 @@ print_chars(void)
 	long stdin_pos = 0;
 	if ((stdin_pos = ftell(stdin)) == -1)
 		err(errno, NULL);
-	printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
+	printf ("%d %d %d @%ld\n", f1, f2, FREQ_DATA_THRESHOLD,
 			stdin_pos - sizeof(frame));
 #endif
 	if (f1 < FREQ_DATA_THRESHOLD)
