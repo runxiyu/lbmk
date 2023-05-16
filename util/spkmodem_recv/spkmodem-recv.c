@@ -24,7 +24,7 @@
 signed short frame[2 * SAMPLES_PER_FRAME];
 signed short pulse[2 * SAMPLES_PER_FRAME];
 int ringpos = 0;
-int pos, f1, f2;
+int f1, f2;
 int amplitude = 0;
 int lp = 0;
 int ascii_bit = 7;
@@ -88,7 +88,6 @@ fetch_sample(void)
 
 	if (abs(frame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
 		pulse[ringpos] = 1;
-		pos = !pos;
 		f2++;
 	} else {
 		pulse[ringpos] = 0;
