@@ -51,12 +51,15 @@ read_sample (void)
 }
 
 int
-main ()
+main (int argc, char *argv[])
 {
 	int bitn = 7;
 	char c = 0;
 	int i;
 	int llp = 0;
+
+	(void)argc; (void)argv;
+
 	while (!feof (stdin)) {
 		if (lp > 3 * SAMPLES_PER_TRAME) {
 			bitn = 7;
