@@ -26,10 +26,10 @@ static int pos, f1, f2;
 static int amplitude = 0;
 static int lp = 0;
 
-static void read_sample (void);
+static void read_sample(void);
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
 	int bitn = 7;
 	char c = 0;
@@ -38,7 +38,7 @@ main (int argc, char *argv[])
 
 	(void)argc; (void)argv;
 
-	while (!feof (stdin)) {
+	while (!feof(stdin)) {
 		if (lp > 3 * SAMPLES_PER_FRAME) {
 			bitn = 7;
 			c = 0;
@@ -46,25 +46,25 @@ main (int argc, char *argv[])
 			llp++;
 		}
 		if (llp == FLUSH_TIMEOUT)
-			fflush (stdout);
+			fflush(stdout);
 
 		if (f2 <= FREQ_SEP_MIN || f2 >= FREQ_SEP_MAX
 				|| f1 <= FREQ_DATA_MIN || f1 >= FREQ_DATA_MAX) {
-			read_sample ();
+			read_sample();
 			continue;
 		}
 #if DEBUG
 		printf ("%d %d %d @%d\n", f1, f2, FREQ_DATA_THRESHOLD,
-				ftell (stdin) - sizeof (frame));
+				ftell(stdin) - sizeof(frame));
 #endif
 		if (f1 < FREQ_DATA_THRESHOLD)
 			c |= (1 << bitn);
 		bitn--;
 		if (bitn < 0) {
 #if DEBUG
-			printf ("<%c, %x>", c, c);
+			printf("<%c, %x>", c, c);
 #else
-			printf ("%c", c);
+			printf("%c", c);
 #endif
 			bitn = 7;
 			c = 0;
@@ -72,20 +72,20 @@ main (int argc, char *argv[])
 		lp = 0;
 		llp = 0;
 		for (i = 0; i < SAMPLES_PER_FRAME; i++)
-			read_sample ();
+			read_sample();
 	}
 	return 0;
 }
 
 static void
-read_sample (void)
+read_sample(void)
 {
-	amplitude -= abs (frame[ringpos]);
+	amplitude -= abs(frame[ringpos]);
 	f1 -= pulse[ringpos];
 	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
 	f2 -= pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
-	fread (frame + ringpos, 1, sizeof (frame[0]), stdin);
-	amplitude += abs (frame[ringpos]);
+	fread(frame + ringpos, 1, sizeof(frame[0]), stdin);
+	amplitude += abs(frame[ringpos]);
 
 	if (abs(frame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
 		pulse[ringpos] = 1;
