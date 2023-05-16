@@ -36,6 +36,11 @@ main(int argc, char *argv[])
 {
 	int c;
 
+#ifdef HAVE_PLEDGE
+	if (pledge("stdio", NULL) == -1)
+		err(errno, "pledge");
+#endif
+
 	while ((c = getopt(argc, argv, "u")) != -1) {
 		switch (c) {
 		case 'u':
