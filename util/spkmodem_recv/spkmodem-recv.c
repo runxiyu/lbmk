@@ -22,6 +22,7 @@
 #define FLUSH_TIMEOUT 1
 
 signed short frame[2 * SAMPLES_PER_FRAME];
+signed short pulse[2 * SAMPLES_PER_FRAME];
 int f1, f2;
 int lp = 0;
 int ascii_bit = 7;
@@ -75,7 +76,6 @@ void
 fetch_sample(void)
 {
 	static int ringpos = 0;
-	static signed short pulse[2 * SAMPLES_PER_FRAME];
 
 	f1 -= pulse[ringpos];
 	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
