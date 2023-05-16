@@ -75,30 +75,6 @@ handle_audio(void)
 }
 
 void
-print_char(void)
-{
-#if DEBUG
-	long stdin_pos = 0;
-	if ((stdin_pos = ftell(stdin)) == -1)
-		err(errno, NULL);
-	printf ("%d %d %d @%ld\n", f1, f2, FREQ_DATA_THRESHOLD,
-			stdin_pos - sizeof(frame));
-#endif
-	if (f1 < FREQ_DATA_THRESHOLD)
-		ascii |= (1 << ascii_bit);
-	ascii_bit--;
-	if (ascii_bit < 0) {
-#if DEBUG
-		printf("<%c, %x>", ascii, ascii);
-#else
-		printf("%c", ascii);
-#endif
-		ascii_bit = 7;
-		ascii = 0;
-	}
-}
-
-void
 fetch_sample(void)
 {
 	amplitude -= abs(frame[ringpos]);
@@ -121,4 +97,28 @@ fetch_sample(void)
 	ringpos++;
 	ringpos %= 2 * SAMPLES_PER_FRAME;
 	lp++;
+}
+
+void
+print_char(void)
+{
+#if DEBUG
+	long stdin_pos = 0;
+	if ((stdin_pos = ftell(stdin)) == -1)
+		err(errno, NULL);
+	printf ("%d %d %d @%ld\n", f1, f2, FREQ_DATA_THRESHOLD,
+			stdin_pos - sizeof(frame));
+#endif
+	if (f1 < FREQ_DATA_THRESHOLD)
+		ascii |= (1 << ascii_bit);
+	ascii_bit--;
+	if (ascii_bit < 0) {
+#if DEBUG
+		printf("<%c, %x>", ascii, ascii);
+#else
+		printf("%c", ascii);
+#endif
+		ascii_bit = 7;
+		ascii = 0;
+	}
 }
