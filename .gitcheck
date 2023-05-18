@@ -17,9 +17,14 @@ main()
 
 		# Check coreboot as well to prevent errors during building
 		if [ -d coreboot ]; then
-			cd coreboot
-			set_placeholder
-			cd -
+			for x in coreboot/*; do
+				if [ ! -d "${x}" ]; then
+					continue
+				fi
+				cd "${x}"
+				set_placeholder
+				cd -
+			done
 		fi
 	fi
 }
