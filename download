@@ -2,7 +2,7 @@
 
 # Generic script for downloading programs used by the build system
 #
-#	Copyright (C) 2014, 2015, 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2014,2015,2020,2021,2023 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
 #	Copyright (C) 2015, 2016 Klemens Nanni <contact@autoboot.org>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
@@ -27,16 +27,42 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-./resources/scripts/misc/versioncheck
-
-rm -f "build_error"
-
 download=resources/scripts/download
+program=""
 
-listprograms() {
-	for program in "${download}"/*; do
-		printf '%s\n' "${program##*/}"
-	done
+main()
+{
+	./resources/scripts/misc/versioncheck	
+	rm -f "build_error"
+
+	if [ $# -lt 1 ]; then
+		help
+		die "Please specify arguments."
+	fi
+
+	program="${1}"
+	shift 1
+
+	if [ "${program}" = help ]; then
+		help
+		exit 0
+	elif [ "${program}" = "all" ]; then
+		for downloadProgram in ${download}/*; do
+			"${downloadProgram}"
+		done
+		exit 0
+	elif [ ! -f "${download}/${program}" ]; then
+		help
+		die "Invalid argument '${program}'. See: './download help'."
+	elif [ $# -lt 1 ]; then	
+		"${download}/${program}"
+	else	
+		"${download}/${program}" $@
+	fi
+
+	exit 0
+
+	./.gitcheck clean
 }
 
 help() {
@@ -54,9 +80,9 @@ help() {
 	Example:	./download coreboot x60
 
 	Each program download script should work without extra paramaters, but
-	they can use them. For instance, './download coreboot' will download all
-	coreboot trees by default, but './download coreboot x60' will only download
-	the coreboot tree required for the target: x60
+	they can be used. For example, './download coreboot' will download all
+	coreboot trees by default, but './download coreboot x60' will only
+	download the coreboot tree required for the target: x60
 
 	Each program download script should also accept the --help parameter to
 	display the usage of the script.
@@ -65,36 +91,15 @@ help() {
 	EOF
 }
 
+listprograms() {
+	for program in "${download}"/*; do
+		printf '%s\n' "${program##*/}"
+	done
+}
+
 die() {
 	printf 'Error: %s\n' "${@}" 1>&2
 	exit 1
 }
 
-if [ $# -lt 1 ]; then
-	help
-	die "Please specify arguments."
-fi
-
-program="${1}"
-shift 1
-[ "${program}" = help ] && help && exit 0
-
-if [ "${program}" = "all" ]; then
-	for downloadProgram in ${download}/*; do
-		"${downloadProgram}"
-	done
-	exit 0
-elif [ ! -f "${download}/${program}" ]; then
-	help
-	die "Invalid argument '${program}'. See: './download help'."
-fi
-
-if [ $# -lt 1 ]; then	
-	"${download}/${program}"
-else	
-	"${download}/${program}" $@
-fi
-
-exit 0
-
-./.gitcheck clean
+main $@
