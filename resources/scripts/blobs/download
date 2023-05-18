@@ -87,7 +87,6 @@ detect_firmware()
 		return 1
 	fi
 	printf "Firmware needed for board %s: %s\n" ${board} ${needs}
-	return 0
 }
 
 scan_sources_config()
@@ -155,25 +154,21 @@ build_dependencies()
 		printf "downloading me_cleaner\n"
 		./download me_cleaner || fail "could not download me_cleaner"
 	fi
-
 	if [ ! -d ${cbdir} ]; then
 		printf "downloading coreboot\n"
 		./download coreboot default \
 				|| fail "could not download coreboot"
 	fi
-
 	if [ ! -d bios_extract ]; then
 		printf "downloading bios_extract\n"
 		./download bios_extract \
 				|| fail "could not download bios_extract"
 	fi
-
 	if [ ! -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ]; then
 		printf "Building kbc1126_ec_dump from coreboot\n"
 		make -BC ${cbdir}/util/kbc1126 \
 				|| fail "could not build kbc1126_ec_dump"
 	fi
-	
 	if [ ! -f "${cbdir}/util/ifdtool/ifdtool" ]; then
 		printf "building ifdtool from coreboot\n"
 		make -C ${cbdir}/util/ifdtool \
@@ -211,8 +206,6 @@ download_blob_intel_me()
 
 	fetch_update me || return 1
 	extract_blob_intel_me || return 1
-
-	return 0
 }
 
 extract_blob_intel_me()
@@ -224,11 +217,9 @@ extract_blob_intel_me()
 	if [ ! -d "${_me_destination%/*}" ]; then
 		mkdir -p ${_me_destination%/*}
 	fi
-	
 	if [ -d "${appdir}" ]; then
 		rm -r ${appdir}
 	fi
-
 	if [ -f "${_me_destination}" ]; then
 		printf 'me already downloaded\n'
 		return 0
@@ -245,7 +236,6 @@ extract_blob_intel_me()
 		|| fail "Could not extract Intel ME firmware"
 
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
-	return 0
 }
 
 # cursed, carcinogenic code. TODO rewrite it better
@@ -301,8 +291,6 @@ bruteforce_extract_blob_intel_me()
 	if [ ! -f "${_me_destination}" ]; then
 		printf "me.bin not found in vendor update for: %s\n" ${board}
 		return 1
-	else
-		return 0
 	fi
 }
 
@@ -312,8 +300,6 @@ download_ec()
 
 	fetch_update ec || return 1
 	extract_ec || return 1
-
-	return 0
 }
 
 extract_ec()
@@ -325,11 +311,9 @@ extract_ec()
 	if [ ! -d "${_ec_destination%/*}" ]; then
 		mkdir -p "${_ec_destination%/*}"
 	fi
-
 	if [ -d "${appdir}" ]; then
 		rm -Rf "${appdir}"
 	fi
-
 	if [ -f "${_ec_destination}" ]; then
 		printf "ec already downloaded\n"
 		return 0
@@ -369,8 +353,6 @@ download_e6400vga()
 
 	fetch_update e6400vga || return 1
 	extract_e6400vga || return 1
-
-	return 0
 }
 
 extract_e6400vga()
@@ -383,21 +365,20 @@ extract_e6400vga()
 		printf 'vga rom already downloaded\n'
 		return 0
 	fi
-
 	if [ ! -d "${_vga_destination%/*}" ]; then
 		mkdir -p ${_vga_destination%/*}
 	fi	
 	if [ -d "${appdir}" ]; then
 		rm -r ${appdir}
 	fi
+
 	mkdir -p "${appdir}"
 	mv "${dl_path}" "${appdir}"
 
 	if [ "${e6400_vga_offset}" = "" ]; then
 		printf "E6400 VGA offset not defined\n"
 		return 1
-	fi
-	if [ "${e6400_vga_romname}" = "" ]; then
+	elif [ "${e6400_vga_romname}" = "" ]; then
 		printf "E6400 VGA ROM name not defined\n"
 		return 1
 	fi
@@ -418,7 +399,6 @@ extract_e6400vga()
 	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}"
 
 	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
-	return 0
 }
 
 fetch_update()
@@ -456,23 +436,17 @@ fetch_update()
 
 	vendor_checksum ${dlsum} || fail \
 		"Cannot guarantee intergity of vendor update for: ${board}"
-
-	return 0
 }
 
 vendor_checksum()
 {
-	sha1=$1
-
 	if [ ! -f "${dl_path}" ]; then
 		printf "Vendor update not found on disk for: %s\n" ${board}
 		return 1
-	fi
-	if [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${sha1}" ]; then
+	elif [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
 		printf "Bad checksum on vendor update for: %s\n" ${board}
 		return 1
 	fi
-	return 0
 }
 
 fail()
