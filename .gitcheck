@@ -29,9 +29,10 @@ set_placeholders()
 		if [ ! -d "${x}" ]; then
 			continue
 		fi
+		(
 		cd "${x}"
 		set_git_credentials
-		cd -
+		)
 	done
 }
 
@@ -57,9 +58,10 @@ clean()
 		if [ ! -d "${x}" ]; then
 			continue
 		fi
+		(
 		cd "${x}"
 		unset_placeholders
-		cd -
+		)
 	done
 }
 
