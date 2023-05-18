@@ -25,7 +25,7 @@ main()
 	clone_project
 
 	# clean in case of failure
-	rm -rf ${tmp_dir} >/dev/null 2>&1
+	rm -rf ${tmp_dir} >/dev/null 2>&1 || exit 1
 }
 
 read_config()
@@ -69,15 +69,15 @@ clone_project()
 
 	# clean out old version just in case
 	if [ -d "${location}" ]; then
-		rm -rf ${location}
+		rm -rf ${location} || exit 1
 	fi
 
 	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} \
 			|| err "ERROR: could not download ${name}"
 
 	(
-	cd ${tmp_dir} || err "Could not access tmp directory."
-	git reset --hard ${revision}
+	cd ${tmp_dir} || exit 1
+	git reset --hard ${revision} || err "Cannot reset revision"
 	)
 
 	patch_project
@@ -96,7 +96,7 @@ patch_project()
 			continue
 		fi
 		(
-		cd ${tmp_dir}
+		cd ${tmp_dir} || exit 1
 		git am ${patchfile} || err "Cannot patch project: $name"
 		)
 	done
