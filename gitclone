@@ -5,35 +5,91 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 name=""
+revision=""
+location=""
+url=""
+bkup_url=""
+tmp_dir=""
 
-Print_help(){
-	cat <<- EOF
-	Usage: ./gitclone [name]
+main()
+{
+	if [ -z "${1+x}" ]; then
+		err 'Error: name not set'
+	fi
 
-	Options:
-	name: The name of the module as specified in resources/git/revisions file
-	EOF
+	name=${1}
+	awkstr=" /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
+
+	while read -r line ; do
+		set ${line} >/dev/null 2>&1
+		case ${line} in
+			rev:*)
+			revision=${2}
+			;;
+			loc:*)
+			location=${2}
+			;;
+			url:*)
+			url=${2}
+			;;
+			bkup_url:*)
+			bkup_url=${2}
+			;;
+		esac
+	done << EOF
+	$(eval "awk '${awkstr}' resources/git/revisions")
+EOF
+
+	check_project
+	tmp_dir=$(mktemp -dt "${name}_XXXXX")
+
+	# clean out old version just in case
+	if [ -d "${location}" ]; then
+		rm -rf ${location}
+	fi
+
+	clone_project
+
+	# clean in case of failure
+	rm -rf ${tmp_dir} >/dev/null 2>&1
 }
 
-Fail(){
-	printf "${@}\n"
-	Print_help
-	exit 1
-}
-
-Check_vars(){
+check_project()
+{
 	if [ -z "${revision+x}" ]; then
-		Fail 'Error: revision not set'
+		err 'Error: revision not set'
 	fi
 	if [ -z "${location+x}" ]; then
-		Fail 'Error: location not set'
+		err 'Error: location not set'
 	fi
 	if [ -z "${url+x}" ]; then
-		Fail 'Error: url not set'
+		err 'Error: url not set'
 	fi
 }
 
-Patch(){
+clone_project()
+{
+	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} \
+			|| err "ERROR: could not download ${name}"
+
+	(
+	cd ${tmp_dir} || err "Could not access tmp directory."
+	git reset --hard ${revision}
+	)
+	patchdir="resources/${name}/patches"
+	
+	if [ -d "${patchdir}" ]; then
+		patch_project || err "ERROR: errd to patch ${name}"	
+	fi
+	
+	mv ${tmp_dir} ${location} && return 0
+
+	printf "ERROR: Could not copy temp file to destination.\n"
+	err " ${tmp_dir} > ${location} check permissions"
+}
+
+patch_project()
+{
 	for patchfile in ${PWD}/${patchdir}/*.patch ; do
 		if [ ! -f "${patchfile}" ]; then
 			continue
@@ -44,52 +100,21 @@ Patch(){
 	done
 }
 
-Run(){
-	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} || Fail "ERROR: couldn't download ${name}\n Check Network connection"
-	( cd ${tmp_dir} && git reset --hard ${revision} )
-	patchdir="resources/${name}/patches"
-	
-	if [ -d "${patchdir}" ]; then
-		Patch || Fail "ERROR: Faild to patch ${name}"	
-	fi
-	
-	mv ${tmp_dir} ${location} || Fail "ERROR: couldn't copy temp to destination\n ${tmp_dir} > ${location} check permissions"
+usage()
+{
+	cat <<- EOF
+	Usage: ./gitclone [name]
+
+	Options:
+	name: Module name as specified in resources/git/revisions
+	EOF
 }
 
-if [ -z "${1+x}" ]; then
-	Fail 'Error: name not set'
-else
-	name=${1}
-fi
+err()
+{
+	printf "${@}\n"
+	usage
+	exit 1
+}
 
-while read -r line ; do
-	set ${line} >/dev/null 2>&1
-	case ${line} in
-		rev:*)
-		revision=${2}
-		;;
-		loc:*)
-		location=${2}
-		;;
-		url:*)
-		url=${2}
-		;;
-		bkup_url:*)
-		bkup_url=${2}
-		;;
-	esac
-done << EOF
-$(eval "awk ' /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }' resources/git/revisions")
-EOF
-Check_vars
-tmp_dir=$(mktemp -dt "${name}_XXXXX")
-
-# clean out old version just in case
-if [ -d "${location}" ]; then
-	rm -rf ${location}
-fi
-
-Run
-
-# clean in case of failure
-rm -rf ${tmp_dir} >/dev/null 2>&1
+main $@
