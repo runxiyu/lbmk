@@ -56,11 +56,9 @@ verify_config()
 {
 	if [ -z "${revision+x}" ]; then
 		err 'Error: revision not set'
-	fi
-	if [ -z "${location+x}" ]; then
+	elif [ -z "${location+x}" ]; then
 		err 'Error: location not set'
-	fi
-	if [ -z "${url+x}" ]; then
+	elif [ -z "${url+x}" ]; then
 		err 'Error: url not set'
 	fi
 }
