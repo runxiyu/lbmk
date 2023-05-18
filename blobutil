@@ -1,13 +1,37 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
-
-./.gitcheck
 
 script_dir="resources/scripts/blobs"
 modes=$(ls -1 ${script_dir})
 
-Print_help(){
+main()
+{
+	if [ $# -lt 1 ]; then
+		printf "%s: Error: you must specify a mode\n" $0
+		usage
+		exit 1
+	fi
+
+	./.gitcheck
+
+	mode=${1}
+	shift
+	args=$@
+
+	if [ ! -f "${script_dir}/${mode}" ]; then
+		printf "Error: No mode ${mode}\n"
+		usage
+		exit 1
+	fi
+
+	./${script_dir}/${mode} ${args}
+
+	./.gitcheck clean
+}
+
+usage(){
 	cat <<- EOF
 	Usage: ./blobutil [mode] <options>
 	Example: ./blobutil download x230_12mb
@@ -22,23 +46,4 @@ Print_help(){
 	EOF
 }
 
-
-if [ $# -gt 0 ]; then
-        mode="${1}"
-        shift
-	args="$@"
-
-	if [ ! -f "${script_dir}/${mode}" ]; then
-		printf "Error: No mode ${mode}\n"
-		Print_help
-		exit 1
-	else
-		./${script_dir}/${mode} ${args}
-	fi
-
-else
-	printf 'Error: You must specify a mode\n'
-        Print_help
-fi
-
-./.gitcheck clean
+main $@
