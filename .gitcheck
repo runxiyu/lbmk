@@ -35,4 +35,4 @@ else
 fi
 }
 
-Run >/dev/null
+Run $@ >/dev/null
