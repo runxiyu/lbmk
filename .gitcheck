@@ -1,40 +1,49 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
-Set_placeholder(){
-	# Check if username and or email is set.
-	if ! git config user.name || git config user.email ; then
-		git config user.name || git config user.name 'lbmkplaceholder'
-		git config user.email || git config user.email 'placeholder@lbmkplaceholder.com'
+git_name="lbmkplaceholder"
+git_email="placeholder@lbmkplaceholder.com"
+
+main()
+{
+	if [ $# -gt 0 ]; then
+		if [ "${1}" = "clean" ]; then
+			clean
+		fi
+	else
+		set_placeholder
+
+		# Check coreboot as well to prevent errors during building
+		if [ -d coreboot ]; then
+			cd coreboot
+			set_placeholder
+			cd -
+		fi
 	fi
 }
 
-Clean(){
-	if [ "$(git config user.name)" = "lbmkplaceholder" ]; then
+set_placeholder()
+{
+	# Check if username and or email is set.
+	if ! git config user.name || git config user.email ; then
+		git config user.name \
+				|| git config user.name "${git_name}"
+		git config user.email \
+				|| git config user.email "${git_email}"
+	fi
+}
+
+clean()
+{
+	if [ "$(git config user.name)" = "${git_name}" ]; then
 		git config --unset user.name
 	fi
 
-	if [ "$(git config user.email)" = "placeholder@lbmkplaceholder.com" ]; then
+	if [ "$(git config user.email)" = "${git_email}" ]; then
 		git config --unset user.email
 	fi
 }
 
-Run(){
-if [ $# -gt 0 ]; then
-	if [ "${1}" = "clean" ]; then
-		Clean
-	fi
-else
-	Set_placeholder
-
-	# Check coreboot as well to prevent errors during building
-	if [ -d coreboot ]; then
-		cd coreboot
-		Set_placeholder
-		cd -
-	fi
-fi
-}
-
-Run $@ >/dev/null
+main $@
