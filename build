@@ -2,7 +2,7 @@
 
 #  generic build script, for building components (all of them)
 #
-#	Copyright (C) 2014, 2015, 2020, 2021 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2014,2015,2020,2021,2023 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
 #	Copyright (C) 2015, 2016 Klemens Nanni <contact@autoboot.org>
 #	Copyright (C) 2022, Caleb La Grange <thonkpeasant@protonmail.com>
@@ -54,7 +54,7 @@ help() {
 	Example:	./build roms withgrub
 	Example:	./build clean all
 
-	Refer to the ${projectname} documentation for more information.
+	Refer to ${projectname} documentation for more info.
 	EOF
 }
 
@@ -64,7 +64,7 @@ die() {
 }
 
 if [ $# -lt 1 ]; then
-	die "Wrong number of arguments specified. See './build help'."
+	die "Wrong argument count. Run: ./build help"
 fi
 
 mode="${1}"
@@ -81,27 +81,27 @@ if [ $# -gt 1 ]; then
 	shift 2
 
 	case "${option}" in
-		list)
-			printf "Available options for mode '%s':\n\n" "${mode}"
-			listoptions "${mode}"
-			;;  
-		all)
-			for option in $(listoptions "${mode}"); do
-				"${build}"/"${mode}"/"${option}" $@
-			done
-			;;
-		*)
-			if [ -d "${build}"/"${mode}"/ ]; then
-				if [ -f "${build}"/"${mode}"/"${option}" ]; then
-					"${build}"/"${mode}"/"${option}" $@
-				else
-					help
-					die "Invalid option for '${mode}'. See './build ${mode} list'."
-				fi
-			else
-				help
-				die "Invalid mode '${mode}'. See './build help'."
-			fi
+	list)
+		printf "Options for mode '%s':\n\n" ${mode}
+		listoptions "${mode}"
+		;;
+	all)
+		for option in $(listoptions "${mode}"); do
+			"${build}"/"${mode}"/"${option}" $@
+		done
+		;;
+	*)
+		if [ ! -d "${build}"/"${mode}"/ ]; then
+			help
+			die "Invalid mode '${mode}'. Run: ./build help"
+		fi
+		if [ -f "${build}"/"${mode}"/"${option}" ]; then
+			"${build}"/"${mode}"/"${option}" $@
+		else
+			help
+			printf "Invalid option for '%s'." ${mode}
+			die "Run: ./build ${mode} list'."
+		fi
 	esac
 else
 	help
