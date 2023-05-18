@@ -48,6 +48,9 @@ main()
 		exit 0
 	elif [ "${program}" = "all" ]; then
 		for downloadProgram in ${download}/*; do
+			if [ ! -f "${downloadProgram}" ]; then
+				continue
+			fi
 			"${downloadProgram}"
 		done
 		exit 0
