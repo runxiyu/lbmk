@@ -67,11 +67,6 @@ clone_project()
 {
 	tmp_dir=$(mktemp -dt "${name}_XXXXX")
 
-	# clean out old version just in case
-	if [ -d "${location}" ]; then
-		rm -rf ${location} || exit 1
-	fi
-
 	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} \
 			|| err "ERROR: could not download ${name}"
 
@@ -81,6 +76,10 @@ clone_project()
 	)
 
 	patch_project
+
+	if [ -d "${location}" ]; then
+		rm -Rf ${location} || exit 1
+	fi
 	mv ${tmp_dir} ${location} && return 0
 
 	printf "ERROR: Could not copy temp file to destination.\n"
