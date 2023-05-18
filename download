@@ -22,8 +22,6 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-./.gitcheck
-
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
@@ -32,7 +30,9 @@ program=""
 
 main()
 {
-	./resources/scripts/misc/versioncheck	
+	./.gitcheck
+	./resources/scripts/misc/versioncheck
+
 	rm -f "build_error"
 
 	if [ $# -lt 1 ]; then
