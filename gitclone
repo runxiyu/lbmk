@@ -18,8 +18,19 @@ main()
 	fi
 
 	name=${1}
-	awkstr=" /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
 
+	read_config
+	verify_config
+
+	clone_project
+
+	# clean in case of failure
+	rm -rf ${tmp_dir} >/dev/null 2>&1
+}
+
+read_config()
+{
+	awkstr=" /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
 	while read -r line ; do
 		set ${line} >/dev/null 2>&1
 		case ${line} in
@@ -39,22 +50,9 @@ main()
 	done << EOF
 	$(eval "awk '${awkstr}' resources/git/revisions")
 EOF
-
-	check_project
-	tmp_dir=$(mktemp -dt "${name}_XXXXX")
-
-	# clean out old version just in case
-	if [ -d "${location}" ]; then
-		rm -rf ${location}
-	fi
-
-	clone_project
-
-	# clean in case of failure
-	rm -rf ${tmp_dir} >/dev/null 2>&1
 }
 
-check_project()
+verify_config()
 {
 	if [ -z "${revision+x}" ]; then
 		err 'Error: revision not set'
@@ -69,6 +67,13 @@ check_project()
 
 clone_project()
 {
+	tmp_dir=$(mktemp -dt "${name}_XXXXX")
+
+	# clean out old version just in case
+	if [ -d "${location}" ]; then
+		rm -rf ${location}
+	fi
+
 	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} \
 			|| err "ERROR: could not download ${name}"
 
@@ -76,12 +81,8 @@ clone_project()
 	cd ${tmp_dir} || err "Could not access tmp directory."
 	git reset --hard ${revision}
 	)
-	patchdir="resources/${name}/patches"
-	
-	if [ -d "${patchdir}" ]; then
-		patch_project || err "ERROR: errd to patch ${name}"	
-	fi
-	
+
+	patch_project
 	mv ${tmp_dir} ${location} && return 0
 
 	printf "ERROR: Could not copy temp file to destination.\n"
@@ -90,12 +91,15 @@ clone_project()
 
 patch_project()
 {
+	patchdir="resources/${name}/patches"
+
 	for patchfile in ${PWD}/${patchdir}/*.patch ; do
 		if [ ! -f "${patchfile}" ]; then
 			continue
 		fi
-		( cd ${tmp_dir}
-		git am ${patchfile} || return 1
+		(
+		cd ${tmp_dir}
+		git am ${patchfile} || err "Cannot patch project: $name"
 		)
 	done
 }
