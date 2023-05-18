@@ -22,16 +22,17 @@ set_placeholders()
 	set_git_credentials
 
 	# Check coreboot as well to prevent errors during building
-	if [ -d coreboot ]; then
-		for x in coreboot/*; do
-			if [ ! -d "${x}" ]; then
-				continue
-			fi
-			cd "${x}"
-			set_git_credentials
-			cd -
-		done
+	if [ ! -d coreboot ]; then
+		return
 	fi
+	for x in coreboot/*; do
+		if [ ! -d "${x}" ]; then
+			continue
+		fi
+		cd "${x}"
+		set_git_credentials
+		cd -
+	done
 }
 
 set_git_credentials()
