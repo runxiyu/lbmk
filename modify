@@ -51,10 +51,10 @@ main()
 	case "${option}" in
 	list)
 		printf "Options for mode '%s':\n\n" ${mode}
-		listoptions "${mode}"
+		listitems "${modify}/${mode}"
 		;;
 	all)
-		for option in $(listoptions "${mode}"); do
+		for option in $(listitems "${modify}/${mode}"); do
 			"${modify}/${mode}/${option}" $@
 		done
 		;;
@@ -71,21 +71,13 @@ main()
 	esac
 }
 
-# Takes exactly one mode as parameter
-listoptions()
-{
-	for option in "${modify}/${1}/"*; do
-		printf '%s\n' ${option##*/}
-	done
-}
-
 help()
 {
 	cat <<- EOF
 	USAGE:	./modify <MODE> <OPTION>
 
 	possible values for 'mode':
-	$(listmodes)
+	$(listitems "${modify}")
 
 	Example:	./modify coreboot configs
 	Example:	./modify coreboot configs x60
@@ -94,10 +86,11 @@ help()
 	EOF
 }
 
-listmodes()
+listitems()
 {
-	for mode in "${modify}/"*; do
-		printf '%s\n' "${mode##*/}"
+	for x in "${1}/"*; do
+		[ ! -f "${x}" ] && continue
+		printf "%s\n" ${x##*/}
 	done
 }
 
