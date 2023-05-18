@@ -21,8 +21,10 @@ Clean(){
 }
 
 Run(){
-if [ "${1}" = "clean" ]; then
-	Clean
+if [ $# -gt 0 ]; then
+	if [ "${1}" = "clean" ]; then
+		Clean
+	fi
 else
 	Set_placeholder
 
