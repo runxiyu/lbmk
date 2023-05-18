@@ -20,29 +20,73 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-./.gitcheck
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
 projectname="$(cat projectname)"
-
 build=./resources/scripts/build
+mode=""
+option=""
 
-listmodes() {
-	for mode in "${build}"/*; do
-		printf '%s\n' "${mode##*/}"
-	done
+main()
+{
+	if [ $# -lt 1 ]; then
+		die "Wrong argument count. Run: ./build help"
+	fi
+	mode="${1}"
+
+	./.gitcheck
+
+	if [ "${mode}" != "dependencies" ]; then
+		./resources/scripts/misc/versioncheck
+	fi
+	if [ "${mode}" = help ]; then
+		usage
+		exit 0
+	elif [ $# -lt 2 ]; then
+		usage
+		exit 0
+	fi
+
+	option="${2}"
+	shift 2
+
+	case "${option}" in
+	list)
+		printf "Options for mode '%s':\n\n" ${mode}
+		listoptions "${mode}"
+		;;
+	all)
+		for option in $(listoptions "${mode}"); do
+			"${build}/${mode}/${option}" $@
+		done
+		;;
+	*)
+		if [ ! -d "${build}/${mode}" ]; then
+			usage
+			die "Invalid mode '${mode}'. Run: ./build help"
+		elif [ ! -f "${build}/${mode}/${option}" ]; then
+			usage
+			printf "Invalid option for '%s'." ${mode}
+			die "Run: ./build ${mode} list'."
+		fi
+		"${build}/${mode}/${option}" $@
+	esac
+
+	./.gitcheck clean
 }
 
 # Takes exactly one mode as parameter
-listoptions() {
-	for option in "${build}"/"${1}"/*; do
-		printf '%s\n' "${option##*/}"
+listoptions()
+{
+	for option in "${build}/${1}/"*; do
+		printf '%s\n' ${option##*/}
 	done
 }
 
-help() {
+usage()
+{
 	cat <<- EOF
 	USAGE:	./build <MODE> <OPTION>
 
@@ -58,54 +102,17 @@ help() {
 	EOF
 }
 
-die() {
-	printf 'Error: %s\n' "${@}" 1>&2
+listmodes()
+{
+	for mode in "${build}"/*; do
+		printf '%s\n' ${mode##*/}
+	done
+}
+
+die()
+{
+	printf 'Error: %s\n' ${@} 1>&2
 	exit 1
 }
 
-if [ $# -lt 1 ]; then
-	die "Wrong argument count. Run: ./build help"
-fi
-
-mode="${1}"
-
-if [ "${mode}" != "dependencies" ]; then
-	./resources/scripts/misc/versioncheck
-fi
-
-[ "${mode}" = help ] && help && exit 0
-
-if [ $# -gt 1 ]; then
-
-	option="${2}"
-	shift 2
-
-	case "${option}" in
-	list)
-		printf "Options for mode '%s':\n\n" ${mode}
-		listoptions "${mode}"
-		;;
-	all)
-		for option in $(listoptions "${mode}"); do
-			"${build}"/"${mode}"/"${option}" $@
-		done
-		;;
-	*)
-		if [ ! -d "${build}"/"${mode}"/ ]; then
-			help
-			die "Invalid mode '${mode}'. Run: ./build help"
-		fi
-		if [ -f "${build}"/"${mode}"/"${option}" ]; then
-			"${build}"/"${mode}"/"${option}" $@
-		else
-			help
-			printf "Invalid option for '%s'." ${mode}
-			die "Run: ./build ${mode} list'."
-		fi
-	esac
-else
-	help
-	exit 0
-fi
-
-./.gitcheck clean
+main $@
