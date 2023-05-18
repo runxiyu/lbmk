@@ -74,4 +74,4 @@ unset_placeholders()
 	fi
 }
 
-main $@
+main $@ > /dev/null 2> /dev/null
