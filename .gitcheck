@@ -10,10 +10,13 @@ main()
 {
 	if [ $# -gt 0 ]; then
 		if [ "${1}" = "clean" ]; then
-			clean
+			clean > /dev/null 2> /dev/null
+		else
+			printf "%s: Unsupported argument\n" $0
+			exit 1
 		fi
 	else
-		set_placeholders
+		set_placeholders > /dev/null 2> /dev/null
 	fi
 }
 
@@ -76,4 +79,4 @@ unset_placeholders()
 	fi
 }
 
-main $@ > /dev/null 2> /dev/null
+main $@
