@@ -48,6 +48,23 @@ set_git_credentials()
 
 clean()
 {
+	unset_placeholders
+
+	if [ ! -d coreboot ]; then
+		return
+	fi
+	for x in coreboot/*; do
+		if [ ! -d "${x}" ]; then
+			continue
+		fi
+		cd "${x}"
+		unset_placeholders
+		cd -
+	done
+}
+
+unset_placeholders()
+{
 	if [ "$(git config user.name)" = "${git_name}" ]; then
 		git config --unset user.name
 	fi
