@@ -4,6 +4,7 @@
 #
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
+#	Copyright (C) 2023 Leah Rowe <leah@libreboot.org>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -22,32 +23,65 @@
 set -u -e
 
 RET=0
-
-# Build U-Boot
-# ---------------------------------------------------------------------
-
-printf "Building U-Boot payloads\n"
-
 pdir="payload/u-boot"
+ubdir=""
+arch=""
+ubtree=""
+config_name=""
+board_dir=""
 
-# Build for all boards if no argument is given
-if [ "$#" -eq 0 ]; then
-	for board_dir in resources/u-boot/*; do
-		[ ! -d "${board_dir}/config/" ] && \
-			continue
-		set -- "$@" "${board_dir#resources/u-boot/}"
-	done
-fi
-
-[ ! -d "payload/" ] && mkdir -p payload/
-[ ! -d "${pdir}" ] && mkdir -p ${pdir}/
-
-# Appends additional version info to U-Boot
 our_version="$(cat version)"
 projectname="$(cat projectname)"
+
 export LOCALVERSION="-${projectname}-${our_version}"
 
-for board in "$@"; do
+main()
+{
+	printf "Building U-Boot payloads\n"
+
+	# Build for all boards if no argument is given
+	if [ "$#" -eq 0 ]; then
+		for board_dir in resources/u-boot/*; do
+			[ ! -d "${board_dir}/config/" ] && \
+				continue
+			set -- "$@" "${board_dir#resources/u-boot/}"
+		done
+	fi
+
+	[ ! -d "payload/" ] && \
+		mkdir -p payload/
+	[ ! -d "${pdir}" ] && \
+		mkdir -p ${pdir}/
+
+	for board in "$@"; do
+		build_uboot_payloads "${board}" || continue
+	done
+
+	printf "Done! U-Boot files are in %s/\n\n" ${pdir}
+	exit $RET
+}
+
+build_uboot_payloads()
+{
+	board=${1}
+
+	handle_dependencies "${board}" || return 1
+
+	for config in "${board_dir}/config"/*; do
+		config_name="${config#$board_dir/config/}"
+
+		check_config "${board}" "${config}" || continue
+		build_uboot_elf "${config}"
+
+		printf "build/u-boot %s: build config %s\n" \
+				"${board}" "${config_name}"
+	done
+}
+
+handle_dependencies()
+{
+	board=${1}
+
 	board_dir="resources/u-boot/${board}"
 	rm -rf "${pdir}/${board}"
 	mkdir -p "${pdir}/${board}"
@@ -59,7 +93,7 @@ for board in "$@"; do
 		printf "build/u-boot %s: Missing board.cfg.\n" \
 				"${board}"
 		RET=1
-		continue
+		return 1
 	fi
 
 	# Override the above defaults using board.cfg
@@ -69,13 +103,13 @@ for board in "$@"; do
 		printf "build/u-boot %s: ubtree undefined\n" \
 				"${board}"
 		RET=1
-		continue
+		return 1
 	fi
 	if [ "${arch}" = "undefined" ]; then
 		printf "build/u-boot %s: undefined cpu type\n" \
 				"${board}"
 		RET=1
-		continue
+		return 1
 	fi
 
 	ubdir="u-boot/${board}"
@@ -91,50 +125,55 @@ for board in "$@"; do
 		printf "build/u-boot %s: uboot download failed\n" \
 				"${board}"
 		RET=1
-		continue
+		return 1
+	fi
+}
+
+check_config()
+{
+	board=${1}
+	config=${2}
+
+	if [ ! -f "${config}" ]; then
+		printf "build/u-boot %s: configs missing\n" \
+				${board}
+		RET=1
+		return 1
 	fi
 
-	for config in "${board_dir}/config"/*; do
-		if [ ! -f "${config}" ]; then
-			printf "build/u-boot %s: configs missing\n" \
-					${board}
-			RET=1
-			continue
+	if [ "$config_name" = "default" ]; then
+		dest_dir="${pdir}/${board}"
+	else
+		dest_dir="${pdir}/${board}/${config_name}"
+	fi
+	mkdir -p "${dest_dir}"
+
+	printf "build/u-boot %s: building config %s).\n" \
+			${board} ${config_name}
+}
+
+build_uboot_elf()
+{
+	config=${1}
+
+	make -C "${ubdir}" distclean
+
+	cp "${config}" "${ubdir}/.config"
+	make -C "${ubdir}" olddefconfig
+	make -C "${ubdir}" -j"$(nproc)" all
+
+	for f in "${ubdir}"/u-boot "${ubdir}"/u-boot.bin \
+			"${ubdir}"/u-boot.dtb \
+			"${ubdir}"/u-boot.img \
+			"${ubdir}"/u-boot.itb \
+			"${ubdir}"/u-boot.elf
+	do
+		if [ -f "$f" ]; then
+			mv "$f" "${dest_dir}/"
 		fi
-
-		config_name="${config#$board_dir/config/}"
-		if [ "$config_name" = "default" ]; then
-			dest_dir="${pdir}/${board}"
-		else
-			dest_dir="${pdir}/${board}/${config_name}"
-		fi
-		mkdir -p "${dest_dir}"
-
-		printf "build/u-boot %s: building config %s).\n" \
-				${board} ${config_name}
-
-		make -C "${ubdir}" distclean
-
-		cp "${config}" "${ubdir}/.config"
-		make -C "${ubdir}" olddefconfig
-		make -C "${ubdir}" -j"$(nproc)" all
-
-		for f in "${ubdir}"/u-boot "${ubdir}"/u-boot.bin \
-					"${ubdir}"/u-boot.dtb \
-					"${ubdir}"/u-boot.img \
-					"${ubdir}"/u-boot.itb \
-					"${ubdir}"/u-boot.elf; do
-			if [ -f "$f" ]; then
-				mv "$f" "${dest_dir}/"
-			fi
-		done
-
-		make -C "${ubdir}" distclean
-
-		printf "build/u-boot %s: build config %s\n" \
-				"${board}" "${config_name}"
 	done
-done
 
-printf "Done! U-Boot files are in %s/\n\n" ${pdir}
-exit $RET
+	make -C "${ubdir}" distclean
+}
+
+main $@
