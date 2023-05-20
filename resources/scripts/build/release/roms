@@ -132,8 +132,8 @@ purge_blobs()
 			> "${romdir}/blobhashes"
 	fi
 	(
-	cd ${romdir}
-	sha1sum *.rom >> blobhashes
+	cd ${romdir} || err "subshell: cd"
+	sha1sum *.rom >> blobhashes || err "subshell: sha1sum"
 	)
 
 	for romfile in "${romdir}"/*.rom
