@@ -2,9 +2,8 @@
 
 #  helper script: builds U-Boot source code
 #
-#	Copyright (C) 2020, 2021 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2021, 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +17,6 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
