@@ -40,7 +40,7 @@ main()
 	init_check
 
 	for romdir in bin/*; do
-		make_archive
+		make_archive "${romdir}"
 	done
 
 	printf "\nROM archives available at release/%s/roms/\n\n" "${version}"
@@ -66,6 +66,7 @@ init_check()
 
 make_archive()
 {
+	romdir=${1}
 	target="${romdir##*/}"
 
 	echo ${target}
@@ -89,7 +90,7 @@ make_archive()
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] \
 			|| [ "${target}" = "e6400nvidia_4mb" ]; then
-		purge_blobs
+		purge_blobs "${romdir}"
 	fi
 
 	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
@@ -111,6 +112,8 @@ make_archive()
 
 purge_blobs()
 {
+	romdir=${1}
+
 	if [ ! -d coreboot/default ]; then
 		./download coreboot default || exit 1
 	fi
