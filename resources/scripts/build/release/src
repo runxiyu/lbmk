@@ -113,41 +113,47 @@ copy_blobs()
 purge_files()
 {
 	(
-	cd "${srcdir}/coreboot/"
+	cd "${srcdir}/coreboot/" || err "cd1"
 	for i in *; do
 		[ ! -d "${i}" ] && \
 			continue
 		(
-		cd "${i}/"
-		make distclean
+		cd "${i}/" || err "cd2"
+		make distclean || err "make-distclean1"
 		)
-	make clean -BC default/util/kbc1126/
+		make clean -BC default/util/kbc1126/ || err "make-clean1"
 	done
 	)
 
 	(
-	cd "${srcdir}/"
-	./build clean all
-	make clean -BC util/nvmutil
-	make clean -BC util/ich9utils
+	cd "${srcdir}/" || err "cd3"
+	./build clean all || err "build-clean1"
+	make clean -BC util/nvmutil || err "make-clean2"
+	make clean -BC util/ich9utils || err "make-clean3"
 
-	rm -Rf coreboot/coreboot/
-	rm -Rf .git .gitignore */.git* coreboot/*/.git* coreboot/*/3rdparty/*/.git*
-	rm -Rf coreboot/*/util/nvidia/cbootimage/.git*
-	rm -Rf u-boot/u-boot/ u-boot/*/.git*
+	rm -Rf coreboot/coreboot/ || err "rm-rf1"
+	rm -Rf .git .gitignore */.git* coreboot/*/.git* \
+			coreboot/*/3rdparty/*/.git* || err "rm-rf2"
+	rm -Rf coreboot/*/util/nvidia/cbootimage/.git* || err "rm-rf3"
+	rm -Rf u-boot/u-boot/ u-boot/*/.git* || err "rm-rf4"
 	)
 }
 
 create_release_archive()
 {
 	(
-	cd "${reldir}/"
+	cd "${reldir}/" || err "cd4"
 	printf "%s\n" "${version}" > "${dirname}/version"
 	printf "%s\n" "${versiondate}" > "${dirname}/versiondate"
 	printf "%s\n" "${projectname}" > "${dirname}/projectname"
-	tar -c "${dirname}/" | xz -9e >"${dirname}.tar.xz"
-	rm -Rf "${dirname}/"
+	tar -c "${dirname}/" | xz -9e >"${dirname}.tar.xz" || err "tar"
+	rm -Rf "${dirname}/" || err "rm-rf5"
 	)
+}
+
+err()
+{
+	printf "%s: %s\n" $0 $1
 }
 
 main $@
