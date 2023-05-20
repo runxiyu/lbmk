@@ -28,17 +28,19 @@ RET=0
 
 printf "Building U-Boot payloads\n"
 
+pdir="payload/u-boot"
+
 # Build for all boards if no argument is given
 if [ "$#" -eq 0 ]; then
 	for board_dir in resources/u-boot/*; do
-		if [ -d "${board_dir}/config/" ]; then
-			set -- "$@" "${board_dir#resources/u-boot/}"
-		fi
+		[ ! -d "${board_dir}/config/" ] && \
+			continue
+		set -- "$@" "${board_dir#resources/u-boot/}"
 	done
 fi
 
 [ ! -d "payload/" ] && mkdir -p payload/
-[ ! -d "payload/u-boot" ] && mkdir -p payload/u-boot/
+[ ! -d "${pdir}" ] && mkdir -p ${pdir}/
 
 # Appends additional version info to U-Boot
 our_version="$(cat version)"
@@ -47,15 +49,15 @@ export LOCALVERSION="-${projectname}-${our_version}"
 
 for board in "$@"; do
 	board_dir="resources/u-boot/${board}"
-	rm -rf "payload/u-boot/${board}"
-	mkdir -p "payload/u-boot/${board}"
+	rm -rf "${pdir}/${board}"
+	mkdir -p "${pdir}/${board}"
 
 	ubtree="undefined"
 	arch="undefined"
 
 	if [ ! -f "${board_dir}/board.cfg" ]; then
-		printf "%s: Target %s does not have a board.cfg. Skipping build.\n" \
-			"build/payload/u-boot" "${board}"
+		printf "build/u-boot %s: Missing board.cfg.\n" \
+				"${board}"
 		RET=1
 		continue
 	fi
@@ -64,14 +66,14 @@ for board in "$@"; do
 	. "${board_dir}/board.cfg" # source
 
 	if [ "${ubtree}" = "undefined" ]; then
-		printf "%s: Target %s does not define a U-Boot tree. Skipping build.\n" \
-			"build/payload/u-boot" "${board}"
+		printf "build/u-boot %s: ubtree undefined\n" \
+				"${board}"
 		RET=1
 		continue
 	fi
 	if [ "${arch}" = "undefined" ]; then
-		printf "%s: Target %s does not define a CPU type. Skipping build.\n" \
-			"build/payload/u-boot" "${board}"
+		printf "build/u-boot %s: undefined cpu type\n" \
+				"${board}"
 		RET=1
 		continue
 	fi
@@ -86,30 +88,30 @@ for board in "$@"; do
 	fi
 
 	if [ ! -d "${ubdir}" ]; then
-		printf "%s: Failed to download U-Boot for target %s. Skipping build.\n" \
-			"build/payload/u-boot" "${board}"
+		printf "build/u-boot %s: uboot download failed\n" \
+				"${board}"
 		RET=1
 		continue
 	fi
 
 	for config in "${board_dir}/config"/*; do
 		if [ ! -f "${config}" ]; then
-			printf "%s: Target %s has no configs to build for. Skipping build.\n" \
-				"build/payload/u-boot" "${board}"
+			printf "build/u-boot %s: configs missing\n" \
+					${board}
 			RET=1
 			continue
 		fi
 
 		config_name="${config#$board_dir/config/}"
 		if [ "$config_name" = "default" ]; then
-			dest_dir="payload/u-boot/${board}"
+			dest_dir="${pdir}/${board}"
 		else
-			dest_dir="payload/u-boot/${board}/${config_name}"
+			dest_dir="${pdir}/${board}/${config_name}"
 		fi
 		mkdir -p "${dest_dir}"
 
-		printf "%s: Building for target %s (config %s).\n" \
-			"build/payload/u-boot" "${board}" "${config_name}"
+		printf "build/u-boot %s: building config %s).\n" \
+				${board} ${config_name}
 
 		make -C "${ubdir}" distclean
 
@@ -117,8 +119,11 @@ for board in "$@"; do
 		make -C "${ubdir}" olddefconfig
 		make -C "${ubdir}" -j"$(nproc)" all
 
-		for f in "${ubdir}"/u-boot "${ubdir}"/u-boot.bin "${ubdir}"/u-boot.dtb \
-			"${ubdir}"/u-boot.img "${ubdir}"/u-boot.itb "${ubdir}"/u-boot.elf; do
+		for f in "${ubdir}"/u-boot "${ubdir}"/u-boot.bin \
+					"${ubdir}"/u-boot.dtb \
+					"${ubdir}"/u-boot.img \
+					"${ubdir}"/u-boot.itb \
+					"${ubdir}"/u-boot.elf; do
 			if [ -f "$f" ]; then
 				mv "$f" "${dest_dir}/"
 			fi
@@ -126,12 +131,10 @@ for board in "$@"; do
 
 		make -C "${ubdir}" distclean
 
-		printf "%s: Built for target %s (config %s).\n" \
-			"build/payload/u-boot" "${board}" "${config_name}"
+		printf "build/u-boot %s: build config %s\n" \
+				"${board}" "${config_name}"
 	done
 done
 
-printf "Done! U-Boot files are in payload/u-boot/\n\n"
+printf "Done! U-Boot files are in %s/\n\n" ${pdir}
 exit $RET
-
-# ------------------- DONE ----------------------
