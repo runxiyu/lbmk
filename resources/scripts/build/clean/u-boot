@@ -20,18 +20,11 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# This script assumes that the current working directory is the root
-
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-# clean u-boot builds (dependencies for 'build'):
-
 printf "Cleaning u-boot builds for all boards\n"
 
-[ ! -d "coreboot/" ] && exit 0
-
-# clean u-boot (source archives preserved)
 for board in u-boot/*; do
 	if [ "${board##*/}" = "u-boot" ] || [ ! -d "${board}" ]; then
 		continue
