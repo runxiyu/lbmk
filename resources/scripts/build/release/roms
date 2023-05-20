@@ -90,7 +90,7 @@ make_archive()
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] \
 			|| [ "${target}" = "e6400nvidia_4mb" ]; then
-		purge_blobs "${romdir}"
+		strip_archive "${romdir}"
 	fi
 
 	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
@@ -110,7 +110,7 @@ make_archive()
 	fi
 }
 
-purge_blobs()
+strip_archive()
 {
 	romdir=${1}
 
@@ -137,34 +137,41 @@ purge_blobs()
 
 	for romfile in "${romdir}"/*.rom
 	do
-		if [ ! -f "${romfile}" ]; then
-			continue
-		fi
-
-		if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-			${ifdtool} --nuke me "${romfile}" || exit 1
-			mv "${romfile}" "${romdir}_tmp"/
-			mv "${romfile}.new" "${romfile}"
-		fi
-
-		if [ "${CONFIG_HAVE_MRC}" = "y" ]
-		then
-			${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
-			${cbfstool} "${romfile}" print
-		fi
-
-		if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-			${cbfstool} "${romfile}" remove -n ecfw1.bin || exit 1
-			${cbfstool} "${romfile}" remove -n ecfw2.bin || exit 1
-		fi
-
-		# TODO: replace this board-specific hack
-		if [ "${target}" = "e6400nvidia_4mb" ]; then
-			${cbfstool} "${romfile}" remove \
-				-n "pci10de,06eb.rom" \
-				|| exit 1
-		fi
+		strip_rom_image "${romfile}"
 	done
+}
+
+strip_rom_image()
+{
+	romfile=${1}
+
+	if [ ! -f "${romfile}" ]; then
+		continue
+	fi
+
+	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+		${ifdtool} --nuke me "${romfile}" || exit 1
+		mv "${romfile}" "${romdir}_tmp"/
+		mv "${romfile}.new" "${romfile}"
+	fi
+
+	if [ "${CONFIG_HAVE_MRC}" = "y" ]
+	then
+		${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
+		${cbfstool} "${romfile}" print
+	fi
+
+	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
+		${cbfstool} "${romfile}" remove -n ecfw1.bin || exit 1
+		${cbfstool} "${romfile}" remove -n ecfw2.bin || exit 1
+	fi
+
+	# TODO: replace this board-specific hack
+	if [ "${target}" = "e6400nvidia_4mb" ]; then
+		${cbfstool} "${romfile}" remove \
+			-n "pci10de,06eb.rom" \
+			|| exit 1
+	fi
 }
 
 err()
