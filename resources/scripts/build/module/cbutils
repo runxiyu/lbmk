@@ -31,7 +31,8 @@ buildutils() {
 		./download coreboot $cbtree || return 1
 	fi
 	if [ ! -d "coreboot/${cbtree}/" ]; then
-		printf "build/cbutils: coreboot/%s not found. Exiting\n" "${cbtree}"
+		printf "build/cbutils: coreboot/%s not found. Exiting\n" \
+				"${cbtree}"
 		return 1
 	fi
 	for util in cbfstool ifdtool; do
@@ -54,7 +55,8 @@ buildfromboardconfig() {
 	cbtree="undefined"
 	. "resources/coreboot/${board}/board.cfg" # source
 	if [ "${cbtree}" = "undefined" ]; then
-		printf "build/cbutils: improper cbtree definition for '%s'" "${board}"
+		printf "build/cbutils: improper cbtree definition for '%s'" \
+				"${board}"
 		return 1
 	fi
 	buildutils "${cbtree}" || return 1
