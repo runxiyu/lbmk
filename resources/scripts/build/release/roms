@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 
-#
 #  helper script: generate release archive (ROM images)
 #
 #	Copyright (C) 2020,2021,2022,2023 Leah Rowe <info@minifree.org>
@@ -18,9 +17,6 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-# This script assumes that the working directory is the root
-# of git or release archive
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
