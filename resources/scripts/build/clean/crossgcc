@@ -2,43 +2,45 @@
 
 #  helper script: clean the crossgcc builds
 #
-#	Copyright (C) 2014, 2015, 2016, 2020 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2014-2016, 2020, 2023 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-# This script assumes that the current working directory is the root
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-# clean coreboot utilities (dependencies for 'build'):
+main()
+{
+	printf "Cleaning crossgcc builds in all coreboot archives\n"
 
-printf "Cleaning crossgcc builds in all coreboot archives\n"
+	[ ! -d "coreboot/" ] && exit 0
 
-[ ! -d "coreboot/" ] && exit 0
+	for board in coreboot/*; do
+		[ "${board##*/}" = "coreboot" ] && \
+			continue
+		[ ! -d "${board}" ] && \
+			continue
+		make -C "${board}/" crossgcc-clean || err "make-clean"
+	done
+}
 
-# clean coreboot and crossgcc (source archives preserved)
-for board in coreboot/*; do
-    if [ "${board##*/}" = "coreboot" ]; then
-        continue
-    fi
-    if [ ! -d "${board}" ]; then
-        continue
-    fi
-    make -C "${board}/" crossgcc-clean
-done
+err()
+{
+	printf "%s: %s\n" $0 $1
+	exit 1
+}
 
-printf "\n\n"
+main $@
