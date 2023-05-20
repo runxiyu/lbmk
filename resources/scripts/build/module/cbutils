@@ -4,18 +4,18 @@
 #
 #	Copyright (C) 2014, 2015, 2016, 2020, 2021 Leah Rowe <info@minifree.org>
 #
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 # This script assumes that the current working directory is the root
@@ -26,52 +26,52 @@ set -u -e
 printf "Building coreboot utils\n"
 
 buildutils() {
-    cbtree="${1}"
-    if [ ! -d "coreboot/${cbtree}/" ]; then
-        ./download coreboot $cbtree || return 1
-    fi
-    if [ ! -d "coreboot/${cbtree}/" ]; then
-        printf "build/cbutils: coreboot/%s not found. Exiting\n" "${cbtree}"
-        return 1
-    fi
-    for util in cbfstool ifdtool; do
-    (
-        cd "coreboot/${cbtree}/util/${util}/"
-        make -j$(nproc) || return 1
-    )
-    done
-    return 0
+	cbtree="${1}"
+	if [ ! -d "coreboot/${cbtree}/" ]; then
+		./download coreboot $cbtree || return 1
+	fi
+	if [ ! -d "coreboot/${cbtree}/" ]; then
+		printf "build/cbutils: coreboot/%s not found. Exiting\n" "${cbtree}"
+		return 1
+	fi
+	for util in cbfstool ifdtool; do
+	(
+		cd "coreboot/${cbtree}/util/${util}/"
+		make -j$(nproc) || return 1
+	)
+	done
+	return 0
 }
 
 buildfromboardconfig() {
-    board="${1}"
-    if [ ! -d "resources/coreboot/${board}" ]; then
-        continue
-    fi
-    if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
-        continue
-    fi
-    cbtree="undefined"
-    . "resources/coreboot/${board}/board.cfg" # source
-    if [ "${cbtree}" = "undefined" ]; then
-        printf "build/cbutils: improper cbtree definition for '%s'" "${board}"
-        return 1
-    fi
-    buildutils "${cbtree}" || return 1
-    return 0
+	board="${1}"
+	if [ ! -d "resources/coreboot/${board}" ]; then
+		continue
+	fi
+	if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
+		continue
+	fi
+	cbtree="undefined"
+	. "resources/coreboot/${board}/board.cfg" # source
+	if [ "${cbtree}" = "undefined" ]; then
+		printf "build/cbutils: improper cbtree definition for '%s'" "${board}"
+		return 1
+	fi
+	buildutils "${cbtree}" || return 1
+	return 0
 }
 
 if [ $# -gt 0 ]; then
-    for board in "${@}"; do
-        buildfromboardconfig ${board} || exit 1
-    done
+	for board in "${@}"; do
+		buildfromboardconfig ${board} || exit 1
+	done
 else
-    for boarddir in resources/coreboot/*; do
-        if [ ! -d "${boarddir}" ]; then
-            continue
-        fi
-        buildfromboardconfig ${boarddir##*/} || exit 1
-    done
+	for boarddir in resources/coreboot/*; do
+		if [ ! -d "${boarddir}" ]; then
+			continue
+		fi
+		buildfromboardconfig ${boarddir##*/} || exit 1
+	done
 fi
 
 printf "\n\n"
