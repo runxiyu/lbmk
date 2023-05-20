@@ -87,14 +87,9 @@ build_grub_elf()
 
 create_grub_configs()
 {
-	if [ "${keymap}" = "usqwerty" ]; then	
-		cp ${grubcfgsdir}/config/grub.cfg \
-				payload/grub/grub_usqwerty.cfg
-	else
-		sed "s/usqwerty/${keymap}/" \
-				< ${grubcfgsdir}/config/grub.cfg \
-				> payload/grub/grub_${keymap}.cfg
-	fi
+	sed "s/usqwerty/${keymap}/" \
+			< ${grubcfgsdir}/config/grub.cfg \
+			> payload/grub/grub_${keymap}.cfg
 	sed "s/grubtest.cfg/grub.cfg/" \
 			< payload/grub/grub_${keymap}.cfg \
 			> payload/grub/grub_${keymap}_test.cfg
