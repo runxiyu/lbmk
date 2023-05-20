@@ -22,32 +22,54 @@
 set -u -e
 
 grubcfgsdir="resources/grub"
+keymap=""
 
 . "${grubcfgsdir}/modules.list"
 
-printf "Creating GRUB payloads and configuration files\n"
+main()
+{
+	printf "Creating GRUB payloads and configuration files\n"
 
-if [ ! -d "grub/" ]; then
-	./download grub
-fi
+	[ ! -d "grub/" ] && \
+		./download grub
+	[ ! -f "grub/grub-mkstandalone" ] && \
+		./build module grub
+	[ ! -d "payload/" ] && \
+		mkdir -p payload/
+	[ ! -d "payload/grub" ] && \
+		mkdir -p payload/grub/
 
-if [ ! -f "grub/grub-mkstandalone" ]; then
-	./build module grub
-fi
+	rm -f payload/grub/*
 
-[ ! -d "payload/" ] && mkdir -p payload/
-[ ! -d "payload/grub" ] && mkdir -p payload/grub/
+	# Separate GRUB payload per keymap to save space in ROM.
 
-rm -f payload/grub/*
+	for keylayoutfile in ${grubcfgsdir}/keymap/*.gkb; do
+		build_grub_payload "${keylayoutfile}"
+	done
 
-# Separate GRUB payload per keymap to save space in ROM.
+	printf "Done! Check payload/grub/ to see the files.\n\n"
+}
 
-for keylayoutfile in ${grubcfgsdir}/keymap/*.gkb; do
+build_grub_payload()
+{
+	keylayoutfile=${1}
+
 	if [ ! -f "${keylayoutfile}" ]; then
 		continue
 	fi
 	keymap="${keylayoutfile##${grubcfgsdir}/keymap/}"
 	keymap="${keymap%.gkb}"
+
+	build_grub_elf "${keylayoutfile}"
+	create_grub_configs
+
+	printf "Created 'payload/grub/grub_%s.elf' and configs.'\n" \
+			"${keymap}"
+}
+
+build_grub_elf()
+{
+	keylayoutfile=${1}
 
 	gcfg="/boot/grub/grub.cfg=${grubcfgsdir}"
 	gcfg="${gcfg}/config/grub_memdisk.cfg"
@@ -61,8 +83,10 @@ for keylayoutfile in ${grubcfgsdir}/keymap/*.gkb; do
 			--modules="${grub_modules}" \
 			--install-modules="${grub_install_modules}" \
 			${gcfg} ${grubk}
+}
 
-
+create_grub_configs()
+{
 	if [ "${keymap}" = "usqwerty" ]; then	
 		cp ${grubcfgsdir}/config/grub.cfg \
 				payload/grub/grub_usqwerty.cfg
@@ -71,13 +95,9 @@ for keylayoutfile in ${grubcfgsdir}/keymap/*.gkb; do
 				< ${grubcfgsdir}/config/grub.cfg \
 				> payload/grub/grub_${keymap}.cfg
 	fi
-
 	sed "s/grubtest.cfg/grub.cfg/" \
 			< payload/grub/grub_${keymap}.cfg \
 			> payload/grub/grub_${keymap}_test.cfg
+}
 
-	printf "Created 'payload/grub/grub_%s.elf' and configs.'\n" \
-			"${keymap}"
-done
-
-printf "Done! Check payload/grub/ to see the files.\n\n"
+main $@
