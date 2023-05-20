@@ -27,17 +27,17 @@ main()
 {
 	if [ $# -gt 0 ]; then
 		for board in "${@}"; do
-			buildfromboardconfig ${board} || exit 1
+			build_for_mainboard ${board} || exit 1
 		done
 	else
 		for boarddir in resources/coreboot/*; do
 			[ ! -d "${boarddir}" ] && continue
-			buildfromboardconfig ${boarddir##*/} || exit 1
+			build_for_mainboard ${boarddir##*/} || exit 1
 		done
 	fi
 }
 
-buildfromboardconfig() {
+build_for_mainboard() {
 	board="${1}"
 	[ ! -d "resources/coreboot/${board}" ] && \
 		continue
