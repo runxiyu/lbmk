@@ -2,22 +2,22 @@
 
 #  helper script: clean the u-boot builds
 #
-#       Copyright (C) 2014, 2015, 2016, 2020 Leah Rowe <info@minifree.org>
-#       Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
-#       Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+#	   Copyright (C) 2014, 2015, 2016, 2020 Leah Rowe <info@minifree.org>
+#	   Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
+#	   Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 # This script assumes that the current working directory is the root
@@ -33,17 +33,14 @@ printf "Cleaning u-boot builds for all boards\n"
 
 # clean u-boot (source archives preserved)
 for board in u-boot/*; do
-    if [ "${board##*/}" = "u-boot" ]; then
-        continue
-    fi
-    if [ ! -d "${board}" ]; then
-        continue
-    fi
-    make -C "${board}/" distclean
+	if [ "${board##*/}" = "u-boot" ] || [ ! -d "${board}" ]; then
+		continue
+	fi
 
-    if [ -e "${board}/.git" ]; then
-        git -C "${board}" clean -fdx
-    fi
+	make -C "${board}/" distclean
+
+	[ -e "${board}/.git" ] && \
+		git -C "${board}" clean -fdx
 done
 
 printf "\n\n"
