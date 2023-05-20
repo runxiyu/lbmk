@@ -28,9 +28,6 @@ set -u -e
 # --------------------------------------------------------------------
 
 printf "Cleaning the previous build of ich9utils\n"
-(
-cd "util/ich9utils/"
-make clean
-)
+make clean -C util/ich9utils
 rm -Rf descriptors/
 printf "\n\n"
