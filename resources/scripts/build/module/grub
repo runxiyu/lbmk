@@ -27,25 +27,35 @@ main()
 	printf "Building GRUB\n"
 
 	if [ ! -d "grub/" ]; then
-		./download grub
+		./download grub || exit 1
 	fi
+
+	build_grub
 }
 
 build_grub()
 {
 	(
-	cd grub/
+	cd grub/ || err "cd"
 
 	# clean up first
-	[ -d Makefile ] && make distclean
+	if [ -d Makefile ]; then
+		make distclean || err "make-distclean"
+	fi
 
-	./bootstrap --gnulib-srcdir=gnulib/ --no-git 
+	./bootstrap --gnulib-srcdir=gnulib/ --no-git || err "bootstrap"
 
 	# build
-	./autogen.sh
-	./configure --with-platform=coreboot
-	make -j$(nproc)
+	./autogen.sh || err "autogen"
+	./configure --with-platform=coreboot || err "configure"
+	make -j$(nproc) || err "make"
 	)
+}
+
+err()
+{
+	printf "%s: error: %s\n" $0 $1
+	exit 1
 }
 
 main $@
