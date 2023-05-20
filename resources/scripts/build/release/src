@@ -22,9 +22,15 @@
 set -u -e
 
 projectname="$(cat projectname)"
-modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot bios_extract"
-dirlist="resources util" # do not add blobs directory here. it is handled below
-filelist="blobutil modify download build README.md COPYING Makefile update version versiondate projectname .gitcheck gitclone"
+
+modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot"
+modlist="${modlist} bios_extract"
+
+dirlist="resources util" # do not add blobs directory here. it's handled below
+
+filelist="blobutil modify download build README.md COPYING Makefile update"
+filelist="${filelist} version versiondate projectname .gitcheck gitclone"
+
 version="version-unknown"
 versiondate="version-date-unknown"
 reldir=""
@@ -86,9 +92,8 @@ copy_files()
 
 	for i in ${filelist}; do
 		if [ ! -f "${i}" ]; then
-			printf "build/release/src: ERROR: file '%s' does not exist.\n" "${i}"
 			rm -Rf "${srcdir}"
-			exit 1
+			err "file '${1}' does not exist"
 		fi
 		cp ${i} "${srcdir}/"
 	done
