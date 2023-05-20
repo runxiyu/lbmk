@@ -58,11 +58,6 @@ buildutils() {
 	if [ ! -d "coreboot/${cbtree}/" ]; then
 		./download coreboot $cbtree || return 1
 	fi
-	if [ ! -d "coreboot/${cbtree}/" ]; then
-		printf "build/cbutils: coreboot/%s not found. Exiting\n" \
-				"${cbtree}"
-		return 1
-	fi
 	for util in cbfstool ifdtool; do
 		make -j$(nproc) -BC "coreboot/${cbtree}/util/${util}/" \
 				|| return 1
