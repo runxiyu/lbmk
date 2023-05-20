@@ -44,13 +44,13 @@ main()
 	# Separate GRUB payload per keymap to save space in ROM.
 
 	for keylayoutfile in ${grubcfgsdir}/keymap/*.gkb; do
-		build_grub_payload "${keylayoutfile}"
+		build_grub_payloads "${keylayoutfile}"
 	done
 
 	printf "Done! Check payload/grub/ to see the files.\n\n"
 }
 
-build_grub_payload()
+build_grub_payloads()
 {
 	keylayoutfile=${1}
 
@@ -61,7 +61,7 @@ build_grub_payload()
 	keymap="${keymap%.gkb}"
 
 	build_grub_elf "${keylayoutfile}"
-	create_grub_configs
+	create_grub_config
 
 	printf "Created 'payload/grub/grub_%s.elf' and configs.'\n" \
 			"${keymap}"
@@ -85,7 +85,7 @@ build_grub_elf()
 			${gcfg} ${grubk}
 }
 
-create_grub_configs()
+create_grub_config()
 {
 	sed "s/usqwerty/${keymap}/" \
 			< ${grubcfgsdir}/config/grub.cfg \
