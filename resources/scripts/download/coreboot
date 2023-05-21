@@ -31,19 +31,6 @@ cbcfgsdir="resources/coreboot"
 
 main()
 {
-	if [ $# -eq 1 ] && [ "$1" = "--help" ] ; then
-		usage
-		exit 0
-	elif [ $# -eq 1 ] && [ "$1" = "--list-boards" ] ; then
-		list_supported_boards
-		exit 0
-	fi
-
-	fetch_coreboot_trees $@
-}
-
-fetch_coreboot_trees()
-{
 	rm -f ${cbcfgsdir}/*/seen
 
 	printf "Downloading coreboot and (if available) applying patches\n"
@@ -184,25 +171,6 @@ prepare_new_coreboot_tree()
 			exit 1
 	fi
 	)
-}
-
-usage()
-{
-	progname="./download coreboot"
-	printf "Usage:\n"
-	printf "\t%s\t\t\t# Clone coreboot for all boards\n" "${progname}"
-	printf "\t%s [board [board] ...] # Clone coreboot for given boards\n" \
-			${progname}
-	printf "\t%s --list-boards\t# Prints this help\n" ${progname}
-	printf "\t%s --help\t\t# List supported boards\n" ${progname}
-	printf "\t%s --help\t\t# Prints this help\n" ${progname}
-}
-
-list_supported_boards()
-{
-	for _board in "${cbcfgsdir}/"*; do
-		echo ${_board} | sed 's#${cbcfgsdir}/##'
-	done
 }
 
 main $@
