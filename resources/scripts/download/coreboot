@@ -132,9 +132,7 @@ gitclone_coreboot_from_upstream()
 	[ ! -d coreboot ] && \
 		return 1
 	[ -d coreboot/coreboot ] && \
-		rm -Rf coreboot/coreboot
-	[ -d coreboot/coreboot ] && \
-		return 1
+		return 0
 	./gitclone coreboot || \
 		return 1
 }
