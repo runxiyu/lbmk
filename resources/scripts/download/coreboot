@@ -149,16 +149,19 @@ prepare_new_coreboot_tree()
 
 	cp -R coreboot/coreboot "coreboot/${cbtree}" || exit 1
 	(
-	cd "coreboot/${cbtree}" || exit 1
-	git reset --hard ${cbrevision} || exit 1
-	git submodule update --init --checkout || exit 1
+	cd "coreboot/${cbtree}" \
+		|| err "cannot cd to coreboot/${cbtree}"
+	git reset --hard ${cbrevision} \
+		|| err "cannot reset coreboot revision for tree, ${cbtree}"
+	git submodule update --init --checkout \
+		|| err "cannot update coreboot submodules for tree, ${cbtree}"
 
 	for patch in ../../"${cbcfgsdir}"/"${cbtree}"/patches/*.patch; do
 		[ ! -f "${patch}" ] && \
 			continue
 		if ! git am "${patch}"; then
 			git am --abort
-			exit 1
+			err "cannot patch ${cbtree}"
 		fi
 	done
 
@@ -166,9 +169,15 @@ prepare_new_coreboot_tree()
 	# but should *only* be a last resort
 	if [ -f "../../${cbcfgsdir}/${cbtree}/extra.sh" ]; then
 		"../../${cbcfgsdir}/${cbtree}/extra.sh" || \
-			exit 1
+			err "${cbtree} extra.sh"
 	fi
 	)
+}
+
+err()
+{
+	printf "ERROR: %s: %s\n" $0 $1 1>&2
+	exit 1
 }
 
 main $@
