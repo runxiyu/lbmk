@@ -1,9 +1,8 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #  helper script: modify U-Boot configs (run make menuconfig)
 #
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
-#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #	Copyright (C) 2023 Leah Rowe <info@minifree.org>
 #
 #	This program is free software: you can redistribute it and/or modify
@@ -51,7 +50,7 @@ modifyconf()
 	fi
 
 	ubtree="undefined"
-	. "resources/u-boot/${board}/board.cfg" # source
+	source "resources/u-boot/${board}/board.cfg" # source
 
 	if [ "${ubtree}" = "undefined" ]; then
 		return 0

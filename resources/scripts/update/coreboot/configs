@@ -1,10 +1,9 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #
 #  helper script: update coreboot configs (run make oldconfig)
 #
 #	Copyright (C) 2021 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -55,7 +54,7 @@ updateconf()
 
 	if [ -f "${boarddir}/board.cfg" ]; then
 		cbtree="undefined"
-		. "${boarddir}/board.cfg" # source
+		source "${boarddir}/board.cfg" # source
 		if [ "${cbtree}" = "undefined" ]; then
 			return 0
 		fi

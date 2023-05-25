@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # ubuntu2004 script: installs build dependencies for Ubuntu 20.04
 #

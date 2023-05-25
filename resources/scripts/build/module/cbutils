@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #  helper script: build various coreboot utilities
 #
@@ -44,7 +44,7 @@ build_for_mainboard() {
 	[ ! -f "resources/coreboot/${board}/board.cfg" ] && \
 		continue
 	cbtree="undefined"
-	. "resources/coreboot/${board}/board.cfg" # source
+	source "resources/coreboot/${board}/board.cfg" # source
 	if [ "${cbtree}" = "undefined" ]; then
 		printf "build/cbutils: improper cbtree definition for '%s'" \
 				"${board}"
@@ -58,7 +58,7 @@ buildutils() {
 	if [ ! -d "coreboot/${cbtree}/" ]; then
 		./download coreboot $cbtree || return 1
 	fi
-	for util in cbfstool ifdtool; do
+	for util in {cbfs,ifd}tool; do
 		make -j$(nproc) -BC "coreboot/${cbtree}/util/${util}/" \
 				|| return 1
 	done

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only

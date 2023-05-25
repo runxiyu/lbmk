@@ -7,7 +7,6 @@
 # https://libreboot.org/docs/build/
 #
 # Copyright (C) 2020, 2021, 2023 Leah Rowe <info@minifree.org>
-# Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,13 +22,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.POSIX:
-
-#.PHONY: all check download modules ich9m-descriptors payloads roms release \
-#	clean crossgcc-clean install-dependencies-ubuntu \
-#	install-dependencies-debian install-dependencies-arch \
-#	install-dependencies-void install-dependencies-fedora38 \
-#	install-dependencies-parabola
+.PHONY: all check download modules ich9m-descriptors payloads roms release \
+	clean crossgcc-clean install-dependencies-ubuntu \
+	install-dependencies-debian install-dependencies-arch \
+	install-dependencies-void install-dependencies-fedora38 \
+	install-dependencies-parabola
 
 all: roms
 

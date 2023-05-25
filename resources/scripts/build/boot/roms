@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #
 #  helper script: build coreboot images with various payloads
@@ -7,7 +7,6 @@
 #							<info@minifree.org>
 #	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
-#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -31,7 +30,7 @@ set -u -e
 
 projectname="$(cat projectname)"
 opts=""
-boards=
+boards=""
 firstoption="${1}"
 
 main()
@@ -50,19 +49,19 @@ main()
 		exit 0
 	fi
 
-	while [ $# -gt 0 ]; do
+	while [[ $# > 0 ]]; do
 		case ${1} in
 			-d)
-			opts="${opts} -d ${2}"
+			opts+=" -d ${2}"
 			shift ;;
 			-p)
-			opts="${opts} -p ${2}"
+			opts+=" -p ${2}"
 			shift ;;
 			-k)
-			opts="${opts} -k ${2}"
+			opts+=" -k ${2}"
 			shift ;;
 			*)
-			boards="${boards} ${1} " ;;
+			boards+=" ${1} " ;;
 		esac
 		shift
 	done
