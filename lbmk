@@ -1,0 +1,122 @@
+#!/usr/bin/env sh
+
+#  generic script for calling other scripts in lbmk
+#
+#	Copyright (C) 2014,2015,2020,2021,2023 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
+#	Copyright (C) 2015, 2016 Klemens Nanni <contact@autoboot.org>
+#	Copyright (C) 2022, Caleb La Grange <thonkpeasant@protonmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+projectname="$(cat projectname)"
+buildpath=""
+mode=""
+option=""
+
+main()
+{
+	if [ "${0##*/}" = "lbmk" ]; then
+		die "Do not run the lbmk script directly!"
+	elif [ $# -lt 2 ]; then
+		die "Too few arguments. Try: ${0} help"
+	fi
+
+	buildpath="./resources/scripts/${0##*/}"
+
+	mode="${1}"
+	./.gitcheck
+	if [ "${mode}" != "dependencies" ]; then
+		./resources/scripts/misc/versioncheck
+	fi
+	if [ "${mode}" = help ]; then
+		usage $0
+		exit 0
+	elif [ $# -lt 2 ]; then
+		usage $0
+		exit 0
+	fi
+
+	option="${2}"
+	shift 2
+
+	case "${option}" in
+	list)
+		printf "Options for mode '%s':\n\n" ${mode}
+		listoptions "${mode}"
+		;;
+	all)
+		for option in $(listoptions "${mode}"); do
+			"${buildpath}/${mode}/${option}" $@
+		done
+		;;
+	*)
+		if [ ! -d "${buildpath}/${mode}" ]; then
+			usage $0
+			die "Invalid mode '${mode}'. Run: ${0} help"
+		elif [ ! -f "${buildpath}/${mode}/${option}" ]; then
+			usage $0
+			printf "Invalid option for '%s'." ${mode}
+			die "Run: ${0} ${mode} list'."
+		fi
+		"${buildpath}/${mode}/${option}" $@
+	esac
+
+	./.gitcheck clean
+}
+
+# Takes exactly one mode as parameter
+listoptions()
+{
+	for option in "${buildpath}/${1}/"*; do
+		printf '%s\n' ${option##*/}
+	done
+}
+
+usage()
+{
+	progname=${0}
+	cat <<- EOF
+	USAGE:	${progname} <MODE> <OPTION>
+
+	possible values for 'mode':
+	$(listmodes)
+
+	Example:	${progname} module all
+	Example:	${progname} module flashrom [static]
+	Example:	${progname} roms withgrub
+	Example:	${progname} clean all
+
+	Refer to ${projectname} documentation for more info.
+	EOF
+}
+
+listmodes()
+{
+	for mode in "${buildpath}"/*; do
+		printf '%s\n' ${mode##*/}
+	done
+}
+
+die()
+{
+	printf "Error: %s\n"; ${@} 1>&2
+	exit 1
+}
+
+main $@
