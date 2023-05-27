@@ -30,7 +30,10 @@ main()
 	printf "Building SeaBIOS payloads and SeaVGABIOS\n"
 
 	check_dependencies
-	build_seabios_payloads
+
+	for x in normal vgarom libgfxinit; do
+		build_seabios_elf "${x}"
+	done
 
 	# clean it again. gotta keep it clean!
 	[[ -f Makefile ]] && make -C seabios distclean
@@ -51,29 +54,28 @@ check_dependencies()
 	fi
 }
 
-build_seabios_payloads()
+build_seabios_elf()
 {
-	for x in normal vgarom libgfxinit; do
-		if [ ! -f seabios/Makefile ]; then
-			printf "SeaBIOS not properly downloaded.\n"
-			exit 1
-		fi
+	inittype=${1}
 
-		make distclean -BC seabios || exit 1
+	if [ ! -f seabios/Makefile ]; then
+		printf "SeaBIOS not properly downloaded.\n"
+		exit 1
+	fi
 
-		cp "resources/seabios/config/${x}" seabios/.config
-		make silentoldconfig -j$(nproc) -BC seabios || exit 1
-		make -j$(nproc) -BC seabios || exit 1
+	make distclean -BC seabios || exit 1
 
-		seabios_elf_dst="${payloaddir}/seabios_${x}.elf"
-		cp ${seabios_elf} "${seabios_elf_dst}" || exit 1
+	cp "resources/seabios/config/${inittype}" seabios/.config
+	make silentoldconfig -j$(nproc) -BC seabios || exit 1
+	make -j$(nproc) -BC seabios || exit 1
 
-		if [ "${x}" = "libgfxinit" ]; then
-			cp ${seavgabios} ${payloaddir}/seavgabios.bin \
-					|| exit 1
-		fi
-		rm -f seabios/.config || exit 1
-	done
+	seabios_elf_dst="${payloaddir}/seabios_${inittype}.elf"
+	cp ${seabios_elf} "${seabios_elf_dst}" || exit 1
+
+	if [ "${inittype}" = "libgfxinit" ]; then
+		cp ${seavgabios} ${payloaddir}/seavgabios.bin || exit 1
+	fi
+	rm -f seabios/.config || exit 1
 }
 
 main $@
