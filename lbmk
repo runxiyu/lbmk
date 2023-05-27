@@ -33,6 +33,8 @@ main()
 {
 	if [ "${0##*/}" = "lbmk" ]; then
 		die "Do not run the lbmk script directly!"
+	elif [ "${0##*/}" = "download" ]; then
+		./update module $@
 	elif [ $# -lt 2 ]; then
 		die "Too few arguments. Try: ${0} help"
 	fi
