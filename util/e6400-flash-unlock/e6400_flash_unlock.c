@@ -44,7 +44,6 @@ void send_ec_cmd(uint8_t cmd);
 void wait_ec(void);
 int get_gbl_smi_en(void);
 int set_gbl_smi_en(int enable);
-/* uint8_t read_ec_reg(uint8_t index); */
 
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
@@ -157,11 +156,3 @@ set_gbl_smi_en(int enable)
 	return (get_gbl_smi_en() == enable);
 }
 
-/*
-uint8_t
-read_ec_reg(uint8_t index)
-{
-	outb(index, EC_INDEX);
-	return inb(EC_DATA);
-}
-*/
