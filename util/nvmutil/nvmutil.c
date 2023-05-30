@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	void (*cmd)(void) = NULL;
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 
-#ifdef HAVE_PLEDGE /* openbsd */
+#ifdef __OpenBSD__
 	if (pledge("stdio wpath", NULL) == -1)
 		err(errno, "pledge");
 #endif
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
-#ifdef HAVE_PLEDGE /* openbsd */
+#ifdef __OpenBSD__
 			if (pledge("stdio rpath", NULL) == -1)
 				err(errno, "pledge");
 #endif

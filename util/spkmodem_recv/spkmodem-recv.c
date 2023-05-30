@@ -36,7 +36,7 @@ main(int argc, char *argv[])
 {
 	int c;
 
-#ifdef HAVE_PLEDGE
+#ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		err(errno, "pledge");
 #endif
