@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 
 #ifdef __OpenBSD__
-	if (pledge("stdio wpath", NULL) == -1)
+	if (pledge("stdio rpath wpath", NULL) == -1)
 		err(errno, "pledge");
 #endif
 
