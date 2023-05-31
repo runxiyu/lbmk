@@ -57,6 +57,7 @@ void setWord(int pos16, int partnum, uint16_t val16);
 void byteswap(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename, size_t nw);
 void xpledge(const char *promises, const char *execpromises);
+void xunveil(const char *path, const char *permissions);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -79,7 +80,7 @@ uint8_t big_endian;
 int
 main(int argc, char *argv[])
 {
-	xpledge("stdio rpath wpath", NULL);
+	xpledge("stdio rpath wpath unveil", NULL);
 	size_t nr = 128;
 	int fd, flags = O_RDWR;
 	void (*cmd)(void) = NULL;
@@ -92,7 +93,7 @@ main(int argc, char *argv[])
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
-			xpledge("stdio rpath", NULL);
+			xpledge("stdio rpath unveil", NULL);
 			flags = O_RDONLY;
 			cmd = &cmd_dump;
 		} else if (strcmp(COMMAND, "setmac") == 0) {
@@ -125,16 +126,20 @@ main(int argc, char *argv[])
 			(cmd == &cmd_setchecksum) | (cmd == &cmd_brick);
 		readGbeFile(&fd, FILENAME, flags, nr);
 		(void)rhex();
-		if (flags == O_RDONLY)
+		xunveil("/dev/urandom", "r");
+		if (flags == O_RDONLY) {
 			xpledge("stdio", NULL);
-		else
-			xpledge("stdio wpath", NULL);
+		} else {
+			xpledge("stdio wpath unveil", NULL);
+			xunveil(FILENAME, "w");
+		}
 		if (strMac != NULL)
 			cmd_setmac(strMac); /* nvm gbe.bin setmac */
 		else if (cmd != NULL)
 			(*cmd)(); /* all other commands except setmac */
 		writeGbeFile(&fd, FILENAME, nr);
-	}
+	} else
+		xpledge("stdio", NULL);
 
 	if ((errno != 0) && (cmd != &cmd_dump))
 		err(errno, NULL);
@@ -378,6 +383,16 @@ xpledge(const char *promises, const char *execpromises)
 	(void)promises; (void)execpromises;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
+		err(errno, NULL);
+#endif
+}
+
+void
+xunveil(const char *path, const char *permissions)
+{
+	(void)path; (void)permissions;
+#ifdef __OpenBSD__
+	if (unveil(path, permissions) == -1)
 		err(errno, NULL);
 #endif
 }
