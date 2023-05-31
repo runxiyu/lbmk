@@ -56,6 +56,7 @@ uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
 void byteswap(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename, size_t nw);
+void xpledge(const char *promises, const char *execpromises);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -78,16 +79,11 @@ uint8_t big_endian;
 int
 main(int argc, char *argv[])
 {
+	xpledge("stdio rpath wpath", NULL);
 	size_t nr = 128;
 	int fd, flags = O_RDWR;
 	void (*cmd)(void) = NULL;
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
-
-#ifdef __OpenBSD__
-	if (pledge("stdio rpath wpath", NULL) == -1)
-		err(errno, "pledge");
-#endif
-
 	buf = (uint8_t *) &buf16;
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 
@@ -96,10 +92,7 @@ main(int argc, char *argv[])
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
-#ifdef __OpenBSD__
-			if (pledge("stdio rpath", NULL) == -1)
-				err(errno, "pledge");
-#endif
+			xpledge("stdio rpath", NULL);
 			flags = O_RDONLY;
 			cmd = &cmd_dump;
 		} else if (strcmp(COMMAND, "setmac") == 0) {
@@ -373,4 +366,14 @@ next_part:
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
+}
+
+void
+xpledge(const char *promises, const char *execpromises)
+{
+	(void)promises; (void)execpromises;
+#ifdef __OpenBSD__
+	if (pledge(promises, execpromises) == -1)
+		err(errno, NULL);
+#endif
 }
