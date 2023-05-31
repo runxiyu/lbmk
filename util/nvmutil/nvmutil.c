@@ -124,6 +124,11 @@ main(int argc, char *argv[])
 		skipread[part ^ 1] = (cmd == &cmd_copy) |
 			(cmd == &cmd_setchecksum) | (cmd == &cmd_brick);
 		readGbeFile(&fd, FILENAME, flags, nr);
+		(void)rhex();
+		if (flags == O_RDONLY)
+			xpledge("stdio", NULL);
+		else
+			xpledge("stdio wpath", NULL);
 		if (strMac != NULL)
 			cmd_setmac(strMac); /* nvm gbe.bin setmac */
 		else if (cmd != NULL)
@@ -219,18 +224,16 @@ hextonum(char ch)
 uint8_t
 rhex(void)
 {
-	static int rfd = -1;
-	static uint64_t rnum = 0;
-	if (rnum == 0) {
+	static int rfd = -1, n = 0;
+	static uint8_t rnum[16];
+	if (!n) {
 		if (rfd == -1)
 			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
 				err(errno, "/dev/urandom");
-		if (read(rfd, (uint8_t *) &rnum, 8) == -1)
+		if (read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1)
 			err(errno, "/dev/urandom");
 	}
-	uint8_t rval = (uint8_t) (rnum & 0xf);
-	rnum >>= 4;
-	return rval;
+	return rnum[n--] & 0xf;
 }
 
 void
@@ -366,6 +369,7 @@ next_part:
 	}
 	if (close((*fd)))
 		err(errno, "%s", filename);
+	xpledge("stdio", NULL);
 }
 
 void
