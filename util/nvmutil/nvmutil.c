@@ -53,7 +53,7 @@ void cmd_swap(void);
 void cmd_copy(void);
 int validChecksum(int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
-void byteswap(int n, int partnum);
+void xorswap_buf(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename, size_t nw);
 void xpledge(const char *promises, const char *execpromises);
 void xunveil(const char *path, const char *permissions);
@@ -68,6 +68,7 @@ void err_if(int condition);
 
 #define word(pos16, partnum) (buf16[pos16 + (partnum << 11)])
 #define ERR() (errno = errno ? errno : ECANCELED)
+#define xorswap(x, y) x ^= y, y ^= x, x ^= y
 
 uint16_t buf16[SIZE_4KB];
 uint8_t *buf;
@@ -166,7 +167,7 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 		if (pread((*fd), (uint8_t *) gbe[p], nr, p << 12) == -1)
 			err(ERR(), "%s", path);
 		if (big_endian)
-			byteswap(nr, p);
+			xorswap_buf(nr, p);
 	}
 }
 
@@ -298,9 +299,7 @@ cmd_brick(void)
 void
 cmd_swap(void)
 {
-	gbe[0] ^= gbe[1]; /* speedhack: swap ptr, not words */
-	gbe[1] ^= gbe[0];
-	gbe[0] ^= gbe[1];
+	xorswap(gbe[0], gbe[1]); /* speedhack: swap ptr, not words */
 	gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
 		= validChecksum(1) | validChecksum(0);
 }
@@ -335,16 +334,11 @@ setWord(int pos16, int partnum, uint16_t val16)
 }
 
 void
-byteswap(int n, int partnum)
+xorswap_buf(int n, int partnum)
 {
-	int b1, b2, wcount = n >> 1;
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
-	for (int w = 0; w < wcount; w++) {
-		b1 = b2 = w << 1;
-		nbuf[b1] ^= nbuf[++b2]; /* xor swap */
-		nbuf[b2] ^= nbuf[b1];
-		nbuf[b1] ^= nbuf[b2];
-	}
+	for (int w = 0; w < (n >> 1); w++)
+		xorswap(nbuf[w << 1], nbuf[(w << 1) + 1]);
 }
 
 void
@@ -358,7 +352,7 @@ writeGbeFile(int *fd, const char *filename, size_t nw)
 		if (!nvmPartModified[p])
 			goto next_part;
 		if (big_endian)
-			byteswap(nw, p);
+			xorswap_buf(nw, p);
 		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) == -1)
 			err(ERR(), "%s", filename);
 next_part:
