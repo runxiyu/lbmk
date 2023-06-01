@@ -1,18 +1,6 @@
 /* Copyright (c) 2022, 2023 Leah Rowe <info@minifree.org> */
 /* SPDX-License-Identifier: MIT */
 
-#include <sys/stat.h>
-
-#include <dirent.h>
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "nvmutil.h"
 
 int
