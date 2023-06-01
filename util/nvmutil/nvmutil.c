@@ -327,10 +327,8 @@ void
 setWord(int pos16, int partnum, uint16_t val16)
 {
 	gbeFileModified = 1;
-	if (word(pos16, partnum) == val16)
-		return;
-	buf16[pos16 + (partnum << 11)] = val16;
-	nvmPartModified[partnum] = 1;
+	if (word(pos16, partnum) != val16)
+		nvmPartModified[partnum] = 1 | (word(pos16, partnum) = val16);
 }
 
 void
