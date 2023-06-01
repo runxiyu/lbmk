@@ -7,15 +7,9 @@ int
 main(int argc, char *argv[])
 {
 	xpledge("stdio rpath wpath unveil", NULL);
-	size_t nr = 128;
-	int fd, flags = O_RDWR;
+	int flags = O_RDWR;
 	void (*cmd)(void) = NULL;
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
-	buf = (uint8_t *) &buf16;
-	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
-
-	test = 1;
-	big_endian = ((uint8_t *) &test)[0] ^ 1;
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
@@ -26,7 +20,7 @@ main(int argc, char *argv[])
 			strMac = (char *) strRMac; /* random mac address */
 		} else if (strcmp(COMMAND, "swap") == 0) {
 			cmd = &cmd_swap;
-			nr = SIZE_4KB;
+			nf = SIZE_4KB;
 		}
 	} else if (argc == 4) {
 		if (strcmp(COMMAND, "setmac") == 0) {
@@ -40,7 +34,7 @@ main(int argc, char *argv[])
 			cmd = &cmd_brick;
 		} else if (strcmp(COMMAND, "copy") == 0) {
 			cmd = &cmd_copy;
-			nr = SIZE_4KB;
+			nf = SIZE_4KB;
 		}
 	}
 
@@ -48,7 +42,7 @@ main(int argc, char *argv[])
 
 	skipread[part ^ 1] = (cmd == &cmd_copy) |
 		(cmd == &cmd_setchecksum) | (cmd == &cmd_brick);
-	readGbeFile(&fd, FILENAME, flags, nr);
+	readGbeFile(FILENAME, flags);
 	(void)rhex();
 	xunveil("/dev/urandom", "r");
 	if (flags == O_RDONLY) {
@@ -62,33 +56,27 @@ main(int argc, char *argv[])
 		cmd_setmac(strMac); /* nvm gbe.bin setmac */
 	else if (cmd != NULL)
 		(*cmd)(); /* all other commands except setmac */
-	writeGbeFile(&fd, FILENAME, nr);
+	writeGbeFile(FILENAME);
 
 	err_if((errno != 0) && (cmd != &cmd_dump));
 	return errno;
 }
 
 void
-readGbeFile(int *fd, const char *path, int flags, size_t nr)
+readGbeFile(const char *path, int flags)
 {
-	struct stat st;
-	if (opendir(path) != NULL)
-		err(errno = EISDIR, "%s", path);
-	xopen(*fd, path, flags);
-	if (fstat((*fd), &st) == -1)
-		err(ERR(), "%s", path);
-	else if ((st.st_size != SIZE_8KB))
+	xopen(fd, path, flags);
+	if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
-	else if (errno == ENOTDIR)
-		errno = 0;
+	errno = errno != ENOTDIR ? errno : 0;
 
+	big_endian = ((uint8_t *) &test)[0] ^ 1;
+	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
 			continue;
-		if (pread((*fd), (uint8_t *) gbe[p], nr, p << 12) == -1)
-			err(ERR(), "%s", path);
-		if (big_endian)
-			xorswap_buf(nr, p);
+		xpread(fd, (uint8_t *) gbe[p], nf, p << 12, path);
+		handle_endianness();
 	}
 }
 
@@ -153,10 +141,8 @@ rhex(void)
 	static int rfd = -1, n = 0;
 	static uint8_t rnum[16];
 	if (!n) {
-		if (rfd == -1)
-			xopen(rfd, "/dev/urandom", O_RDONLY);
-		if (read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1)
-			err(ERR(), "/dev/urandom");
+		xopen(rfd, "/dev/urandom", O_RDONLY);
+		xpread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0, "/dev/urandom");
 	}
 	return rnum[n--] & 0xf;
 }
@@ -251,15 +237,15 @@ setWord(int pos16, int partnum, uint16_t val16)
 }
 
 void
-xorswap_buf(int n, int partnum)
+xorswap_buf(int partnum)
 {
 	uint8_t *nbuf = (uint8_t *) gbe[partnum];
-	for (int w = 0; w < (n >> 1); w++)
+	for (size_t w = 0; w < (nf >> 1); w++)
 		xorswap(nbuf[w << 1], nbuf[(w << 1) + 1]);
 }
 
 void
-writeGbeFile(int *fd, const char *filename, size_t nw)
+writeGbeFile(const char *filename)
 {
 	if (gbeFileModified)
 		errno = 0;
@@ -268,15 +254,12 @@ writeGbeFile(int *fd, const char *filename, size_t nw)
 			p ^= 1; /* speedhack: write sequentially on-disk */
 		if (!nvmPartModified[p])
 			goto next_part;
-		if (big_endian)
-			xorswap_buf(nw, p);
-		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) == -1)
-			err(ERR(), "%s", filename);
+		handle_endianness();
+		xpwrite(fd, (uint8_t *) gbe[p], nf, p << 12, filename);
 next_part:
 		if (gbe[0] > gbe[1])
 			p ^= 1; /* speedhack: write sequentially on-disk */
 	}
-	if (close((*fd)))
-		err(ERR(), "%s", filename);
+	xclose(fd, filename);
 	xpledge("stdio", NULL);
 }

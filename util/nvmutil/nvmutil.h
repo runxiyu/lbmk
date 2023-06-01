@@ -13,8 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-void readGbeFile(int *fd, const char *path, int flags,
-	size_t nr);
+void readGbeFile(const char *path, int flags);
 void cmd_setmac(const char *strMac);
 int invalidMacAddress(const char *strMac, uint16_t *mac);
 uint8_t hextonum(char chs);
@@ -28,8 +27,8 @@ void cmd_swap(void);
 void cmd_copy(void);
 int validChecksum(int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
-void xorswap_buf(int n, int partnum);
-void writeGbeFile(int *fd, const char *filename, size_t nw);
+void xorswap_buf(int partnum);
+void writeGbeFile(const char *filename);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -39,21 +38,29 @@ void writeGbeFile(int *fd, const char *filename, size_t nw);
 #define SIZE_8KB 0x2000
 
 uint16_t buf16[SIZE_4KB];
-uint8_t *buf;
-size_t gbe[2];
+uint8_t *buf = (uint8_t *) &buf16;
+size_t nf = 128, gbe[2];
 uint8_t skipread[2] = {0, 0};
 
-int part, gbeFileModified = 0;
+int fd = -1, part, gbeFileModified = 0;
 uint8_t nvmPartModified[2] = {0, 0};
 
-uint16_t test;
-uint8_t big_endian;
+int test = 1;
+int big_endian;
 
-#define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
 #define ERR() errno = errno ? errno : ECANCELED
-#define xorswap(x, y) x ^= y, y ^= x, x ^= y
-#define xopen(fd, loc, p) if ((fd = open(loc, p)) == -1) err(ERR(), "%s", loc)
 #define err_if(x) if (x) err(ERR(), NULL)
+
+#define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
+	if (f == -1) if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
+	struct stat st; if (fstat(f, &st) == -1) err(ERR(), "%s", l)
+#define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
+#define handle_endianness() if (big_endian) xorswap_buf(p)
+#define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
+#define xclose(f, l) if (close(f)) err(ERR(), "%s", l)
+
+#define xorswap(x, y) x ^= y, y ^= x, x ^= y
+#define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
 
 void
 xpledge(const char *promises, const char *execpromises)
