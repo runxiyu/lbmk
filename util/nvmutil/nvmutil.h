@@ -51,8 +51,10 @@ int big_endian;
 #define ERR() errno = errno ? errno : ECANCELED
 #define err_if(x) if (x) err(ERR(), NULL)
 
-#define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
-	if (f == -1) if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
+#define xopen(f,l,p) \
+	if (f == -1) \
+	if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
+	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
 	struct stat st; if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 #define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define handle_endianness() if (big_endian) xorswap_buf(p)
