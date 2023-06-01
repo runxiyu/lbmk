@@ -57,7 +57,6 @@ void xorswap_buf(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename, size_t nw);
 void xpledge(const char *promises, const char *execpromises);
 void xunveil(const char *path, const char *permissions);
-void err_if(int condition);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -65,10 +64,6 @@ void err_if(int condition);
 #define PARTNUM argv[3]
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
-
-#define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
-#define ERR() errno = errno ? errno : ECANCELED
-#define xorswap(x, y) x ^= y, y ^= x, x ^= y
 
 uint16_t buf16[SIZE_4KB];
 uint8_t *buf;
@@ -80,6 +75,12 @@ uint8_t nvmPartModified[2] = {0, 0};
 
 uint16_t test;
 uint8_t big_endian;
+
+#define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
+#define ERR() errno = errno ? errno : ECANCELED
+#define xorswap(x, y) x ^= y, y ^= x, x ^= y
+#define xopen(fd, loc, p) if ((fd = open(loc, p)) == -1) err(ERR(), "%s", loc)
+#define err_if(x) if (x) err(ERR(), NULL)
 
 int
 main(int argc, char *argv[])
@@ -122,7 +123,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	err_if(errno = ((strMac == NULL) && (cmd == NULL)) ? EINVAL : errno);
+	err_if((errno = ((strMac == NULL) && (cmd == NULL)) ? EINVAL : errno));
 
 	skipread[part ^ 1] = (cmd == &cmd_copy) |
 		(cmd == &cmd_setchecksum) | (cmd == &cmd_brick);
@@ -152,9 +153,8 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	struct stat st;
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
-	else if (((*fd) = open(path, flags)) == -1)
-		err(ERR(), "%s", path);
-	else if (fstat((*fd), &st) == -1)
+	xopen(*fd, path, flags);
+	if (fstat((*fd), &st) == -1)
 		err(ERR(), "%s", path);
 	else if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
@@ -233,8 +233,7 @@ rhex(void)
 	static uint8_t rnum[16];
 	if (!n) {
 		if (rfd == -1)
-			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
-				err(ERR(), "/dev/urandom");
+			xopen(rfd, "/dev/urandom", O_RDONLY);
 		if (read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1)
 			err(ERR(), "/dev/urandom");
 	}
@@ -326,8 +325,7 @@ validChecksum(int partnum)
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
-	gbeFileModified = 1;
-	if (word(pos16, partnum) != val16)
+	if ((gbeFileModified = 1) && word(pos16, partnum) != val16)
 		nvmPartModified[partnum] = 1 | (word(pos16, partnum) = val16);
 }
 
@@ -380,11 +378,4 @@ xunveil(const char *path, const char *permissions)
 	if (unveil(path, permissions) == -1)
 		err(ERR(), "unveil");
 #endif
-}
-
-void
-err_if(int condition)
-{
-	if (condition)
-		err(ERR(), NULL);
 }
