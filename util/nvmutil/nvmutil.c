@@ -40,9 +40,10 @@ main(int argc, char *argv[])
 
 	err_if((errno = ((strMac == NULL) && (cmd == NULL)) ? EINVAL : errno));
 
-	skipread[part ^ 1] = (cmd == &cmd_copy) |
-		(cmd == &cmd_setchecksum) | (cmd == &cmd_brick);
+	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
+	    | (cmd == &cmd_brick);
 	readGbeFile(FILENAME, flags);
+
 	(void)rhex();
 	xunveil("/dev/urandom", "r");
 	if (flags == O_RDONLY) {
@@ -114,7 +115,7 @@ invalidMacAddress(const char *strMac, uint16_t *mac)
 				if (strMac[i + nib] == '?')
 					h = (h & 0xE) | 2; /* local, unicast */
 			mac[byte >> 1] |= ((uint16_t ) h)
-				<< ((8 * (byte % 2)) + (4 * (nib ^ 1)));
+			    << ((8 * (byte % 2)) + (4 * (nib ^ 1)));
 		}
 	}}
 	return ((total == 0) | (mac[0] & 1)); /* multicast/all-zero banned */
@@ -206,7 +207,7 @@ cmd_swap(void)
 {
 	xorswap(gbe[0], gbe[1]); /* speedhack: swap ptr, not words */
 	gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
-		= validChecksum(1) | validChecksum(0);
+	    = validChecksum(1) | validChecksum(0);
 }
 
 void
