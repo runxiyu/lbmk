@@ -205,16 +205,18 @@ cmd_brick(void)
 void
 cmd_swap(void)
 {
-	xorswap(gbe[0], gbe[1]); /* speedhack: swap ptr, not words */
 	gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
 	    = validChecksum(1) | validChecksum(0);
+	if (gbeFileModified)
+		xorswap(gbe[0], gbe[1]); /* speedhack: swap ptr, not words */
 }
 
 void
 cmd_copy(void)
 {
-	gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
 	gbeFileModified = nvmPartModified[part ^ 1] = validChecksum(part);
+	if (gbeFileModified)
+		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
 }
 
 int
