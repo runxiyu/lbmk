@@ -50,7 +50,8 @@ main(int argc, char *argv[])
 		cmd_setmac(strMac); /* nvm gbe.bin setmac */
 	else if (cmd != NULL)
 		(*cmd)(); /* all other commands except setmac */
-	writeGbeFile(FILENAME);
+	if ((gbeFileModified) && (flags != O_RDONLY))
+		writeGbeFile(FILENAME);
 
 	err_if((errno != 0) && (cmd != &cmd_dump));
 	return errno;
@@ -253,8 +254,6 @@ xorswap_buf(int partnum)
 void
 writeGbeFile(const char *filename)
 {
-	if (flags == O_RDONLY)
-		err(ERR(), "Write aborted due to read-only mode: %s", filename);
 	if (gbeFileModified)
 		errno = 0;
 	for (int p = 0; p < 2; p++) {
