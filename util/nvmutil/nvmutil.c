@@ -52,7 +52,6 @@ void cmd_brick(void);
 void cmd_swap(void);
 void cmd_copy(void);
 int validChecksum(int partnum);
-uint16_t word(int pos16, int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
 void byteswap(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename, size_t nw);
@@ -66,6 +65,8 @@ void err_if(int condition);
 #define PARTNUM argv[3]
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
+
+#define word(pos16, partnum) (buf16[pos16 + (partnum << 11)])
 
 uint16_t buf16[SIZE_4KB];
 uint8_t *buf;
@@ -322,12 +323,6 @@ validChecksum(int partnum)
 	return (errno = ECANCELED) & 0;
 }
 
-uint16_t
-word(int pos16, int partnum)
-{
-	return buf16[pos16 + (partnum << 11)];
-}
-
 void
 setWord(int pos16, int partnum, uint16_t val16)
 {
@@ -397,9 +392,6 @@ xunveil(const char *path, const char *permissions)
 void
 err_if(int condition)
 {
-	if (!condition)
-		return;
-	if (!errno)
-		errno = ECANCELED;
-	err(errno, NULL);
+	if (condition)
+		err(errno = errno ? errno : ECANCELED, NULL);
 }
