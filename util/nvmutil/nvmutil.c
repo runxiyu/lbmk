@@ -67,6 +67,7 @@ void err_if(int condition);
 #define SIZE_8KB 0x2000
 
 #define word(pos16, partnum) (buf16[pos16 + (partnum << 11)])
+#define ERR() (errno = errno ? errno : ECANCELED)
 
 uint16_t buf16[SIZE_4KB];
 uint8_t *buf;
@@ -151,9 +152,9 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
 	else if (((*fd) = open(path, flags)) == -1)
-		err(errno, "%s", path);
+		err(ERR(), "%s", path);
 	else if (fstat((*fd), &st) == -1)
-		err(errno, "%s", path);
+		err(ERR(), "%s", path);
 	else if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	else if (errno == ENOTDIR)
@@ -163,7 +164,7 @@ readGbeFile(int *fd, const char *path, int flags, size_t nr)
 		if (skipread[p])
 			continue;
 		if (pread((*fd), (uint8_t *) gbe[p], nr, p << 12) == -1)
-			err(errno, "%s", path);
+			err(ERR(), "%s", path);
 		if (big_endian)
 			byteswap(nr, p);
 	}
@@ -232,9 +233,9 @@ rhex(void)
 	if (!n) {
 		if (rfd == -1)
 			if ((rfd = open("/dev/urandom", O_RDONLY)) == -1)
-				err(errno, "/dev/urandom");
+				err(ERR(), "/dev/urandom");
 		if (read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1)
-			err(errno, "/dev/urandom");
+			err(ERR(), "/dev/urandom");
 	}
 	return rnum[n--] & 0xf;
 }
@@ -359,13 +360,13 @@ writeGbeFile(int *fd, const char *filename, size_t nw)
 		if (big_endian)
 			byteswap(nw, p);
 		if (pwrite((*fd), (uint8_t *) gbe[p], nw, p << 12) == -1)
-			err(errno, "%s", filename);
+			err(ERR(), "%s", filename);
 next_part:
 		if (gbe[0] > gbe[1])
 			p ^= 1; /* speedhack: write sequentially on-disk */
 	}
 	if (close((*fd)))
-		err(errno, "%s", filename);
+		err(ERR(), "%s", filename);
 	xpledge("stdio", NULL);
 }
 
@@ -375,7 +376,7 @@ xpledge(const char *promises, const char *execpromises)
 	(void)promises; (void)execpromises;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
-		err(errno, NULL);
+		err(ERR(), NULL);
 #endif
 }
 
@@ -385,7 +386,7 @@ xunveil(const char *path, const char *permissions)
 	(void)path; (void)permissions;
 #ifdef __OpenBSD__
 	if (unveil(path, permissions) == -1)
-		err(errno, NULL);
+		err(ERR(), NULL);
 #endif
 }
 
@@ -393,5 +394,5 @@ void
 err_if(int condition)
 {
 	if (condition)
-		err(errno = errno ? errno : ECANCELED, NULL);
+		err(ERR(), NULL);
 }
