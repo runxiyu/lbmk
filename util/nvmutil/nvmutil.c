@@ -18,7 +18,6 @@ main(int argc, char *argv[])
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
-			xpledge("stdio", NULL);
 			cmd = &cmd_dump;
 		} else if (strcmp(COMMAND, "setmac") == 0) {
 			strMac = (char *) strRMac; /* random mac address */
@@ -41,7 +40,6 @@ main(int argc, char *argv[])
 			nf = SIZE_4KB;
 		}
 	}
-
 	err_if((errno = ((strMac == NULL) && (cmd == NULL)) ? EINVAL : errno));
 
 	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
@@ -61,10 +59,11 @@ main(int argc, char *argv[])
 void
 openFiles(const char *path)
 {
-	(void)rhex();
+	struct stat st;
 	xopen(fd, path, flags);
 	if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
+	xopen(rfd, "/dev/urandom", O_RDONLY);
 	errno = errno != ENOTDIR ? errno : 0;
 	xunveil("/dev/urandom", "r");
 	if (flags != O_RDONLY) {
@@ -145,14 +144,10 @@ hextonum(char ch)
 uint8_t
 rhex(void)
 {
-	static int rfd = -1, n = 0;
+	static int n = 0;
 	static uint8_t rnum[16];
-	if (!n) {
-		if (rfd == -1) {
-			xopen(rfd, "/dev/urandom", O_RDONLY);
-		}
+	if (!n)
 		xpread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0, "/dev/urandom");
-	}
 	return rnum[n--] & 0xf;
 }
 

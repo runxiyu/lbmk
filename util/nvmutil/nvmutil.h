@@ -43,7 +43,7 @@ uint8_t *buf = (uint8_t *) &buf16;
 size_t nf = 128, gbe[2];
 uint8_t skipread[2] = {0, 0};
 
-int flags = O_RDWR, fd = -1, part, gbeFileModified = 0;
+int flags = O_RDWR, rfd, fd, part, gbeFileModified = 0;
 uint8_t nvmPartModified[2] = {0, 0};
 
 int test = 1;
@@ -54,7 +54,7 @@ int big_endian;
 
 #define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
 	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
-	struct stat st; if (fstat(f, &st) == -1) err(ERR(), "%s", l)
+	if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 #define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define handle_endianness() if (big_endian) xorswap_buf(p)
 #define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
