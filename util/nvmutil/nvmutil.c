@@ -292,23 +292,3 @@ next_part:
 		err(ERR(), "%s", filename);
 	xpledge("stdio", NULL);
 }
-
-void
-xpledge(const char *promises, const char *execpromises)
-{
-	(void)promises; (void)execpromises;
-#ifdef __OpenBSD__
-	if (pledge(promises, execpromises) == -1)
-		err(ERR(), "pledge");
-#endif
-}
-
-void
-xunveil(const char *path, const char *permissions)
-{
-	(void)path; (void)permissions;
-#ifdef __OpenBSD__
-	if (unveil(path, permissions) == -1)
-		err(ERR(), "unveil");
-#endif
-}

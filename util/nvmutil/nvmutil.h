@@ -18,8 +18,6 @@ int validChecksum(int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
 void xorswap_buf(int n, int partnum);
 void writeGbeFile(int *fd, const char *filename, size_t nw);
-void xpledge(const char *promises, const char *execpromises);
-void xunveil(const char *path, const char *permissions);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -45,3 +43,22 @@ uint8_t big_endian;
 #define xopen(fd, loc, p) if ((fd = open(loc, p)) == -1) err(ERR(), "%s", loc)
 #define err_if(x) if (x) err(ERR(), NULL)
 
+void
+xpledge(const char *promises, const char *execpromises)
+{
+	(void)promises; (void)execpromises;
+#ifdef __OpenBSD__
+	if (pledge(promises, execpromises) == -1)
+		err(ERR(), "pledge");
+#endif
+}
+
+void
+xunveil(const char *path, const char *permissions)
+{
+	(void)path; (void)permissions;
+#ifdef __OpenBSD__
+	if (unveil(path, permissions) == -1)
+		err(ERR(), "unveil");
+#endif
+}
