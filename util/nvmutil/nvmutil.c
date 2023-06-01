@@ -141,9 +141,12 @@ rhex(void)
 {
 	static int rfd = -1, n = 0;
 	static uint8_t rnum[16];
-	xopen(rfd, "/dev/urandom", O_RDONLY);
-	if (!n)
+	if (!n) {
+		if (rfd == -1) {
+			xopen(rfd, "/dev/urandom", O_RDONLY);
+		}
 		xpread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0, "/dev/urandom");
+	}
 	return rnum[n--] & 0xf;
 }
 
