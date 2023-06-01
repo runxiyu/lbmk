@@ -376,7 +376,7 @@ xpledge(const char *promises, const char *execpromises)
 	(void)promises; (void)execpromises;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
-		err(ERR(), NULL);
+		err(ERR(), "pledge");
 #endif
 }
 
@@ -386,7 +386,7 @@ xunveil(const char *path, const char *permissions)
 	(void)path; (void)permissions;
 #ifdef __OpenBSD__
 	if (unveil(path, permissions) == -1)
-		err(ERR(), NULL);
+		err(ERR(), "unveil");
 #endif
 }
 
