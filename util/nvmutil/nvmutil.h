@@ -57,7 +57,7 @@ int big_endian;
 #define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define handle_endianness() if (big_endian) xorswap_buf(p)
 #define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
-#define xclose(f, l) if (close(f)) err(ERR(), "%s", l)
+#define xclose(f, l) if (close(f) == -1) err(ERR(), "%s", l)
 
 #define xorswap(x, y) x ^= y, y ^= x, x ^= y
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
