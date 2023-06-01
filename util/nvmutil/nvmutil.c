@@ -66,8 +66,8 @@ void err_if(int condition);
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
-#define word(pos16, partnum) (buf16[pos16 + (partnum << 11)])
-#define ERR() (errno = errno ? errno : ECANCELED)
+#define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
+#define ERR() errno = errno ? errno : ECANCELED
 #define xorswap(x, y) x ^= y, y ^= x, x ^= y
 
 uint16_t buf16[SIZE_4KB];
