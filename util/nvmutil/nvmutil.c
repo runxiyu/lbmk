@@ -7,14 +7,18 @@ int
 main(int argc, char *argv[])
 {
 	xpledge("stdio rpath wpath unveil", NULL);
-	int flags = O_RDWR;
+	if (argc < 3)
+		err(errno = EINVAL, NULL);
+	if (strcmp(COMMAND, "dump") == 0)
+		flags = O_RDONLY;
+	openFiles(FILENAME);
+
 	void (*cmd)(void) = NULL;
 	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 
 	if (argc == 3) {
 		if (strcmp(COMMAND, "dump") == 0) {
-			xpledge("stdio rpath unveil", NULL);
-			flags = O_RDONLY;
+			xpledge("stdio", NULL);
 			cmd = &cmd_dump;
 		} else if (strcmp(COMMAND, "setmac") == 0) {
 			strMac = (char *) strRMac; /* random mac address */
@@ -42,16 +46,7 @@ main(int argc, char *argv[])
 
 	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
 	    | (cmd == &cmd_brick);
-	readGbeFile(FILENAME, flags);
-
-	(void)rhex();
-	xunveil("/dev/urandom", "r");
-	if (flags == O_RDONLY) {
-		xpledge("stdio", NULL);
-	} else {
-		xpledge("stdio wpath unveil", NULL);
-		xunveil(FILENAME, "w");
-	}
+	readGbeFile(FILENAME);
 
 	if (strMac != NULL)
 		cmd_setmac(strMac); /* nvm gbe.bin setmac */
@@ -64,13 +59,24 @@ main(int argc, char *argv[])
 }
 
 void
-readGbeFile(const char *path, int flags)
+openFiles(const char *path)
 {
+	(void)rhex();
 	xopen(fd, path, flags);
 	if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	errno = errno != ENOTDIR ? errno : 0;
+	xunveil("/dev/urandom", "r");
+	if (flags != O_RDONLY) {
+		xunveil(path, "w");
+		xpledge("stdio wpath", NULL);
+	} else
+		xpledge("stdio", NULL);
+}
 
+void
+readGbeFile(const char *path)
+{
 	big_endian = ((uint8_t *) &test)[0] ^ 1;
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 	for (int p = 0; p < 2; p++) {
@@ -252,6 +258,8 @@ xorswap_buf(int partnum)
 void
 writeGbeFile(const char *filename)
 {
+	if (flags == O_RDONLY)
+		err(ERR(), "Write aborted due to read-only mode: %s", filename);
 	if (gbeFileModified)
 		errno = 0;
 	for (int p = 0; p < 2; p++) {

@@ -13,7 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 
-void readGbeFile(const char *path, int flags);
+void openFiles(const char *path);
+void readGbeFile(const char *path);
 void cmd_setmac(const char *strMac);
 int invalidMacAddress(const char *strMac, uint16_t *mac);
 uint8_t hextonum(char chs);
@@ -42,7 +43,7 @@ uint8_t *buf = (uint8_t *) &buf16;
 size_t nf = 128, gbe[2];
 uint8_t skipread[2] = {0, 0};
 
-int fd = -1, part, gbeFileModified = 0;
+int flags = O_RDWR, fd = -1, part, gbeFileModified = 0;
 uint8_t nvmPartModified[2] = {0, 0};
 
 int test = 1;
