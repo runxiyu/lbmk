@@ -56,7 +56,7 @@ int big_endian;
 	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
 	if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 #define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
-#define handle_endianness() if (big_endian) xorswap_buf(p)
+#define handle_endianness(r) if (big_endian) xorswap_buf(r)
 #define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define xclose(f, l) if (close(f) == -1) err(ERR(), "%s", l)
 

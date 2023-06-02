@@ -83,7 +83,7 @@ readGbeFile(const char *path)
 		if (skipread[p])
 			continue;
 		xpread(fd, (uint8_t *) gbe[p], nf, p << 12, path);
-		handle_endianness();
+		handle_endianness(p);
 	}
 }
 
@@ -256,16 +256,11 @@ writeGbeFile(const char *filename)
 {
 	if (gbeFileModified)
 		errno = 0;
-	for (int p = 0; p < 2; p++) {
-		if (gbe[0] > gbe[1])
-			p ^= 1; /* speedhack: write sequentially on-disk */
-		if (!nvmPartModified[p])
-			goto next_part;
-		handle_endianness();
-		xpwrite(fd, (uint8_t *) gbe[p], nf, p << 12, filename);
-next_part:
-		if (gbe[0] > gbe[1])
-			p ^= 1; /* speedhack: write sequentially on-disk */
+	for (int x = gbe[0] > gbe[1] ? 1 : 0, p = 0; p < 2; p++, x ^= 1) {
+		if (!nvmPartModified[x])
+			continue;
+		handle_endianness(x);
+		xpwrite(fd, (uint8_t *) gbe[x], nf, x << 12, filename);
 	}
 	xclose(fd, filename);
 	xpledge("stdio", NULL);
