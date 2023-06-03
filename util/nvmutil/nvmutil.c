@@ -7,6 +7,12 @@ int
 main(int argc, char *argv[])
 {
 	xpledge("stdio rpath wpath unveil", NULL);
+	err_if((errno = argc < 3 ? EINVAL : errno));
+	if ((flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags)
+	    == O_RDONLY)
+		xpledge("stdio rpath unveil", NULL);
+	openFiles(FILENAME);
+	xpledge("stdio", NULL);
 	for (int i = 0; i < 6; i++)
 		if (strcmp(COMMAND, op[i].str) == 0)
 			if ((cmd = argc >= op[i].args ? op[i].cmd : NULL))
@@ -16,8 +22,7 @@ main(int argc, char *argv[])
 	else if ((cmd != NULL) && (argc > 3))
 		err_if((errno = (!((part = PARTNUM[0] - '0') == 0 || part == 1))
 		    || PARTNUM[1] ? EINVAL : errno));
-	err_if((errno = (!cmd) ? EINVAL : errno));
-	openFiles(FILENAME);
+	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 	readGbeFile(FILENAME);
 
 	(*cmd)();
@@ -31,7 +36,7 @@ void
 openFiles(const char *path)
 {
 	struct stat st;
-	xopen(fd, path, flags = (cmd == cmd_dump) ? O_RDONLY : flags);
+	xopen(fd, path, flags);
 	if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	xopen(rfd, "/dev/urandom", O_RDONLY);
@@ -39,7 +44,6 @@ openFiles(const char *path)
 	xunveil("/dev/urandom", "r");
 	if (flags != O_RDONLY)
 		xunveil(path, "w");
-	xpledge("stdio", NULL);
 }
 
 void
