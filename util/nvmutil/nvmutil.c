@@ -9,7 +9,7 @@ main(int argc, char *argv[])
 	xpledge("stdio rpath wpath unveil", NULL);
 	for (int i = 0; i < 6; i++)
 		if (strcmp(COMMAND, op[i].str) == 0)
-			if (!(cmd = argc >= op[i].args ? op[i].cmd : NULL))
+			if ((cmd = argc >= op[i].args ? op[i].cmd : NULL))
 				break;
 	if (cmd == cmd_setmac)
 		strMac = (argc > 3) ? MAC_ADDRESS : strRMac;
