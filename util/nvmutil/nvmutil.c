@@ -17,9 +17,6 @@ main(int argc, char *argv[])
 		err_if((errno = (!((part = PARTNUM[0] - '0') == 0 || part == 1))
 		    || PARTNUM[1] ? EINVAL : errno));
 	err_if((errno = (!cmd) ? EINVAL : errno));
-
-	nf = ((cmd == cmd_swap) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
-	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
 	openFiles(FILENAME);
 	readGbeFile(FILENAME);
 
@@ -34,7 +31,7 @@ void
 openFiles(const char *path)
 {
 	struct stat st;
-	xopen(fd, path, flags);
+	xopen(fd, path, flags = (cmd == cmd_dump) ? O_RDONLY : flags);
 	if ((st.st_size != SIZE_8KB))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	xopen(rfd, "/dev/urandom", O_RDONLY);
@@ -48,6 +45,7 @@ openFiles(const char *path)
 void
 readGbeFile(const char *path)
 {
+	nf = ((cmd == cmd_swap) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
 	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
 	    | (cmd == &cmd_brick);
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
