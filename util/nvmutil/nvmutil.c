@@ -7,52 +7,25 @@ int
 main(int argc, char *argv[])
 {
 	xpledge("stdio rpath wpath unveil", NULL);
-	if (argc < 3)
-		err(errno = EINVAL, NULL);
-	if (strcmp(COMMAND, "dump") == 0)
-		flags = O_RDONLY;
+	for (int i = 0; i < 6; i++)
+		if (strcmp(COMMAND, op[i].str) == 0)
+			if (!(cmd = argc >= op[i].args ? op[i].cmd : NULL))
+				break;
+	if (cmd == cmd_setmac)
+		strMac = (argc > 3) ? MAC_ADDRESS : strRMac;
+	else if ((cmd != NULL) && (argc > 3))
+		err_if((errno = (!((part = PARTNUM[0] - '0') == 0 || part == 1))
+		    || PARTNUM[1] ? EINVAL : errno));
+	err_if((errno = (!cmd) ? EINVAL : errno));
+
+	nf = ((cmd == cmd_swap) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
+	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
 	openFiles(FILENAME);
-
-	void (*cmd)(void) = NULL;
-	const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
-
-	if (argc == 3) {
-		if (strcmp(COMMAND, "dump") == 0) {
-			cmd = &cmd_dump;
-		} else if (strcmp(COMMAND, "setmac") == 0) {
-			strMac = (char *) strRMac; /* random mac address */
-		} else if (strcmp(COMMAND, "swap") == 0) {
-			cmd = &cmd_swap;
-			nf = SIZE_4KB;
-		}
-	} else if (argc == 4) {
-		if (strcmp(COMMAND, "setmac") == 0) {
-			strMac = MAC_ADDRESS; /* user-supplied mac address */
-		} else if ((!((part = PARTNUM[0] - '0') == 0 || part == 1))
-		|| PARTNUM[1]) { /* only allow '1' or '0' */
-			errno = EINVAL;
-		} else if (strcmp(COMMAND, "setchecksum") == 0) {
-			cmd = &cmd_setchecksum;
-		} else if (strcmp(COMMAND, "brick") == 0) {
-			cmd = &cmd_brick;
-		} else if (strcmp(COMMAND, "copy") == 0) {
-			cmd = &cmd_copy;
-			nf = SIZE_4KB;
-		}
-	}
-	err_if((errno = ((strMac == NULL) && (cmd == NULL)) ? EINVAL : errno));
-
-	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
-	    | (cmd == &cmd_brick);
 	readGbeFile(FILENAME);
 
-	if (strMac != NULL)
-		cmd_setmac(strMac); /* nvm gbe.bin setmac */
-	else if (cmd != NULL)
-		(*cmd)(); /* all other commands except setmac */
+	(*cmd)();
 	if ((gbeFileModified) && (flags != O_RDONLY))
 		writeGbeFile(FILENAME);
-
 	err_if((errno != 0) && (cmd != &cmd_dump));
 	return errno;
 }
@@ -67,17 +40,16 @@ openFiles(const char *path)
 	xopen(rfd, "/dev/urandom", O_RDONLY);
 	errno = errno != ENOTDIR ? errno : 0;
 	xunveil("/dev/urandom", "r");
-	if (flags != O_RDONLY) {
+	if (flags != O_RDONLY)
 		xunveil(path, "w");
-		xpledge("stdio wpath", NULL);
-	} else
-		xpledge("stdio", NULL);
+	xpledge("stdio", NULL);
 }
 
 void
 readGbeFile(const char *path)
 {
-	big_endian = ((uint8_t *) &test)[0] ^ 1;
+	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
+	    | (cmd == &cmd_brick);
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
@@ -88,12 +60,10 @@ readGbeFile(const char *path)
 }
 
 void
-cmd_setmac(const char *strMac)
+cmd_setmac(void)
 {
-	uint16_t mac[3] = {0, 0, 0};
 	if (invalidMacAddress(strMac, mac))
 		err(errno = ECANCELED, "Bad MAC address");
-
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (validChecksum(part = partnum)) {
 			for (int w = 0; w < 3; w++)
@@ -106,10 +76,9 @@ cmd_setmac(const char *strMac)
 int
 invalidMacAddress(const char *strMac, uint16_t *mac)
 {
-	uint8_t h;
 	uint64_t total = 0;
 	if (strnlen(strMac, 20) == 17) {
-	for (int i = 0; i < 16; i += 3) {
+	for (uint8_t h, i = 0; i < 16; i += 3) {
 		if (i != 15)
 			if (strMac[i + 2] != ':')
 				return 1;
@@ -136,17 +105,13 @@ hextonum(char ch)
 		return ch - 'A' + 10;
 	else if ((ch >= 'a') && (ch <= 'f'))
 		return ch - 'a' + 10;
-	else if (ch == '?')
-		return rhex(); /* random number */
-	else
-		return 16;
+	return (ch == '?') ? rhex() : 16;
 }
 
 uint8_t
 rhex(void)
 {
-	static int n = 0;
-	static uint8_t rnum[16];
+	static uint8_t n = 0, rnum[16];
 	if (!n)
 		xpread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0, "/dev/urandom");
 	return rnum[n--] & 0xf;
@@ -155,24 +120,20 @@ rhex(void)
 void
 cmd_dump(void)
 {
-	int partnum, numInvalid = 0;
-	for (partnum = 0; partnum < 2; partnum++) {
+	for (int partnum = 0, numInvalid = 0; partnum < 2; partnum++) {
 		if (!validChecksum(partnum))
 			++numInvalid;
 		printf("MAC (part %d): ", partnum);
-		showmac(partnum);
-		hexdump(partnum);
+		showmac(partnum), hexdump(partnum);
+		errno = ((numInvalid < 2) && (partnum)) ? 0 : errno;
 	}
-	if (numInvalid < 2)
-		errno = 0;
 }
 
 void
 showmac(int partnum)
 {
-	uint16_t val16;
 	for (int c = 0; c < 3; c++) {
-		val16 = word(c, partnum);
+		uint16_t val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
 		printf(c == 2 ? "\n" : ":");
 	}
@@ -186,8 +147,7 @@ hexdump(int partnum)
 		for (int c = 0; c < 8; c++) {
 			uint16_t val16 = word((row << 3) + c, partnum);
 			printf(" %02x%02x", val16 >> 8, val16 & 0xff);
-		}
-		printf("\n");
+		} printf("\n");
 	}
 }
 
@@ -210,17 +170,15 @@ cmd_brick(void)
 void
 cmd_swap(void)
 {
-	gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
-	    = validChecksum(1) | validChecksum(0);
-	if (gbeFileModified)
+	if ((gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
+	    = validChecksum(1) | validChecksum(0)))
 		xorswap(gbe[0], gbe[1]); /* speedhack: swap ptr, not words */
 }
 
 void
 cmd_copy(void)
 {
-	gbeFileModified = nvmPartModified[part ^ 1] = validChecksum(part);
-	if (gbeFileModified)
+	if ((gbeFileModified = nvmPartModified[part ^ 1] = validChecksum(part)))
 		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
 }
 
@@ -254,8 +212,7 @@ xorswap_buf(int partnum)
 void
 writeGbeFile(const char *filename)
 {
-	if (gbeFileModified)
-		errno = 0;
+	errno = 0;
 	for (int x = gbe[0] > gbe[1] ? 1 : 0, p = 0; p < 2; p++, x ^= 1) {
 		if (!nvmPartModified[x])
 			continue;
@@ -263,5 +220,4 @@ writeGbeFile(const char *filename)
 		xpwrite(fd, (uint8_t *) gbe[x], nf, x << 12, filename);
 	}
 	xclose(fd, filename);
-	xpledge("stdio", NULL);
 }

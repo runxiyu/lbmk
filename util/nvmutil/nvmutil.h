@@ -15,7 +15,7 @@
 
 void openFiles(const char *path);
 void readGbeFile(const char *path);
-void cmd_setmac(const char *strMac);
+void cmd_setmac(void);
 int invalidMacAddress(const char *strMac, uint16_t *mac);
 uint8_t hextonum(char chs);
 uint8_t rhex(void);
@@ -38,16 +38,28 @@ void writeGbeFile(const char *filename);
 #define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 
-uint16_t buf16[SIZE_4KB];
+uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
 size_t nf = 128, gbe[2];
-uint8_t skipread[2] = {0, 0};
+uint8_t nvmPartModified[2] = {0, 0}, skipread[2] = {0, 0};
+int endian = 1, flags = O_RDWR, rfd, fd, part, gbeFileModified = 0;
 
-int flags = O_RDWR, rfd, fd, part, gbeFileModified = 0;
-uint8_t nvmPartModified[2] = {0, 0};
+const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
 
-int test = 1;
-int big_endian;
+typedef struct op {
+	char *str;
+	void (*cmd)(void);
+	int args;
+} op_t;
+op_t op[] = {
+{ .str = "dump", .cmd = cmd_dump, .args = 3},
+{ .str = "setmac", .cmd = cmd_setmac, .args = 3},
+{ .str = "swap", .cmd = cmd_swap, .args = 3},
+{ .str = "copy", .cmd = cmd_copy, .args = 4},
+{ .str = "brick", .cmd = cmd_brick, .args = 4},
+{ .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4},
+};
+void (*cmd)(void) = NULL;
 
 #define ERR() errno = errno ? errno : ECANCELED
 #define err_if(x) if (x) err(ERR(), NULL)
@@ -56,7 +68,7 @@ int big_endian;
 	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
 	if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 #define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
-#define handle_endianness(r) if (big_endian) xorswap_buf(r)
+#define handle_endianness(r) if (((uint8_t *) &endian)[0] ^ 1) xorswap_buf(r)
 #define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define xclose(f, l) if (close(f) == -1) err(ERR(), "%s", l)
 
