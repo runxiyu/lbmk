@@ -76,7 +76,7 @@ handle_audio(void)
 			err(ERR(), NULL);
 
 	if ((f2 <= FREQ_SEP_MIN) || (f2 >= FREQ_SEP_MAX)
-			|| (f1 <= FREQ_DATA_MIN) || (f1 >= FREQ_DATA_MAX)) {
+	    || (f1 <= FREQ_DATA_MIN) || (f1 >= FREQ_DATA_MAX)) {
 		fetch_sample();
 		return;
 	}
@@ -110,7 +110,7 @@ void
 read_frame(int ringpos)
 {
 	if (fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
-			!= sizeof(frame[0]))
+	    != sizeof(frame[0]))
 		err(ERR(), "Could not read from frame.");
 	if (ferror(stdin) != 0)
 		err(ERR(), "Could not read from frame");
@@ -124,7 +124,7 @@ print_char(void)
 	if ((stdin_pos = ftell(stdin)) == -1)
 		err(ERR(), NULL);
 	printf ("%d %d %d @%ld\n", f1, f2, FREQ_DATA_THRESHOLD,
-			stdin_pos - sizeof(frame));
+	    stdin_pos - sizeof(frame));
 #endif
 	if (f1 < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
