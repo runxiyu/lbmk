@@ -72,7 +72,7 @@ handle_audio(void)
 	}
 	if (llp == FLUSH_TIMEOUT)
 		if (fflush(stdout) == EOF)
-			err(errno, NULL);
+			err(ERR(), NULL);
 
 	if ((f2 <= FREQ_SEP_MIN) || (f2 >= FREQ_SEP_MAX)
 			|| (f1 <= FREQ_DATA_MIN) || (f1 >= FREQ_DATA_MAX)) {
@@ -120,7 +120,7 @@ print_char(void)
 #if DEBUG
 	long stdin_pos = 0;
 	if ((stdin_pos = ftell(stdin)) == -1)
-		err(errno, NULL);
+		err(ERR(), NULL);
 	printf ("%d %d %d @%ld\n", f1, f2, FREQ_DATA_THRESHOLD,
 			stdin_pos - sizeof(frame));
 #endif
