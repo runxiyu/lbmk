@@ -23,8 +23,7 @@
 #define FLUSH_TIMEOUT 1
 #define ERR() (errno = errno ? errno : ECANCELED)
 
-signed short frame[2 * SAMPLES_PER_FRAME];
-signed short pulse[2 * SAMPLES_PER_FRAME];
+signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
 int f1, f2, lp, ascii_bit = 7;
 char ascii = 0;
 
@@ -37,25 +36,17 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		err(ERR(), "pledge");
 #endif
-
 	while ((c = getopt(argc, argv, "u")) != -1) {
-		switch (c) {
-		case 'u':
-			setvbuf(stdout, NULL, _IONBF, 0);
-			break;
-		default:
+		if (c != 'u')
 			err(errno = EINVAL, NULL);
-		}
+		setvbuf(stdout, NULL, _IONBF, 0);
 	}
-
 	while (!feof(stdin))
 		handle_audio();
-
 	if (errno)
 		err(errno, "Unhandled error upon exit. Exit status is errno.");
 	return 0;
@@ -65,7 +56,6 @@ void
 handle_audio(void)
 {
 	static int llp = 0;
-
 	if (lp > (3 * SAMPLES_PER_FRAME)) {
 		ascii_bit = 7;
 		ascii = lp = 0;
@@ -74,13 +64,11 @@ handle_audio(void)
 	if (llp == FLUSH_TIMEOUT)
 		if (fflush(stdout) == EOF)
 			err(ERR(), NULL);
-
 	if ((f2 <= FREQ_SEP_MIN) || (f2 >= FREQ_SEP_MAX)
 	    || (f1 <= FREQ_DATA_MIN) || (f1 >= FREQ_DATA_MAX)) {
 		fetch_sample();
 		return;
 	}
-
 	print_char();
 
 	lp = llp = 0;
@@ -92,14 +80,12 @@ void
 fetch_sample(void)
 {
 	static int ringpos = 0;
-
 	f1 -= pulse[ringpos];
 	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
 	f2 -= pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
-	read_frame(ringpos);
 
-	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
-	if (pulse[ringpos])
+	read_frame(ringpos);
+	if ((pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0))
 		++f2;
 	++ringpos;
 	ringpos %= 2 * SAMPLES_PER_FRAME;
@@ -109,11 +95,9 @@ fetch_sample(void)
 void
 read_frame(int ringpos)
 {
-	if (fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
-	    != sizeof(frame[0]))
+	if ((fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
+	    != sizeof(frame[0])) || (ferror(stdin) != 0))
 		err(ERR(), "Could not read from frame.");
-	if (ferror(stdin) != 0)
-		err(ERR(), "Could not read from frame");
 }
 
 void
@@ -128,8 +112,7 @@ print_char(void)
 #endif
 	if (f1 < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
-	ascii_bit--;
-	if (ascii_bit < 0) {
+	if (!ascii_bit) {
 #if DEBUG
 		printf("<%c, %x>", ascii, ascii);
 #else
