@@ -20,11 +20,10 @@
 #define THRESHOLD 500
 
 #define DEBUG 0
-#define FLUSH_TIMEOUT 1
 #define ERR() (errno = errno ? errno : ECANCELED)
 
 signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
-int freq_data, freq_separator, sample_count, ascii_bit = 7;
+int flush, freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
@@ -56,15 +55,12 @@ main(int argc, char *argv[])
 void
 handle_audio(void)
 {
-	static int flush_count = 0;
-	if (sample_count > (3 * SAMPLES_PER_FRAME)) {
+	if ((flush = (sample_count > (3 * SAMPLES_PER_FRAME)))) {
 		ascii_bit = 7;
 		ascii = sample_count = 0;
-		++flush_count;
-	}
-	if (flush_count == FLUSH_TIMEOUT) /* TODO: reset flush count? */
 		if (fflush(stdout) == EOF)
 			err(ERR(), NULL);
+	}
 	if ((freq_separator <= FREQ_SEP_MIN) || (freq_separator >= FREQ_SEP_MAX)
 	    || (freq_data <= FREQ_DATA_MIN) || (freq_data >= FREQ_DATA_MAX)) {
 		fetch_sample();
@@ -73,7 +69,7 @@ handle_audio(void)
 	if (!set_ascii_bit())
 		print_char();
 
-	sample_count = flush_count = 0;
+	sample_count = flush = 0;
 	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		fetch_sample();
 }
