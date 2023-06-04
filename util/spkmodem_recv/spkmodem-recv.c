@@ -40,7 +40,7 @@ main(int argc, char *argv[])
 
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
-		err(errno, "pledge");
+		err(ERR(), "pledge");
 #endif
 
 	while ((c = getopt(argc, argv, "u")) != -1) {
@@ -82,9 +82,8 @@ handle_audio(void)
 
 	print_char();
 
-	lp = 0;
-	llp = 0;
-	for (int i = 0; i < SAMPLES_PER_FRAME; i++)
+	lp = llp = 0;
+	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		fetch_sample();
 }
 
