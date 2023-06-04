@@ -24,7 +24,7 @@
 #define ERR() (errno = errno ? errno : ECANCELED)
 
 signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
-int f1, f2, lp, ascii_bit = 7;
+int freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
@@ -56,24 +56,24 @@ main(int argc, char *argv[])
 void
 handle_audio(void)
 {
-	static int llp = 0;
-	if (lp > (3 * SAMPLES_PER_FRAME)) {
+	static int flush_count = 0;
+	if (sample_count > (3 * SAMPLES_PER_FRAME)) {
 		ascii_bit = 7;
-		ascii = lp = 0;
-		++llp;
+		ascii = sample_count = 0;
+		++flush_count;
 	}
-	if (llp == FLUSH_TIMEOUT)
+	if (flush_count == FLUSH_TIMEOUT) /* TODO: reset flush count? */
 		if (fflush(stdout) == EOF)
 			err(ERR(), NULL);
-	if ((f2 <= FREQ_SEP_MIN) || (f2 >= FREQ_SEP_MAX)
-	    || (f1 <= FREQ_DATA_MIN) || (f1 >= FREQ_DATA_MAX)) {
+	if ((freq_separator <= FREQ_SEP_MIN) || (freq_separator >= FREQ_SEP_MAX)
+	    || (freq_data <= FREQ_DATA_MIN) || (freq_data >= FREQ_DATA_MAX)) {
 		fetch_sample();
 		return;
 	}
 	if (!set_ascii_bit())
 		print_char();
 
-	lp = llp = 0;
+	sample_count = flush_count = 0;
 	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		fetch_sample();
 }
@@ -82,16 +82,18 @@ void
 fetch_sample(void)
 {
 	static int ringpos = 0;
-	f1 -= pulse[ringpos];
-	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
-	f2 -= pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
+	freq_data -= pulse[ringpos];
+	freq_data += pulse[(ringpos + SAMPLES_PER_FRAME)
+	    % (2 * SAMPLES_PER_FRAME)];
+	freq_separator -= pulse[(ringpos + SAMPLES_PER_FRAME)
+	    % (2 * SAMPLES_PER_FRAME)];
 
 	read_frame(ringpos);
 	if ((pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0))
-		++f2;
+		++freq_separator;
 	++ringpos;
 	ringpos %= 2 * SAMPLES_PER_FRAME;
-	++lp;
+	++sample_count;
 }
 
 void
@@ -109,10 +111,10 @@ set_ascii_bit(void)
 	long stdin_pos = 0;
 	if ((stdin_pos = ftell(stdin)) == -1)
 		err(ERR(), NULL);
-	printf ("%d %d %d @%ld\n", f1, f2, FREQ_DATA_THRESHOLD,
-	    stdin_pos - sizeof(frame));
+	printf ("%d %d %d @%ld\n", freq_data, freq_separator,
+	    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
 #endif
-	if (f1 < FREQ_DATA_THRESHOLD)
+	if (freq_data < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
 	return ascii_bit;
 }
