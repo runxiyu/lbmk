@@ -29,9 +29,9 @@ int f1, f2, lp, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
-void print_char(void);
 void fetch_sample(void);
 void read_frame(int ringpos);
+void print_char(void);
 
 int
 main(int argc, char *argv[])
