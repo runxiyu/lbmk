@@ -112,13 +112,13 @@ print_char(void)
 #endif
 	if (f1 < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
-	if (!ascii_bit) {
+	if (ascii_bit)
+		return;
 #if DEBUG
-		printf("<%c, %x>", ascii, ascii);
+	printf("<%c, %x>", ascii, ascii);
 #else
-		printf("%c", ascii);
+	printf("%c", ascii);
 #endif
-		ascii_bit = 7;
-		ascii = 0;
-	}
+	ascii_bit = 7;
+	ascii = 0;
 }
