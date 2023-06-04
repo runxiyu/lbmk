@@ -98,16 +98,11 @@ fetch_sample(void)
 			!= sizeof(frame[0]))
 		err(errno = ECANCELED, "Could not read frame.");
 
-	if (abs(frame[ringpos]) > THRESHOLD) { /* rising/falling edge(pulse) */
-		pulse[ringpos] = 1;
-		f2++;
-	} else {
-		pulse[ringpos] = 0;
-	}
-
-	ringpos++;
+	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
+	if (pulse[ringpos++])
+		++f2;
 	ringpos %= 2 * SAMPLES_PER_FRAME;
-	lp++;
+	++lp;
 }
 
 void
