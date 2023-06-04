@@ -30,6 +30,7 @@ char ascii = 0;
 void handle_audio(void);
 void fetch_sample(void);
 void read_frame(int ringpos);
+int set_ascii_bit(void);
 void print_char(void);
 
 int
@@ -69,7 +70,8 @@ handle_audio(void)
 		fetch_sample();
 		return;
 	}
-	print_char();
+	if (!set_ascii_bit())
+		print_char();
 
 	lp = llp = 0;
 	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
@@ -100,8 +102,8 @@ read_frame(int ringpos)
 		err(ERR(), "Could not read from frame.");
 }
 
-void
-print_char(void)
+int
+set_ascii_bit(void)
 {
 #if DEBUG
 	long stdin_pos = 0;
@@ -112,8 +114,12 @@ print_char(void)
 #endif
 	if (f1 < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
-	if (ascii_bit)
-		return;
+	return ascii_bit;
+}
+
+void
+print_char(void)
+{
 #if DEBUG
 	printf("<%c, %x>", ascii, ascii);
 #else
