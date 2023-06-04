@@ -21,6 +21,7 @@
 
 #define DEBUG 0
 #define FLUSH_TIMEOUT 1
+#define ERR() (errno = errno ? errno : ECANCELED)
 
 signed short frame[2 * SAMPLES_PER_FRAME];
 signed short pulse[2 * SAMPLES_PER_FRAME];
@@ -30,6 +31,7 @@ char ascii = 0;
 void handle_audio(void);
 void print_char(void);
 void fetch_sample(void);
+void read_frame(int ringpos);
 
 int
 main(int argc, char *argv[])
@@ -94,15 +96,23 @@ fetch_sample(void)
 	f1 -= pulse[ringpos];
 	f1 += pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
 	f2 -= pulse[(ringpos + SAMPLES_PER_FRAME) % (2 * SAMPLES_PER_FRAME)];
-	if (fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
-			!= sizeof(frame[0]))
-		err(errno = ECANCELED, "Could not read frame.");
+	read_frame(ringpos);
 
 	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
 	if (pulse[ringpos++])
 		++f2;
 	ringpos %= 2 * SAMPLES_PER_FRAME;
 	++lp;
+}
+
+void
+read_frame(int ringpos)
+{
+	if (fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
+			!= sizeof(frame[0]))
+		err(ERR(), "Could not read from frame.");
+	if (ferror(stdin) != 0)
+		err(ERR(), "Could not read from frame");
 }
 
 void
