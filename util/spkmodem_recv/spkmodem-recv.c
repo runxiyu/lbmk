@@ -66,9 +66,8 @@ handle_audio(void)
 
 	if (lp > (3 * SAMPLES_PER_FRAME)) {
 		ascii_bit = 7;
-		ascii = 0;
-		lp = 0;
-		llp++;
+		ascii = lp = 0;
+		++llp;
 	}
 	if (llp == FLUSH_TIMEOUT)
 		if (fflush(stdout) == EOF)
@@ -98,8 +97,9 @@ fetch_sample(void)
 	read_frame(ringpos);
 
 	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
-	if (pulse[ringpos++])
+	if (pulse[ringpos])
 		++f2;
+	++ringpos;
 	ringpos %= 2 * SAMPLES_PER_FRAME;
 	++lp;
 }
