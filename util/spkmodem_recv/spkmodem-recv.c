@@ -56,7 +56,9 @@ main(int argc, char *argv[])
 	while (!feof(stdin))
 		handle_audio();
 
-	return errno;
+	if (errno)
+		err(errno, "Unhandled error upon exit. Exit status is errno.");
+	return 0;
 }
 
 void
