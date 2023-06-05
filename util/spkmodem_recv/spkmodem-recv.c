@@ -23,12 +23,12 @@
 #define reset_char() ascii = 0, ascii_bit = 7
 
 signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
-int debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
+int ringpos, debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
 void fetch_sample(void);
-void read_frame(int ringpos);
+void read_frame(void);
 int set_ascii_bit(void);
 void print_char(void);
 void print_stats(void);
@@ -75,14 +75,13 @@ handle_audio(void)
 void
 fetch_sample(void)
 {
-	static int ringpos = 0;
 	freq_data -= pulse[ringpos];
 	freq_data += pulse[(ringpos + SAMPLES_PER_FRAME)
 	    % (2 * SAMPLES_PER_FRAME)];
 	freq_separator -= pulse[(ringpos + SAMPLES_PER_FRAME)
 	    % (2 * SAMPLES_PER_FRAME)];
 
-	read_frame(ringpos);
+	read_frame();
 	if ((pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0))
 		++freq_separator;
 	++ringpos;
@@ -91,7 +90,7 @@ fetch_sample(void)
 }
 
 void
-read_frame(int ringpos)
+read_frame(void)
 {
 	if ((fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
 	    != sizeof(frame[0])) || (ferror(stdin) != 0))
