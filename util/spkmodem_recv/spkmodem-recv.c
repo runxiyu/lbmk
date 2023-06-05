@@ -30,6 +30,7 @@ void fetch_sample(void);
 void read_frame(int ringpos);
 int set_ascii_bit(void);
 void print_char(void);
+void print_stats(void);
 
 int
 main(int argc, char *argv[])
@@ -101,13 +102,8 @@ read_frame(int ringpos)
 int
 set_ascii_bit(void)
 {
-	if (debug) {
-		long stdin_pos = 0;
-		if ((stdin_pos = ftell(stdin)) == -1)
-			err(ERR(), NULL);
-		printf ("%d %d %d @%ld\n", freq_data, freq_separator,
-		    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
-	}
+	if (debug)
+		print_stats();
 	if (freq_data < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
 	return ascii_bit;
@@ -122,4 +118,14 @@ print_char(void)
 		printf("%c", ascii);
 	ascii_bit = 7;
 	ascii = 0;
+}
+
+void
+print_stats(void)
+{
+	long stdin_pos = 0;
+	if ((stdin_pos = ftell(stdin)) == -1)
+		err(ERR(), NULL);
+	printf ("%d %d %d @%ld\n", freq_data, freq_separator,
+	    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
 }
