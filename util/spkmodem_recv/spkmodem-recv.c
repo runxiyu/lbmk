@@ -23,7 +23,7 @@
 #define ERR() (errno = errno ? errno : ECANCELED)
 
 signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
-int flush, freq_data, freq_separator, sample_count, ascii_bit = 7;
+int freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
@@ -40,11 +40,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(ERR(), "pledge");
 #endif
-	while ((c = getopt(argc, argv, "u")) != -1) {
-		if (c != 'u')
-			err(errno = EINVAL, NULL);
-		setvbuf(stdout, NULL, _IONBF, 0);
-	}
+	setvbuf(stdout, NULL, _IONBF, 0);
 	while (!feof(stdin))
 		handle_audio();
 	if (errno)
@@ -55,21 +51,19 @@ main(int argc, char *argv[])
 void
 handle_audio(void)
 {
-	if ((flush = (sample_count > (3 * SAMPLES_PER_FRAME)))) {
+	if (sample_count > (3 * SAMPLES_PER_FRAME)) {
 		ascii_bit = 7;
 		ascii = sample_count = 0;
-		if (fflush(stdout) == EOF)
-			err(ERR(), NULL);
 	}
 	if ((freq_separator <= FREQ_SEP_MIN) || (freq_separator >= FREQ_SEP_MAX)
 	    || (freq_data <= FREQ_DATA_MIN) || (freq_data >= FREQ_DATA_MAX)) {
 		fetch_sample();
 		return;
 	}
+
 	if (!set_ascii_bit())
 		print_char();
-
-	sample_count = flush = 0;
+	sample_count = 0;
 	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		fetch_sample();
 }
