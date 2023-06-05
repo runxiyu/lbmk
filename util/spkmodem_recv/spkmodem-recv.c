@@ -47,9 +47,9 @@ main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IONBF, 0);
 	while (!feof(stdin))
 		handle_audio();
-	if (errno)
-		err(errno, "Unhandled error upon exit. Exit status is errno.");
-	return 0;
+	if (errno && debug)
+		err(errno, "Unhandled error, errno %d", errno);
+	return errno;
 }
 
 void
