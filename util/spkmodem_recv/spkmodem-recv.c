@@ -19,11 +19,10 @@
 #define FREQ_DATA_MAX 60
 #define THRESHOLD 500
 
-#define DEBUG 0
 #define ERR() (errno = errno ? errno : ECANCELED)
 
 signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
-int freq_data, freq_separator, sample_count, ascii_bit = 7;
+int debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
@@ -40,6 +39,11 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(ERR(), "pledge");
 #endif
+	while ((c = getopt(argc, argv, "d")) != -1) {
+		if (c != 'd')
+			err(errno = EINVAL, NULL);
+		debug = 1;
+	}
 	setvbuf(stdout, NULL, _IONBF, 0);
 	while (!feof(stdin))
 		handle_audio();
@@ -97,13 +101,13 @@ read_frame(int ringpos)
 int
 set_ascii_bit(void)
 {
-#if DEBUG
-	long stdin_pos = 0;
-	if ((stdin_pos = ftell(stdin)) == -1)
-		err(ERR(), NULL);
-	printf ("%d %d %d @%ld\n", freq_data, freq_separator,
-	    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
-#endif
+	if (debug) {
+		long stdin_pos = 0;
+		if ((stdin_pos = ftell(stdin)) == -1)
+			err(ERR(), NULL);
+		printf ("%d %d %d @%ld\n", freq_data, freq_separator,
+		    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
+	}
 	if (freq_data < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
 	return ascii_bit;
@@ -112,11 +116,10 @@ set_ascii_bit(void)
 void
 print_char(void)
 {
-#if DEBUG
-	printf("<%c, %x>", ascii, ascii);
-#else
-	printf("%c", ascii);
-#endif
+	if (debug)
+		printf("<%c, %x>", ascii, ascii);
+	else
+		printf("%c", ascii);
 	ascii_bit = 7;
 	ascii = 0;
 }
