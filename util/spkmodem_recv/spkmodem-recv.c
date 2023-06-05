@@ -20,6 +20,7 @@
 #define THRESHOLD 500
 
 #define ERR() (errno = errno ? errno : ECANCELED)
+#define reset_char() ascii = 0, ascii_bit = 7
 
 signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
 int debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
@@ -56,10 +57,8 @@ main(int argc, char *argv[])
 void
 handle_audio(void)
 {
-	if (sample_count > (3 * SAMPLES_PER_FRAME)) {
-		ascii_bit = 7;
-		ascii = sample_count = 0;
-	}
+	if (sample_count > (3 * SAMPLES_PER_FRAME))
+		sample_count = reset_char();
 	if ((freq_separator <= FREQ_SEP_MIN) || (freq_separator >= FREQ_SEP_MAX)
 	    || (freq_data <= FREQ_DATA_MIN) || (freq_data >= FREQ_DATA_MAX)) {
 		fetch_sample();
@@ -116,8 +115,7 @@ print_char(void)
 		printf("<%c, %x>", ascii, ascii);
 	else
 		printf("%c", ascii);
-	ascii_bit = 7;
-	ascii = 0;
+	reset_char();
 }
 
 void
