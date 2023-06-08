@@ -65,7 +65,7 @@ handle_audio(void)
 		return;
 	}
 
-	if (!set_ascii_bit())
+	if (set_ascii_bit() < 0)
 		print_char();
 	sample_count = 0;
 	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
@@ -104,6 +104,7 @@ set_ascii_bit(void)
 		print_stats();
 	if (freq_data < FREQ_DATA_THRESHOLD)
 		ascii |= (1 << ascii_bit);
+	--ascii_bit;
 	return ascii_bit;
 }
 
