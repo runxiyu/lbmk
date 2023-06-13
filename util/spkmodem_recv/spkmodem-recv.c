@@ -57,11 +57,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(ERR(), "pledge");
 #endif
-	while ((c = getopt(argc, argv, "d")) != -1) {
-		if (c != 'd')
+	while ((c = getopt(argc, argv, "d")) != -1)
+		if (!(debug = (c == 'd')))
 			err(errno = EINVAL, NULL);
-		debug = 1;
-	}
 	setvbuf(stdout, NULL, _IONBF, 0);
 	while (!feof(stdin))
 		handle_audio();
