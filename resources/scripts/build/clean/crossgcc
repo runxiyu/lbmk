@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #  helper script: clean the crossgcc builds
 #
 #	Copyright (C) 2014-2016, 2020, 2023 Leah Rowe <info@minifree.org>
-#	 Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
+#	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by

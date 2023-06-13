@@ -1,9 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #  helper script: create ROM images for a given mainboard
 #
 #	Copyright (C) 2020,2021,2023 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2021 Ferass El Hafidi <vitali64pmemail@protonmail.com>
+#	Copyright (C) 2021,2022 Ferass El Hafidi
+#				<vitali64pmemail@protonmail.com>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
@@ -63,16 +64,16 @@ CROSS_COMPILE=""
 
 main()
 {
-	while [[ $# > 0 ]]; do
+	while [ $# -gt 0 ]; do
 		case ${1} in
 			-d)
-			displaymodes+="${2}" 
+			displaymodes="${displaymodes}${2}" 
 			shift ;;
 			-p)
-			payloads+="${2}"
+			payloads="${payloads}${2}"
 			shift ;;
 			-k)
-			keyboard_layouts+="${2}"
+			keyboard_layouts="${keyboard_layouts}${2}"
 			shift ;;
 			*)
 			board=${1} ;;
@@ -107,7 +108,7 @@ load_config()
 		exit 1
 	fi
 
-	source "${boardcfgdir}/board.cfg"
+	. "${boardcfgdir}/board.cfg"
 
 	if [ "${board}" != "${cbtree}" ]; then
 		cbdir="coreboot/${cbtree}"
@@ -554,11 +555,11 @@ mkRomsWithGrub()
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
 		for kmapfile in "${kmapdir}"/*; do
-			keymaps+=" ${kmapfile}"
+			keymaps="${keymaps} ${kmapfile}"
 		done
 	else
 		for keymapname in ${keyboard_layouts}; do
-			keymaps+=" ${kmapdir}/${keymapname}.gkb"
+			keymaps="${keymaps} ${kmapdir}/${keymapname}.gkb"
 		done
 	fi
 	for keymapfile in ${keymaps}; do
@@ -694,10 +695,11 @@ moverom()
 
 	if [ "${cuttype}" = "i945 laptop" ]; then
 		dd if=${_newrom} of=top64k.bin bs=1 \
-				skip=$[$(stat -c %s ${_newrom}) - 0x10000] \
+				skip=$(($(stat -c %s ${_newrom}) - 0x10000)) \
 				count=64k
-		dd if=top64k.bin of=${_newrom} bs=1 seek=$[$(stat -c %s \
-				${_newrom}) - 0x20000] count=64k conv=notrunc
+		dd if=top64k.bin of=${_newrom} bs=1 \
+				seek=$(($(stat -c %s ${_newrom}) - 0x20000)) \
+				count=64k conv=notrunc
 		rm -f top64k.bin
 		return 0
 	fi

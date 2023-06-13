@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # parabola script: installs build dependencies for Parabola GNU/Linux-libre
 # based on the arch script

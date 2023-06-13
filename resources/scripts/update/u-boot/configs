@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #
 #  helper script: update U-Boot configs (run make oldconfig)
@@ -33,7 +33,7 @@ updateconf() {
 	board="$1"
 	if [ -f "resources/u-boot/${board}/board.cfg" ]; then
         ubtree="undefined"
-        source "resources/u-boot/${board}/board.cfg" # source
+        . "resources/u-boot/${board}/board.cfg" # source
         if [ "${ubtree}" = "undefined" ]; then
             return 0
         fi

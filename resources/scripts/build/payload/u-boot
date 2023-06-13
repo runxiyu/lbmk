@@ -3,6 +3,7 @@
 #  helper script: builds U-Boot source code
 #
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 #	Copyright (C) 2023 Leah Rowe <leah@libreboot.org>
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -96,7 +97,7 @@ handle_dependencies()
 	fi
 
 	# Override the above defaults using board.cfg
-	source "${board_dir}/board.cfg" # source
+	. "${board_dir}/board.cfg" # source
 
 	if [ "${ubtree}" = "undefined" ]; then
 		printf "build/u-boot %s: ubtree undefined\n" \
@@ -161,7 +162,12 @@ build_uboot_elf()
 	make -C "${ubdir}" olddefconfig
 	make -C "${ubdir}" -j"$(nproc)" all
 
-	for f in "${ubdir}"/u-boot{,.bin,.dtb,.img,.itb,.elf}; do
+	for f in "${ubdir}"/u-boot "${ubdir}"/u-boot.bin \
+			"${ubdir}"/u-boot.dtb \
+			"${ubdir}"/u-boot.img \
+			"${ubdir}"/u-boot.itb \
+			"${ubdir}"/u-boot.elf
+	do
 		if [ -f "$f" ]; then
 			mv "$f" "${dest_dir}/"
 		fi

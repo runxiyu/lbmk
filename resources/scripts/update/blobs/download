@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -63,23 +64,23 @@ detect_firmware()
 	. "${boarddir}/board.cfg"
 
 	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
-		needs+=" MRC"
+		needs="${needs} MRC"
 	fi
 	if [ "${CONFIG_HAVE_IFD_BIN}" = "y" ]; then
-		needs+=" IFD"
+		needs="${needs} IFD"
 	fi
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		needs+=" ME"
+		needs="${needs} ME"
 	fi
 	if [ "${CONFIG_HAVE_GBE_BIN}" = "y" ]; then
-		needs+=" GBE"
+		needs="${needs} GBE"
 	fi
 	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		needs+=" EC"
+		needs="${needs} EC"
 	fi
 	if [ "${CONFIG_BOARD_DELL_E6400}" = "y" ] \
 			&& [ "${CONFIG_VGA_BIOS_FILE}" != "" ]; then
-		needs+=" E6400VGA"
+		needs="${needs} E6400VGA"
 	fi
 	if [ -z ${needs+x} ]; then
 		printf 'No binary blobs needed for this board\n'
@@ -142,7 +143,9 @@ scan_sources_config()
 			e6400_vga_romname=${2}
 			;;
 		esac
-	done <<< $(eval "awk '${awkstr}' resources/blobs/sources")
+	done << EOF
+	$(eval "awk '${awkstr}' resources/blobs/sources")
+EOF
 }
 
 build_dependencies()
@@ -178,16 +181,16 @@ download_blobs()
 	for need in ${needs}; do
 		case ${need} in
 		*ME*)
-			download_blob_intel_me || _failed+=" me"
+			download_blob_intel_me || _failed="${_failed} me"
 			;;
 		*EC*)
-			download_ec || _failed+=" ec"
+			download_ec || _failed="${_failed} ec"
 			;;
 		*E6400VGA*)
-			download_e6400vga || _failed+=" e6400vga"
+			download_e6400vga || _failed="${_failed} e6400vga"
 			;;
 		*MRC*)
-			./download mrc || _failed+=" mrc"
+			./download mrc || _failed="${_failed} mrc"
 			;;
 		esac
 	done

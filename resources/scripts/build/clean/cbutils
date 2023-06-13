@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #  helper script: clean the dependencies that were built in coreboot
 #
 #	Copyright (C) 2014, 2015, 2016, 2020 Leah Rowe <info@minifree.org>
-#	 Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
+#	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ for board in coreboot/*; do
     make -C "${board}/" distclean
 
 	# Clean its utilities as well
-	for util in {cbfs,ifd,nvram}tool cbmem; do
+	for util in cbfstool ifdtool nvramtool cbmem; do
 		make -C "${board}/util/${util}/" clean
 	done
 	make -C "${board}/payloads/libpayload/" distclean

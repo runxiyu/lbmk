@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #   generate GRUB ELF files (coreboot payload) and configuration files
 #
@@ -24,7 +24,7 @@ set -u -e
 grubcfgsdir="resources/grub"
 keymap=""
 
-source "${grubcfgsdir}/modules.list"
+. "${grubcfgsdir}/modules.list"
 
 main()
 {

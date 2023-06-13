@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
+# SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -47,7 +48,9 @@ read_config()
 			bkup_url=${2}
 			;;
 		esac
-	done <<< $(eval "awk '${awkstr}' resources/git/revisions")
+	done << EOF
+	$(eval "awk '${awkstr}' resources/git/revisions")
+EOF
 }
 
 verify_config()
