@@ -23,7 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
-/* Compilation:	gcc -o spkmodem-recv spkmodem-recv  */
+/* Compilation:	gcc -o spkmodem-recv spkmodem-recv.c */
 /* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
 
 #define SAMPLES_PER_FRAME 240
