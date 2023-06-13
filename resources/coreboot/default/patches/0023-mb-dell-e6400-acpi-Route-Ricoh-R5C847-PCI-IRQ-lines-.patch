@@ -1,0 +1,125 @@
+From 5c1455495e8d2030473d8194fcf2e1d1111696b7 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Tue, 23 May 2023 20:59:56 -0600
+Subject: [PATCH] mb/dell/e6400/acpi: Route Ricoh R5C847 PCI IRQ lines as DBC
+
+Based on the schematic and vendor ASL code, PCI interrupt lines ABC of
+the Ricoh R5C847 PC Card/Media Card/FireWire controller are routed DBC.
+From lspci and the schematic this chip is PCI device 1. The original
+config copied from the T400 was routed ABCD->BCDA, causing Linux to
+issue an "irq 18: nobody cared" message when inserting an SD card.
+This is fixed by this patch and the SD card now works properly.
+
+Change-Id: Iede1de72d5369f1aebbac170792733739add3431
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/75411
+Reviewed-by: Paul Menzel <paulepanter@mailbox.org>
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+Reviewed-by: Angel Pons <th3fanbus@gmail.com>
+---
+ .../dell/e6400/acpi/ich9_pci_irqs.asl         | 85 ++-----------------
+ 1 file changed, 8 insertions(+), 77 deletions(-)
+
+diff --git a/src/mainboard/dell/e6400/acpi/ich9_pci_irqs.asl b/src/mainboard/dell/e6400/acpi/ich9_pci_irqs.asl
+index 21066fbf3b..9a4cdfb75b 100644
+--- a/src/mainboard/dell/e6400/acpi/ich9_pci_irqs.asl
++++ b/src/mainboard/dell/e6400/acpi/ich9_pci_irqs.asl
+@@ -4,87 +4,18 @@
+  * 0:1e.0 PCI bridge of the ICH9
+  */
+ 
+-/* TODO: which slots are actually relevant? */
+ If (PICM) {
+ 	Return (Package() {
+-		// PCI Slot 1 routes ABCD
+-		Package() { 0x0000ffff, 0, 0, 16},
+-		Package() { 0x0000ffff, 1, 0, 17},
+-		Package() { 0x0000ffff, 2, 0, 18},
+-		Package() { 0x0000ffff, 3, 0, 19},
+-
+-		// PCI Slot 2 routes BCDA
+-		Package() { 0x0001ffff, 0, 0, 17},
+-		Package() { 0x0001ffff, 1, 0, 18},
+-		Package() { 0x0001ffff, 2, 0, 19},
+-		Package() { 0x0001ffff, 3, 0, 16},
+-
+-		// PCI Slot 3 routes CDAB
+-		Package() { 0x0002ffff, 0, 0, 18},
+-		Package() { 0x0002ffff, 1, 0, 19},
+-		Package() { 0x0002ffff, 2, 0, 16},
+-		Package() { 0x0002ffff, 3, 0, 17},
+-
+-		// PCI Slot 4 routes ABCD
+-		Package() { 0x0003ffff, 0, 0, 16},
+-		Package() { 0x0003ffff, 1, 0, 17},
+-		Package() { 0x0003ffff, 2, 0, 18},
+-		Package() { 0x0003ffff, 3, 0, 19},
+-
+-		// PCI Slot 5 routes ABCD
+-		Package() { 0x0004ffff, 0, 0, 16},
+-		Package() { 0x0004ffff, 1, 0, 17},
+-		Package() { 0x0004ffff, 2, 0, 18},
+-		Package() { 0x0004ffff, 3, 0, 19},
+-
+-		// PCI Slot 6 routes BCDA
+-		Package() { 0x0005ffff, 0, 0, 17},
+-		Package() { 0x0005ffff, 1, 0, 18},
+-		Package() { 0x0005ffff, 2, 0, 19},
+-		Package() { 0x0005ffff, 3, 0, 16},
+-
+-		// FIXME: what's this supposed to mean? (adopted from ich7)
+-		//Package() { 0x0008ffff, 0, 0, 20},
++		// PCI Device 1, Ricoh R5C847 routes DBC
++		Package() { 0x0001ffff, 0, 0, 19},
++		Package() { 0x0001ffff, 1, 0, 17},
++		Package() { 0x0001ffff, 2, 0, 18},
+ 	})
+ } Else {
+ 	Return (Package() {
+-		// PCI Slot 1 routes ABCD
+-		Package() { 0x0000ffff, 0, \_SB.PCI0.LPCB.LNKA, 0},
+-		Package() { 0x0000ffff, 1, \_SB.PCI0.LPCB.LNKB, 0},
+-		Package() { 0x0000ffff, 2, \_SB.PCI0.LPCB.LNKC, 0},
+-		Package() { 0x0000ffff, 3, \_SB.PCI0.LPCB.LNKD, 0},
+-
+-		// PCI Slot 2 routes BCDA
+-		Package() { 0x0001ffff, 0, \_SB.PCI0.LPCB.LNKB, 0},
+-		Package() { 0x0001ffff, 1, \_SB.PCI0.LPCB.LNKC, 0},
+-		Package() { 0x0001ffff, 2, \_SB.PCI0.LPCB.LNKD, 0},
+-		Package() { 0x0001ffff, 3, \_SB.PCI0.LPCB.LNKA, 0},
+-
+-		// PCI Slot 3 routes CDAB
+-		Package() { 0x0002ffff, 0, \_SB.PCI0.LPCB.LNKC, 0},
+-		Package() { 0x0002ffff, 1, \_SB.PCI0.LPCB.LNKD, 0},
+-		Package() { 0x0002ffff, 2, \_SB.PCI0.LPCB.LNKA, 0},
+-		Package() { 0x0002ffff, 3, \_SB.PCI0.LPCB.LNKB, 0},
+-
+-		// PCI Slot 4 routes ABCD
+-		Package() { 0x0003ffff, 0, \_SB.PCI0.LPCB.LNKA, 0},
+-		Package() { 0x0003ffff, 1, \_SB.PCI0.LPCB.LNKB, 0},
+-		Package() { 0x0003ffff, 2, \_SB.PCI0.LPCB.LNKC, 0},
+-		Package() { 0x0003ffff, 3, \_SB.PCI0.LPCB.LNKD, 0},
+-
+-		// PCI Slot 5 routes ABCD
+-		Package() { 0x0004ffff, 0, \_SB.PCI0.LPCB.LNKA, 0},
+-		Package() { 0x0004ffff, 1, \_SB.PCI0.LPCB.LNKB, 0},
+-		Package() { 0x0004ffff, 2, \_SB.PCI0.LPCB.LNKC, 0},
+-		Package() { 0x0004ffff, 3, \_SB.PCI0.LPCB.LNKD, 0},
+-
+-		// PCI Slot 6 routes BCDA
+-		Package() { 0x0005ffff, 0, \_SB.PCI0.LPCB.LNKB, 0},
+-		Package() { 0x0005ffff, 1, \_SB.PCI0.LPCB.LNKC, 0},
+-		Package() { 0x0005ffff, 2, \_SB.PCI0.LPCB.LNKD, 0},
+-		Package() { 0x0005ffff, 3, \_SB.PCI0.LPCB.LNKA, 0},
+-
+-		// FIXME
+-		// Package() { 0x0008ffff, 0, \_SB.PCI0.LPCB.LNKE, 0},
++		// PCI Device 1, Ricoh R5C847 routes DBC
++		Package() { 0x0001ffff, 0, \_SB.PCI0.LPCB.LNKD, 0},
++		Package() { 0x0001ffff, 1, \_SB.PCI0.LPCB.LNKB, 0},
++		Package() { 0x0001ffff, 2, \_SB.PCI0.LPCB.LNKC, 0},
+ 	})
+ }
+-- 
+2.41.0
+
