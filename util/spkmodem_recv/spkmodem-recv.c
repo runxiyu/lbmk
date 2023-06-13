@@ -27,6 +27,7 @@
 /* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
 
 #define SAMPLES_PER_FRAME 240
+#define MAX_SAMPLES (2 * SAMPLES_PER_FRAME)
 #define FREQ_SEP_MIN 5
 #define FREQ_SEP_MAX 15
 #define FREQ_DATA_MIN 15
@@ -37,7 +38,7 @@
 #define ERR() (errno = errno ? errno : ECANCELED)
 #define reset_char() ascii = 0, ascii_bit = 7
 
-signed short frame[2 * SAMPLES_PER_FRAME], pulse[2 * SAMPLES_PER_FRAME];
+signed short frame[MAX_SAMPLES], pulse[MAX_SAMPLES];
 int ringpos, debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
@@ -90,17 +91,16 @@ handle_audio(void)
 void
 fetch_sample(void)
 {
+	int next_ringpos = (ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
 	freq_data -= pulse[ringpos];
-	freq_data += pulse[(ringpos + SAMPLES_PER_FRAME)
-	    % (2 * SAMPLES_PER_FRAME)];
-	freq_separator -= pulse[(ringpos + SAMPLES_PER_FRAME)
-	    % (2 * SAMPLES_PER_FRAME)];
+	freq_data += pulse[next_ringpos];
+	freq_separator -= pulse[next_ringpos];
 
 	read_frame();
 	if ((pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0))
 		++freq_separator;
 	++ringpos;
-	ringpos %= 2 * SAMPLES_PER_FRAME;
+	ringpos %= MAX_SAMPLES;
 	++sample_count;
 }
 
