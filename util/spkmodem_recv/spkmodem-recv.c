@@ -44,7 +44,6 @@ char ascii = 0;
 
 void handle_audio(void);
 void fetch_sample(void);
-void read_frame(void);
 int set_ascii_bit(void);
 void print_char(void);
 void print_stats(void);
@@ -94,20 +93,15 @@ fetch_sample(void)
 	freq_data += pulse[next_ringpos];
 	freq_separator -= pulse[next_ringpos];
 
-	read_frame();
+	fread(frame + ringpos, 1, sizeof(frame[0]), stdin);
+	if (ferror(stdin) != 0)
+		err(ERR(), "Could not read from frame.");
+
 	if ((pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0))
 		++freq_separator;
 	++ringpos;
 	ringpos %= MAX_SAMPLES;
 	++sample_count;
-}
-
-void
-read_frame(void)
-{
-	if ((fread(frame + ringpos, 1, sizeof(frame[0]), stdin)
-	    != sizeof(frame[0])) || (ferror(stdin) != 0))
-		err(ERR(), "Could not read from frame.");
 }
 
 int
