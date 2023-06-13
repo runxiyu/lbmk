@@ -134,7 +134,7 @@ print_char(void)
 void
 print_stats(void)
 {
-	long stdin_pos = 0;
+	long stdin_pos;
 	if ((stdin_pos = ftell(stdin)) == -1)
 		err(ERR(), NULL);
 	printf ("%d %d %d @%ld\n", freq_data, freq_separator,
