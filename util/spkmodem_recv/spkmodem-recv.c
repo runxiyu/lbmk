@@ -43,7 +43,7 @@ int ringpos, debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
 char ascii = 0;
 
 void handle_audio(void);
-void fetch_sample(void);
+void decode_pulse(void);
 int set_ascii_bit(void);
 void print_char(void);
 void print_stats(void);
@@ -74,7 +74,7 @@ handle_audio(void)
 		sample_count = reset_char();
 	if ((freq_separator <= FREQ_SEP_MIN) || (freq_separator >= FREQ_SEP_MAX)
 	    || (freq_data <= FREQ_DATA_MIN) || (freq_data >= FREQ_DATA_MAX)) {
-		fetch_sample();
+		decode_pulse();
 		return;
 	}
 
@@ -82,11 +82,11 @@ handle_audio(void)
 		print_char();
 	sample_count = 0;
 	for (int sample = 0; sample < SAMPLES_PER_FRAME; sample++)
-		fetch_sample();
+		decode_pulse();
 }
 
 void
-fetch_sample(void)
+decode_pulse(void)
 {
 	int next_ringpos = (ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
 	freq_data -= pulse[ringpos];
