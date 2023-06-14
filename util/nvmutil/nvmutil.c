@@ -72,11 +72,11 @@ cmd_setmac(void)
 	if (invalidMacAddress(strMac, mac))
 		err(errno = ECANCELED, "Bad MAC address");
 	for (int partnum = 0; partnum < 2; partnum++) {
-		if (validChecksum(part = partnum)) {
-			for (int w = 0; w < 3; w++)
-				setWord(w, partnum, mac[w]);
-			cmd_setchecksum();
-		}
+		if (!validChecksum(part = partnum))
+			continue;
+		for (int w = 0; w < 3; w++)
+			setWord(w, partnum, mac[w]);
+		cmd_setchecksum();
 	}
 }
 
