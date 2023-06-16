@@ -39,6 +39,16 @@
 	EC_url_bkup https://web.archive.org/web/20230416125725/https://ftp.hp.com/pub/softpaq/sp85501-86000/sp85526.exe
 }
 
+{hp2570p}{
+	DL_hash 039c89c6d44ae11ae2510cbd5fed756e97ed9a31
+	DL_url https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+	DL_url_bkup https://web.archive.org/web/20210706183911/https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+
+	EC_hash a896ef72799e8abd4d0601ec415a2113b2a7f240
+	EC_url https://ftp.hp.com/pub/softpaq/sp96001-96500/sp96085.exe
+	EC_url_bkup https://web.archive.org/web/20230610174558/https://ftp.hp.com/pub/softpaq/sp96001-96500/sp96085.exe
+}
+
 {hp9470m}{
 	DL_hash 039c89c6d44ae11ae2510cbd5fed756e97ed9a31
 	DL_url https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
