@@ -29,6 +29,12 @@
 	DL_url_bkup https://web.archive.org/web/20220708171920/https://ftp.ext.hp.com/pub/softpaq/sp96001-96500/sp96026.exe
 }
 
+{hp8300usdt}{
+	DL_hash 039c89c6d44ae11ae2510cbd5fed756e97ed9a31
+	DL_url https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+	DL_url_bkup https://web.archive.org/web/20210706183911/https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+}
+
 {hp2560p}{
 	DL_hash fa0f96c8f36646492fb8c57ad3296bf5f647d9c5
 	DL_url https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
