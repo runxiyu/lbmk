@@ -39,7 +39,7 @@
 /version
 /versiondate
 /blobs/app/
-/blobs/vendorupdate
+/blobs/cache/
 *me.bin
 /mrc/
 /util/nvmutil/nvm
