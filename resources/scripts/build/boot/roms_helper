@@ -60,6 +60,10 @@ cbfstool=""
 corebootrom=""
 seavgabiosrom=""
 
+# almost all boards will set at least one of these to "n"
+blobs_required=""
+microcode_required=""
+
 CROSS_COMPILE=""
 
 main()
@@ -171,6 +175,14 @@ load_config()
 	if [ "${payload_uboot}" = "y" ] && \
 			[ "${uboot_config}" = "undefined" ]; then
 		uboot_config="default"
+	fi
+	if [ "${microcode_required}" != "n" ] \
+			&& [ "${microcode_required}" != "y" ]; then
+		microcode_required="y"
+	fi
+	if [ "${blobs_required}" != "n" ] \
+			&& [ "${blobs_required}" != "y" ]; then
+		blobs_required="y"
 	fi
 
 	load_config_overrides
@@ -689,6 +701,10 @@ moverom()
 	_newrom="$2"
 	cuttype="$3"
 
+	if [ "${blobs_required}" = "n" ]; then
+		_newrom="${_newrom%.rom}_noblobs.rom"
+	fi
+
 	printf "\nCreating new ROM image: %s\n" "${_newrom}"
 
 	cp ${rompath} ${_newrom}
@@ -701,7 +717,6 @@ moverom()
 				seek=$(($(stat -c %s ${_newrom}) - 0x20000)) \
 				count=64k conv=notrunc
 		rm -f top64k.bin
-		return 0
 	fi
 
 	for romsize in 4 8 16; do
@@ -723,6 +738,21 @@ moverom()
 					conv=notrunc
 		done
 	done
+
+	if [ "${microcode_required}" = "n" ]; then
+		_newrom_b="${_newrom%.rom}_nomicrocode.rom"
+		cp "${_newrom}" "${_newrom_b}" || exit 1
+		microcode_present="y"
+		"${cbfstool}" "${_newrom_b}" remove -n \
+				cpu_microcode_blob.bin || microcode_present="n"
+		if [ "${microcode_present}" = "n" ]; then
+			rm -f "${_newrom_b}" || exit 1
+			printf "REMARK: '%s' already lacks microcode\n" \
+					${_newrom}
+			printf "Renaming default ROM file instead.\n"
+			mv "${_newrom}" "${_newrom_b}" || exit 1
+		fi
+	fi
 }
 
 main $@
