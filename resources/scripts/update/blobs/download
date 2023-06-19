@@ -11,6 +11,7 @@ ec_hash=""
 dl_hash=""
 dl_url=""
 dl_url_bkup=""
+dl_path=""
 e6400_vga_dl_hash=""
 e6400_vga_dl_url=""
 e6400_vga_dl_url_bkup=""
@@ -21,7 +22,6 @@ cbdir="coreboot/default"
 cbcfgsdir="resources/coreboot"
 boarddir=""
 blobdir="blobs"
-dl_path="${blobdir}/vendorupdate"
 appdir="${blobdir}/app"
 _7ztest="a"
 mecleaner="$(pwd)/me_cleaner/me_cleaner.py"
@@ -430,6 +430,9 @@ fetch_update()
 		printf "No vendor update specified for board: %s\n" ${board}
 		return 1
 	fi
+
+	dl_path=${blobdir}/cache/${dlsum}
+	mkdir -p ${blobdir}/cache
 
 	vendor_checksum ${dlsum} || \
 		wget ${dl} -O ${dl_path} || wget ${dl_bkup} -O ${dl_path}
