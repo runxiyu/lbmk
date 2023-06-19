@@ -28,7 +28,7 @@ modlist="${modlist} bios_extract"
 
 dirlist="resources util" # do not add blobs directory here. it's handled below
 
-filelist="blobutil modify download build README.md COPYING Makefile update"
+filelist="lbmk blobutil modify download build README.md COPYING Makefile update"
 filelist="${filelist} version versiondate projectname .gitcheck gitclone"
 
 version="version-unknown"
@@ -103,7 +103,8 @@ copy_blobs()
 {
 	mkdir -p "${srcdir}"/blobs
 	# do not copy intel ME etc, but do copy ifd/gbe files
-	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge; do
+	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
+			hp8300usdt; do
 		for j in ifd gbe 16_ifd; do
 			if [ -f "blobs/${i}/${j}.bin" ]; then
 				if [ ! -e "${srcdir}/blobs/${i}" ]; then
