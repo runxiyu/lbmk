@@ -134,7 +134,7 @@ buildrom() {
 	./blobutil download ${board} || exit 1
 
 	if [ -d "resources/coreboot/${board}/" ]; then
-		./build boot roms_helper "${board}${opts}"
+		./build boot roms_helper ${board}${opts}
 	else
 		printf "\nbuild/roms: target not defined: %s\n" ${board}
 		die "Run: ./build boot roms list"
