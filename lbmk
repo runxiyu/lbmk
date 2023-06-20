@@ -80,7 +80,7 @@ main()
 			printf "Invalid option for '%s'." ${mode}
 			die "Run: ${0} ${mode} list'."
 		fi
-		"${buildpath}/${mode}/${option}" $@ || exit 1
+		"${buildpath}/${mode}/${option}" $@ || die "lbmk error"
 	esac
 
 	./.gitcheck clean
@@ -121,6 +121,7 @@ listmodes()
 
 die()
 {
+	./.gitcheck clean
 	printf "Error: %s\n" "${@}" 1>&2
 	exit 1
 }
