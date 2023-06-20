@@ -80,7 +80,7 @@ main()
 			printf "Invalid option for '%s'." ${mode}
 			die "Run: ${0} ${mode} list'."
 		fi
-		"${buildpath}/${mode}/${option}" $@
+		"${buildpath}/${mode}/${option}" $@ || exit 1
 	esac
 
 	./.gitcheck clean
