@@ -53,16 +53,16 @@ main()
 
 	while [ $# -gt 0 ]; do
 		case ${1} in
-			-d)
+		-d)
 			opts="${opts} -d ${2}"
 			shift ;;
-			-p)
+		-p)
 			opts="${opts} -p ${2}"
 			shift ;;
-			-k)
+		-k)
 			opts="${opts} -k ${2}"
 			shift ;;
-			*)
+		*)
 			boards="${boards} ${1} " ;;
 		esac
 		shift
