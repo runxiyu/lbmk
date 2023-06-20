@@ -70,16 +70,16 @@ main()
 {
 	while [ $# -gt 0 ]; do
 		case ${1} in
-			-d)
+		-d)
 			displaymodes="${displaymodes}${2}" 
 			shift ;;
-			-p)
+		-p)
 			payloads="${payloads}${2}"
 			shift ;;
-			-k)
+		-k)
 			keyboard_layouts="${keyboard_layouts}${2}"
 			shift ;;
-			*)
+		*)
 			board=${1} ;;
 		esac
 		shift
