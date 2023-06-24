@@ -59,7 +59,9 @@ buildutils() {
 		./download coreboot $cbtree || return 1
 	fi
 	for util in cbfstool ifdtool; do
-		make -j$(nproc) -BC "coreboot/${cbtree}/util/${util}/" \
+		utildir="coreboot/${cbtree}/util/${util}/"
+		make distclean -C "${utildir}"
+		make -j$(nproc) -C "${utildir}" \
 				|| return 1
 	done
 }
