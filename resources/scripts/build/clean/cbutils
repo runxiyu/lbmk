@@ -30,18 +30,18 @@ printf "Cleaning the previous build of coreboot and its utilities\n"
 
 [ ! -d "coreboot/" ] && exit 0
 
-for board in coreboot/*; do
-    if [ "${board##*/}" = "coreboot" ]; then
+for cbtree in coreboot/*; do
+    if [ "${cbtree##*/}" = "coreboot" ]; then
         continue
     fi
     # Clean coreboot, of course
-    make -C "${board}/" distclean
+    make -C "${cbtree}/" distclean
 
 	# Clean its utilities as well
 	for util in cbfstool ifdtool nvramtool cbmem; do
-		make -C "${board}/util/${util}/" clean
+		make -C "${cbtree}/util/${util}/" clean
 	done
-	make -C "${board}/payloads/libpayload/" distclean
+	make -C "${cbtree}/payloads/libpayload/" distclean
 done
 
 printf "\n\n"
