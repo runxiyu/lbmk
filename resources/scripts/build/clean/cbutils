@@ -34,6 +34,9 @@ for cbtree in coreboot/*; do
 	if [ "${cbtree##*/}" = "coreboot" ]; then
 		continue
 	fi
+	if [ ! -d "${cbtree}" ]; then
+		continue
+	fi
 	# Clean coreboot, of course
 	make -C "${cbtree}/" distclean
 
