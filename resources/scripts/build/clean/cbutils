@@ -2,7 +2,7 @@
 
 #  helper script: clean the dependencies that were built in coreboot
 #
-#	Copyright (C) 2014, 2015, 2016, 2020 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2014-2016, 2020, 2023 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #
 #	This program is free software: you can redistribute it and/or modify
@@ -28,6 +28,8 @@ set -u -e
 
 printf "Cleaning the previous build of coreboot and its utilities\n"
 
+rm -Rf cbutils
+
 [ ! -d "coreboot/" ] && exit 0
 
 for cbtree in coreboot/*; do
@@ -42,9 +44,9 @@ for cbtree in coreboot/*; do
 
 	# Clean its utilities as well
 	for util in cbfstool ifdtool nvramtool cbmem; do
-		make -C "${cbtree}/util/${util}/" clean
+		make distclean -C "${cbtree}/util/${util}/"
 	done
-	make -C "${cbtree}/payloads/libpayload/" distclean
+	make distclean -C "${cbtree}/payloads/libpayload/"
 done
 
 printf "\n\n"

@@ -41,7 +41,7 @@ _mrc_complete_hash="d18de1e3d52c0815b82ea406ca07897c56c65696"
 _mrc_complete="mrc/haswell/mrc.bin"
 
 cbdir="coreboot/default"
-cbfstool="${cbdir}/util/cbfstool/cbfstool"
+cbfstool="cbutils/default/cbfstool"
 
 sname=""
 
@@ -76,9 +76,7 @@ build_dependencies()
 	if [ ! -d "${cbdir}/" ]; then
 	    ./download coreboot default || return 1
 	fi
-	if [ ! -f "${cbfstool}" ]; then
-	    ./build module cbutils default || return 1
-	fi
+	./build module cbutils default || return 1
 	return 0
 }
 

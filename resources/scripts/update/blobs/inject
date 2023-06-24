@@ -17,8 +17,8 @@ releasearchive=""
 
 cbdir="coreboot/default"
 cbcfgsdir="resources/coreboot"
-ifdtool="${cbdir}/util/ifdtool/ifdtool"
-cbfstool="${cbdir}/util/cbfstool/cbfstool"
+ifdtool="cbutils/default/ifdtool"
+cbfstool="cbutils/default/cbfstool"
 nvmutil="util/nvmutil/nvm"
 boarddir=""
 pciromsdir="pciroms"
@@ -140,17 +140,7 @@ build_dependencies()
 		./download coreboot default
 	fi
 
-	if [ ! -f "${ifdtool}" ]; then
-		printf "building ifdtool from coreboot\n"
-		./build module cbutils default \
-				|| fail 'could not build ifdtool'
-	fi
-
-	if [ ! -f "${cbfstool}" ]; then
-		printf "building cbfstool from coreboot\n"
-		./build module cbutils default \
-				|| fail 'could not build cbfstool'
-	fi
+	./build module cbutils default || fail "could not build cbutils"
 
 	./blobutil download ${board} || \
 			fail "Could not download blobs for ${board}"

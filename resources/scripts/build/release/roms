@@ -24,14 +24,13 @@ set -u -e
 projectname="$(cat projectname)"
 version="version-unknown"
 versiondate="version-date-unknown"
+cbtree="default"
 target=""
 CONFIG_HAVE_MRC=""
 CONFIG_HAVE_ME_BIN=""
 CONFIG_KBC1126_FIRMWARE=""
-ifdtooldir="coreboot/default/util/ifdtool"
-ifdtool="${ifdtooldir}/ifdtool"
-cbfstooldir="coreboot/default/util/cbfstool"
-cbfstool="${cbfstooldir}/cbfstool"
+ifdtool="cbutils/${cbtree}/ifdtool"
+cbfstool="cbutils/${cbtree}/cbfstool"
 
 main()
 {
@@ -114,12 +113,10 @@ strip_archive()
 {
 	romdir=${1}
 
-	if [ ! -d coreboot/default ]; then
-		./download coreboot default || exit 1
+	if [ ! -d coreboot/${cbtree} ]; then
+		./download coreboot ${cbtree} || exit 1
 	fi
-	if [ ! -f "${ifdtool}" ] || [ ! -f "${cbfstool}" ]; then
-		./build module cbutils default || exit 1
-	fi
+	./build module cbutils ${cbtree} || exit 1
 
 	rm -Rf "${romdir}_tmp" # dirty hack, to reduce disk io later
 	# rather than using /tmp, which might not be tmpfs

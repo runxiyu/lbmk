@@ -121,7 +121,7 @@ load_config()
 	fi
 
 	romdir="bin/${board}"
-	cbfstool="${cbdir}/util/cbfstool/cbfstool"
+	cbfstool="cbutils/${cbtree}/cbfstool"
 	seavgabiosrom="payload/seabios/seavgabios.bin"
 	corebootrom="${cbdir}/build/coreboot.rom"
 
@@ -236,9 +236,7 @@ build_dependencies()
 	if [ ! -d "${cbdir}" ]; then
 		./download coreboot ${cbtree}
 	fi
-	if [ ! -f "${cbfstool}" ]; then
-		./build module cbutils ${cbtree} || exit 1
-	fi
+	./build module cbutils ${cbtree} || exit 1
 	cat version > "${cbdir}/.coreboot-version"
 
 	build_dependency_crossgcc
@@ -499,7 +497,6 @@ mkCoreboot()
 	fi
 
 	cp "${_cbcfg}" "${cbdir}"/.config
-	./build module cbutils ${cbdir#coreboot/} || exit 1
 
 	make -j$(nproc) -BC "${cbdir}"
 }
