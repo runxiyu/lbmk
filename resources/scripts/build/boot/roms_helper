@@ -248,6 +248,7 @@ build_dependencies()
 
 build_dependency_crossgcc()
 {
+	make distclean -C "${cbdir}"
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 		if [ ! -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ]; then
 			# Even for 64-bit machines, coreboot builds 32-bit ROM
@@ -490,7 +491,7 @@ mkCoreboot()
 	if [ -f "${cbfstool}" ]; then
 		mv "${cbfstool}" "${cbdir}/cbfstool"
 	fi
-	make clean -BC "${cbdir}"
+	make distclean -BC "${cbdir}"
 
 	if [ -f "${cbdir}/cbfstool" ]; then
 		mv "${cbdir}/cbfstool" "${cbfstool}"
