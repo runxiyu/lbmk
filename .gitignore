@@ -1,5 +1,7 @@
 *~
 *.o
+/lbmk.err.log
+/cbutils/
 /pciroms/
 /util/e6400-flash-unlock/e6400_flash_unlock
 /util/ich9utils/*.bin
