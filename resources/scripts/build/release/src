@@ -136,6 +136,8 @@ purge_files()
 	./build clean all || err "build-clean1"
 	make clean -BC util/nvmutil || err "make-clean2"
 	make clean -BC util/ich9utils || err "make-clean3"
+	make clean -BC util/spkmodem_recv || err "make-clean4"
+	make clean -BC util/e6400-flash-unlock || err "make-clean5"
 
 	rm -Rf coreboot/coreboot/ || err "rm-rf1"
 	rm -Rf .git .gitignore */.git* coreboot/*/.git* \
