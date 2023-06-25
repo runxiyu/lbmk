@@ -85,9 +85,9 @@ main()
 		shift
 	done
 
-	printf "board %s , kb %s , displaymode %s , payloads %s\n" \
+	printf "\n\nboard %s , kb %s , displaymode %s , payloads %s\n" \
 			${board} ${keyboard_layouts} ${displaymodes} \
-			${payloads}
+			${payloads} 1>&2
 
 	if [ "${board}" = "" ]; then
 		printf "build/roms: undefined board. Exiting\n"
