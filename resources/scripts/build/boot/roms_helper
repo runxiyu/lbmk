@@ -390,8 +390,7 @@ mkCoreboot() {
 		printf "Skipping build.\n"
 		return 0
 	fi
-	printf "%s-%s\n" "$(cat projectname)" "$(cat version)" \
-			> "${cbdir}/.coreboot-version"
+	cat version > "${cbdir}/.coreboot-version"
 	(
 		if [ -f "${cbfstool}" ]; then
 			mv "${cbfstool}" "${cbdir}/cbfstool"
