@@ -1,0 +1,30 @@
+From 29c1116ebd5879568010a8386e4838294a78b408 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 16 Jul 2023 03:48:23 +0100
+Subject: [PATCH 1/1] coreboot/haswell: fix acpica downloads
+
+the upstream link died. i now host the relevant acpica
+tarball myself, on libreboot rsync. this patch makes
+coreboot crossgcc use that
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/crossgcc/buildgcc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
+index 3c4b10cc92..0c4262b7b1 100755
+--- a/util/crossgcc/buildgcc
++++ b/util/crossgcc/buildgcc
+@@ -52,7 +52,7 @@ MPFR_ARCHIVE="https://ftpmirror.gnu.org/mpfr/mpfr-${MPFR_VERSION}.tar.xz"
+ MPC_ARCHIVE="https://ftpmirror.gnu.org/mpc/mpc-${MPC_VERSION}.tar.gz"
+ GCC_ARCHIVE="https://ftpmirror.gnu.org/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz"
+ BINUTILS_ARCHIVE="https://ftpmirror.gnu.org/binutils/binutils-${BINUTILS_VERSION}.tar.xz"
+-IASL_ARCHIVE="https://acpica.org/sites/acpica/files/acpica-unix2-${IASL_VERSION}.tar.gz"
++IASL_ARCHIVE="https://mirror.math.princeton.edu/pub/libreboot/misc/acpica/acpica-unix2-${IASL_VERSION}.tar.gz"
+ # CLANG toolchain archive locations
+ LLVM_ARCHIVE="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}/llvm-${CLANG_VERSION}.src.tar.xz"
+ CLANG_ARCHIVE="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}/clang-${CLANG_VERSION}.src.tar.xz"
+-- 
+2.40.1
+
