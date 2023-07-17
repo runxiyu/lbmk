@@ -487,9 +487,6 @@ mkUbootRom() {
 	target_uboot_config="${3}"
 	cbfstool_path="${4}"
 
-	target_ubootelf=""
-	target_ubdir=""
-
 	if [ "${target_uboot_config}" = "default" ]; then
 		target_ubdir="payload/u-boot/${board}"
 	else
