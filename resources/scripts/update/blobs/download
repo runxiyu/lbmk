@@ -337,6 +337,11 @@ extract_ec()
 		unar -D ROM.CAB Rom.bin
 		mv Rom.bin ec.bin
 	fi
+	if [ ! -f ec.bin ]; then
+		printf "could not extract ec.bin for board '%s'" ${board} \
+			1>&2
+		fail "aborting the build. please audit blobutil carefully."
+	fi
 
 	"${kbc1126_ec_dump}" ec.bin
 	)
