@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101"
+
 ec_url=""
 ec_url_bkup=""
 ec_hash=""
@@ -447,7 +449,8 @@ fetch_update()
 	mkdir -p ${blobdir}/cache
 
 	vendor_checksum ${dlsum} || \
-		wget ${dl} -O ${dl_path} || wget ${dl_bkup} -O ${dl_path}
+		wget -U "${agent}" ${dl} -O ${dl_path} \
+		|| wget -U "${agent}" ${dl_bkup} -O ${dl_path}
 
 	vendor_checksum ${dlsum} || fail \
 		"Cannot guarantee intergity of vendor update for: ${board}"
