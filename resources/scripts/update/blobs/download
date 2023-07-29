@@ -281,16 +281,15 @@ bruteforce_extract_blob_intel_me()
 			7z x "${i}" -o${_7ztest} || continue
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
 					"${cdir}/${_7ztest}"
-			cdir="${1}"
-			cd "${cdir}"
 		elif [ -d "$i" ]; then
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
 					"${cdir}/${i}"
-			cdir="${1}"
-			cd "${cdir}"
 		else
 			printf "SKIPPING: %s\n" "${i}"
+			continue
 		fi
+		cdir="${1}"
+		cd "${cdir}"
 	done
 	)
 
