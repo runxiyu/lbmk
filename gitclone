@@ -35,16 +35,16 @@ read_config()
 	while read -r line ; do
 		set ${line} >/dev/null 2>&1
 		case ${line} in
-			rev:*)
+		rev:*)
 			revision=${2}
 			;;
-			loc:*)
+		loc:*)
 			location=${2}
 			;;
-			url:*)
+		url:*)
 			url=${2}
 			;;
-			bkup_url:*)
+		bkup_url:*)
 			bkup_url=${2}
 			;;
 		esac
