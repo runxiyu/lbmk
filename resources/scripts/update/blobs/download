@@ -110,7 +110,7 @@ scan_sources_config()
 		case ${line} in
 		EC_url*)
 			set ${line}
-			ec_url=${2}
+			ec_url=http${2##*http}
 			;;
 		EC_url_bkup*)
 			set ${line}
@@ -126,7 +126,7 @@ scan_sources_config()
 			;;
 		DL_url*)
 			set ${line}
-			dl_url=${2}
+			dl_url=http${2##*http}
 			;;
 		DL_url_bkup*)
 			set ${line}
@@ -138,7 +138,7 @@ scan_sources_config()
 			;;
 		E6400_VGA_DL_url*)
 			set ${line}
-			e6400_vga_dl_url=${2}
+			e6400_vga_dl_url=http${2##*http}
 			;;
 		E6400_VGA_DL_url_bkup*)
 			set ${line}
