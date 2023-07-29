@@ -108,13 +108,13 @@ scan_sources_config()
 
 	while read -r line ; do
 		case ${line} in
-		EC_url*)
-			set ${line}
-			ec_url=http${2##*http}
-			;;
 		EC_url_bkup*)
 			set ${line}
 			ec_url_bkup=${2}
+			;;
+		EC_url*)
+			set ${line}
+			ec_url=${2}
 			;;
 		EC_hash*)
 			set ${line}
@@ -124,25 +124,25 @@ scan_sources_config()
 			set ${line}
 			dl_hash=${2}
 			;;
-		DL_url*)
-			set ${line}
-			dl_url=http${2##*http}
-			;;
 		DL_url_bkup*)
 			set ${line}
 			dl_url_bkup=${2}
+			;;
+		DL_url*)
+			set ${line}
+			dl_url=${2}
 			;;
 		E6400_VGA_DL_hash*)
 			set ${line}
 			e6400_vga_dl_hash=${2}
 			;;
-		E6400_VGA_DL_url*)
-			set ${line}
-			e6400_vga_dl_url=http${2##*http}
-			;;
 		E6400_VGA_DL_url_bkup*)
 			set ${line}
 			e6400_vga_dl_url_bkup=${2}
+			;;
+		E6400_VGA_DL_url*)
+			set ${line}
+			e6400_vga_dl_url=${2}
 			;;
 		E6400_VGA_offset*)
 			set ${line}
