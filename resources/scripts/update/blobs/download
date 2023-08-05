@@ -237,7 +237,7 @@ extract_blob_intel_me()
 
 	printf "Extracting and stripping Intel ME firmware\n"
 
-	innoextract ${dl_path} -d ${blobdir} \
+	innoextract ${dl_path} -d ${appdir} \
 	|| 7z x ${dl_path} -o${appdir} \
 	|| unar "${dl_path}" -o "${appdir}" \
 		|| fail 'Could not extract vendor update' 
