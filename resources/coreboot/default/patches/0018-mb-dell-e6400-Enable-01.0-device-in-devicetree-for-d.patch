@@ -1,8 +1,8 @@
-From 521a2edd13050fa39c896bf4f481ff0021c9213e Mon Sep 17 00:00:00 2001
+From 6dc133e52c1ede4dbd3207133dd8ed0eb053fcd0 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sat, 6 May 2023 15:53:41 -0600
-Subject: [PATCH] mb/dell/e6400: Enable 01.0 device in devicetree for dGPU
- models
+Subject: [PATCH 18/19] mb/dell/e6400: Enable 01.0 device in devicetree for
+ dGPU models
 
 Change-Id: I9b8e5d3cd1e1f64dc87b682b1e045b6342924aed
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -24,5 +24,5 @@ index bb954cbd7b..e9f3915d17 100644
  		device pci 02.1 on end # Display
  		device pci 03.0 on end # ME
 -- 
-2.40.1
+2.39.2
 

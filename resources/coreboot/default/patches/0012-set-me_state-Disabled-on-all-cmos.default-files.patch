@@ -1,19 +1,23 @@
-From 4bb3d60a1a1dfb2dac6320cef491a99b728ed25a Mon Sep 17 00:00:00 2001
+From 03610ab506bdaca92c1623abd18b4812f92273ed Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Wed, 2 Mar 2022 21:50:01 +0000
-Subject: [PATCH 12/18] set me_state=Disabled on all cmos.default files!
+Subject: [PATCH 12/19] set me_state=Disabled on all cmos.default files!
 
 yeah. why the hell isn't this the default
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
- src/mainboard/lenovo/l520/cmos.default  | 2 +-
- src/mainboard/lenovo/t420/cmos.default  | 2 +-
- src/mainboard/lenovo/t420s/cmos.default | 2 +-
- src/mainboard/lenovo/t430/cmos.default  | 2 +-
- src/mainboard/lenovo/t430s/cmos.default | 2 +-
- src/mainboard/lenovo/t520/cmos.default  | 2 +-
- src/mainboard/lenovo/t530/cmos.default  | 2 +-
- src/mainboard/lenovo/x220/cmos.default  | 2 +-
- 8 files changed, 8 insertions(+), 8 deletions(-)
+ src/mainboard/lenovo/l520/cmos.default         | 2 +-
+ src/mainboard/lenovo/t420/cmos.default         | 2 +-
+ src/mainboard/lenovo/t420s/cmos.default        | 2 +-
+ src/mainboard/lenovo/t430/cmos.default         | 2 +-
+ src/mainboard/lenovo/t430s/cmos.default        | 2 +-
+ src/mainboard/lenovo/t520/cmos.default         | 2 +-
+ src/mainboard/lenovo/t530/cmos.default         | 2 +-
+ src/mainboard/lenovo/x220/cmos.default         | 2 +-
+ src/mainboard/protectli/vault_cml/cmos.default | 2 +-
+ src/mainboard/system76/tgl-u/cmos.default      | 2 +-
+ 10 files changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/src/mainboard/lenovo/l520/cmos.default b/src/mainboard/lenovo/l520/cmos.default
 index 681c40e78b..57cdcf9162 100644
@@ -94,6 +98,24 @@ index 6d1d57a795..52f303dfdb 100644
  sticky_fn=Disable
  trackpoint=Enable
 -me_state=Normal
++me_state=Disabled
+diff --git a/src/mainboard/protectli/vault_cml/cmos.default b/src/mainboard/protectli/vault_cml/cmos.default
+index 62715bc6ba..129b5fd121 100644
+--- a/src/mainboard/protectli/vault_cml/cmos.default
++++ b/src/mainboard/protectli/vault_cml/cmos.default
+@@ -1,3 +1,3 @@
+ boot_option=Fallback
+ debug_level=Debug
+-me_state=Enable
++me_state=Disabled
+diff --git a/src/mainboard/system76/tgl-u/cmos.default b/src/mainboard/system76/tgl-u/cmos.default
+index 62715bc6ba..129b5fd121 100644
+--- a/src/mainboard/system76/tgl-u/cmos.default
++++ b/src/mainboard/system76/tgl-u/cmos.default
+@@ -1,3 +1,3 @@
+ boot_option=Fallback
+ debug_level=Debug
+-me_state=Enable
 +me_state=Disabled
 -- 
 2.39.2

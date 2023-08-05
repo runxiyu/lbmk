@@ -1,19 +1,15 @@
-From 73ca2562e77c971c2e581a414dc57b4b9aa544d7 Mon Sep 17 00:00:00 2001
+From 400e23c5149ab53300f57d8334ab25645d27b0c8 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:10:33 +0100
-Subject: [PATCH 05/18] lenovo/t400: set VRAM to 352MiB VRAM by default
+Subject: [PATCH 05/19] lenovo/t400: set VRAM to 256MiB VRAM by default
 
-In the past, this caused stability issues so we set it to 256MiB. Nowadays,
-coreboot has fixed the issue preventing this. See:
-https://review.coreboot.org/c/coreboot/+/16831
-
-So, set the VRAM to 352MiB
+Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
  src/mainboard/lenovo/t400/cmos.default | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/lenovo/t400/cmos.default b/src/mainboard/lenovo/t400/cmos.default
-index a326e315b1..e74d15d030 100644
+index a326e315b1..b907a3e2df 100644
 --- a/src/mainboard/lenovo/t400/cmos.default
 +++ b/src/mainboard/lenovo/t400/cmos.default
 @@ -13,4 +13,4 @@ power_management_beeps=Enable
@@ -21,7 +17,7 @@ index a326e315b1..e74d15d030 100644
  sata_mode=AHCI
  hybrid_graphics_mode=Integrated Only
 -gfx_uma_size=32M
-+gfx_uma_size=352M
++gfx_uma_size=256M
 -- 
 2.39.2
 

@@ -1,7 +1,7 @@
-From 3cf315fd59f1388d60cce9290eb52bccb7b29625 Mon Sep 17 00:00:00 2001
+From 929974434bbd627ab7add5ef4ec4eb62e5412f57 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Wed, 1 Dec 2021 02:53:00 +0000
-Subject: [PATCH 1/2] fix speedstep on x200/t400: Revert
+Subject: [PATCH 16/19] fix speedstep on x200/t400: Revert
  "cpu/intel/model_1067x: enable PECI"
 
 This reverts commit 70fea013c7ebd6d85a7806748233fcfd76802f5f.
@@ -43,5 +43,5 @@ index 315e7c36fc..1423fd72bc 100644
  
  #define PIC_SENS_CFG	0x1aa
 -- 
-2.40.0
+2.39.2
 

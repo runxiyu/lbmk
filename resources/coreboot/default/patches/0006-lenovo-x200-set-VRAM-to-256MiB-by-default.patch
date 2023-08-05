@@ -1,16 +1,15 @@
-From badcbb2f07ac0e3d8b53a23e324f709bf93c3dd5 Mon Sep 17 00:00:00 2001
+From 29e6f78973928ad9ae86b26d5cf308a2680c88bf Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:11:59 +0100
-Subject: [PATCH 06/18] lenovo/x200: set VRAM to 352MiB by default
+Subject: [PATCH 06/19] lenovo/x200: set VRAM to 256MiB by default
 
-This fix makes it possible:
-https://review.coreboot.org/c/coreboot/+/16831
+Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
  src/mainboard/lenovo/x200/cmos.default | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/lenovo/x200/cmos.default b/src/mainboard/lenovo/x200/cmos.default
-index bb4323836e..33a6a69f59 100644
+index bb4323836e..458b3f19c5 100644
 --- a/src/mainboard/lenovo/x200/cmos.default
 +++ b/src/mainboard/lenovo/x200/cmos.default
 @@ -12,4 +12,4 @@ sticky_fn=Disable
@@ -18,7 +17,7 @@ index bb4323836e..33a6a69f59 100644
  low_battery_beep=Enable
  sata_mode=AHCI
 -gfx_uma_size=32M
-+gfx_uma_size=352M
++gfx_uma_size=256M
 -- 
 2.39.2
 

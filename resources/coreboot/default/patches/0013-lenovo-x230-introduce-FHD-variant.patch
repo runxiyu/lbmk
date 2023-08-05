@@ -1,7 +1,7 @@
-From f60a7e12526ca254b1d98830ad1e31296984e815 Mon Sep 17 00:00:00 2001
+From f4e5f11762e4c54829e1d6515d7fd369d86ac9d7 Mon Sep 17 00:00:00 2001
 From: Alexander Couzens <lynxis@fe80.eu>
 Date: Sat, 19 Mar 2022 13:42:33 +0000
-Subject: [PATCH 14/18] lenovo/x230: introduce FHD variant
+Subject: [PATCH 13/19] lenovo/x230: introduce FHD variant
 
 There is a modification for the x230 which uses the 2nd DP from the dock
 as the integrated panel's connection, which allows using a custom eDP
@@ -44,7 +44,7 @@ Signed-off-by: Felix Singer <felixsinger@posteo.net>
  create mode 100644 src/mainboard/lenovo/x230/variants/x230_edp/gma-mainboard.ads
 
 diff --git a/src/mainboard/lenovo/x230/Kconfig b/src/mainboard/lenovo/x230/Kconfig
-index f9667267d5..4d8325ea43 100644
+index 279095629b..acfd0ed561 100644
 --- a/src/mainboard/lenovo/x230/Kconfig
 +++ b/src/mainboard/lenovo/x230/Kconfig
 @@ -1,4 +1,4 @@
@@ -71,7 +71,7 @@ index f9667267d5..4d8325ea43 100644
  	select MAINBOARD_HAS_LIBGFXINIT
  	select GFX_GMA_PANEL_1_ON_LVDS if BOARD_LENOVO_X230 || BOARD_LENOVO_X230T
  	select INTEL_GMA_HAVE_VBT
-@@ -51,17 +51,20 @@ config MAINBOARD_DIR
+@@ -47,17 +47,20 @@ config MAINBOARD_DIR
  	default "lenovo/x230"
  
  config VARIANT_DIR
@@ -94,7 +94,7 @@ index f9667267d5..4d8325ea43 100644
  config USBDEBUG_HCD_INDEX
  	int
  	default 2
-@@ -83,4 +86,4 @@ config PS2M_EISAID
+@@ -79,4 +82,4 @@ config PS2M_EISAID
  config THINKPADEC_HKEY_EISAID
  	default "LEN0068"
  
