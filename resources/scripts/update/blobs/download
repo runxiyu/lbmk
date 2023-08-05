@@ -239,6 +239,7 @@ extract_blob_intel_me()
 
 	innoextract ${dl_path} -d ${blobdir} \
 	|| 7z x ${dl_path} -o${appdir} \
+	|| unar "${dl_path}" -o "${appdir}" \
 		|| fail 'Could not extract vendor update' 
 
 	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
@@ -280,7 +281,10 @@ bruteforce_extract_blob_intel_me()
 			"${me7updateparser}" -O ${_me_destination} "${i}" \
 				&& break # (we found me.bin)
 			_7ztest="${_7ztest}a"
-			7z x "${i}" -o${_7ztest} || continue
+			7z x "${i}" -o${_7ztest} \
+				|| innoextract "${i}" -d  "${_7ztest}" \
+				|| unar "${i}" -o "${_7ztest}" \
+				|| continue
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
 					"${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
