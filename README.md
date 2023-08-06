@@ -28,7 +28,7 @@ Your freedom matters.
 Many people use proprietary (non-libre)
 boot firmware, even if they use [a libre OS](https://www.openbsd.org/).
 Proprietary firmware often contains backdoors (more info on the FAQ), and it
-and can be buggy. The libreboot project was founded in in December 2013,
+and can be buggy. The libreboot project was founded in December 2013,
 with the express purpose of making coreboot firmware accessible for
 non-technical users.
 
@@ -111,7 +111,7 @@ written in Markdown and hosted in a [separate
 repository](https://codeberg.org/libreboot/lbwww) where you can send patches.
 
 Any and all development discussion and user support are all done on the IRC
-channel. More information is on the contact page of libreboot.org.
+channel. More information is on https://libreboot.org/contact.html.
 
 LICENSE FOR THIS README
 =======================
