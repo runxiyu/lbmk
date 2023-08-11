@@ -101,6 +101,11 @@ pacman -S --needed --noconfirm innoextract p7zip unar
 # ------------------------------------------------------------
 pacman -S --needed --noconfirm swig dtc
 
+# UEFIExtract
+# ------------
+
+pacman -S --needed --noconfirm cmake
+
 # Unifont, for GRUB
 # ------------------------------------------------------------
 

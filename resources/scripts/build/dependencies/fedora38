@@ -93,6 +93,11 @@ dnf -y install gcc
 
 dnf -y install pciutils-devel zlib-devel libftdi-devel gcc libusb-devel
 
+# UEFIExtract
+# ------------
+
+dnf -y install cmake
+
 # For extracting IntelME from lenovo updates (X230 etc)
 
 dnf -y install innoextract p7zip p7zip-plugins unar

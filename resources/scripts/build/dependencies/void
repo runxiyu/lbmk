@@ -85,6 +85,11 @@ xbps-install -y base-devel
 
 xbps-install -y libpciaccess pciutils zlib libftdi1 base-devel libusb
 
+# UEFIExtract
+# ------------
+
+xbps-install -y cmake
+
 # Management engine extraction dependencies
 # ------------------------------------------------------------
 

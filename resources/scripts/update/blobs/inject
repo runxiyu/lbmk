@@ -34,6 +34,8 @@ CONFIG_KBC1126_FW2_OFFSET=""
 CONFIG_VGA_BIOS_FILE=""
 CONFIG_VGA_BIOS_ID=""
 CONFIG_GBE_BIN_PATH=""
+CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=""
+CONFIG_SMSC_SCH5545_EC_FW_FILE=""
 
 main()
 {
@@ -217,6 +219,11 @@ patch_rom()
 		inject_blob_dell_e6400_vgarom_nvidia
 	fi
 
+	if [ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] \
+	    && [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ]; then
+		inject_blob_smsc_sch5545_ec "${rom}"
+	fi
+
 	if [ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ]; then
 		modify_gbe ${rom}
 	fi
@@ -323,6 +330,21 @@ inject_blob_dell_e6400_vgarom_nvidia()
 	${cbfstool} ${rom} add -f "${_vga_location}" \
 		-n "pci${CONFIG_VGA_BIOS_ID}.rom" \
 		-t optionrom || exit 1
+}
+
+inject_blob_smsc_sch5545_ec()
+{
+	rom="${1}"
+
+	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}"
+
+	if [ ! -f "${_sch5545ec_location}" ]; then
+		printf "SCH5545 firmware file missing\n" 1>&2
+		exit 1
+	fi
+
+	"${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
+	    -n sch5545_ecfw.bin -t raw || exit 1
 }
 
 modify_gbe()

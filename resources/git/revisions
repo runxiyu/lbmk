@@ -56,3 +56,15 @@
 	loc: bios_extract
 	url: https://review.coreboot.org/bios_extract
 }
+
+{biosutilities}{
+	rev: 03ae0cf0706ede5a2a15da0986c19c776d0e6b26
+	loc: biosutilities
+	url: https://github.com/platomav/BIOSUtilities
+}
+
+{uefitool}{
+	rev: 4a41c33596e9bc3ae812e763965d91ac57553e02
+	loc: uefitool
+	url: https://github.com/LongSoft/UEFITool
+}

@@ -24,7 +24,7 @@ set -u -e
 projectname="$(cat projectname)"
 
 modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot"
-modlist="${modlist} bios_extract"
+modlist="${modlist} bios_extract biosutilities uefitool"
 
 dirlist="resources util" # do not add blobs directory here. it's handled below
 
@@ -104,8 +104,8 @@ copy_blobs()
 	mkdir -p "${srcdir}"/blobs
 	# do not copy intel ME etc, but do copy ifd/gbe files
 	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
-			hp8300usdt; do
-		for j in ifd gbe 16_ifd; do
+	    hp8300usdt t1650; do
+		for j in ifd gbe 4_ifd 8_ifd 12_ifd 16_ifd; do
 			if [ -f "blobs/${i}/${j}.bin" ]; then
 				if [ ! -e "${srcdir}/blobs/${i}" ]; then
 					mkdir -p "${srcdir}/blobs/${i}"

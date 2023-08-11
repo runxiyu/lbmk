@@ -43,5 +43,8 @@
 /blobs/app/
 /blobs/cache/
 *me.bin
+*sch5545ec.bin
 /mrc/
 /util/nvmutil/nvm
+/biosutilities/
+/uefitool/

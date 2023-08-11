@@ -29,6 +29,7 @@ target=""
 CONFIG_HAVE_MRC=""
 CONFIG_HAVE_ME_BIN=""
 CONFIG_KBC1126_FIRMWARE=""
+CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=""
 ifdtool="cbutils/${cbtree}/ifdtool"
 cbfstool="cbutils/${cbtree}/cbfstool"
 
@@ -76,6 +77,7 @@ make_archive()
 	CONFIG_HAVE_MRC="y"
 	CONFIG_HAVE_ME_BIN="y"
 	CONFIG_KBC1126_FIRMWARE="y"
+	CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="y"
 	grep "CONFIG_HAVE_ME_BIN=y" \
 			"resources/coreboot/${target}/config/"* \
 			|| CONFIG_HAVE_ME_BIN="n"
@@ -85,6 +87,9 @@ make_archive()
 	grep "CONFIG_KBC1126_FIRMWARE=y" \
 			"resources/coreboot/${target}/config"/* \
 			|| CONFIG_KBC1126_FIRMWARE="n"
+	grep "CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=y" \
+			"resources/coreboot/${target}/config"/* \
+			|| CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="n"
 
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] \
@@ -161,6 +166,10 @@ strip_rom_image()
 	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
 		${cbfstool} "${romfile}" remove -n ecfw1.bin || exit 1
 		${cbfstool} "${romfile}" remove -n ecfw2.bin || exit 1
+	fi
+
+	if [ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ]; then
+		${cbfstool} "${romfile}" remove -n sch5545_ecfw.bin || exit 1
 	fi
 
 	# TODO: replace this board-specific hack

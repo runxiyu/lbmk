@@ -94,6 +94,11 @@ pacman -S --needed --noconfirm libpciaccess pciutils zlib libftdi \
 
 pacman -S --needed --noconfirm innoextract p7zip unar
 
+# UEFIExtract
+# ------------
+
+pacman -S --needed --noconfirm cmake
+
 # U-Boot build dependencies
 # ------------------------------------------------------------
 pacman -S --needed --noconfirm swig dtc

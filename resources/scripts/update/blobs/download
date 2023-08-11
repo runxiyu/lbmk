@@ -19,6 +19,9 @@ e6400_vga_dl_url=""
 e6400_vga_dl_url_bkup=""
 e6400_vga_offset=""
 e6400_vga_romname=""
+sch5545ec_dl_url=""
+sch5545ec_dl_url_bkup=""
+sch5545ec_dl_hash=""
 
 cbdir="coreboot/default"
 cbcfgsdir="resources/coreboot"
@@ -31,6 +34,8 @@ e6400_unpack="$(pwd)/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$(pwd)/resources/blobs/me7_update_parser.py"
 kbc1126_ec_dump="$(pwd)/${cbdir}/util/kbc1126/kbc1126_ec_dump"
 board=""
+pfs_extract="$(pwd)/biosutilities/Dell_PFS_Extract.py"
+uefiextract="$(pwd)/uefitool/uefiextract"
 _b="" # board shorthand without e.g. _4mb (avoid duplication per flash size)
 
 CONFIG_HAVE_MRC=""
@@ -40,6 +45,8 @@ CONFIG_HAVE_GBE_BIN=""
 CONFIG_KBC1126_FIRMWARE=""
 CONFIG_BOARD_DELL_E6400=""
 CONFIG_VGA_BIOS_FILE=""
+CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=""
+CONFIG_SMSC_SCH5545_EC_FW_FILE=""
 
 main()
 {
@@ -92,11 +99,15 @@ detect_firmware()
 			&& [ "${CONFIG_VGA_BIOS_FILE}" != "" ]; then
 		needs="${needs} E6400VGA"
 	fi
+	if [ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ]; then
+		needs="${needs} SCH5545EC"
+	fi
 	if [ -z ${needs+x} ]; then
 		printf 'No binary blobs needed for this board\n'
 		return 1
 	fi
-	printf "Firmware needed for board %s: %s\n" ${board} ${needs}
+	printf "Firmware needed for board '%s':\n" ${board}
+	printf "%s\n" ${needs}
 }
 
 scan_sources_config()
@@ -152,6 +163,18 @@ scan_sources_config()
 			set ${line}
 			e6400_vga_romname=${2}
 			;;
+		SCH5545EC_DL_hash*)
+			set ${line}
+			sch5545ec_dl_hash=${2}
+			;;
+		SCH5545EC_DL_url_bkup*)
+			set ${line}
+			sch5545ec_dl_url_bkup=${2}
+			;;
+		SCH5545EC_DL_url*)
+			set ${line}
+			sch5545ec_dl_url=${2}
+			;;
 		esac
 	done << EOF
 	$(eval "awk '${awkstr}' resources/blobs/sources")
@@ -174,6 +197,20 @@ build_dependencies()
 		./download bios_extract \
 				|| fail "could not download bios_extract"
 	fi
+	if [ ! -d biosutilities ]; then
+		printf "downloading biosutilities\n"
+		./download biosutilities \
+				|| fail "could not download biosutilities"
+	fi
+	if [ ! -d uefitool ]; then
+		printf "download uefitool (for UEFIExtract)\n"
+		./download uefitool \
+				|| fail "could not download uefitool"
+	fi
+	if [ ! -f uefitool/uefiextract ]; then
+		./build module uefitool \
+				|| fail "could not build uefitool"
+	fi
 	if [ ! -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ]; then
 		printf "Building kbc1126_ec_dump from coreboot\n"
 		make -BC ${cbdir}/util/kbc1126 \
@@ -192,6 +229,9 @@ download_blobs()
 		case ${need} in
 		*ME*)
 			download_blob_intel_me || _failed="${_failed} me"
+			;;
+		*SCH5545EC*)
+			download_sch5545ec || failed="${_failed} sch5545ec"
 			;;
 		*EC*)
 			download_ec || _failed="${_failed} ec"
@@ -420,6 +460,51 @@ extract_e6400vga()
 	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
 }
 
+download_sch5545ec()
+{
+	printf "Downloading SMSC SCH5545 Environment Controller firmware\n"
+
+	fetch_update sch5545ec || return 1
+	extract_sch5545ec || return 1
+}
+
+# TODO: this code is cancer. hardcoded is bad, and stupid.
+# TODO: make it *scan* (based on signature, in each file)
+extract_sch5545ec()
+{
+	printf "Extracting SCH5545 Environment Controller firmware for '%s'\n" \
+	    ${board}
+
+	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
+
+	if [ -f "${_sch5545ec_destination}" ]; then
+		printf 'sch5545 firmware already downloaded\n'
+		return 0
+	fi
+
+	if [ -d "${appdir}" ]; then
+		rm -Rf "${appdir}"
+	fi
+	mkdir -p "${appdir}/"
+
+	cp "${dl_path}" "${appdir}/"
+	python "${pfs_extract}" "${appdir}/${dlsum}" -e || exit 1
+
+	# full system ROM (UEFI), to extract with UEFIExtract:
+	_bios="${appdir}/${dlsum}_extracted/Firmware"
+	_bios="${_bios}/1 ${dlsum} -- 1 System BIOS vA.28.bin"
+
+	# this is the SCH5545 firmware, inside of the extracted UEFI ROM:
+	_sch5545ec_fw="${_bios}.dump/4 7A9354D9-0468-444A-81CE-0BF617D890DF"
+	_sch5545ec_fw="${_sch5545ec_fw}/54 D386BEB8-4B54-4E69-94F5-06091F67E0D3"
+	_sch5545ec_fw="${_sch5545ec_fw}/0 Raw section/body.bin" # <-- this!
+
+	# this makes the file defined by _sch5545ec_fw available to copy
+	"${uefiextract}" "${_bios}" || exit 1
+
+	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || exit 1
+}
+
 fetch_update()
 {
 	printf "Fetching vendor update for board: %s\n" ${board}
@@ -440,6 +525,10 @@ fetch_update()
 		dl=${e6400_vga_dl_url}
 		dl_bkup=${e6400_vga_dl_url_bkup}
 		dlsum=${e6400_vga_dl_hash}
+	elif [ "${fw_type}" = "sch5545ec" ]; then
+		dl="${sch5545ec_dl_url}"
+		dl_bkup="${sch5545ec_dl_url_bkup}"
+		dlsum="${sch5545ec_dl_hash}"
 	else
 		printf "Unsupported download type: %s\n" ${fw_type}
 		return 1
