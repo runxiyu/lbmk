@@ -380,7 +380,8 @@ extract_ec()
 	mv Rompaq/68*.BIN ec.bin
 	if [ ! -f ec.bin ]; then
 		unar -D ROM.CAB Rom.bin || \
-		    unar -D Rom.CAB Rom.bin
+		    unar -D Rom.CAB Rom.bin || \
+		    unar -D 68*.CAB Rom.bin
 		mv Rom.bin ec.bin
 	fi
 	if [ ! -f ec.bin ]; then

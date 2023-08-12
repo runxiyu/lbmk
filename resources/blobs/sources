@@ -85,6 +85,18 @@
 	SCH5545EC_DL_hash 9651bab78b8a0063997f568f7698590c7deb7925
 }
 
+{hp8470pintel}{
+	DL_hash 039c89c6d44ae11ae2510cbd5fed756e97ed9a31
+	DL_url https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+	DL_url_bkup https://web.archive.org/web/20210706183911/https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+
+	EC_hash 20e49c92f610e0bba4b67faac7ae2bc78f421cb7
+	EC_url https://ftp.hp.com/pub/softpaq/sp77501-78000/sp77818.exe
+	EC_url_bkup https://ftp.hp.com/pub/softpaq/sp77501-78000/sp77818.exe
+}
+
+# nvidia vga option rom for dgpu models of Dell Latitude E6400
+# for downloading the nvidia rom to pciroms/pci10de,06eb.rom
 {e6400nvidia}{
 	E6400_VGA_DL_hash a24ed919e80287b281e407d525af31f307746250
 	E6400_VGA_DL_url https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe
