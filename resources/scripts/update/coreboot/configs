@@ -53,15 +53,15 @@ updateconf()
 
 	boarddir="${cbcfgsdir}/${board}"
 
-	if [ -f "${boarddir}/board.cfg" ]; then
-		cbtree="undefined"
-		. "${boarddir}/board.cfg" # source
-		if [ "${cbtree}" = "undefined" ]; then
+	if [ -f "${boarddir}/target.cfg" ]; then
+		tree="undefined"
+		. "${boarddir}/target.cfg" # source
+		if [ "${tree}" = "undefined" ]; then
 			return 0
 		fi
-		cbdir="coreboot/${cbtree}"
+		cbdir="coreboot/${tree}"
 		if [ ! -d "${cbdir}" ]; then
-			./download coreboot ${cbtree}
+			./fetch_trees coreboot ${tree}
 		fi
 		for cbcfg in "${boarddir}/config/"*; do
 			if [ ! -f "${cbcfg}" ]; then
@@ -74,7 +74,7 @@ updateconf()
 			make distclean -BC "${cbdir}"
 		done
 	else
-		printf "\nupdate/config/coreboot: no board.cfg for: %s\n" \
+		printf "\nupdate/config/coreboot: no target.cfg for: %s\n" \
 				${board}
 	fi
 }

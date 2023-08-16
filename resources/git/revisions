@@ -13,6 +13,13 @@
 	bkup_url: https://github.com/coreboot/coreboot.git
 }
 
+{u-boot}{
+	rev: HEAD
+	loc: u-boot/u-boot
+	url: https://source.denx.de/u-boot/u-boot.git
+	bkup_url: https://github.com/u-boot/u-boot.git
+}
+
 {grub}{
 	rev: 7a994c87f571ac99745645be0bdde9827297321a
 	loc: grub

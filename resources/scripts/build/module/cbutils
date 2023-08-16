@@ -41,34 +41,34 @@ build_for_mainboard() {
 	board="${1}"
 	[ ! -d "resources/coreboot/${board}" ] && \
 		continue
-	[ ! -f "resources/coreboot/${board}/board.cfg" ] && \
+	[ ! -f "resources/coreboot/${board}/target.cfg" ] && \
 		continue
-	cbtree="undefined"
-	. "resources/coreboot/${board}/board.cfg" # source
-	if [ "${cbtree}" = "undefined" ]; then
-		printf "build/cbutils: improper cbtree definition for '%s'" \
+	tree="undefined"
+	. "resources/coreboot/${board}/target.cfg" # source
+	if [ "${tree}" = "undefined" ]; then
+		printf "build/cbutils: improper tree definition for '%s'" \
 				"${board}"
 		return 1
 	fi
-	buildutils "${cbtree}" || return 1
+	buildutils "${tree}" || return 1
 }
 
 buildutils() {
-	cbtree="${1}"
-	if [ ! -d "coreboot/${cbtree}/" ]; then
-		./download coreboot $cbtree || return 1
+	tree="${1}"
+	if [ ! -d "coreboot/${tree}/" ]; then
+		./fetch_trees coreboot $tree || return 1
 	fi
 	for util in cbfstool ifdtool; do
-		[ -f "cbutils/${cbtree}/${util}" ] \
+		[ -f "cbutils/${tree}/${util}" ] \
 			&& continue
-		if [ ! -d "cbutils/${cbtree}" ]; then
-			mkdir -p "cbutils/${cbtree}" || return 1
+		if [ ! -d "cbutils/${tree}" ]; then
+			mkdir -p "cbutils/${tree}" || return 1
 		fi
 
-		utildir="coreboot/${cbtree}/util/${util}"
+		utildir="coreboot/${tree}/util/${util}"
 		make distclean -C "${utildir}" || return 1
 		make -j$(nproc) -C "${utildir}" || return 1
-		mv "${utildir}/${util}" "cbutils/${cbtree}" || return 1
+		mv "${utildir}/${util}" "cbutils/${tree}" || return 1
 		make distclean -C "${utildir}" || return 1
 	done
 }

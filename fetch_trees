@@ -1,0 +1,191 @@
+#!/usr/bin/env sh
+
+#  helper script: create code trees based on git revision, with patches
+#  (currently used for downloading coreboot and u-boot)
+#
+#	Copyright (C) 2014-2016,2020,2021,2023 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+#	Copyright (C) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+_target=""
+tree=""
+rev=""
+project=""
+cfgsdir=""
+
+main()
+{
+	rm -f ${cfgsdir}/*/seen
+
+	printf "Downloading %s and (if available) applying patches\n" \
+	    ${project}
+
+	[ -z "${1}" ] && err "project name not specified"
+	project="${1}"
+	cfgsdir="resources/${project}"
+	[ -d "${cfgsdir}" ] || err "unsupported project name"
+	shift 1
+
+	targets=""
+	if [ $# -gt 0 ]; then
+		targets=$@
+	else
+		for x in "${cfgsdir}/"*; do
+			[ ! -d "${x}" ] && continue
+			targets="${targets} ${x##*/}"
+		done
+	fi
+	for x in ${targets}; do
+		rm -f "${cfgsdir}"/*/seen
+		download_for_target "${x}"
+	done
+
+	rm -f ${cfgsdir}/*/seen
+}
+
+download_for_target()
+{
+	_target="${1}"
+	tree="undefined"
+	rev="undefined"
+
+	fetch_config "${_target}" || exit 1
+
+	rm -f "${cfgsdir}"/*/seen
+
+	if [ -d "${project}/${tree}" ]; then
+		printf "REMARK: download/%s %s: exists. Skipping.\n" \
+				${project} ${tree}
+		[ "${tree}" != "${1}" ] && \
+			printf "(for target: '%s}')\n" ${1}
+		return 0
+	fi
+
+	gitclone_from_upstream || exit 1
+
+	prepare_new_tree "${1}" "${tree}" "${rev}" \
+			|| exit 1
+}
+
+fetch_config()
+{
+	_target=${1}
+
+	while true; do
+		rev="undefined"
+		tree="undefined"
+
+		check_config_for_target "${_target}" || return 1
+
+		# This is to override $rev and $tree
+		. "${cfgsdir}/${_target}/target.cfg" || exit 1
+
+		if [ "${_target}" != "${tree}" ]; then
+			_target="${tree}"
+			continue
+		elif [ "${tree}" = "undefined" ]; then
+			printf "ERROR: download/%s:"
+			printf " tree name undefined for '%s\n'" \
+					${project} ${_target}
+			return 1
+		elif [ "${rev}" = "undefined" ]; then
+			printf "ERROR: download/%s:"
+			printf " commit ID undefined for '%s'\n" \
+					${project} ${_target}
+			return 1
+		else
+			break
+		fi
+	done
+}
+
+check_config_for_target()
+{
+	_target=${1}
+
+	if [ ! -f "${cfgsdir}/${_target}/target.cfg" ]; then
+		printf "ERROR: download/%s: target.cfg does not" ${project}
+		printf " exist for '%s'\n" ${_target}
+		return 1
+	elif [ -f "${cfgsdir}/${_target}/seen" ]; then
+		printf "ERROR: download/%s: logical loop:" ${project}
+		printf " '%s' target.cfg refers to another tree," ${_target}
+		printf " which ultimately refers back to '%s'." ${_target}
+		return 1
+	fi
+	touch "${cfgsdir}/${_target}/seen"
+}
+
+gitclone_from_upstream()
+{
+	[ ! -d "${project}" ] && \
+		mkdir -p "${project}"
+	[ ! -d "${project}" ] && \
+		return 1
+	[ -d "${project}/${project}" ] && \
+		return 0
+	./gitclone ${project} || \
+		return 1
+}
+
+prepare_new_tree()
+{
+	target=${1}
+	tree=${2}
+	rev=${3}
+
+	printf "Preparing %s tree: %s\n" ${project} ${tree}
+	[ "${tree}" != "${target}" ] && \
+		printf "(for target, %s)\n" "${target}"
+
+	cp -R "${project}/${project}" "${project}/${tree}" || exit 1
+	(
+	cd "${project}/${tree}" \
+		|| err "cannot cd to ${project}/${tree}"
+	git reset --hard ${rev} \
+		|| err "cannot reset ${project} revision for tree, ${tree}"
+	git submodule update --init --checkout \
+		|| err "cannot update ${project} submodules for tree, ${tree}"
+
+	for patch in ../../"${cfgsdir}"/"${tree}"/patches/*.patch; do
+		[ ! -f "${patch}" ] && \
+			continue
+		if ! git am "${patch}"; then
+			git am --abort
+			err "cannot patch ${tree}"
+		fi
+	done
+
+	# extra.sh can be used for anything
+	# but should *only* be a last resort
+	if [ -f "../../${cfgsdir}/${tree}/extra.sh" ]; then
+		"../../${cfgsdir}/${tree}/extra.sh" || \
+			err "${tree} extra.sh"
+	fi
+	)
+}
+
+err()
+{
+	printf "ERROR, %s, %s\n" $0 $1 1>&2
+	exit 1
+}
+
+main $@

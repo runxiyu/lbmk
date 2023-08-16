@@ -31,38 +31,38 @@ printf "Updating U-Boot configs\n"
 # Build ROM images for supported boards
 updateconf() {
 	board="$1"
-	if [ -f "resources/u-boot/${board}/board.cfg" ]; then
-        ubtree="undefined"
-        . "resources/u-boot/${board}/board.cfg" # source
-        if [ "${ubtree}" = "undefined" ]; then
+	if [ -f "resources/u-boot/${board}/target.cfg" ]; then
+        tree="undefined"
+        . "resources/u-boot/${board}/target.cfg" # source
+        if [ "${tree}" = "undefined" ]; then
             return 0
         fi
-        if [ ! -d "u-boot/${ubtree}" ]; then
-            ./download u-boot ${ubtree}
+        if [ ! -d "u-boot/${tree}" ]; then
+            ./fetch_trees u-boot ${tree}
         fi
         for ubcfg in resources/u-boot/${board}/config/*; do
             if [ ! -f ${ubcfg} ]; then
                 continue
             fi
             (
-                cd u-boot/${ubtree}/
+                cd u-boot/${tree}/
                 rm -f .config*
                 make distclean
             )
-            mv $ubcfg u-boot/${ubtree}/.config
+            mv $ubcfg u-boot/${tree}/.config
             (
-                cd u-boot/${ubtree}/
+                cd u-boot/${tree}/
                 make oldconfig
             )
-            mv u-boot/${ubtree}/.config $ubcfg
-            rm -f u-boot/${ubtree}/.config*
+            mv u-boot/${tree}/.config $ubcfg
+            rm -f u-boot/${tree}/.config*
             (
-                cd u-boot/${ubtree}/
+                cd u-boot/${tree}/
                 make distclean
             )
         done
     else
-        printf "\nupdate/config/u-boot: no board.cfg for: %s\n" "${board}"
+        printf "\nupdate/config/u-boot: no target.cfg for: %s\n" "${board}"
     fi
 }
 

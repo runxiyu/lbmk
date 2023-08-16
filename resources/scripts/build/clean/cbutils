@@ -32,21 +32,21 @@ rm -Rf cbutils
 
 [ ! -d "coreboot/" ] && exit 0
 
-for cbtree in coreboot/*; do
-	if [ "${cbtree##*/}" = "coreboot" ]; then
+for tree in coreboot/*; do
+	if [ "${tree##*/}" = "coreboot" ]; then
 		continue
 	fi
-	if [ ! -d "${cbtree}" ]; then
+	if [ ! -d "${tree}" ]; then
 		continue
 	fi
 	# Clean coreboot, of course
-	make -C "${cbtree}/" distclean
+	make -C "${tree}/" distclean
 
 	# Clean its utilities as well
 	for util in cbfstool ifdtool nvramtool cbmem; do
-		make distclean -C "${cbtree}/util/${util}/"
+		make distclean -C "${tree}/util/${util}/"
 	done
-	make distclean -C "${cbtree}/payloads/libpayload/"
+	make distclean -C "${tree}/payloads/libpayload/"
 done
 
 printf "\n\n"

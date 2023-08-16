@@ -142,7 +142,7 @@ build_dependencies()
 {
 	if [ ! -d ${cbdir} ]; then
 		printf "downloading coreboot\n"
-		./download coreboot default
+		./fetch_trees coreboot default
 	fi
 
 	./build module cbutils default || fail "could not build cbutils"
@@ -200,7 +200,7 @@ patch_rom()
 
 	set -- "${boarddir}/config/"*
 	. ${1} 2>/dev/null
-	. "${boarddir}/board.cfg"
+	. "${boarddir}/target.cfg"
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		inject_blob_intel_mrc "${rom}"

@@ -26,7 +26,7 @@ RET=0
 pdir="payload/u-boot"
 ubdir=""
 arch=""
-ubtree=""
+tree=""
 config_name=""
 board_dir=""
 
@@ -86,21 +86,21 @@ handle_dependencies()
 	rm -rf "${pdir}/${board}"
 	mkdir -p "${pdir}/${board}"
 
-	ubtree="undefined"
+	tree="undefined"
 	arch="undefined"
 
-	if [ ! -f "${board_dir}/board.cfg" ]; then
-		printf "build/u-boot %s: Missing board.cfg.\n" \
+	if [ ! -f "${board_dir}/target.cfg" ]; then
+		printf "build/u-boot %s: Missing target.cfg.\n" \
 				"${board}"
 		RET=1
 		return 1
 	fi
 
-	# Override the above defaults using board.cfg
-	. "${board_dir}/board.cfg" # source
+	# Override the above defaults using target.cfg
+	. "${board_dir}/target.cfg" # source
 
-	if [ "${ubtree}" = "undefined" ]; then
-		printf "build/u-boot %s: ubtree undefined\n" \
+	if [ "${tree}" = "undefined" ]; then
+		printf "build/u-boot %s: tree undefined\n" \
 				"${board}"
 		RET=1
 		return 1
@@ -113,12 +113,12 @@ handle_dependencies()
 	fi
 
 	ubdir="u-boot/${board}"
-	if [ "${board}" != "${ubtree}" ]; then
-		ubdir="u-boot/${ubtree}"
+	if [ "${board}" != "${tree}" ]; then
+		ubdir="u-boot/${tree}"
 	fi
 
 	if [ ! -d "${ubdir}" ]; then
-		./download u-boot "$board"
+		./fetch_trees u-boot "$board"
 	fi
 
 	if [ ! -d "${ubdir}" ]; then

@@ -49,8 +49,8 @@ check_board()
 		fail "file does not exist: ${vendor_rom}"
 	elif [ ! -d "${boarddir}" ]; then
 		fail "build/roms ${board}: target not defined"
-	elif [ ! -f "${boarddir}/board.cfg" ]; then
-		fail "build/roms ${board}: missing board.cfg"
+	elif [ ! -f "${boarddir}/target.cfg" ]; then
+		fail "build/roms ${board}: missing target.cfg"
 	fi
 }
 
@@ -66,11 +66,11 @@ build_dependencies()
 
 	if [ ! -d ${cbdir} ]; then
 		printf "downloading coreboot\n"
-		./download coreboot default \
+		./fetch_trees coreboot default \
 				|| fail "could not download coreboot"
 	else
 		printf "coreboot already downloaded. Skipping.\n"
-		printf "run ./download coreboot to manually overwrite\n"
+		printf "run ./fetch_trees coreboot to manually overwrite\n"
 	fi
 
 	if ! [ -f ${ifdtool} ]; then
@@ -86,7 +86,7 @@ extract_blobs()
 
 	set -- "${boarddir}/config/"*
 	. ${1} 2>/dev/null
-	. "${boarddir}/board.cfg"
+	. "${boarddir}/target.cfg"
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		printf 'haswell board detected, downloading mrc\n'

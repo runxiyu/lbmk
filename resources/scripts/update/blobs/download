@@ -63,8 +63,8 @@ main()
 
 	if [ ! -d "${boarddir}" ]; then
 		fail "Target not defined"
-	elif [ ! -f "${boarddir}/board.cfg" ]; then
-		fail "Target missing board.cfg"
+	elif [ ! -f "${boarddir}/target.cfg" ]; then
+		fail "Target missing target.cfg"
 	fi
 	
 	detect_firmware || exit 0
@@ -78,7 +78,7 @@ detect_firmware()
 {
 	set -- "${boarddir}/config/"*
 	. ${1} 2>/dev/null
-	. "${boarddir}/board.cfg"
+	. "${boarddir}/target.cfg"
 
 	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
 		needs="${needs} MRC"
@@ -189,7 +189,7 @@ build_dependencies()
 	fi
 	if [ ! -d ${cbdir} ]; then
 		printf "downloading coreboot\n"
-		./download coreboot default \
+		./fetch_trees coreboot default \
 				|| fail "could not download coreboot"
 	fi
 	if [ ! -d bios_extract ]; then

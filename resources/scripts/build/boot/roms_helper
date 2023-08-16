@@ -63,19 +63,19 @@ if [ ! -d "resources/coreboot/${board}" ]; then
 	exit 1
 fi
 
-if [ ! -f "resources/coreboot/${board}/board.cfg" ]; then
-	printf "build/roms: Missing board.cfg for target: %s\n" ${board}
+if [ ! -f "resources/coreboot/${board}/target.cfg" ]; then
+	printf "build/roms: Missing target.cfg for target: %s\n" ${board}
 	exit 1
 fi
 
 
 grub_scan_disk="undefined"
-cbtree="undefined"
-romtype="normal" # optional parameter in board.cfg. "normal" is default
+tree="undefined"
+romtype="normal" # optional parameter in target.cfg. "normal" is default
 arch="undefined"
 
 # Disable all payloads by default.
-# board.cfg files have to specifically enable [a] payload(s)
+# target.cfg files have to specifically enable [a] payload(s)
 payload_grub="n"
 payload_grub_withseabios="n" # seabios chainloaded from grub
 payload_seabios="n"
@@ -86,8 +86,8 @@ payload_uboot="n"
 uboot_config="undefined"
 # ditto option whether to compile ada in crossgcc:
 crossgcc_ada="y" # yes by default
-# Override the above defaults using board.cfg
-. "resources/coreboot/${board}/board.cfg"
+# Override the above defaults using target.cfg
+. "resources/coreboot/${board}/target.cfg"
 
 if [ "${grub_scan_disk}" = "undefined" ]; then
 	printf "build/roms: Target '%s' does not define grub_scan_disk. " \
@@ -106,7 +106,7 @@ if [ "${grub_scan_disk}" != "both" ] && \
 	# erroring out would be silly. just use the default
 fi
 
-if [ "${cbtree}" = "undefined" ]; then
+if [ "${tree}" = "undefined" ]; then
 	printf "build/roms: Target '%s' does not define a coreboot tree. " \
 			${board}
 	printf "Skipping build.\n"
@@ -196,17 +196,17 @@ fi
 
 romdir="bin/${board}"
 cbdir="coreboot/${board}"
-if [ "${board}" != "${cbtree}" ]; then
-	cbdir="coreboot/${cbtree}"
+if [ "${board}" != "${tree}" ]; then
+	cbdir="coreboot/${tree}"
 fi
-cbfstool="cbutils/${cbtree}/cbfstool"
+cbfstool="cbutils/${tree}/cbfstool"
 corebootrom="${cbdir}/build/coreboot.rom"
 seavgabiosrom="payload/seabios/seavgabios.bin"
 
-./build module cbutils ${cbtree} || exit 1
+./build module cbutils ${tree} || exit 1
 
 if [ ! -d "${cbdir}" ]; then
-	./download coreboot ${cbtree}
+	./fetch_trees coreboot ${tree}
 fi
 
 cat version > "${cbdir}/.coreboot-version"
@@ -554,7 +554,7 @@ mkGrubRom() {
 
 	backgroundfile="background1280x800.png"
 	if [ "${board}" = "x60" ] || [ "${board}" = "t60_intelgpu" ]; then
-		# TODO: don't hardcode this. do it in board.cfg per board
+		# TODO: don't hardcode this. do it in target.cfg per board
 		backgroundfile="background1024x768.png"
 	fi
 	backgroundfile="resources/grub/background/${backgroundfile}"

@@ -44,22 +44,22 @@ main()
 modifyconf()
 {
 	board="$1"
-	if [ ! -f "resources/u-boot/${board}/board.cfg" ]; then
-		printf "\nmodify/config/u-boot: no board.cfg for: %s\n" \
+	if [ ! -f "resources/u-boot/${board}/target.cfg" ]; then
+		printf "\nmodify/config/u-boot: no target.cfg for: %s\n" \
 				"${board}"
 		return 0
 	fi
 
-	ubtree="undefined"
-	. "resources/u-boot/${board}/board.cfg" # source
+	tree="undefined"
+	. "resources/u-boot/${board}/target.cfg" # source
 
-	if [ "${ubtree}" = "undefined" ]; then
+	if [ "${tree}" = "undefined" ]; then
 		return 0
 	fi
-	ubdir="u-boot/${ubtree}"
+	ubdir="u-boot/${tree}"
 
 	if [ ! -d "${ubdir}" ]; then
-		./download u-boot ${ubtree}
+		./fetch_trees u-boot ${tree}
 	fi
 
 	for ubcfg in resources/u-boot/${board}/config/*; do

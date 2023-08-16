@@ -23,13 +23,15 @@ set -u -e
 
 projectname="$(cat projectname)"
 
-modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot"
-modlist="${modlist} bios_extract biosutilities uefitool"
+trees_gitclone_list="coreboot u-boot"
+simple_gitclone_list="flashrom grub memtest86plus seabios me_cleaner uefitool"
+simple_gitclone_list="${simple_gitclone_list} bios_extract biosutilities"
 
 dirlist="resources util" # do not add blobs directory here. it's handled below
 
 filelist="lbmk blobutil modify download build README.md COPYING Makefile update"
 filelist="${filelist} version versiondate projectname .gitcheck gitclone"
+filelist="${filelist} fetch_trees"
 
 version="version-unknown"
 versiondate="version-date-unknown"
@@ -75,16 +77,19 @@ create_release_directory()
 
 download_modules()
 {
-	for modname in ${modlist}; do
-		if [ ! -d "${modname}/" ]; then
-			./download ${modname}
-		fi
+	for modname in ${trees_gitclone_list}; do
+		[ ! -d "${modname}" ] && \
+		    ./fetch_trees ${modname}
+	done
+	for modname in ${simple_gitclone_list}; do
+		[ ! -d "${modname}/" ] && \
+		    ./download ${modname}
 	done
 }
 
 copy_files()
 {
-	for dir in ${modlist} ${dirlist}; do
+	for dir in ${simple_gitclone_list} ${dirlist}; do
 		cp -R "${dir}/" "${srcdir}/"
 	done
 
