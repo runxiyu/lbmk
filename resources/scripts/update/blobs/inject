@@ -69,6 +69,10 @@ main()
 	check_board
 	build_dependencies
 	inject_blobs
+
+	printf "Friendly reminder (this is *not* an error message):\n"
+	printf "Please always ensure that the files were inserted correctly.\n"
+	printf "Read https://libreboot.org/docs/install/ivy_has_common.html\n"
 }
 
 check_board()

@@ -53,19 +53,18 @@ main()
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
 
-	exit_if_no_config="exit 0"
+	[ ! -d "${boarddir}" ] && \
+	    fail "Board target, ${board}, not defined"
+	[ ! -f "${boarddir}/target.cfg" ] && \
+	    fail "Target missing target.cfg"
+
+	no_config="printf \"No config for target, %s\\n\" ${board} 1>&2; exit 0"
 	for x in "${boarddir}"/config/*; do
 		if [ -f "${x}" ]; then
-			exit_if_no_config=""
+			no_config=""
 		fi
 	done
-	eval "${exit_if_no_config}"
-
-	if [ ! -d "${boarddir}" ]; then
-		fail "Target not defined"
-	elif [ ! -f "${boarddir}/target.cfg" ]; then
-		fail "Target missing target.cfg"
-	fi
+	eval "${no_config}"
 	
 	detect_firmware || exit 0
 	scan_sources_config
