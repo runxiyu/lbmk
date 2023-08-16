@@ -26,7 +26,7 @@ main()
 	clone_project
 
 	# clean in case of failure
-	rm -rf ${tmp_dir} >/dev/null 2>&1 || exit 1
+	rm -Rf ${tmp_dir} >/dev/null 2>&1 || exit 1
 }
 
 read_config()
@@ -72,14 +72,14 @@ clone_project()
 			|| err "ERROR: could not download ${name}"
 
 	(
-	cd ${tmp_dir} || exit 1
+	cd ${tmp_dir} || err "tmpdir not created"
 	git reset --hard ${revision} || err "Cannot reset revision"
 	)
 
 	patch_project
 
 	if [ -d "${location}" ]; then
-		rm -Rf ${location} || exit 1
+		rm -Rf ${location} || err "Cannot remove directory '${location}'"
 	fi
 	mv ${tmp_dir} ${location} && return 0
 
@@ -96,7 +96,7 @@ patch_project()
 			continue
 		fi
 		(
-		cd ${tmp_dir} || exit 1
+		cd ${tmp_dir} || err "tmpdir not created"
 		git am ${patchfile} || err "Cannot patch project: $name"
 		)
 	done
@@ -116,6 +116,7 @@ err()
 {
 	printf "${@}\n"
 	usage
+	rm -Rf ${tmp_dir} >/dev/null 2>&1
 	exit 1
 }
 
