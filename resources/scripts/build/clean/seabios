@@ -24,14 +24,13 @@ set -u -e
 # clean bucts
 # --------------------------------------------------------
 
-printf "Cleaning the previous build of seabios\n"
+printf "Cleaning the previous builds of seabios\n"
 
-rm -f seabios_libgfxinit.elf seavgabios.bin seabios_vgarom.elf
-
+rm -Rf elf/seabios || exit 1
 [ ! -d "seabios/" ] && exit 0
 
-(
-cd "seabios/"
-make distclean
-)
-
+for x in seabios/*; do
+	[ "${x}" = "seabios/seabios" ] && continue
+	[ ! -d "${x}" ] && continue
+	make -C "${x}" distclean || exit 1
+done

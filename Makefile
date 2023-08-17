@@ -25,7 +25,7 @@
 
 .POSIX:
 
-#.PHONY: all check modules ich9m-descriptors payloads roms release \
+#.PHONY: all check modules ich9m-descriptors roms release \
 #	clean crossgcc-clean install-dependencies-ubuntu \
 #	install-dependencies-debian install-dependencies-arch \
 #	install-dependencies-void install-dependencies-fedora38 \
@@ -39,9 +39,6 @@ modules:
 ich9m-descriptors:
 	./build descriptors ich9m
 
-payloads:
-	./build payload all
-
 roms:
 	./build boot roms all
 
@@ -53,13 +50,13 @@ clean:
 	./build clean cbutils
 	./build clean flashrom
 	./build clean ich9utils
-	./build clean payloads
 	./build clean seabios
 	./build clean grub
 	./build clean memtest86plus
 	./build clean rom_images
 	./build clean u-boot
 	./build clean bios_extract
+	rm -Rf elf/ bin/
 
 crossgcc-clean:
 	./build clean crossgcc

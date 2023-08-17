@@ -34,12 +34,12 @@ main()
 		./fetch grub
 	[ ! -f "grub/grub-mkstandalone" ] && \
 		./build module grub
-	[ ! -d "payload/" ] && \
-		mkdir -p payload/
-	[ ! -d "payload/grub" ] && \
-		mkdir -p payload/grub/
+	[ ! -d "elf/" ] && \
+		mkdir -p elf/
+	[ ! -d "elf/grub" ] && \
+		mkdir -p elf/grub/
 
-	rm -f payload/grub/*
+	rm -f elf/grub/*
 
 	# Separate GRUB payload per keymap to save space in ROM.
 
@@ -47,7 +47,7 @@ main()
 		build_grub_payloads "${keylayoutfile}"
 	done
 
-	printf "Done! Check payload/grub/ to see the files.\n\n"
+	printf "Done! Check elf/grub/ to see the files.\n\n"
 }
 
 build_grub_payloads()
@@ -63,7 +63,7 @@ build_grub_payloads()
 	build_grub_elf "${keylayoutfile}"
 	create_grub_config
 
-	printf "Created 'payload/grub/grub_%s.elf' and configs.'\n" \
+	printf "Created 'elf/grub/grub_%s.elf' and configs.'\n" \
 			"${keymap}"
 }
 
@@ -77,7 +77,7 @@ build_grub_elf()
 	grub/grub-mkstandalone \
 			--grub-mkimage="grub/grub-mkimage" \
 			-O i386-coreboot \
-			-o payload/grub/grub_${keymap}.elf \
+			-o elf/grub/grub_${keymap}.elf \
 			-d grub/grub-core/ \
 			--fonts= --themes= --locales=  \
 			--modules="${grub_modules}" \
@@ -89,10 +89,10 @@ create_grub_config()
 {
 	sed "s/usqwerty/${keymap}/" \
 			< ${grubcfgsdir}/config/grub.cfg \
-			> payload/grub/grub_${keymap}.cfg
+			> elf/grub/grub_${keymap}.cfg
 	sed "s/grubtest.cfg/grub.cfg/" \
-			< payload/grub/grub_${keymap}.cfg \
-			> payload/grub/grub_${keymap}_test.cfg
+			< elf/grub/grub_${keymap}.cfg \
+			> elf/grub/grub_${keymap}_test.cfg
 }
 
 main $@

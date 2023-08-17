@@ -13,6 +13,7 @@
 /bios_extract/
 /ec/
 /tmp/
+/elf/
 /payload/
 /me_cleaner/
 *.s[a-w]?

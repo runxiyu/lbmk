@@ -47,8 +47,8 @@
 }
 
 {seabios}{
-	rev: 1281e340ad1d90c0cc8e8d902bb34f1871eb48cf
-	loc: seabios
+	rev: HEAD
+	loc: seabios/seabios
 	url: https://review.coreboot.org/seabios
 	bkup_url: https://github.com/coreboot/seabios
 }
