@@ -31,7 +31,7 @@ set -u -e
 printf "Building MemTest86+\n"
 
 if [ ! -d "memtest86plus/" ]; then
-	./download memtest86plus
+	./fetch memtest86plus
 fi
 
 make -j$(nproc) -BC memtest86plus

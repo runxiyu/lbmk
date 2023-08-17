@@ -58,10 +58,10 @@ build_dependencies()
 {
 	if [ ! -d me_cleaner ]; then
 		printf "downloading me_cleaner\n"
-		./download me_cleaner || fail 'could not download me_cleaner'
+		./fetch me_cleaner || fail 'could not download me_cleaner'
 	else
 		printf "me_cleaner already downloaded. Skipping.\n"
-		printf "run ./download me_cleaner to manually overwrite\n"
+		printf "run ./fetch me_cleaner to manually overwrite\n"
 	fi
 
 	if [ ! -d ${cbdir} ]; then
@@ -90,7 +90,7 @@ extract_blobs()
 
 	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
 		printf 'haswell board detected, downloading mrc\n'
-		./download mrc || fail "could not download mrc"
+		./update blobs mrc || fail "could not download mrc"
 	fi
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}

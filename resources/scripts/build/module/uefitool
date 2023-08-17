@@ -24,7 +24,7 @@ set -u -e
 main()
 {
 	if [ ! -d "uefitool" ]; then
-		./download uefitool || fail "cannot download uefitool"
+		./fetch uefitool || fail "cannot download uefitool"
 	fi
 
 	printf "Building uefitool (UEFIExtract)\n"

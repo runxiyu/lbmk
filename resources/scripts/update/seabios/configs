@@ -28,7 +28,7 @@ set -u -e
 printf "Updating seabios configs\n"
 
 if [ ! -d "seabios" ]; then
-	./download seabios
+	./fetch seabios
 fi
 
 if [ ! -d "seabios" ]; then

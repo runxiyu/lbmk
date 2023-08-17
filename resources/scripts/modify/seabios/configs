@@ -30,7 +30,7 @@ main()
 download_seabios()
 {
 	if [ ! -d "seabios" ]; then
-		./download seabios
+		./fetch seabios
 	fi
 	if [ ! -d "seabios" ]; then
 		printf "error: Failed to download SeaBIOS. "

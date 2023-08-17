@@ -29,7 +29,7 @@ set -u -e
 # --------------------------------------------------------------------
 
 if [ ! -d "flashrom/" ]; then
-    ./download flashrom
+    ./fetch flashrom
 fi
 
 printf "Building flashrom\n"

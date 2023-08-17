@@ -25,7 +25,7 @@ set -u -e
 # --------------------------------------------------------------------
 
 if [ ! -d "bios_extract/" ]; then
-    ./download bios_extract
+    ./fetch bios_extract
 fi
 
 printf "Building bios_extract\n"

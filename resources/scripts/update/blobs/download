@@ -184,7 +184,7 @@ build_dependencies()
 {
 	if [ ! -d me_cleaner ]; then
 		printf "downloading me_cleaner\n"
-		./download me_cleaner || fail "could not download me_cleaner"
+		./fetch me_cleaner || fail "could not download me_cleaner"
 	fi
 	if [ ! -d ${cbdir} ]; then
 		printf "downloading coreboot\n"
@@ -193,17 +193,17 @@ build_dependencies()
 	fi
 	if [ ! -d bios_extract ]; then
 		printf "downloading bios_extract\n"
-		./download bios_extract \
+		./fetch bios_extract \
 				|| fail "could not download bios_extract"
 	fi
 	if [ ! -d biosutilities ]; then
 		printf "downloading biosutilities\n"
-		./download biosutilities \
+		./fetch biosutilities \
 				|| fail "could not download biosutilities"
 	fi
 	if [ ! -d uefitool ]; then
 		printf "download uefitool (for UEFIExtract)\n"
-		./download uefitool \
+		./fetch uefitool \
 				|| fail "could not download uefitool"
 	fi
 	if [ ! -f uefitool/uefiextract ]; then
@@ -239,7 +239,7 @@ download_blobs()
 			download_e6400vga || _failed="${_failed} e6400vga"
 			;;
 		*MRC*)
-			./download mrc || _failed="${_failed} mrc"
+			./update blobs mrc || _failed="${_failed} mrc"
 			;;
 		esac
 	done

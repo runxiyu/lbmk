@@ -11,6 +11,7 @@ location=""
 url=""
 bkup_url=""
 tmp_dir=""
+depend=""
 
 main()
 {
@@ -24,6 +25,13 @@ main()
 	verify_config
 
 	clone_project
+
+	# dependencies are downloaded *after*
+	# to account for cases like gnulib in grub where
+	# the dependency (gnulib) goes inside the main repo (grub)
+	if [ "${depend}" != "" ]; then
+		./fetch ${depend} || exit 1
+	fi
 
 	# clean in case of failure
 	rm -Rf ${tmp_dir} >/dev/null 2>&1 || exit 1
@@ -46,6 +54,9 @@ read_config()
 			;;
 		bkup_url:*)
 			bkup_url=${2}
+			;;
+		depend:*)
+			depend=${2}
 			;;
 		esac
 	done << EOF
@@ -105,7 +116,7 @@ patch_project()
 usage()
 {
 	cat <<- EOF
-	Usage: ./gitclone [name]
+	Usage: ./fetch [name]
 
 	Options:
 	name: Module name as specified in resources/git/revisions

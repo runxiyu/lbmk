@@ -78,7 +78,7 @@ download_for_target()
 		return 0
 	fi
 
-	gitclone_from_upstream || exit 1
+	fetch_from_upstream || exit 1
 
 	prepare_new_tree "${1}" "${tree}" "${rev}" \
 			|| exit 1
@@ -133,7 +133,7 @@ check_config_for_target()
 	touch "${cfgsdir}/${_target}/seen"
 }
 
-gitclone_from_upstream()
+fetch_from_upstream()
 {
 	[ ! -d "${project}" ] && \
 		mkdir -p "${project}"
@@ -141,7 +141,7 @@ gitclone_from_upstream()
 		return 1
 	[ -d "${project}/${project}" ] && \
 		return 0
-	./gitclone ${project} || \
+	./fetch ${project} || \
 		return 1
 }
 

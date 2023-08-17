@@ -31,7 +31,7 @@ main()
 	printf "Creating GRUB payloads and configuration files\n"
 
 	[ ! -d "grub/" ] && \
-		./download grub
+		./fetch grub
 	[ ! -f "grub/grub-mkstandalone" ] && \
 		./build module grub
 	[ ! -d "payload/" ] && \

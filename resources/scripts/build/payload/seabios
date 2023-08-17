@@ -53,7 +53,7 @@ check_dependencies()
 	rm -f ${payloaddir}/* || exit 1
 
 	if [ ! -d "seabios/" ]; then
-	    ./download seabios || exit 1
+	    ./fetch seabios || exit 1
 	fi
 }
 

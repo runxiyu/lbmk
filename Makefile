@@ -25,16 +25,13 @@
 
 .POSIX:
 
-#.PHONY: all check download modules ich9m-descriptors payloads roms release \
+#.PHONY: all check modules ich9m-descriptors payloads roms release \
 #	clean crossgcc-clean install-dependencies-ubuntu \
 #	install-dependencies-debian install-dependencies-arch \
 #	install-dependencies-void install-dependencies-fedora38 \
 #	install-dependencies-parabola
 
 all: roms
-
-download:
-	./download all
 
 modules:
 	./build module all

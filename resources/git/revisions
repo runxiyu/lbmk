@@ -3,7 +3,7 @@
 # Project name is enclosed by curly braces '{}' information about the
 # project relevant to osbmk is stored between the subsequent curly
 # braces. This file is used by the gitcheck script as well as the
-# gitclone script. Each entry must include: revision 'rev', location
+# fetch script. Each entry must include: revision 'rev', location
 # 'loc', and the git url 'url'. Bkup_url is optional.
 
 {coreboot}{
@@ -25,6 +25,7 @@
 	loc: grub
 	url: git://git.savannah.gnu.org/grub.git
 	bkup_url: http://git.savannah.gnu.org/r/grub.git
+	depend: gnulib
 }
 
 {gnulib}{

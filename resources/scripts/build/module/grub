@@ -27,7 +27,7 @@ main()
 	printf "Building GRUB\n"
 
 	if [ ! -d "grub/" ]; then
-		./download grub || exit 1
+		./fetch grub || exit 1
 	fi
 
 	build_grub
