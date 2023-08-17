@@ -29,9 +29,8 @@ simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 
 dirlist="resources util" # do not add blobs directory here. it's handled below
 
-filelist="lbmk blobutil modify build README.md COPYING Makefile update"
-filelist="${filelist} version versiondate projectname .gitcheck fetch"
-filelist="${filelist} fetch_trees"
+filelist="lbmk modify build README.md COPYING Makefile update version"
+filelist="${filelist} versiondate projectname .gitcheck fetch fetch_trees"
 
 version="version-unknown"
 versiondate="version-date-unknown"

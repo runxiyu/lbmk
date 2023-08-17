@@ -142,8 +142,8 @@ fail()
 
 print_help()
 {
-	printf "Usage: ./blobutil extract {boardname} {path/to/vendor_rom}\n"
-	printf "Example: ./blobutil extract x230 12mb_flash.bin\n"
+	printf "Usage: ./update blobs extract {boardname} {path/to/vendor_rom}\n"
+	printf "Example: ./update blobs extract x230 12mb_flash.bin\n"
 	printf "\nYou need to specify exactly 2 arguments\n"
 }
 

@@ -151,7 +151,7 @@ build_dependencies()
 
 	./build module cbutils default || fail "could not build cbutils"
 
-	./blobutil download ${board} || \
+	./update blobs download ${board} || \
 			fail "Could not download blobs for ${board}"
 }
 
@@ -405,13 +405,13 @@ fail()
 usage()
 {
 	cat <<- EOF
-	USAGE: ./blobutil inject -r [rom path] -b [boardname] -m [macaddress]
-	Example: ./blobutil inject -r x230_12mb.rom -b x230_12mb
+	USAGE: ./update blobs inject -r [rom path] -b [boardname] -m [macaddress]
+	Example: ./update blobs inject -r x230_12mb.rom -b x230_12mb
 
 	Adding a macadress to the gbe is optional.
 	If the [-m] parameter is left blank, the gbe will not be touched.
 
-	Type './blobutil inject listboards' to get a list of valid boards
+	Type './update blobs inject listboards' to get a list of valid boards
 	EOF
 }
 

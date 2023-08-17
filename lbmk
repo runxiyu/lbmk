@@ -33,10 +33,7 @@ main()
 {
 	if [ "${0##*/}" = "lbmk" ]; then
 		die "Do not run the lbmk script directly!"
-	elif [ "${0##*/}" = "blobutil" ]; then
-		./update blobs $@ || exit 1
-		exit 0
-	elif [ $# -lt 1 ]; then
+	elif [ $# -lt 2 ]; then
 		die "Too few arguments. Try: ${0} help"
 	fi
 

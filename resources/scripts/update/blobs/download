@@ -386,7 +386,7 @@ extract_ec()
 	if [ ! -f ec.bin ]; then
 		printf "could not extract ec.bin for board '%s'" ${board} \
 			1>&2
-		fail "aborting the build. please audit blobutil carefully."
+		fail "aborting the build. please audit lbmk carefully."
 	fi
 
 	"${kbc1126_ec_dump}" ec.bin
