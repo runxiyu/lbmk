@@ -40,10 +40,13 @@ main()
 	buildpath="./resources/scripts/${0##*/}"
 
 	mode="${1}"
-	./.gitcheck
-	if [ "${mode}" != "dependencies" ]; then
-		./resources/scripts/misc/versioncheck
+	if [ "${mode}" = "dependencies" ]; then
+		install_dependencies $@ || die "Could not install dependencies"
+		exit 0
 	fi
+	./.gitcheck
+	[ "${mode}" != "dependencies" ] && \
+		./resources/scripts/misc/versioncheck
 	if [ "${mode}" = help ]; then
 		usage $0
 		exit 0
@@ -78,6 +81,19 @@ main()
 	esac
 
 	./.gitcheck clean
+}
+
+install_dependencies()
+{
+	[ -f "resources/dependencies/${2}" ] || die "Unsupported target"
+
+	aur_notice=""
+	. "resources/dependencies/${2}"
+
+	${pkg_add} ${pkglist} || die "Error installing dependencies"
+	[ "${aur_notice}" != "" ] && \
+		printf "You must install these AUR packages: %s\n" \
+		    "${aur_notice}" 1>&2
 }
 
 # Takes exactly one mode as parameter

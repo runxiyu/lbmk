@@ -1,0 +1,13 @@
+pkg_add="apt-get -y install"
+pkglist=" \
+wget git uuid-dev nasm build-essential sharutils curl parted e2fsprogs unzip \
+pkg-config gcc-arm-linux-gnueabi gcc-multilib libc6-i386 libc6-dev-i386 \
+lib32stdc++6 g++-multilib dh-autoreconf lib32tinfo-dev build-essential python3 \
+build-essential perl libncurses5-dev doxygen iasl gdb flex bison build-essential \
+git libssl-dev gnat lib32ncurses5-dev ttf-unifont libopts25 libselinux1-dev \
+autogen m4 autoconf help2man libopts25-dev libfont-freetype-perl automake \
+autotools-dev build-essential bison flex libfuse-dev liblzma-dev gawk \
+libdevmapper-dev libtool libfreetype6-dev gettext build-essential libpci-dev \
+pciutils zlib1g-dev libftdi-dev build-essential libusb-1.0-0-dev libusb-1.0 \
+libusb-1.0-0-dev libusb-dev lib32z1-dev cmake innoextract p7zip p7zip-full unar \
+"
