@@ -33,7 +33,7 @@ main()
 	[ ! -d "grub/" ] && \
 		./fetch grub
 	[ ! -f "grub/grub-mkstandalone" ] && \
-		./build module grub
+		./build grub utils
 	[ ! -d "elf/" ] && \
 		mkdir -p elf/
 	[ ! -d "elf/grub" ] && \

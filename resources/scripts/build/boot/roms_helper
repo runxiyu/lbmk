@@ -205,7 +205,7 @@ if [ "${payload_grub}" = "y" ] \
 
 		if [ ! -f "${grubelf}" ] || [ ! -f "${grubcfg}" ] || \
 		    [ ! -f "${grubtestcfg}" ]; then
-			./build payload grub
+			./build grub payload
 		fi
 	done
 fi
