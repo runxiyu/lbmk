@@ -179,6 +179,7 @@ lsmmap \
 lspci \
 luks \
 luks2 \
+argon2 \
 lvm \
 lzopio \
 mdraid09 \
