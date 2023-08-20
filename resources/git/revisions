@@ -21,7 +21,7 @@
 }
 
 {grub}{
-	rev: 7a994c87f571ac99745645be0bdde9827297321a
+	rev: 4fdcb339bbcfbf5c234c764c83813ab8de9c9657
 	loc: grub
 	url: git://git.savannah.gnu.org/grub.git
 	bkup_url: http://git.savannah.gnu.org/r/grub.git
