@@ -170,7 +170,7 @@ if [ ! -f "${seavgabiosrom}" ] \
 fi
 
 [ "${payload_memtest}" = "y" ] && [ ! -f "memtest86plus/memtest" ] && \
-	./build src for memtest86plus
+	./build src for -b memtest86plus
 
 [ -d "${romdir}/" ] || mkdir -p "${romdir}/"
 rm -f "${romdir}"/*

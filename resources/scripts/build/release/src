@@ -138,6 +138,9 @@ purge_files()
 	(
 	cd "${srcdir}/" || err "cd3"
 	./build clean all || err "build-clean1"
+	for p in bios_extract flashrom grub ich9utils memtest86plus uefitool; do
+		./build src for -c "${p}"
+	done
 	make clean -BC util/nvmutil || err "make-clean2"
 	make clean -BC util/ich9utils || err "make-clean3"
 	make clean -BC util/spkmodem_recv || err "make-clean4"

@@ -207,7 +207,7 @@ build_dependencies()
 				|| fail "could not download uefitool"
 	fi
 	if [ ! -f uefitool/uefiextract ]; then
-		./build src for uefitool \
+		./build src for -b uefitool \
 				|| fail "could not build uefitool"
 	fi
 	if [ ! -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ]; then

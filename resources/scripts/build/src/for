@@ -21,14 +21,27 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+mode=""
 project=""
 
 main()
 {
-	[ $# -lt 1 ] && err "project name not specified"
-	project="${1}"
-	shift 1
+	while getopts b:c: option
+	do
+		case "${1}" in
+		-b)
+			shift ;;
+		-c)
+			mode="distclean"
+			shift ;;
+		*)
+			err "Invalid option" ;;
+		esac
+		project="${OPTARG}"
+		shift
+	done
 
+	[ -z "${project}" ] && err "project name not specified"
 	[ "${project}" = "ich9utils" ] && project="util/ich9utils"
 
 	[ -d "${project}" ] || ./fetch "${project}" \
@@ -41,7 +54,11 @@ main()
 		cmake UEFIExtract/ || err "cannot cmake UEFIExtract"
 		)
 	fi
-	make -C "${project}" || err "Cannot build project, ${project}"
+	[ ! -z "${mode}" ] || \
+		make -C "${project}" || err "'make' failed (${project})"
+	[ -z "${mode}" ] || \
+		make -C "${project}" distclean || make -C "${project}" clean \
+		    || err "cannot clean project src, ${project}"
 }
 
 err()
