@@ -166,7 +166,7 @@ if [ ! -f "${seavgabiosrom}" ] \
     || [ ! -f elf/seabios/default/vgarom/bios.bin.elf ] \
     || [ ! -f elf/seabios/default/normal/bios.bin.elf ]; then
 	[ "${payload_seabios}" = "y" ] && \
-		./build defconfig for seabios
+		./handle config file -b seabios
 fi
 
 [ "${payload_memtest}" = "y" ] && [ ! -f "memtest86plus/memtest" ] && \
@@ -211,7 +211,7 @@ if [ "${payload_grub}" = "y" ] \
 fi
 
 if [ "${payload_uboot}" = "y" ]; then
-	./build defconfig for u-boot ${board}
+	./handle config file -b u-boot ${board}
 	ubdir="elf/u-boot/${board}/${uboot_config}"
 	ubootelf="${ubdir}/u-boot.elf"
 	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot.bin" ] && \
@@ -497,7 +497,8 @@ mkRoms()
 		return 0
 	fi
 
-	./build defconfig for coreboot ${board}
+	./handle config file -b coreboot ${board}
+
 	_corebootrom="elf/coreboot/${board}/${initmode}_${displaymode}"
 	[ "${initmode}" = "normal" ] && \
 		_corebootrom="${_corebootrom%_${displaymode}}"

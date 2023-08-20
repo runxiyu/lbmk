@@ -37,6 +37,7 @@ config_name=""
 crossgcc_ada=""
 elfdir=""
 listfile=""
+mode=""
 project=""
 target=""
 target_dir=""
@@ -44,18 +45,33 @@ tree=""
 
 main()
 {
-	[ $# -lt 1 ] && err "Project name not specified"
-	project="${1}"
+	while getopts b:m:u: option
+	do
+		case "${1}" in
+		-b)
+			mode="all"
+			shift ;;
+		-u)
+			mode="oldconfig"
+			shift ;;
+		-m)
+			mode="menuconfig"
+			shift ;;
+		*)
+			err "Invalid option" ;;
+		esac
+		project="${OPTARG}"
+		shift
+	done
+	[ -z "${mode}" ] && err "mode not given (-m menuconfig or -u oldconfig)"
+
 	elfdir="elf/${project}"
-	shift 1
 
 	cfgsdir="resources/${project}"
 	[ -d "${cfgsdir}" ] || err "directory, ${cfgsdir}, does not exist"
 
 	listfile="${cfgsdir}/build.list"
 	[ -f "${listfile}" ] || err "list file, ${listfile}, does not exist"
-
-	printf "Building %s binaries (elf files)\n" ${project}
 
 	# Build for all targets if no argument is given
 	if [ "$#" -eq 0 ]; then
@@ -66,21 +82,24 @@ main()
 		done
 	fi
 
-	[ ! -d "${elfdir}" ] && \
+	[ ! -d "${elfdir}" ] && [ "${mode}" = "all" ] && \
 		mkdir -p ${elfdir}/
 
 	for x in "$@"; do
 		target="${x}"
-		if [ "${project}" = "coreboot" ]; then
+		printf "Running 'make %s' for project '%s, target '%s''\n" \
+		    "${mode}" "${project}" "${target}"
+		if [ "${project}" = "coreboot" ] && [ "${mode}" = "all" ]; then
 			./update blobs download ${target} || err "blobutil"
 		fi
-		build_defconfig || exit 1
+		handle_defconfig || exit 1
 	done
 
-	printf "Done! The files are stored under %s/\n\n" ${elfdir}
+	[ "${mode}" = "all" ] && \
+		printf "Done! The files are stored under %s/\n\n" ${elfdir}
 }
 
-build_defconfig()
+handle_defconfig()
 {
 	handle_dependencies "${target}" || return 1
 
@@ -89,12 +108,12 @@ build_defconfig()
 		config="${y}"
 		config_name="${config#$target_dir/config/}"
 
-		printf "build/defconfig/%s %s: build config %s\n" \
+		printf "build/defconfig/%s %s: handling config %s\n" \
 		    ${project} ${target} ${config_name}
 
-		check_config || continue
-		build_elf
-		copy_elf
+		[ "${mode}" != "all" ] || check_config || continue
+		run_make_command
+		[ "${mode}" != "all" ] || copy_elf
 	done
 }
 
@@ -123,7 +142,7 @@ handle_dependencies()
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
-		check_cross_compiler || err "crossgcc fail"
+		[ "${mode}" != "all" ] || check_cross_compiler || err "crossgcc"
 	fi
 }
 
@@ -199,22 +218,19 @@ check_config()
 		fi
 	done
 	mkdir -p "${dest_dir}"
-
-	printf "build/%s %s: building config %s).\n" \
-			${project} ${target} ${config_name}
 }
 
-build_elf()
+run_make_command()
 {
-	make -C "${codedir}" distclean || err "build_elf"
+	make -C "${codedir}" distclean || err "run_make_command"
 
-	cp "${config}" "${codedir}/.config" || err "build_elf"
-	make -C "${codedir}" silentoldconfig || \
+	cp "${config}" "${codedir}/.config" || err "run_make_command"
+	[ "${mode}" != "all" ] || make -C "${codedir}" silentoldconfig || \
 	    make -C "${codedir}" oldconfig || : # don't error on oldconfig
 
-	[ "${project}" = "coreboot" ] && \
+	[ "${project}" = "coreboot" ] && [ "${mode}" = "all" ] && \
 		printf "%s\n" "${our_version}" > "${codedir}/.coreboot-version"
-	make -C "${codedir}" -j"$(nproc)" all || err "build_elf"
+	make -C "${codedir}" -j$(nproc) ${mode} || err "run_make_command"
 }
 
 copy_elf()
