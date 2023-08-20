@@ -76,7 +76,7 @@ build_dependencies()
 	if [ ! -d "${cbdir}/" ]; then
 	    ./fetch_trees coreboot default || return 1
 	fi
-	./build module cbutils default || return 1
+	./build coreboot utils default || return 1
 	return 0
 }
 

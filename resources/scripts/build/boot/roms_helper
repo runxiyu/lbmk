@@ -159,7 +159,7 @@ cbfstool="cbutils/${tree}/cbfstool"
 corebootrom="${cbdir}/build/coreboot.rom"
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 
-./build module cbutils ${tree} || exit 1
+./build coreboot utils ${tree} || exit 1
 
 if [ ! -f "${seavgabiosrom}" ] \
     || [ ! -f elf/seabios/default/libgfxinit/bios.bin.elf ] \
@@ -170,7 +170,7 @@ if [ ! -f "${seavgabiosrom}" ] \
 fi
 
 [ "${payload_memtest}" = "y" ] && [ ! -f "memtest86plus/memtest" ] && \
-	./build module memtest86plus
+	./build src for memtest86plus
 
 [ -d "${romdir}/" ] || mkdir -p "${romdir}/"
 rm -f "${romdir}"/*

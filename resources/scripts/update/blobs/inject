@@ -149,7 +149,7 @@ build_dependencies()
 		./fetch_trees coreboot default
 	fi
 
-	./build module cbutils default || fail "could not build cbutils"
+	./build coreboot utils default || fail "could not build cbutils"
 
 	./update blobs download ${board} || \
 			fail "Could not download blobs for ${board}"

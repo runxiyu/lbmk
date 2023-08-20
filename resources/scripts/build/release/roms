@@ -121,7 +121,7 @@ strip_archive()
 	if [ ! -d coreboot/${tree} ]; then
 		./fetch_trees coreboot ${tree} || exit 1
 	fi
-	./build module cbutils ${tree} || exit 1
+	./build coreboot utils ${tree} || exit 1
 
 	rm -Rf "${romdir}_tmp" # dirty hack, to reduce disk io later
 	# rather than using /tmp, which might not be tmpfs

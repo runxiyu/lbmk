@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 
-#  helper script: build ich9utils
+#  helper script: build utils used by lbmk
 #
-#	Copyright (C) 2014, 2015, 2020, 2023 Leah Rowe <info@minifree.org>
+#	Copyright (C) 2023 Leah Rowe <info@minifree.org>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,15 +21,32 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+project=""
+
 main()
 {
-	printf "Build ich9utils\n"
-	make -j$(nproc) -C "util/ich9utils" || err "make"
+	[ $# -lt 1 ] && err "project name not specified"
+	project="${1}"
+	shift 1
+
+	[ "${project}" = "ich9utils" ] && project="util/ich9utils"
+
+	[ -d "${project}" ] || ./fetch "${project}" \
+	    || err "Cannot download project, ${project}"
+	[ -d "${project}" ] || err "Project, ${project}, not downloaded"
+
+	if [ "${project}" = "uefitool" ]; then
+		(
+		cd uefitool || err "cannot cd to uefitool/"
+		cmake UEFIExtract/ || err "cannot cmake UEFIExtract"
+		)
+	fi
+	make -C "${project}" || err "Cannot build project, ${project}"
 }
 
 err()
 {
-	printf "%s: %s\n" $0 $1
+	printf "ERROR: build/src: %s\n" "${1}" 1>&2
 	exit 1
 }
 
