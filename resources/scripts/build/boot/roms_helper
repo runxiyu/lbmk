@@ -7,6 +7,7 @@
 #				<vitali64pmemail@protonmail.com>
 #	Copyright (C) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+#	Copyright (C) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -100,8 +101,7 @@ uboot_config="undefined"
 [ "${arch}" = "undefined" ] && \
 	err "Target '${board}' does not define a CPU type. Skipping build."
 
-[ "${payload_memtest}" != "n" ] && \
-    [ "${payload_memtest}" != "y" ] && \
+[ "${payload_memtest}" != "y" ] && \
 	payload_memtest="n"
 [ "${payload_grub_withseabios}" = "y" ] && \
 	payload_grub="y"
@@ -169,8 +169,9 @@ if [ ! -f "${seavgabiosrom}" ] \
 		./handle config file -b seabios
 fi
 
-[ "${payload_memtest}" = "y" ] && [ ! -f "memtest86plus/memtest" ] && \
-	./build src for -b memtest86plus
+memtest_bin="memtest86plus/build${arch#*_}/memtest.bin"
+[ "${payload_memtest}" = "y" ] && [ ! -f "${memtest_bin}" ] && \
+	./build src for -b ${memtest_bin%/*}
 
 [ -d "${romdir}/" ] || mkdir -p "${romdir}/"
 rm -f "${romdir}"/*
@@ -492,10 +493,10 @@ mkRoms()
 	corebootrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	cp "${_corebootrom}" "${corebootrom}"
 
-	if [ "${displaymode}" = "txtmode" ] && \
-	    [ "${payload_memtest}" = "y" ]; then
+	if [ "${payload_memtest}" = "y" ]; then
 		"${cbfstool}" "${corebootrom}" add-payload \
-		    -f memtest86plus/memtest -n img/memtest -c lzma || exit 1
+				-f ${memtest_bin} -n img/memtest \
+				-c lzma || exit 1
 	fi
 
 	if [ "${payload_seabios}" = "y" ]; then
