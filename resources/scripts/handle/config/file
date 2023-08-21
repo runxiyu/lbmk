@@ -63,7 +63,7 @@ main()
 		project="${OPTARG}"
 		shift
 	done
-	[ -z "${mode}" ] && err "mode not given (-m menuconfig or -u oldconfig)"
+	[ -z "${mode}" ] && err "mode not given (-m, -u or -b)"
 
 	elfdir="elf/${project}"
 

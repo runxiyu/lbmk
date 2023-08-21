@@ -15,25 +15,15 @@ depend=""
 
 main()
 {
-	if [ -z "${1+x}" ]; then
-		err 'Error: name not set'
-	fi
-
+	[ -z "${1+x}" ] && err 'Error: name not set'
 	name=${1}
 
 	read_config
 	verify_config
 
 	clone_project
+	[ "${depend}" = "" ] || ./fetch ${depend} || exit 1
 
-	# dependencies are downloaded *after*
-	# to account for cases like gnulib in grub where
-	# the dependency (gnulib) goes inside the main repo (grub)
-	if [ "${depend}" != "" ]; then
-		./fetch ${depend} || exit 1
-	fi
-
-	# clean in case of failure
 	rm -Rf ${tmp_dir} >/dev/null 2>&1 || exit 1
 }
 
@@ -44,20 +34,15 @@ read_config()
 		set ${line} >/dev/null 2>&1
 		case ${line} in
 		rev:*)
-			revision=${2}
-			;;
+			revision=${2} ;;
 		loc:*)
-			location=${2}
-			;;
+			location=${2} ;;
 		url:*)
-			url=${2}
-			;;
+			url=${2} ;;
 		bkup_url:*)
-			bkup_url=${2}
-			;;
+			bkup_url=${2} ;;
 		depend:*)
-			depend=${2}
-			;;
+			depend=${2} ;;
 		esac
 	done << EOF
 	$(eval "awk '${awkstr}' resources/git/revisions")
@@ -66,32 +51,25 @@ EOF
 
 verify_config()
 {
-	if [ -z "${revision+x}" ]; then
-		err 'Error: revision not set'
-	elif [ -z "${location+x}" ]; then
-		err 'Error: location not set'
-	elif [ -z "${url+x}" ]; then
-		err 'Error: url not set'
-	fi
+	[ -z "${revision+x}" ] && err 'Error: revision not set'
+	[ -z "${location+x}" ] && err 'Error: location not set'
+	[ -z "${url+x}" ] && err 'Error: url not set'
 }
 
 clone_project()
 {
 	tmp_dir=$(mktemp -dt "${name}_XXXXX")
 
-	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} \
-			|| err "ERROR: could not download ${name}"
-
+	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} || \
+	    err "ERROR: could not download ${name}"
 	(
 	cd ${tmp_dir} || err "tmpdir not created"
 	git reset --hard ${revision} || err "Cannot reset revision"
 	)
-
 	patch_project
 
-	if [ -d "${location}" ]; then
-		rm -Rf ${location} || err "Cannot remove directory '${location}'"
-	fi
+	[ ! -d "${location}" ] || \
+		rm -Rf ${location} || err "Can't remove directory '${location}'"
 	mv ${tmp_dir} ${location} && return 0
 
 	printf "ERROR: Could not copy temp file to destination.\n"
@@ -103,9 +81,7 @@ patch_project()
 	patchdir="resources/${name}/patches"
 
 	for patchfile in ${PWD}/${patchdir}/*.patch ; do
-		if [ ! -f "${patchfile}" ]; then
-			continue
-		fi
+		[ -f "${patchfile}" ] || continue
 		(
 		cd ${tmp_dir} || err "tmpdir not created"
 		git am ${patchfile} || err "Cannot patch project: $name"

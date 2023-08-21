@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 #  helper script: create code trees based on git revision, with patches
-#  (currently used for downloading coreboot and u-boot)
+#  (currently used for downloading coreboot, seabios and u-boot)
 #
 #	Copyright (C) 2014-2016,2020,2021,2023 Leah Rowe <info@minifree.org>
 #	Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
@@ -72,16 +72,14 @@ download_for_target()
 
 	if [ -d "${project}/${tree}" ]; then
 		printf "REMARK: download/%s %s: exists. Skipping.\n" \
-				${project} ${tree}
-		[ "${tree}" != "${1}" ] && \
-			printf "(for target: '%s}')\n" ${1}
+		    ${project} ${tree}
+		[ "${tree}" != "${_target}" ] && \
+			printf "(for target: '%s}')\n" ${_target}
 		return 0
 	fi
 
 	fetch_from_upstream || exit 1
-
-	prepare_new_tree "${1}" "${tree}" "${rev}" \
-			|| exit 1
+	prepare_new_tree "${_target}" "${tree}" "${rev}" || exit 1
 }
 
 fetch_config()
@@ -135,14 +133,11 @@ check_config_for_target()
 
 fetch_from_upstream()
 {
-	[ ! -d "${project}" ] && \
-		mkdir -p "${project}"
-	[ ! -d "${project}" ] && \
-		return 1
-	[ -d "${project}/${project}" ] && \
-		return 0
-	./fetch ${project} || \
-		return 1
+	[ -d "${project}" ] || mkdir -p "${project}"
+	[ -d "${project}" ] || return 1
+	[ -d "${project}/${project}" ] && return 0
+
+	./fetch ${project} || return 1
 }
 
 prepare_new_tree()
@@ -157,16 +152,14 @@ prepare_new_tree()
 
 	cp -R "${project}/${project}" "${project}/${tree}" || exit 1
 	(
-	cd "${project}/${tree}" \
-		|| err "cannot cd to ${project}/${tree}"
-	git reset --hard ${rev} \
-		|| err "cannot reset ${project} revision for tree, ${tree}"
-	git submodule update --init --checkout \
-		|| err "cannot update ${project} submodules for tree, ${tree}"
+	cd "${project}/${tree}" || err "cannot cd to ${project}/${tree}"
+	git reset --hard ${rev} || \
+	    err "cannot reset ${project} revision for tree, ${tree}"
+	git submodule update --init --checkout || \
+	    err "cannot update ${project} submodules for tree, ${tree}"
 
 	for patch in ../../"${cfgsdir}"/"${tree}"/patches/*.patch; do
-		[ ! -f "${patch}" ] && \
-			continue
+		[ ! -f "${patch}" ] && continue
 		if ! git am "${patch}"; then
 			git am --abort
 			err "cannot patch ${tree}"
