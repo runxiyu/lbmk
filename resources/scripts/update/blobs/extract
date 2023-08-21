@@ -29,13 +29,10 @@ _ifd_destination=""
 main()
 {
 	sname=${0}
-	if [ $# -lt 2 ]; then
-		fail "Missing arguments (less than two)."
-	fi
+	[ $# -lt 2 ] && fail "Missing arguments (fewer than two)."
 
 	board="${1}"
 	vendor_rom="${2}"
-
 	boarddir="${cbcfgsdir}/${board}"
 
 	check_board
@@ -45,39 +42,22 @@ main()
 
 check_board()
 {
-	if [ ! -f "${vendor_rom}" ] ; then
+	[ -f "${vendor_rom}" ] || \
 		fail "file does not exist: ${vendor_rom}"
-	elif [ ! -d "${boarddir}" ]; then
+	[ -d "${boarddir}" ] || \
 		fail "build/roms ${board}: target not defined"
-	elif [ ! -f "${boarddir}/target.cfg" ]; then
+	[ -f "${boarddir}/target.cfg" ] || \
 		fail "build/roms ${board}: missing target.cfg"
-	fi
 }
 
 build_dependencies()
 {
-	if [ ! -d me_cleaner ]; then
-		printf "downloading me_cleaner\n"
-		./fetch me_cleaner || fail 'could not download me_cleaner'
-	else
-		printf "me_cleaner already downloaded. Skipping.\n"
-		printf "run ./fetch me_cleaner to manually overwrite\n"
-	fi
-
-	if [ ! -d ${cbdir} ]; then
-		printf "downloading coreboot\n"
-		./fetch_trees coreboot default \
-				|| fail "could not download coreboot"
-	else
-		printf "coreboot already downloaded. Skipping.\n"
-		printf "run ./fetch_trees coreboot to manually overwrite\n"
-	fi
-
-	if ! [ -f ${ifdtool} ]; then
-		printf "building ifdtool from coreboot\n"
-		make -C "${ifdtool%/ifdtool}" \
-				|| fail "could not build ifdtool"
-	fi
+	[ -d me_cleaner ] || \
+		./fetch me_cleaner || fail "can't fetch me_cleaner"
+	[ -d ${cbdir} ] || \
+		./fetch_trees coreboot default || fail "can't fetch coreboot"
+	[ -f ${ifdtool} ] || \
+		make -C "${ifdtool%/ifdtool}" || fail "can't build ifdtool"
 }
 
 extract_blobs()
@@ -88,10 +68,8 @@ extract_blobs()
 	. ${1} 2>/dev/null
 	. "${boarddir}/target.cfg"
 
-	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
-		printf 'haswell board detected, downloading mrc\n'
+	[ "$CONFIG_HAVE_MRC" != "y" ] || \
 		./update blobs mrc || fail "could not download mrc"
-	fi
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 	_gbe_destination=${CONFIG_GBE_BIN_PATH#../../}
@@ -103,13 +81,9 @@ extract_blobs()
 	# Cleans up other files extracted with ifdtool
 	rm -f flashregion*.bin 2> /dev/null
 
-	if [ -f ${_ifd_destination} ]; then
-		printf "gbe, ifd, and me extracted to %s\n" \
-				${_me_destination%/*}
-	else
-		printf "WARNING: Intel firmware descriptor could not "
-		printf "be extracted with modified me\n"
-	fi
+	[ -f ${_ifd_destination} ] || fail "Could not extract IFD"
+	printf "gbe, ifd, and me extracted to %s\n" \
+	    ${_me_destination%/*}
 }
 
 extract_blob_intel_me()
@@ -117,25 +91,23 @@ extract_blob_intel_me()
 	printf "extracting clean ime and modified ifd\n"
 
 	${mecleaner} -D ${_ifd_destination} \
-			-M ${_me_destination} ${vendor_rom} -t -r -S \
-	|| ${me7updateparser} \
-			-O ${_me_destination} ${vendor_rom} \
-	|| fail \
-			"me_cleaner failed to extract blobs from rom"
+		-M ${_me_destination} ${vendor_rom} -t -r -S || \
+	    ${me7updateparser} \
+		-O ${_me_destination} ${vendor_rom} || \
+	    fail "me_cleaner failed to extract blobs from rom"
 }
 
 extract_blob_intel_gbe_nvm()
 {
 	printf "extracting gigabit ethernet firmware"
 	./${ifdtool} -x ${vendor_rom}
-	mv flashregion*gbe.bin ${_gbe_destination} \
-			|| fail 'could not extract gbe'
+	mv flashregion*gbe.bin ${_gbe_destination} || \
+	    fail 'could not extract gbe'
 }
 
 fail()
 {
 	print_help
-
 	printf "\n%s: ERROR: %s\n" ${sname} $@
 	exit 1 
 }

@@ -41,12 +41,8 @@ main()
 {
 	sname="${0}"
 
-	if [ $# -lt 1 ]; then
-		fail "No options specified."
-	elif [ "${1}" = "listboards" ]; then
-		listboards
-		exit 0
-	fi
+	[ $# -lt 1 ] && fail "No options specified."
+	[ "${1}" = "listboards" ] && listboards && exit 0
 
 	archive="${1}"
 
@@ -54,15 +50,12 @@ main()
 	do
 		case "${option}" in
 		r)
-			rom=${OPTARG}
-			;;
+			rom=${OPTARG} ;;
 		b)
-			board=${OPTARG}
-			;;
+			board=${OPTARG} ;;
 		m)
 			modifygbe=true
-			new_mac=${OPTARG}
-			;;
+			new_mac=${OPTARG} ;;
 		esac
 	done
 
@@ -78,39 +71,29 @@ main()
 check_board()
 {
 	if ! check_release ${archive} ; then
-		if [ ! -f "${rom}" ]; then
+		[ -f "${rom}" ] || \
 			fail "${rom} is not a valid path"
-		elif [ -z ${rom+x} ]; then
+		[ -z ${rom+x} ] && \
 			fail 'no rom specified'
-		elif [ -z ${board+x} ]; then
-			board=$(detect_board ${rom}) \
-					|| fail 'no board specified'
-		fi
+		[ ! -z ${board+x} ] || \
+			board=$(detect_board ${rom}) || \
+			    fail 'no board specified'
 	else
 		release=true
 		releasearchive="${archive}"
-		board=$(detect_board ${archive}) \
-				|| fail 'Could not detect board type'
+		board=$(detect_board ${archive}) || \
+		    fail 'Could not detect board type'
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	if [ ! -d "${boarddir}" ]; then
-		fail "board ${board} not found"
-	fi
+	[ -d "${boarddir}" ] || fail "board ${board} not found"
 }
 
 check_release()
 {
-	if [ ! -f "${archive}" ]; then
-		return 1
-	fi
-
-	if [ "${archive##*.}" = "xz" ]; then
-		printf "%s\n" "Release archive ${archive} detected"
-		return 0
-	else
-		return 1
-	fi
+	[ -f "${archive}" ] || return 1
+	[ "${archive##*.}" = "xz" ] || return 1
+	printf "%s\n" "Release archive ${archive} detected"
 }
 
 # This function tries to determine the board from the filename of the rom.
@@ -121,38 +104,25 @@ detect_board()
 	filename=$(basename ${path})
 	case ${filename} in
 	grub_*)
-		board=$(echo "${filename}" | cut -d '_' -f2-3)
-		;;
+		board=$(echo "${filename}" | cut -d '_' -f2-3) ;;
 	seabios_withgrub_*)
-		board=$(echo "${filename}" | cut -d '_' -f3-4)
-		;;
+		board=$(echo "${filename}" | cut -d '_' -f3-4) ;;
 	*.tar.xz)
 		_stripped_prefix=${filename#*_}
-		board="${_stripped_prefix%.tar.xz}"
-		;;
+		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
 		return 1
 	esac	
-
-	if [ -d "${boarddir}/" ]; then
-		printf '%s\n' "${board}"
-		return 0
-	else
-		return 1
-	fi
+	[ -d "${boarddir}/" ] || return 1
+	printf '%s\n' "${board}"
 }
 
 build_dependencies()
 {
-	if [ ! -d ${cbdir} ]; then
-		printf "downloading coreboot\n"
-		./fetch_trees coreboot default
-	fi
-
+	[ -d "${cbdir}" ] || ./fetch_trees coreboot default
 	./build coreboot utils default || fail "could not build cbutils"
-
 	./update blobs download ${board} || \
-			fail "Could not download blobs for ${board}"
+	    fail "Could not download blobs for ${board}"
 }
 
 inject_blobs()
@@ -188,12 +158,9 @@ patch_release_roms()
 		done
 	fi
 
-	if ! [ -d bin/release ]; then
-		mkdir -p bin/release
-	fi
-
+	[ -d bin/release ] || mkdir -p bin/release
 	mv ${_tmpdir}/bin/* bin/release/ && \
-	printf '%s\n' 'Success! Your ROMs are in bin/release'
+	    printf '%s\n' 'Success! Your ROMs are in bin/release'
 
 	rm -r "${_tmpdir}"
 }
@@ -206,31 +173,20 @@ patch_rom()
 	. ${1} 2>/dev/null
 	. "${boarddir}/target.cfg"
 
-	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
+	[ "$CONFIG_HAVE_MRC" = "y" ] && \
 		inject_blob_intel_mrc "${rom}"
-	fi
-
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
+	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && \
 		inject_blob_intel_me "${rom}"
-	fi
-
-	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
+	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && \
 		inject_blob_hp_kbc1126_ec "${rom}"
-	fi
-
-	if [ "${CONFIG_VGA_BIOS_FILE}" != "" ] \
-				&& [ "${CONFIG_VGA_BIOS_ID}" != "" ]; then
+	[ "${CONFIG_VGA_BIOS_FILE}" != "" ] && \
+	    [ "${CONFIG_VGA_BIOS_ID}" != "" ] && \
 		inject_blob_dell_e6400_vgarom_nvidia
-	fi
-
-	if [ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] \
-	    && [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ]; then
+	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
+	    [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ] && \
 		inject_blob_smsc_sch5545_ec "${rom}"
-	fi
-
-	if [ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ]; then
+	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ] && \
 		modify_gbe ${rom}
-	fi
 }
 
 inject_blob_intel_mrc()
@@ -266,16 +222,12 @@ inject_blob_intel_me()
 	printf 'adding intel management engine\n'
 
 	rom="${1}"
-
-	if [ -z ${CONFIG_ME_BIN_PATH} ]; then
+	[ -z ${CONFIG_ME_BIN_PATH} ] && \
 		fail "CONFIG_ME_BIN_PATH not set"
-	fi
 
 	_me_location=${CONFIG_ME_BIN_PATH#../../}
-
-	if [ ! -f "${_me_location}" ]; then
+	[ ! -f "${_me_location}" ] && \
 		fail "CONFIG_ME_BIN_PATH points to missing file"
-	fi
 
 	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || exit 1
 }
@@ -293,23 +245,23 @@ inject_blob_hp_kbc1126_ec()
 
 	if [ "${_ec1_offset}" = "" ] || [ "${_ec1_offset}" = "" ]; then
 		printf "EC offsets not declared for board: %s\n" \
-				"${board}"
+		    "${board}"
 		exit 1
 	fi
 	if [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
 		printf "EC firmware path not declared for board: %s\n" \
-				"${board}"
+		    "${board}"
 	fi
 	if [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
 		printf "EC firmware not downloaded for board: %s\n" \
-				"${board}"
+		    "${board}"
 		exit 1
 	fi
 
 	${cbfstool} "${rom}" add -f ${_ec1_location} -n ecfw1.bin \
-			-b ${_ec1_offset} -t raw || exit 1
+	    -b ${_ec1_offset} -t raw || exit 1
 	${cbfstool} "${rom}" add -f ${_ec2_location} -n ecfw2.bin \
-			-b ${_ec2_offset} -t raw || exit 1
+	    -b ${_ec2_offset} -t raw || exit 1
 }
 
 inject_blob_dell_e6400_vgarom_nvidia()
@@ -332,8 +284,8 @@ inject_blob_dell_e6400_vgarom_nvidia()
 	fi
 
 	${cbfstool} ${rom} add -f "${_vga_location}" \
-		-n "pci${CONFIG_VGA_BIOS_ID}.rom" \
-		-t optionrom || exit 1
+	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" \
+	    -t optionrom || exit 1
 }
 
 inject_blob_smsc_sch5545_ec()
@@ -357,27 +309,22 @@ modify_gbe()
 
 	rom=${1}
 
-	if [ -z ${CONFIG_GBE_BIN_PATH} ]; then
+	[ -z ${CONFIG_GBE_BIN_PATH} ] && \
 		fail "CONFIG_GBE_BIN_PATH not set"
-	fi
 
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
-	if [ ! -f "${_gbe_location}" ]; then
+	[ -f "${_gbe_location}" ] || \
 		fail "CONFIG_GBE_BIN_PATH points to missing file"
-	fi
-
-	if [ ! -f ${nvmutil} ]; then
+	[ -f ${nvmutil} ] || \
 		make -C util/nvmutil || fail 'failed to build nvmutil'
-	fi
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
 	cp ${_gbe_location} ${_gbe_tmp}
-	${nvmutil} "${_gbe_tmp}" setmac ${new_mac} \
-			|| fail 'failed to modify mac address'
+	${nvmutil} "${_gbe_tmp}" setmac ${new_mac} || \
+	    fail 'failed to modify mac address'
 
-	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" \
-			-O "${rom}" || exit 1
+	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" -O "${rom}" || exit 1
 
 	rm -f ${_gbe_tmp}
 }
@@ -385,7 +332,7 @@ modify_gbe()
 listboards()
 {
 	for boarddir in ${cbcfgsdir}/*; do
-		if [ ! -d "${boarddir}" ]; then continue; fi
+		[ -d "${boarddir}" ] || continue
 		board="${boarddir##${cbcfgsdir}/}"
 		board="${board%/}"
 		printf '%s\n' "${board##*/}"
@@ -394,10 +341,8 @@ listboards()
 
 fail()
 {
-	if [ ! -z ${@+x} ]; then
+	[ -z ${@+x} ] || \
 		printf "\n%s: ERROR: ${@}\n" ${sname}
-	fi
-
 	usage
 	exit 1
 }

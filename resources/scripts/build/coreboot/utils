@@ -39,10 +39,8 @@ main()
 
 build_for_mainboard() {
 	board="${1}"
-	[ ! -d "resources/coreboot/${board}" ] && \
-		continue
-	[ ! -f "resources/coreboot/${board}/target.cfg" ] && \
-		continue
+	[ -d "resources/coreboot/${board}" ] || continue
+	[ -f "resources/coreboot/${board}/target.cfg" ] || continue
 	tree="undefined"
 	. "resources/coreboot/${board}/target.cfg" # source
 	if [ "${tree}" = "undefined" ]; then
@@ -55,15 +53,12 @@ build_for_mainboard() {
 
 buildutils() {
 	tree="${1}"
-	if [ ! -d "coreboot/${tree}/" ]; then
+	[ -d "coreboot/${tree}/" ] || \
 		./fetch_trees coreboot $tree || return 1
-	fi
 	for util in cbfstool ifdtool; do
-		[ -f "cbutils/${tree}/${util}" ] \
-			&& continue
-		if [ ! -d "cbutils/${tree}" ]; then
+		[ -f "cbutils/${tree}/${util}" ] && continue
+		[ -d "cbutils/${tree}" ] || \
 			mkdir -p "cbutils/${tree}" || return 1
-		fi
 
 		utildir="coreboot/${tree}/util/${util}"
 		make distclean -C "${utildir}" || return 1

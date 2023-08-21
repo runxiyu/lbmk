@@ -33,12 +33,9 @@ rm -Rf cbutils
 [ ! -d "coreboot/" ] && exit 0
 
 for tree in coreboot/*; do
-	if [ "${tree##*/}" = "coreboot" ]; then
-		continue
-	fi
-	if [ ! -d "${tree}" ]; then
-		continue
-	fi
+	[ "${tree##*/}" = "coreboot" ] && continue
+	[ -d "${tree}" ] || continue
+
 	# Clean coreboot, of course
 	make -C "${tree}/" distclean
 

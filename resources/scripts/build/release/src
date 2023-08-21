@@ -77,12 +77,10 @@ create_release_directory()
 download_modules()
 {
 	for modname in ${trees_fetch_list}; do
-		[ ! -d "${modname}" ] && \
-		    ./fetch_trees ${modname}
+		[ ! -d "${modname}" ] && ./fetch_trees ${modname}
 	done
 	for modname in ${simple_fetch_list}; do
-		[ ! -d "${modname}/" ] && \
-		    ./fetch ${modname}
+		[ ! -d "${modname}/" ] && ./fetch ${modname}
 	done
 }
 
@@ -110,12 +108,10 @@ copy_blobs()
 	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
 	    hp8300usdt t1650; do
 		for j in ifd gbe 4_ifd 8_ifd 12_ifd 16_ifd; do
-			if [ -f "blobs/${i}/${j}.bin" ]; then
-				if [ ! -e "${srcdir}/blobs/${i}" ]; then
-					mkdir -p "${srcdir}/blobs/${i}"
-				fi
-				cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}"
-			fi
+			[ -f "blobs/${i}/${j}.bin" ] || continue
+			[ -e "${srcdir}/blobs/${i}" ] || \
+				mkdir -p "${srcdir}/blobs/${i}"
+			cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}"
 		done
 	done
 }
@@ -125,8 +121,7 @@ purge_files()
 	(
 	cd "${srcdir}/coreboot/" || err "cd1"
 	for i in *; do
-		[ ! -d "${i}" ] && \
-			continue
+		[ ! -d "${i}" ] && continue
 		(
 		cd "${i}/" || err "cd2"
 		make distclean || err "make-distclean1"
@@ -148,7 +143,7 @@ purge_files()
 
 	rm -Rf coreboot/coreboot/ || err "rm-rf1"
 	rm -Rf .git .gitignore */.git* coreboot/*/.git* \
-			coreboot/*/3rdparty/*/.git* || err "rm-rf2"
+	    coreboot/*/3rdparty/*/.git* || err "rm-rf2"
 	rm -Rf coreboot/*/util/nvidia/cbootimage/.git* || err "rm-rf3"
 	rm -Rf u-boot/u-boot/ u-boot/*/.git* || err "rm-rf4"
 	)

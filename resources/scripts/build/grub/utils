@@ -25,11 +25,7 @@ set -u -e
 main()
 {
 	printf "Building GRUB\n"
-
-	if [ ! -d "grub/" ]; then
-		./fetch grub || exit 1
-	fi
-
+	[ -d "grub/" ] || ./fetch grub || exit 1
 	build_grub
 }
 
@@ -37,15 +33,8 @@ build_grub()
 {
 	(
 	cd grub/ || err "cd"
-
-	# clean up first
-	if [ -d Makefile ]; then
-		make distclean || err "make-distclean"
-	fi
-
+	[ ! -d Makefile ] || make distclean || err "make-distclean"
 	./bootstrap --gnulib-srcdir=gnulib/ --no-git || err "bootstrap"
-
-	# build
 	./autogen.sh || err "autogen"
 	./configure --with-platform=coreboot || err "configure"
 	make -j$(nproc) || err "make"

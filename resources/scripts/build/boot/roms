@@ -36,20 +36,11 @@ firstoption=""
 
 main()
 {
-	if [ $# -lt 1 ]; then
-		usage
-		exit 1
-	fi
-	firstoption="${1}"
+	[ $# -lt 1 ] && usage && exit 1
 
-	if [ "${firstoption}" = "help" ]; then
-		usage
-		exit 0
-	fi
-	if [ "${firstoption}" = "list" ]; then
-		listboards
-		exit 0
-	fi
+	firstoption="${1}"
+	[ "${firstoption}" = "help" ] && usage && exit 0
+	[ "${firstoption}" = "list" ] && listboards && exit 0
 
 	while [ $# -gt 0 ]; do
 		case ${1} in
@@ -68,21 +59,16 @@ main()
 		shift
 	done
 
-	if [ -z ${opts+x} ]; then
-		opts=""
-	fi
-
+	[ -z ${opts+x} ] && opts=""
 	printf "Building %s ROM images\n" "${projectname}"
 
 	if [ "${firstoption}" = "all" ]; then
 		for boardname in $(listboards); do
-			buildrom "${boardname}" \
-					|| die "build/roms: error"
+			buildrom "${boardname}" || err "build/roms: error"
 		done
 	else
 		for board in ${boards}; do
-			buildrom "${board}" \
-					|| die "build/roms: error"
+			buildrom "${board}" || err "build/roms: error"
 		done
 	fi
 
@@ -116,9 +102,7 @@ usage()
 listboards()
 {
 	for boarddir in resources/coreboot/*; do
-		if [ ! -d "${boarddir}" ]; then
-			continue
-		fi
+		[ ! -d "${boarddir}" ] && continue
 		board="${boarddir##resources/coreboot/}"
 		board="${board%/}"
 		printf '%s\n' "${board##*/}"
@@ -127,18 +111,13 @@ listboards()
 
 # Build ROM images for supported boards
 buildrom() {
-	board="$1"
-
-	if [ -d "resources/coreboot/${board}/" ]; then
-		./build boot roms_helper ${board}${opts}
-	else
-		printf "\nbuild/roms: target not defined: %s\n" ${board}
-		die "Run: ./build boot roms list"
-	fi
+	[ -d "resources/coreboot/${1}/" ] || \
+		err "build/roms: target not defined: ${1}"
+	./build boot roms_helper ${1}${opts}
 }
 
-die() {
-	printf 'Error: %s\n' "${@}" 1>&2
+err() {
+	printf '%s\n' "${1}" 1>&2
 	exit 1
 }
 

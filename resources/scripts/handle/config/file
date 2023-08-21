@@ -89,9 +89,8 @@ main()
 		target="${x}"
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
-		if [ "${project}" = "coreboot" ] && [ "${mode}" = "all" ]; then
+		[ "${project}" != "coreboot" ] || [ "${mode}" != "all" ] || \
 			./update blobs download ${target} || err "blobutil"
-		fi
 		handle_defconfig || exit 1
 	done
 
@@ -166,35 +165,29 @@ check_cross_compiler()
 		    err "check_cross_compiler"
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
-		if [ ! -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ]; then
-			# Even for 64-bit machines, coreboot builds 32-bit ROM
-			# images, so we only need to worry about i386-elf
+		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \
 			make -C "${cbdir}" crossgcc-i386 CPUS=$(nproc) || \
 			    return 1
-		fi
 		case "$(uname -m)" in
 			x86*|i*86|amd64) : ;;
 			*) export CROSS_COMPILE=i386-elf- ;;
 		esac
 	elif [ "${arch}" = "ARMv7" ]; then
-		if [ ! -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ]; then
+		[ -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ] || \
 			make -C "${cbdir}" crossgcc-arm CPUS=$(nproc) || \
 			    return 1
-		fi
 		case "$(uname -m)" in
 			arm|arm32|armv6*|armv7*) : ;;
 			*) export CROSS_COMPILE=arm-eabi- ;;
 		esac
 	elif [ "${arch}" = "AArch64" ]; then
-		if [ ! -d "${cbdir}/util/crossgcc/xgcc/aarch64-elf/" ]; then
+		[ -d "${cbdir}/util/crossgcc/xgcc/aarch64-elf/" ] || \
 			make -C "${cbdir}" crossgcc-aarch64 CPUS=$(nproc) || \
 			    return 1
-		fi
 		# aarch64 also needs armv7 toolchain for arm-trusted-firmware
-		if [ ! -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ]; then
+		[ -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ] || \
 			make -C "${cbdir}" crossgcc-arm CPUS=$(nproc) || \
 			    return 1
-		fi
 		case "$(uname -m)" in
 			arm64|aarch64) : ;;
 			*) export CROSS_COMPILE=aarch64-elf- ;;

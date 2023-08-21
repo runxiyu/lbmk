@@ -54,15 +54,13 @@ main()
 	boarddir="${cbcfgsdir}/${board}"
 
 	[ ! -d "${boarddir}" ] && \
-	    fail "Board target, ${board}, not defined"
+		fail "Board target, ${board}, not defined"
 	[ ! -f "${boarddir}/target.cfg" ] && \
-	    fail "Target missing target.cfg"
+		fail "Target missing target.cfg"
 
 	no_config="printf \"No config for target, %s\\n\" ${board} 1>&2; exit 0"
 	for x in "${boarddir}"/config/*; do
-		if [ -f "${x}" ]; then
-			no_config=""
-		fi
+		[ -f "${x}" ] && no_config=""
 	done
 	eval "${no_config}"
 	
@@ -79,34 +77,19 @@ detect_firmware()
 	. ${1} 2>/dev/null
 	. "${boarddir}/target.cfg"
 
-	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
-		needs="${needs} MRC"
-	fi
-	if [ "${CONFIG_HAVE_IFD_BIN}" = "y" ]; then
-		needs="${needs} IFD"
-	fi
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		needs="${needs} ME"
-	fi
-	if [ "${CONFIG_HAVE_GBE_BIN}" = "y" ]; then
-		needs="${needs} GBE"
-	fi
-	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		needs="${needs} EC"
-	fi
-	if [ "${CONFIG_BOARD_DELL_E6400}" = "y" ] \
-			&& [ "${CONFIG_VGA_BIOS_FILE}" != "" ]; then
-		needs="${needs} E6400VGA"
-	fi
-	if [ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ]; then
-		needs="${needs} SCH5545EC"
-	fi
-	if [ -z ${needs+x} ]; then
-		printf 'No binary blobs needed for this board\n'
+	[ "${CONFIG_HAVE_MRC}" = "y" ] && needs="${needs} MRC"
+	[ "${CONFIG_HAVE_IFD_BIN}" = "y" ] && needs="${needs} IFD"
+	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && needs="${needs} ME"
+	[ "${CONFIG_HAVE_GBE_BIN}" = "y" ] && needs="${needs} GBE"
+	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && needs="${needs} EC"
+	[ "${CONFIG_BOARD_DELL_E6400}" = "y" ] && \
+	    [ "${CONFIG_VGA_BIOS_FILE}" != "" ] && needs="${needs} E6400VGA"
+	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
+	    needs="${needs} SCH5545EC"
+	[ -z ${needs+x} ] && \
+		printf 'No binary blobs needed for this board\n' && \
 		return 1
-	fi
-	printf "Firmware needed for board '%s':\n" ${board}
-	printf "%s\n" ${needs}
+	printf "Firmware needed for board '%s':\n%s\n" ${board} ${needs}
 }
 
 scan_sources_config()
@@ -120,60 +103,46 @@ scan_sources_config()
 		case ${line} in
 		EC_url_bkup*)
 			set ${line}
-			ec_url_bkup=${2}
-			;;
+			ec_url_bkup=${2} ;;
 		EC_url*)
 			set ${line}
-			ec_url=${2}
-			;;
+			ec_url=${2} ;;
 		EC_hash*)
 			set ${line}
-			ec_hash=${2}
-			;;
+			ec_hash=${2} ;;
 		DL_hash*)
 			set ${line}
-			dl_hash=${2}
-			;;
+			dl_hash=${2} ;;
 		DL_url_bkup*)
 			set ${line}
-			dl_url_bkup=${2}
-			;;
+			dl_url_bkup=${2} ;;
 		DL_url*)
 			set ${line}
-			dl_url=${2}
-			;;
+			dl_url=${2} ;;
 		E6400_VGA_DL_hash*)
 			set ${line}
-			e6400_vga_dl_hash=${2}
-			;;
+			e6400_vga_dl_hash=${2} ;;
 		E6400_VGA_DL_url_bkup*)
 			set ${line}
-			e6400_vga_dl_url_bkup=${2}
-			;;
+			e6400_vga_dl_url_bkup=${2} ;;
 		E6400_VGA_DL_url*)
 			set ${line}
-			e6400_vga_dl_url=${2}
-			;;
+			e6400_vga_dl_url=${2} ;;
 		E6400_VGA_offset*)
 			set ${line}
-			e6400_vga_offset=${2}
-			;;
+			e6400_vga_offset=${2} ;;
 		E6400_VGA_romname*)
 			set ${line}
-			e6400_vga_romname=${2}
-			;;
+			e6400_vga_romname=${2} ;;
 		SCH5545EC_DL_hash*)
 			set ${line}
-			sch5545ec_dl_hash=${2}
-			;;
+			sch5545ec_dl_hash=${2} ;;
 		SCH5545EC_DL_url_bkup*)
 			set ${line}
-			sch5545ec_dl_url_bkup=${2}
-			;;
+			sch5545ec_dl_url_bkup=${2} ;;
 		SCH5545EC_DL_url*)
 			set ${line}
-			sch5545ec_dl_url=${2}
-			;;
+			sch5545ec_dl_url=${2} ;;
 		esac
 	done << EOF
 	$(eval "awk '${awkstr}' resources/blobs/sources")
@@ -182,44 +151,18 @@ EOF
 
 build_dependencies()
 {
-	if [ ! -d me_cleaner ]; then
-		printf "downloading me_cleaner\n"
-		./fetch me_cleaner || fail "could not download me_cleaner"
-	fi
-	if [ ! -d ${cbdir} ]; then
-		printf "downloading coreboot\n"
-		./fetch_trees coreboot default \
-				|| fail "could not download coreboot"
-	fi
-	if [ ! -d bios_extract ]; then
-		printf "downloading bios_extract\n"
-		./fetch bios_extract \
-				|| fail "could not download bios_extract"
-	fi
-	if [ ! -d biosutilities ]; then
-		printf "downloading biosutilities\n"
-		./fetch biosutilities \
-				|| fail "could not download biosutilities"
-	fi
-	if [ ! -d uefitool ]; then
-		printf "download uefitool (for UEFIExtract)\n"
-		./fetch uefitool \
-				|| fail "could not download uefitool"
-	fi
-	if [ ! -f uefitool/uefiextract ]; then
-		./build src for -b uefitool \
-				|| fail "could not build uefitool"
-	fi
-	if [ ! -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ]; then
-		printf "Building kbc1126_ec_dump from coreboot\n"
-		make -BC ${cbdir}/util/kbc1126 \
-				|| fail "could not build kbc1126_ec_dump"
-	fi
-	if [ ! -f "${cbdir}/util/ifdtool/ifdtool" ]; then
-		printf "building ifdtool from coreboot\n"
-		make -C ${cbdir}/util/ifdtool \
-				|| fail 'could not build ifdtool'
-	fi
+	[ -d ${cbdir} ] || \
+		./fetch_trees coreboot ${cbdir##*/} || \
+		    fail "can't download to ${cbdir}"
+	for d in uefitool biosutilities bios_extract me_cleaner; do
+		[ -d "${d}" ] && continue
+		./fetch ${d} || fail "can't download ${d}"
+	done
+	[ -f uefitool/uefiextract ] || \
+		./build src for -b uefitool || fail "can't build uefitool"
+	[ -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ] || \
+		make -BC ${cbdir}/util/kbc1126 || \
+		    fail "can't build kbc1126_ec_dump"
 }
 
 download_blobs()
@@ -227,26 +170,20 @@ download_blobs()
 	for need in ${needs}; do
 		case ${need} in
 		*ME*)
-			download_blob_intel_me || _failed="${_failed} me"
-			;;
+			download_blob_intel_me || _failed="${_failed} me" ;;
 		*SCH5545EC*)
-			download_sch5545ec || failed="${_failed} sch5545ec"
-			;;
+			download_sch5545ec || failed="${_failed} sch5545ec" ;;
 		*EC*)
-			download_ec || _failed="${_failed} ec"
-			;;
+			download_ec || _failed="${_failed} ec" ;;
 		*E6400VGA*)
-			download_e6400vga || _failed="${_failed} e6400vga"
-			;;
+			download_e6400vga || _failed="${_failed} e6400vga" ;;
 		*MRC*)
-			./update blobs mrc || _failed="${_failed} mrc"
-			;;
+			./update blobs mrc || _failed="${_failed} mrc" ;;
 		esac
 	done
 	
-	if [ ! -z ${_failed+x} ]; then
+	[ -z ${_failed+x} ] || \
 		fail "failed to obtain ${_failed}\nTry manual extraction?"
-	fi
 }
 
 download_blob_intel_me()
@@ -263,12 +200,10 @@ extract_blob_intel_me()
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 
-	if [ ! -d "${_me_destination%/*}" ]; then
+	[ -d "${_me_destination%/*}" ] || \
 		mkdir -p ${_me_destination%/*}
-	fi
-	if [ -d "${appdir}" ]; then
-		rm -r ${appdir}
-	fi
+	[ -d "${appdir}" ] && \
+		rm -Rf ${appdir}
 	if [ -f "${_me_destination}" ]; then
 		printf 'me already downloaded\n'
 		return 0
@@ -276,14 +211,13 @@ extract_blob_intel_me()
 
 	printf "Extracting and stripping Intel ME firmware\n"
 
-	innoextract ${dl_path} -d ${appdir} \
-	|| 7z x ${dl_path} -o${appdir} \
-	|| unar "${dl_path}" -o "${appdir}" \
-		|| fail 'Could not extract vendor update' 
+	innoextract ${dl_path} -d ${appdir} || \
+	    7z x ${dl_path} -o${appdir} || \
+	    unar "${dl_path}" -o "${appdir}" || \
+	    fail "Could not extract vendor update"
 
 	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
-			"$(pwd)/${appdir}" \
-		|| fail "Could not extract Intel ME firmware"
+	    "$(pwd)/${appdir}" || fail "Could not extract Intel ME firmware"
 
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
 }
@@ -294,9 +228,7 @@ bruteforce_extract_blob_intel_me()
 	_me_destination="${1}"
 	cdir="${2}" # must be an absolute path, not relative
 
-	if [ -f "${_me_destination}" ]; then
-		return 0
-	fi
+	[ -f "${_me_destination}" ] && return 0
 
 	sdir="$(mktemp -d)"
 	mkdir -p "${sdir}" || return 1
@@ -321,9 +253,9 @@ bruteforce_extract_blob_intel_me()
 				&& break # (we found me.bin)
 			_7ztest="${_7ztest}a"
 			7z x "${i}" -o${_7ztest} \
-				|| innoextract "${i}" -d  "${_7ztest}" \
-				|| unar "${i}" -o "${_7ztest}" \
-				|| continue
+			    || innoextract "${i}" -d  "${_7ztest}" \
+			    || unar "${i}" -o "${_7ztest}" \
+			    || continue
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
 					"${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
@@ -351,21 +283,19 @@ download_ec()
 	printf "Downloading KBC1126 EC firmware for HP laptop\n"
 
 	fetch_update ec || return 1
-	extract_ec || return 1
+	extract_blob_kbc1126_ec || return 1
 }
 
-extract_ec()
+extract_blob_kbc1126_ec()
 {
 	printf "Extracting KBC1126 EC firmware for board: %s\n" ${board}
 
 	_ec_destination=${CONFIG_KBC1126_FW1#../../}
 
-	if [ ! -d "${_ec_destination%/*}" ]; then
+	[ -d "${_ec_destination%/*}" ] || \
 		mkdir -p "${_ec_destination%/*}"
-	fi
-	if [ -d "${appdir}" ]; then
+	[ -d "${appdir}" ] && \
 		rm -Rf "${appdir}"
-	fi
 	if [ -f "${_ec_destination}" ]; then
 		printf "ec already downloaded\n"
 		return 0
@@ -383,23 +313,15 @@ extract_ec()
 		    unar -D 68*.CAB Rom.bin
 		mv Rom.bin ec.bin
 	fi
-	if [ ! -f ec.bin ]; then
-		printf "could not extract ec.bin for board '%s'" ${board} \
-			1>&2
-		fail "aborting the build. please audit lbmk carefully."
-	fi
 
+	[ -f ec.bin ] || fail "could not extract ec.bin for board, ${board}"
 	"${kbc1126_ec_dump}" ec.bin
 	)
 
 	for i in 1 2; do
-		if [ -f "${appdir}/${dl_path##*/}/ec.bin.fw${i}" ]; then
-			continue
-		fi
-		printf "Not found: %s/%s/ec.bin.fw%s\n" \
-				${appdir} ${dl_path##*/} ${i}
+		[ -f "${appdir}/${dl_path##*/}/ec.bin.fw${i}" ] && continue
 		printf "Could not extract EC firmware for: %s\n" \
-				${board}
+		    ${board}
 		return 1
 	done
 
@@ -424,12 +346,10 @@ extract_e6400vga()
 		printf 'vga rom already downloaded\n'
 		return 0
 	fi
-	if [ ! -d "${_vga_destination%/*}" ]; then
+	[ -d "${_vga_destination%/*}" ] || \
 		mkdir -p ${_vga_destination%/*}
-	fi	
-	if [ -d "${appdir}" ]; then
-		rm -r ${appdir}
-	fi
+	[ -d "${appdir}" ] && \
+		rm -Rf ${appdir}
 
 	mkdir -p "${appdir}"
 	mv "${dl_path}" "${appdir}"
@@ -446,13 +366,11 @@ extract_e6400vga()
 	cd "${appdir}"
 	tail -c +${e6400_vga_offset} "${dl_path##*/}" \
 			| gunzip > bios.bin
-	if [ ! -f "bios.bin" ]; then
-		fail 'Could not extract bios.bin from Dell E6400 update'
-	fi
+	[ -f "bios.bin" ] || \
+		fail "Could not extract bios.bin from Dell E6400 update"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
-	if [ ! -f "${e6400_vga_romname}" ]; then
-		fail 'Could not extract VGA ROM from Dell E6400 BIOS update'
-	fi
+	[ -f "${e6400_vga_romname}" ] || \
+		fail "Could not extract VGA ROM from Dell E6400 BIOS update"
 	)
 
 	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}"
@@ -482,11 +400,9 @@ extract_sch5545ec()
 		return 0
 	fi
 
-	if [ -d "${appdir}" ]; then
-		rm -Rf "${appdir}"
-	fi
-	mkdir -p "${appdir}/"
+	[ -d "${appdir}" ] rm -Rf "${appdir}"
 
+	mkdir -p "${appdir}/"
 	cp "${dl_path}" "${appdir}/"
 	python "${pfs_extract}" "${appdir}/${dlsum}" -e || exit 1
 
@@ -545,9 +461,7 @@ fetch_update()
 	dl_fail="y"
 	vendor_checksum ${dlsum} && dl_fail="n"
 	for x in "${dl}" "${dl_bkup}"; do
-		if [ "${dl_fail}" = "n" ]; then
-			break
-		fi
+		[ "${dl_fail}" = "n" ] && break
 		rm -f "${dl_path}"
 		wget -U "${agent}" ${x} -O ${dl_path}
 		vendor_checksum ${dlsum} && dl_fail="n"

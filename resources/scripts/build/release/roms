@@ -70,26 +70,22 @@ make_archive()
 	target="${romdir##*/}"
 
 	echo ${target}
-	if [ ! -d "${romdir}/" ]; then
-		continue
-	fi
+	[ -d "${romdir}/" ] || continue
 
 	CONFIG_HAVE_MRC="y"
 	CONFIG_HAVE_ME_BIN="y"
 	CONFIG_KBC1126_FIRMWARE="y"
 	CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="y"
-	grep "CONFIG_HAVE_ME_BIN=y" \
-			"resources/coreboot/${target}/config/"* \
-			|| CONFIG_HAVE_ME_BIN="n"
-	grep "CONFIG_HAVE_MRC=y" \
-			"resources/coreboot/${target}/config/"* \
-			|| CONFIG_HAVE_MRC="n"
+	grep "CONFIG_HAVE_ME_BIN=y" "resources/coreboot/${target}/config/"* || \
+	    CONFIG_HAVE_ME_BIN="n"
+	grep "CONFIG_HAVE_MRC=y" "resources/coreboot/${target}/config/"* || \
+	    CONFIG_HAVE_MRC="n"
 	grep "CONFIG_KBC1126_FIRMWARE=y" \
-			"resources/coreboot/${target}/config"/* \
-			|| CONFIG_KBC1126_FIRMWARE="n"
+	    "resources/coreboot/${target}/config"/* || \
+	    CONFIG_KBC1126_FIRMWARE="n"
 	grep "CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=y" \
-			"resources/coreboot/${target}/config"/* \
-			|| CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="n"
+	    "resources/coreboot/${target}/config"/* || \
+	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="n"
 
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] \
@@ -107,8 +103,7 @@ make_archive()
 	f="release/${version}/roms/${projectname}-${version}_${target##*/}"
 	tar -c "${romdir}/" | xz -9e > "${f}.tar.xz"
 
-	if [ -d "${romdir}_tmp" ]
-	then
+	if [ -d "${romdir}_tmp" ]; then
 		rm -Rf "${romdir}"
 		mv "${romdir}_tmp" "${romdir}"
 	fi
@@ -118,9 +113,8 @@ strip_archive()
 {
 	romdir=${1}
 
-	if [ ! -d coreboot/${tree} ]; then
+	[ -d coreboot/${tree} ] || \
 		./fetch_trees coreboot ${tree} || exit 1
-	fi
 	./build coreboot utils ${tree} || exit 1
 
 	rm -Rf "${romdir}_tmp" # dirty hack, to reduce disk io later
@@ -128,17 +122,15 @@ strip_archive()
 	mkdir "${romdir}_tmp"
 
 	# Hash the rom before removing blobs
-	if [ ! -f "${romdir}/blobhashes" ]; then
+	[ -f "${romdir}/blobhashes" ] || \
 		printf "ROMs must match these hashes after blob insertion:" \
-			> "${romdir}/blobhashes"
-	fi
+		    > "${romdir}/blobhashes"
 	(
 	cd ${romdir} || err "subshell: cd"
 	sha1sum *.rom >> blobhashes || err "subshell: sha1sum"
 	)
 
-	for romfile in "${romdir}"/*.rom
-	do
+	for romfile in "${romdir}"/*.rom; do
 		strip_rom_image "${romfile}"
 	done
 }
@@ -147,9 +139,7 @@ strip_rom_image()
 {
 	romfile=${1}
 
-	if [ ! -f "${romfile}" ]; then
-		continue
-	fi
+	[ -f "${romfile}" ] || continue
 
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
 		${ifdtool} --nuke me "${romfile}" || exit 1
@@ -157,8 +147,7 @@ strip_rom_image()
 		mv "${romfile}.new" "${romfile}"
 	fi
 
-	if [ "${CONFIG_HAVE_MRC}" = "y" ]
-	then
+	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
 		${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
 		${cbfstool} "${romfile}" print
 	fi
@@ -168,16 +157,12 @@ strip_rom_image()
 		${cbfstool} "${romfile}" remove -n ecfw2.bin || exit 1
 	fi
 
-	if [ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ]; then
+	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
 		${cbfstool} "${romfile}" remove -n sch5545_ecfw.bin || exit 1
-	fi
 
 	# TODO: replace this board-specific hack
-	if [ "${target}" = "e6400nvidia_4mb" ]; then
-		${cbfstool} "${romfile}" remove \
-			-n "pci10de,06eb.rom" \
-			|| exit 1
-	fi
+	[ "${target}" != "e6400nvidia_4mb" ] || \
+		${cbfstool} "${romfile}" remove -n "pci10de,06eb.rom" || exit 1
 }
 
 err()

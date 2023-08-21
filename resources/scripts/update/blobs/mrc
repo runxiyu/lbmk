@@ -57,25 +57,19 @@ main()
 
 check_existing()
 {
-	if [ ! -f ${_mrc_complete} ]; then
+	[ -f ${_mrc_complete} ] || \
 		return 1
-	fi
-	printf 'found existing mrc.bin, checking its hash\n'
-	if [ "$(sha1sum ${_mrc_complete} | awk '{print $1}')" \
-			= "${_mrc_complete_hash}" ]; then
-		printf 'checksums matched, skipping downloading\n'
+	printf 'found existing mrc.bin\n'
+	[ "$(sha1sum ${_mrc_complete} | awk '{print $1}')" \
+	    = "${_mrc_complete_hash}" ] && \
 		return 0
-	else
-		printf 'hashes did not match, starting over\n'
-		return 1
-	fi
+	printf 'hashes did not match, starting over\n'
+	return 1
 }
 
 build_dependencies()
 {
-	if [ ! -d "${cbdir}/" ]; then
-	    ./fetch_trees coreboot default || return 1
-	fi
+	[ -d "${cbdir}/" ] || ./fetch_trees coreboot default || return 1
 	./build coreboot utils default || return 1
 	return 0
 }
@@ -88,23 +82,20 @@ fetch_mrc()
 	cd mrc/haswell/
 
 	download_image ${_url} ${_file} ${_sha1sum}
-	if [ ! -f ${_file} ]; then
+	[ -f ${_file} ] || \
 		download_image ${_url2} ${_file} ${_sha1sum}
-	fi
-	if [ ! -f $_file ]; then
+	[ -f $_file ] || \
 		fail "%{_file} not downloaded / verification failed."
-	fi
 
 	extract_partition ROOT-A ${_file} root-a.ext2
 	extract_shellball root-a.ext2 chromeos-firmwareupdate-${_board}
 
 	extract_coreboot chromeos-firmwareupdate-${_board}
 
-	../../${cbfstool} coreboot-*.bin extract -f mrc.bin \
-			-n mrc.bin -r RO_SECTION \
-					|| fail "Could not fetch mrc.bin"
+	../../${cbfstool} coreboot-*.bin extract -f mrc.bin -n mrc.bin \
+	    -r RO_SECTION || fail "Could not fetch mrc.bin"
 	rm -f "chromeos-firmwareupdate-${_board}" coreboot-*.bin \
-			"${_file}" "root-a.ext2"
+	    "${_file}" "root-a.ext2"
 
 	printf "\n\nmrc.bin saved to ${_mrc_complete}\n\n"
 	)
@@ -118,19 +109,18 @@ download_image()
 	_file=${2}
 	_sha1sum=${3}
 
-	echo "Downloading recovery image"
+	printf "Downloading recovery image\n"
 	curl "$url" > "$_file.zip"
+	printf "Verifying recovery image checksum\n"
 	if [ "$(sha1sum ${_file}.zip | awk '{print $1}')" = "${_sha1sum}" ]
 	then
 		unzip -q "${_file}.zip"
 		rm "${_file}.zip"
-		echo "Checksum verification passed for recovery image."
 		return 0
-	else
-		rm "${_file}.zip"
-		echo "Bad checksum. Recovery image deleted."
-		return 1
 	fi
+	rm "${_file}.zip"
+	printf "Bad checksum. Recovery image deleted.\n"
+	return 1
 }
 
 extract_partition()
@@ -140,15 +130,15 @@ extract_partition()
 	ROOTFS=${3}
 	_bs=1024
 
-	echo "Extracting ROOT-A partition"
+	printf "Extracting ROOT-A partition\n"
 	ROOTP=$( printf "unit\nB\nprint\nquit\n" | \
-		 parted ${FILE} 2>/dev/null | grep ${NAME} )
+	    parted ${FILE} 2>/dev/null | grep ${NAME} )
 
 	START=$(( $( echo ${ROOTP} | cut -f2 -d\ | tr -d "B" ) ))
 	SIZE=$(( $( echo ${ROOTP} | cut -f4 -d\ | tr -d "B" ) ))
 
 	dd if=${FILE} of=${ROOTFS} bs=${_bs} skip=$(( ${START} / ${_bs} )) \
-		count=$(( ${SIZE} / ${_bs} ))  > /dev/null
+	    count=$(( ${SIZE} / ${_bs} )) > /dev/null
 }
 
 extract_shellball()
@@ -156,9 +146,9 @@ extract_shellball()
 	ROOTFS=${1}
 	SHELLBALL=${2}
 
-	echo "Extracting chromeos-firmwareupdate"
+	printf "Extracting chromeos-firmwareupdate\n"
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
-		| debugfs ${ROOTFS} > /dev/null 2>&1
+	    | debugfs ${ROOTFS} > /dev/null 2>&1
 }
 
 extract_coreboot()
@@ -166,11 +156,11 @@ extract_coreboot()
 	_shellball=${1}
 	_unpacked=$( mktemp -d )
 
-	echo "Extracting coreboot image"
+	printf "Extracting coreboot image\n"
 	sh ${_shellball} --unpack ${_unpacked} > /dev/null
 
 	_version=$( cat ${_unpacked}/VERSION | grep BIOS\ version: | \
-			cut -f2 -d: | tr -d \  )
+	    cut -f2 -d: | tr -d \  )
 
 	cp ${_unpacked}/bios.bin coreboot-${_version}.bin
 	rm -r "${_unpacked}"
