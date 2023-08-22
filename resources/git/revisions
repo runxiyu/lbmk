@@ -1,7 +1,7 @@
 # This file contains information needed for getting the correct versions
-# for various git projects used by osbmk.
+# for various git projects used by lbmk.
 # Project name is enclosed by curly braces '{}' information about the
-# project relevant to osbmk is stored between the subsequent curly
+# project relevant to lbmk is stored between the subsequent curly
 # braces. This file is used by the gitcheck script as well as the
 # fetch script. Each entry must include: revision 'rev', location
 # 'loc', and the git url 'url'. Bkup_url is optional.
