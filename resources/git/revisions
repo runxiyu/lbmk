@@ -41,9 +41,9 @@
 }
 
 {memtest86plus}{
-	rev: a78401b9704cfdd49c89bfb31d2df08f60521d0b
+	rev: 5dcd424ea7afb857c1171e747ef064d98d26afeb
 	loc: memtest86plus
-	url: https://review.coreboot.org/memtest86plus.git
+	url: https://github.com/memtest86plus/memtest86plus.git
 }
 
 {seabios}{

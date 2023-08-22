@@ -44,9 +44,9 @@ main()
 	[ -z "${project}" ] && err "project name not specified"
 	[ "${project}" = "ich9utils" ] && project="util/ich9utils"
 
-	[ -d "${project}" ] || ./fetch "${project}" || \
-	    err "Cannot download project, ${project}"
-	[ -d "${project}" ] || err "Project, ${project}, not downloaded"
+	[ -d "${project}" ] || ./fetch "${project%/*}" \
+	    || err "Cannot download project, ${project%/*}"
+	[ -d "${project}" ] || err "Project, ${project%/*}, not downloaded"
 
 	if [ "${project}" = "uefitool" ]; then
 		(
