@@ -21,6 +21,8 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 projectname="$(cat projectname)"
 version="version-unknown"
 versiondate="version-date-unknown"
@@ -163,12 +165,6 @@ strip_rom_image()
 	# TODO: replace this board-specific hack
 	[ "${target}" != "e6400nvidia_4mb" ] || \
 		${cbfstool} "${romfile}" remove -n "pci10de,06eb.rom" || exit 1
-}
-
-err()
-{
-	printf "%s: %s\n" $0 $1
-	exit 1
 }
 
 main $@

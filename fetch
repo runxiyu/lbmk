@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+. "include/err.sh"
+
 name=""
 revision=""
 location=""
@@ -15,7 +17,7 @@ depend=""
 
 main()
 {
-	[ -z "${1+x}" ] && err 'Error: name not set'
+	[ -z "${1+x}" ] && fail 'Error: name not set'
 	name=${1}
 
 	read_config
@@ -51,9 +53,9 @@ EOF
 
 verify_config()
 {
-	[ -z "${revision+x}" ] && err 'Error: revision not set'
-	[ -z "${location+x}" ] && err 'Error: location not set'
-	[ -z "${url+x}" ] && err 'Error: url not set'
+	[ -z "${revision+x}" ] && fail 'Error: revision not set'
+	[ -z "${location+x}" ] && fail 'Error: location not set'
+	[ -z "${url+x}" ] && fail 'Error: url not set'
 }
 
 clone_project()
@@ -61,19 +63,19 @@ clone_project()
 	tmp_dir=$(mktemp -dt "${name}_XXXXX")
 
 	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} || \
-	    err "ERROR: could not download ${name}"
+	    fail "ERROR: could not download ${name}"
 	(
-	cd ${tmp_dir} || err "tmpdir not created"
-	git reset --hard ${revision} || err "Cannot reset revision"
+	cd ${tmp_dir} || fail "tmpdir not created"
+	git reset --hard ${revision} || fail "Cannot reset revision"
 	)
 	patch_project
 
 	[ ! -d "${location}" ] || \
-		rm -Rf ${location} || err "Can't remove directory '${location}'"
+		rm -Rf ${location} || fail "Can't remove directory '${location}'"
 	mv ${tmp_dir} ${location} && return 0
 
 	printf "ERROR: Could not copy temp file to destination.\n"
-	err " ${tmp_dir} > ${location} check permissions"
+	fail " ${tmp_dir} > ${location} check permissions"
 }
 
 patch_project()
@@ -83,10 +85,17 @@ patch_project()
 	for patchfile in ${PWD}/${patchdir}/*.patch ; do
 		[ -f "${patchfile}" ] || continue
 		(
-		cd ${tmp_dir} || err "tmpdir not created"
-		git am ${patchfile} || err "Cannot patch project: $name"
+		cd ${tmp_dir} || fail "tmpdir not created"
+		git am ${patchfile} || fail "Cannot patch project: $name"
 		)
 	done
+}
+
+fail()
+{
+	usage
+	rm -Rf "${tmp_dir}" > /dev/null 2>&1 | :
+	err "${1}"
 }
 
 usage()
@@ -97,14 +106,6 @@ usage()
 	Options:
 	name: Module name as specified in resources/git/revisions
 	EOF
-}
-
-err()
-{
-	printf "${@}\n"
-	usage
-	rm -Rf ${tmp_dir} >/dev/null 2>&1
-	exit 1
 }
 
 main $@

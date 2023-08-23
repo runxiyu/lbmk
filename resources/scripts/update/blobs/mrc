@@ -17,6 +17,9 @@
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
+
+. "include/err.sh"
+
 export PATH="${PATH}:/sbin"
 
 # This file is forked from util/chromeos/crosfirmware.sh in coreboot cfc26ce278
@@ -51,8 +54,8 @@ main()
 	printf "Downloading Intel MRC blobs\n"
 
 	check_existing && exit 0
-	build_dependencies || fail "could not build dependencies"
-	fetch_mrc || fail "could not fetch mrc.bin"
+	build_dependencies || err "could not build dependencies"
+	fetch_mrc || err "could not fetch mrc.bin"
 }
 
 check_existing()
@@ -85,7 +88,7 @@ fetch_mrc()
 	[ -f ${_file} ] || \
 		download_image ${_url2} ${_file} ${_sha1sum}
 	[ -f $_file ] || \
-		fail "%{_file} not downloaded / verification failed."
+		err "%{_file} not downloaded / verification failed."
 
 	extract_partition ROOT-A ${_file} root-a.ext2
 	extract_shellball root-a.ext2 chromeos-firmwareupdate-${_board}
@@ -93,7 +96,7 @@ fetch_mrc()
 	extract_coreboot chromeos-firmwareupdate-${_board}
 
 	../../${cbfstool} coreboot-*.bin extract -f mrc.bin -n mrc.bin \
-	    -r RO_SECTION || fail "Could not fetch mrc.bin"
+	    -r RO_SECTION || err "Could not fetch mrc.bin"
 	rm -f "chromeos-firmwareupdate-${_board}" coreboot-*.bin \
 	    "${_file}" "root-a.ext2"
 
@@ -164,13 +167,6 @@ extract_coreboot()
 
 	cp ${_unpacked}/bios.bin coreboot-${_version}.bin
 	rm -r "${_unpacked}"
-}
-
-fail()
-{
-	printf "%s: ERROR: %s\n"
-			${sname} ${1}
-	exit 1
 }
 
 main $@

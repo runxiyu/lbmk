@@ -19,6 +19,8 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 ich9gen="util/ich9utils/ich9gen"
 
 main()
@@ -34,12 +36,6 @@ main()
 	cd descriptors/ich9m/ || err "cd2"
 	../../"${ich9gen}" || err "ich9gen"
 	)
-}
-
-err()
-{
-	printf "%s: %s\n" $0 $1
-	exit 1
 }
 
 main $@

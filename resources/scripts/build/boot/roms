@@ -29,6 +29,8 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 projectname="$(cat projectname)"
 opts=""
 boards=
@@ -114,11 +116,6 @@ buildrom() {
 	[ -d "resources/coreboot/${1}/" ] || \
 		err "build/roms: target not defined: ${1}"
 	./build boot roms_helper ${1}${opts}
-}
-
-err() {
-	printf '%s\n' "${1}" 1>&2
-	exit 1
 }
 
 main $@

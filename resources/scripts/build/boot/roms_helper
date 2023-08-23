@@ -30,11 +30,7 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-err()
-{
-	printf "ERROR: build/boot/roms: %s\n" "${1}" 1>&2
-	exit 1
-}
+. "include/err.sh"
 
 projectname="$(cat projectname)"
 

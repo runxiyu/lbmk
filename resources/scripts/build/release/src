@@ -21,6 +21,8 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 projectname="$(cat projectname)"
 
 trees_fetch_list="coreboot u-boot"
@@ -159,11 +161,6 @@ create_release_archive()
 	tar -c "${dirname}/" | xz -9e >"${dirname}.tar.xz" || err "tar"
 	rm -Rf "${dirname}/" || err "rm-rf5"
 	)
-}
-
-err()
-{
-	printf "%s: %s\n" $0 $1
 }
 
 main $@

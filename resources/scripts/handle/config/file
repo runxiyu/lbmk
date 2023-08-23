@@ -24,6 +24,8 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 projectname="$(cat projectname)"
 our_version="$(cat version)"
 
@@ -58,20 +60,20 @@ main()
 			mode="menuconfig"
 			shift ;;
 		*)
-			err "Invalid option" ;;
+			fail "Invalid option" ;;
 		esac
 		project="${OPTARG}"
 		shift
 	done
-	[ -z "${mode}" ] && err "mode not given (-m, -u or -b)"
+	[ -z "${mode}" ] && fail "mode not given (-m, -u or -b)"
 
 	elfdir="elf/${project}"
 
 	cfgsdir="resources/${project}"
-	[ -d "${cfgsdir}" ] || err "directory, ${cfgsdir}, does not exist"
+	[ -d "${cfgsdir}" ] || fail "directory, ${cfgsdir}, does not exist"
 
 	listfile="${cfgsdir}/build.list"
-	[ -f "${listfile}" ] || err "list file, ${listfile}, does not exist"
+	[ -f "${listfile}" ] || fail "list file, ${listfile}, does not exist"
 
 	# Build for all targets if no argument is given
 	if [ "$#" -eq 0 ]; then
@@ -90,7 +92,7 @@ main()
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ "${mode}" != "all" ] || \
-			./update blobs download ${target} || err "blobutil"
+			./update blobs download ${target} || fail "blobutil"
 		handle_defconfig || exit 1
 	done
 
@@ -125,15 +127,15 @@ handle_dependencies()
 	arch="undefined"
 
 	[ ! -f "${target_dir}/target.cfg" ] && \
-		err "build/${project} ${target}: Missing target.cfg"
+		fail "build/${project} ${target}: Missing target.cfg"
 
 	# Override the above defaults using target.cfg
 	. "${target_dir}/target.cfg" # source
 
 	[ "${tree}" = "undefined" ] && \
-		err "build/${project} %{target}: tree undefined"
+		fail "build/${project} %{target}: tree undefined"
 	[ "${arch}" = "undefined" ] && \
-		err "build/${project} ${target}: undefined cpu type"
+		fail "build/${project} ${target}: undefined cpu type"
 
 	codedir="${project}/${tree}"
 	[ -d "${codedir}" ] || \
@@ -141,7 +143,7 @@ handle_dependencies()
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
-		[ "${mode}" != "all" ] || check_cross_compiler || err "crossgcc"
+		[ "${mode}" != "all" ] || check_cross_compiler || fail "crossgcc"
 	fi
 }
 
@@ -162,7 +164,7 @@ check_cross_compiler()
 	# only true if not building coreboot:
 	[ -d "${cbdir}" ] || \
 		./fetch_trees coreboot ${cbdir#coreboot/} || \
-		    err "check_cross_compiler"
+		    fail "check_cross_compiler"
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \
@@ -201,7 +203,7 @@ check_cross_compiler()
 check_config()
 {
 	[ ! -f "${config}" ] && \
-		err "build/${project} ${target}: configs missing"
+		fail "build/${project} ${target}: configs missing"
 
 	dest_dir="${elfdir}/${target}/${config_name}"
 	for elftest in "${dest_dir}"/*; do
@@ -215,15 +217,15 @@ check_config()
 
 run_make_command()
 {
-	make -C "${codedir}" distclean || err "run_make_command"
+	make -C "${codedir}" distclean || fail "run_make_command"
 
-	cp "${config}" "${codedir}/.config" || err "run_make_command"
+	cp "${config}" "${codedir}/.config" || fail "run_make_command"
 	[ "${mode}" != "all" ] || make -C "${codedir}" silentoldconfig || \
 	    make -C "${codedir}" oldconfig || : # don't error on oldconfig
 
 	[ "${project}" = "coreboot" ] && [ "${mode}" = "all" ] && \
 		printf "%s\n" "${our_version}" > "${codedir}/.coreboot-version"
-	make -C "${codedir}" -j$(nproc) ${mode} || err "run_make_command"
+	make -C "${codedir}" -j$(nproc) ${mode} || fail "run_make_command"
 }
 
 copy_elf()
@@ -233,17 +235,16 @@ copy_elf()
 	done
 
 	make -C "${codedir}" distclean || \
-	    make -C "${codedir}" clean || err "copy_elf"
+	    make -C "${codedir}" clean || fail "copy_elf"
 }
 
-err()
+fail()
 {
 	[ -z "${codedir}" ] || \
 		make -C "${codedir}" distclean \
 		    || make -C "${codedir}" clean || :
 
-	printf "build/defconfig error %s\n" "${1}" 1>&2
-	exit 1
+	err "build/defconfig error ${1}"
 }
 
 main $@

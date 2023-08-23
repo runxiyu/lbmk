@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+. "include/err.sh"
+
 agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 ec_url=""
@@ -54,9 +56,9 @@ main()
 	boarddir="${cbcfgsdir}/${board}"
 
 	[ ! -d "${boarddir}" ] && \
-		fail "Board target, ${board}, not defined"
+		err "Board target, ${board}, not defined"
 	[ ! -f "${boarddir}/target.cfg" ] && \
-		fail "Target missing target.cfg"
+		err "Target missing target.cfg"
 
 	no_config="printf \"No config for target, %s\\n\" ${board} 1>&2; exit 0"
 	for x in "${boarddir}"/config/*; do
@@ -153,16 +155,16 @@ build_dependencies()
 {
 	[ -d ${cbdir} ] || \
 		./fetch_trees coreboot ${cbdir##*/} || \
-		    fail "can't download to ${cbdir}"
+		    err "can't download to ${cbdir}"
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "${d}" ] && continue
-		./fetch ${d} || fail "can't download ${d}"
+		./fetch ${d} || err "can't download ${d}"
 	done
 	[ -f uefitool/uefiextract ] || \
-		./build src for -b uefitool || fail "can't build uefitool"
+		./build src for -b uefitool || err "can't build uefitool"
 	[ -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ] || \
 		make -BC ${cbdir}/util/kbc1126 || \
-		    fail "can't build kbc1126_ec_dump"
+		    err "can't build kbc1126_ec_dump"
 }
 
 download_blobs()
@@ -183,7 +185,7 @@ download_blobs()
 	done
 	
 	[ -z ${_failed+x} ] || \
-		fail "failed to obtain ${_failed}\nTry manual extraction?"
+		err "failed to obtain ${_failed}\nTry manual extraction?"
 }
 
 download_blob_intel_me()
@@ -214,10 +216,10 @@ extract_blob_intel_me()
 	innoextract ${dl_path} -d ${appdir} || \
 	    7z x ${dl_path} -o${appdir} || \
 	    unar "${dl_path}" -o "${appdir}" || \
-	    fail "Could not extract vendor update"
+	    err "Could not extract vendor update"
 
 	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
-	    "$(pwd)/${appdir}" || fail "Could not extract Intel ME firmware"
+	    "$(pwd)/${appdir}" || err "Could not extract Intel ME firmware"
 
 	printf "Truncated and cleaned me output to ${_me_destination}\n"
 }
@@ -314,7 +316,7 @@ extract_blob_kbc1126_ec()
 		mv Rom.bin ec.bin
 	fi
 
-	[ -f ec.bin ] || fail "could not extract ec.bin for board, ${board}"
+	[ -f ec.bin ] || err "could not extract ec.bin for board, ${board}"
 	"${kbc1126_ec_dump}" ec.bin
 	)
 
@@ -367,10 +369,10 @@ extract_e6400vga()
 	tail -c +${e6400_vga_offset} "${dl_path##*/}" \
 			| gunzip > bios.bin
 	[ -f "bios.bin" ] || \
-		fail "Could not extract bios.bin from Dell E6400 update"
+		err "Could not extract bios.bin from Dell E6400 update"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
 	[ -f "${e6400_vga_romname}" ] || \
-		fail "Could not extract VGA ROM from Dell E6400 BIOS update"
+		err "Could not extract VGA ROM from Dell E6400 BIOS update"
 	)
 
 	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}"
@@ -481,12 +483,6 @@ vendor_checksum()
 		printf "Bad checksum on vendor update for: %s\n" ${board}
 		return 1
 	fi
-}
-
-fail()
-{
-	printf "\nERROR: $@\n"
-	exit 1
 }
 
 main $@

@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+. "include/err.sh"
+
 sname=""
 archive=""
 _filetype=""
@@ -41,7 +43,7 @@ main()
 {
 	sname="${0}"
 
-	[ $# -lt 1 ] && fail "No options specified."
+	[ $# -lt 1 ] && err "No options specified."
 	[ "${1}" = "listboards" ] && listboards && exit 0
 
 	archive="${1}"
@@ -72,21 +74,21 @@ check_board()
 {
 	if ! check_release ${archive} ; then
 		[ -f "${rom}" ] || \
-			fail "${rom} is not a valid path"
+			err "${rom} is not a valid path"
 		[ -z ${rom+x} ] && \
-			fail 'no rom specified'
+			err 'no rom specified'
 		[ ! -z ${board+x} ] || \
 			board=$(detect_board ${rom}) || \
-			    fail 'no board specified'
+			    err 'no board specified'
 	else
 		release=true
 		releasearchive="${archive}"
 		board=$(detect_board ${archive}) || \
-		    fail 'Could not detect board type'
+		    err 'Could not detect board type'
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	[ -d "${boarddir}" ] || fail "board ${board} not found"
+	[ -d "${boarddir}" ] || err "board ${board} not found"
 }
 
 check_release()
@@ -120,9 +122,9 @@ detect_board()
 build_dependencies()
 {
 	[ -d "${cbdir}" ] || ./fetch_trees coreboot default
-	./build coreboot utils default || fail "could not build cbutils"
+	./build coreboot utils default || err "could not build cbutils"
 	./update blobs download ${board} || \
-	    fail "Could not download blobs for ${board}"
+	    err "Could not download blobs for ${board}"
 }
 
 inject_blobs()
@@ -139,17 +141,17 @@ patch_release_roms()
 {
 	_tmpdir=$(mktemp -d "/tmp/${board}_tmpXXXX")
 	tar xf "${releasearchive}" -C "${_tmpdir}" || \
-	fail 'could not extract release archive'
+	err 'could not extract release archive'
 
 	for x in ${_tmpdir}/bin/*/*.rom ; do
 		echo "patching rom $x"
-		patch_rom ${x} || fail "could not patch ${x}"
+		patch_rom ${x} || err "could not patch ${x}"
 	done
 
 	(
 	cd ${_tmpdir}/bin/*
 	sha1sum --status -c blobhashes || \
-	fail 'ROMs did not match expected hashes'
+	err 'ROMs did not match expected hashes'
 	)
 
 	if [ "${modifygbe}" = "true" ]; then
@@ -223,11 +225,11 @@ inject_blob_intel_me()
 
 	rom="${1}"
 	[ -z ${CONFIG_ME_BIN_PATH} ] && \
-		fail "CONFIG_ME_BIN_PATH not set"
+		err "CONFIG_ME_BIN_PATH not set"
 
 	_me_location=${CONFIG_ME_BIN_PATH#../../}
 	[ ! -f "${_me_location}" ] && \
-		fail "CONFIG_ME_BIN_PATH points to missing file"
+		err "CONFIG_ME_BIN_PATH points to missing file"
 
 	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || exit 1
 }
@@ -310,19 +312,19 @@ modify_gbe()
 	rom=${1}
 
 	[ -z ${CONFIG_GBE_BIN_PATH} ] && \
-		fail "CONFIG_GBE_BIN_PATH not set"
+		err "CONFIG_GBE_BIN_PATH not set"
 
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
 	[ -f "${_gbe_location}" ] || \
-		fail "CONFIG_GBE_BIN_PATH points to missing file"
+		err "CONFIG_GBE_BIN_PATH points to missing file"
 	[ -f ${nvmutil} ] || \
-		make -C util/nvmutil || fail 'failed to build nvmutil'
+		make -C util/nvmutil || err 'failed to build nvmutil'
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
 	cp ${_gbe_location} ${_gbe_tmp}
 	${nvmutil} "${_gbe_tmp}" setmac ${new_mac} || \
-	    fail 'failed to modify mac address'
+	    err 'failed to modify mac address'
 
 	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" -O "${rom}" || exit 1
 
@@ -337,14 +339,6 @@ listboards()
 		board="${board%/}"
 		printf '%s\n' "${board##*/}"
 	done
-}
-
-fail()
-{
-	[ -z ${@+x} ] || \
-		printf "\n%s: ERROR: ${@}\n" ${sname}
-	usage
-	exit 1
 }
 
 usage()
