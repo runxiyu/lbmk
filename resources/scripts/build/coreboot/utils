@@ -27,12 +27,14 @@ main()
 {
 	if [ $# -gt 0 ]; then
 		for board in "${@}"; do
-			build_for_mainboard ${board} || exit 1
+			build_for_mainboard ${board} || \
+			    err "cannot build cbutils for target, ${board}"
 		done
 	else
 		for boarddir in resources/coreboot/*; do
 			[ ! -d "${boarddir}" ] && continue
-			build_for_mainboard ${boarddir##*/} || exit 1
+			build_for_mainboard ${boarddir##*/} || \
+			    err "cannot build cbutils for target, ${board}"
 		done
 	fi
 }

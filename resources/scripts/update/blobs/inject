@@ -74,17 +74,16 @@ check_board()
 {
 	if ! check_release ${archive} ; then
 		[ -f "${rom}" ] || \
-			err "${rom} is not a valid path"
+			err "\"${rom}\" is not a valid path"
 		[ -z ${rom+x} ] && \
-			err 'no rom specified'
+			err "no rom specified"
 		[ ! -z ${board+x} ] || \
 			board=$(detect_board ${rom}) || \
-			    err 'no board specified'
+			    err "no board specified"
 	else
 		release=true
 		releasearchive="${archive}"
-		board=$(detect_board ${archive}) || \
-		    err 'Could not detect board type'
+		board=$(detect_board ${archive})
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
@@ -113,9 +112,10 @@ detect_board()
 		_stripped_prefix=${filename#*_}
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
-		return 1
+		err "detect_board: could not detect board type"
 	esac	
-	[ -d "${boarddir}/" ] || return 1
+	[ -d "${boarddir}/" ] || \
+	    err "detect_board: dir, ${boarddir}, doesn't exist"
 	printf '%s\n' "${board}"
 }
 
@@ -216,7 +216,7 @@ inject_blob_intel_mrc()
 	# TODO: this logic should be tweaked to handle more platforms
 
 	${cbfstool} ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc \
-		-b 0xfffa0000 || exit 1
+		-b 0xfffa0000 || err "cannot insert mrc.bin"
 }
 
 inject_blob_intel_me()
@@ -231,7 +231,8 @@ inject_blob_intel_me()
 	[ ! -f "${_me_location}" ] && \
 		err "CONFIG_ME_BIN_PATH points to missing file"
 
-	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || exit 1
+	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || \
+	    err "cannot insert me.bin"
 }
 
 inject_blob_hp_kbc1126_ec()
@@ -246,24 +247,19 @@ inject_blob_hp_kbc1126_ec()
 	printf "adding hp kbc1126 ec firmware\n"
 
 	if [ "${_ec1_offset}" = "" ] || [ "${_ec1_offset}" = "" ]; then
-		printf "EC offsets not declared for board: %s\n" \
-		    "${board}"
-		exit 1
+		err "EC offsets not declared for board, ${board}"
 	fi
 	if [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
-		printf "EC firmware path not declared for board: %s\n" \
-		    "${board}"
+		err "EC firmware path not declared for board, ${board}"
 	fi
 	if [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
-		printf "EC firmware not downloaded for board: %s\n" \
-		    "${board}"
-		exit 1
+		err "EC firmware not downloaded for board: ${board}"
 	fi
 
 	${cbfstool} "${rom}" add -f ${_ec1_location} -n ecfw1.bin \
-	    -b ${_ec1_offset} -t raw || exit 1
+	    -b ${_ec1_offset} -t raw || err "cannot insert ecfw1.bin"
 	${cbfstool} "${rom}" add -f ${_ec2_location} -n ecfw2.bin \
-	    -b ${_ec2_offset} -t raw || exit 1
+	    -b ${_ec2_offset} -t raw || err "cannot insert ecfw2.bin"
 }
 
 inject_blob_dell_e6400_vgarom_nvidia()
@@ -277,17 +273,15 @@ inject_blob_dell_e6400_vgarom_nvidia()
 	printf "adding pci option rom\n"
 
 	if [ "${_vga_dir}" != "${pciromsdir}" ]; then
-		printf "Invalid PCI ROM directory: %s\n" ${_vga_dir}
-		exit 1
+		err "Invalid PCI ROM directory, ${_vga_dir}"
 	fi
 	if [ ! -f "${_vga_location}" ]; then
-		printf "No such file exists: %s\n" ${_vga_location}
-		exit 1
+		err "No such file exists, ${_vga_location}"
 	fi
 
 	${cbfstool} ${rom} add -f "${_vga_location}" \
-	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" \
-	    -t optionrom || exit 1
+	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom || \
+	    err "cannot insert e6400 nvidia rom"
 }
 
 inject_blob_smsc_sch5545_ec()
@@ -297,12 +291,11 @@ inject_blob_smsc_sch5545_ec()
 	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}"
 
 	if [ ! -f "${_sch5545ec_location}" ]; then
-		printf "SCH5545 firmware file missing\n" 1>&2
-		exit 1
+		err "SCH5545 firmware file missing"
 	fi
 
 	"${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
-	    -n sch5545_ecfw.bin -t raw || exit 1
+	    -n sch5545_ecfw.bin -t raw || err "cannot insert sch5545_ecfw.bin"
 }
 
 modify_gbe()
@@ -326,7 +319,8 @@ modify_gbe()
 	${nvmutil} "${_gbe_tmp}" setmac ${new_mac} || \
 	    err 'failed to modify mac address'
 
-	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" -O "${rom}" || exit 1
+	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" -O "${rom}" || \
+	    err "cannot insert modified gbe.bin"
 
 	rm -f ${_gbe_tmp}
 }

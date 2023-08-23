@@ -21,16 +21,18 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 # clean bucts
 # --------------------------------------------------------
 
 printf "Cleaning the previous builds of seabios\n"
 
-rm -Rf elf/seabios || exit 1
+[ ! -d "elf/seabios" ] || rm -Rf elf/seabios || err "cannot remove elf/seabios"
 [ ! -d "seabios/" ] && exit 0
 
 for x in seabios/*; do
 	[ "${x}" = "seabios/seabios" ] && continue
 	[ ! -d "${x}" ] && continue
-	make -C "${x}" distclean || exit 1
+	make -C "${x}" distclean || err "cannot distclean tree, ${x}"
 done

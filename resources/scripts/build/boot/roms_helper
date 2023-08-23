@@ -115,10 +115,7 @@ if [ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] && \
     [ "${payload_uboot}" != "y" ]; then
 	for configfile in "resources/coreboot/${board}/config/"*; do
 		[ ! -e "${configfile}" ] && continue
-		printf "ERROR build/roms: Target '%s' defines no payload. " \
-				${board}
-		printf "Exiting.\n"
-		exit 1
+		err "target '${board}' defines no payload"
 	done
 fi
 
@@ -155,7 +152,7 @@ cbfstool="cbutils/${tree}/cbfstool"
 corebootrom="${cbdir}/build/coreboot.rom"
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 
-./build coreboot utils ${tree} || exit 1
+./build coreboot utils ${tree} || err "cannot build cbutils/${tree}"
 
 if [ ! -f "${seavgabiosrom}" ] \
     || [ ! -f elf/seabios/default/libgfxinit/bios.bin.elf ] \
@@ -275,16 +272,18 @@ moverom() {
 
 	if [ "${microcode_required}" = "n" ]; then
 		_newrom_b="${newrompath%.rom}_nomicrocode.rom"
-		cp "${newrompath}" "${_newrom_b}" || exit 1
+		cp "${newrompath}" "${_newrom_b}" || \
+		    err "cannot do: cp \"${newrompath}\" \"${_newrom_b}\""
 		microcode_present="y"
 		"${cbfstool}" "${_newrom_b}" remove -n \
 		    cpu_microcode_blob.bin || microcode_present="n"
 		if [ "${microcode_present}" = "n" ]; then
-			rm -f "${_newrom_b}" || exit 1
+			rm -f "${_newrom_b}" || err "cannot remove ${_newrom_b}"
 			printf "REMARK: '%s' already lacks microcode\n" \
 			    ${newrompath}
 			printf "Renaming default ROM file instead.\n"
-			mv "${newrompath}" "${_newrom_b}" || exit 1
+			mv "${newrompath}" "${_newrom_b}" || \
+			    err "fail: mv \"${newrompath}\" \"${_newrom_b}\""
 		fi
 	fi
 }
@@ -303,26 +302,30 @@ mkSeabiosRom() {
 	cp "${target_cbrom}" "${tmprom}"
 
 	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" \
-	    -n ${target_seabios_cbfs_path} -c lzma || exit 1
+	    -n ${target_seabios_cbfs_path} -c lzma || \
+	    err "cannot add payload, ${target_seabioself}, to tmprom, ${tmprom}"
 
 	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup \
-	    || exit 1
+	    || err "cannot add-int etc/ps2-keyboard-spinup to tmprom, ${tmprom}"
 
 	if [ "${target_initmode}" = "normal" ] || \
 	    [ "${target_initmode}" = "libgfxinit" ]; then
 		"${cbfstool}" "${tmprom}" add-int -i 2 \
-		    -n etc/pci-optionrom-exec || exit 1
+		    -n etc/pci-optionrom-exec || \
+		    err "cannot add-int etc/pci-optionrom-exec 2 to tmprom"
 	elif [ "${target_initmode}" = "vgarom" ]; then # coreboot executes it
 		"${cbfstool}" "${tmprom}" add-int -i 0 \
-		    -n etc/pci-optionrom-exec || exit 1
+		    -n etc/pci-optionrom-exec || \
+		    err "cannot add-int etc/pci-optionrom-exec 0 to tmprom"
 	fi # for undefined modes, don't add this integer. use SeaBIOS defaults
 
 	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || \
-	    exit 1
+	    err "cannot add-int etc/optionroms-checksum 0 to tmprom"
 
 	[ "${target_initmode}" != "libgfxinit" ] || \
 		"${cbfstool}" "${tmprom}" add -f "${seavgabiosrom}" \
-		    -n vgaroms/seavgabios.bin -t raw || exit 1
+		    -n vgaroms/seavgabios.bin -t raw || \
+		    err "cannot add vgaroms/seavgabios.bin to tmprom"
 
 	printf "%s\n" "${tmprom}"
 }
@@ -346,7 +349,8 @@ mkUbootRom() {
 
 	cp "${target_cbrom}" "${tmprom}"
 	"${cbfstool}" "${tmprom}" add-payload -f "${target_ubootelf}" \
-	    -n ${target_uboot_cbfs_path} -c lzma || exit 1
+	    -n ${target_uboot_cbfs_path} -c lzma || \
+	    err "cannot add u-boot to tmprom"
 
 	printf "%s\n" "${tmprom}"
 }
@@ -361,11 +365,14 @@ mkGrubRom() {
 	grubcfg="elf/grub/grub_${target_keymap}.cfg"
 	grubtestcfg="elf/grub/grub_${target_keymap}_test.cfg"
 
-	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX) || exit 1
-	cp "${target_cbrom}" "${tmprom}" || exit 1
+	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX) || \
+	    err "mkGrubRom: cannot create tmprom"
+	cp "${target_cbrom}" "${tmprom}" || \
+	    err "mkGrubRom: cannot copy to tmprom"
 
 	"${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" \
-	    -n ${target_grubelf_cbfs_path} -c lzma || exit 1
+	    -n ${target_grubelf_cbfs_path} -c lzma || \
+	    err "mkGrubRom: cannot add grub payload to tmprom"
 
 	tmpgrubcfg=$(mktemp -t grub.cfg.XXXXXXXXXX)
 	tmpgrubtestcfg=$(mktemp -t grubtest.cfg.XXXXXXXXXX)
@@ -389,10 +396,10 @@ mkGrubRom() {
 	fi
 
 	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw || \
-	    exit 1
+	    err "mkGrubRom: cannot add grub.cfg to tmprom"
 
 	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg \
-	    -t raw || exit 1
+	    -t raw || err "mkGrubRom: cannot add grubtest.cfg to tmprom"
 	rm -f "${tmpgrubcfg}" "${tmpgrubtestcfg}"
 
 	backgroundfile="background1280x800.png"
@@ -402,7 +409,7 @@ mkGrubRom() {
 	fi
 	backgroundfile="resources/grub/background/${backgroundfile}"
 	"${cbfstool}" "${tmprom}" add -f ${backgroundfile} -n background.png \
-	    -t raw || exit 1
+	    -t raw || err "mkGrubRom: cannot add background.png to tmprom"
 
 	printf "%s\n" "${tmprom}"
 }
@@ -491,8 +498,8 @@ mkRoms()
 
 	if [ "${payload_memtest}" = "y" ]; then
 		"${cbfstool}" "${corebootrom}" add-payload \
-				-f ${memtest_bin} -n img/memtest \
-				-c lzma || exit 1
+		    -f ${memtest_bin} -n img/memtest -c lzma || \
+		    err "mkRoms: cannot add img/memtest to coreboot rom"
 	fi
 
 	if [ "${payload_seabios}" = "y" ]; then

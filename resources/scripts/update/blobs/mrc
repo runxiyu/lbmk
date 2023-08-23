@@ -53,33 +53,33 @@ main()
 	sname=${0}
 	printf "Downloading Intel MRC blobs\n"
 
-	check_existing && exit 0
-	build_dependencies || err "could not build dependencies"
+	check_existing || return 0
+	build_dependencies
 	fetch_mrc || err "could not fetch mrc.bin"
 }
 
 check_existing()
 {
 	[ -f ${_mrc_complete} ] || \
-		return 1
+		return 0
 	printf 'found existing mrc.bin\n'
 	[ "$(sha1sum ${_mrc_complete} | awk '{print $1}')" \
 	    = "${_mrc_complete_hash}" ] && \
-		return 0
+		return 1
 	printf 'hashes did not match, starting over\n'
-	return 1
 }
 
 build_dependencies()
 {
-	[ -d "${cbdir}/" ] || ./fetch_trees coreboot default || return 1
-	./build coreboot utils default || return 1
-	return 0
+	[ -d "${cbdir}/" ] || ./fetch_trees coreboot default || \
+	    err "cannot fetch coreboot/default"
+	./build coreboot utils default || \
+	    err "cannot build cbutils/default"
 }
 
 fetch_mrc()
 {
-	mkdir -p mrc/haswell/ || return 1
+	mkdir -p mrc/haswell/ || err "cannot mkdir mrc/haswell"
 
 	(
 	cd mrc/haswell/
@@ -102,8 +102,6 @@ fetch_mrc()
 
 	printf "\n\nmrc.bin saved to ${_mrc_complete}\n\n"
 	)
-
-	return 0
 }
 
 download_image()
@@ -122,8 +120,7 @@ download_image()
 		return 0
 	fi
 	rm "${_file}.zip"
-	printf "Bad checksum. Recovery image deleted.\n"
-	return 1
+	err "Bad checksum. Recovery image deleted"
 }
 
 extract_partition()

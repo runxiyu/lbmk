@@ -116,8 +116,10 @@ strip_archive()
 	romdir=${1}
 
 	[ -d coreboot/${tree} ] || \
-		./fetch_trees coreboot ${tree} || exit 1
-	./build coreboot utils ${tree} || exit 1
+		./fetch_trees coreboot ${tree} || \
+		    err "cannot fetch source tree, coreboot/${tree}"
+	./build coreboot utils ${tree} || \
+	    err "cannot build utils for coreboot/${tree}"
 
 	rm -Rf "${romdir}_tmp" # dirty hack, to reduce disk io later
 	# rather than using /tmp, which might not be tmpfs
@@ -141,30 +143,36 @@ strip_rom_image()
 {
 	romfile=${1}
 
-	[ -f "${romfile}" ] || continue
+	[ -f "${romfile}" ] || return 0
 
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		${ifdtool} --nuke me "${romfile}" || exit 1
+		${ifdtool} --nuke me "${romfile}" || \
+		    err "cannot nuke Intel ME region on file, ${romfile}"
 		mv "${romfile}" "${romdir}_tmp"/
 		mv "${romfile}.new" "${romfile}"
 	fi
 
 	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
-		${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
-		${cbfstool} "${romfile}" print
+		${cbfstool} "${romfile}" remove -n mrc.bin || \
+		    err "cannot remove mrc.bin from file, ${romfile}"
+		${cbfstool} "${romfile}" print || :
 	fi
 
 	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		${cbfstool} "${romfile}" remove -n ecfw1.bin || exit 1
-		${cbfstool} "${romfile}" remove -n ecfw2.bin || exit 1
+		${cbfstool} "${romfile}" remove -n ecfw1.bin || \
+		    err "cannot remove ecfw1.bin from file, ${romfile}"
+		${cbfstool} "${romfile}" remove -n ecfw2.bin || \
+		    err "cannot remove ecfw2.bin from file, ${romfile}"
 	fi
 
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
-		${cbfstool} "${romfile}" remove -n sch5545_ecfw.bin || exit 1
+		${cbfstool} "${romfile}" remove -n sch5545_ecfw.bin || \
+		    err "cannot remove sch5545_ecfw.bin from file, ${romfile}"
 
 	# TODO: replace this board-specific hack
 	[ "${target}" != "e6400nvidia_4mb" ] || \
-		${cbfstool} "${romfile}" remove -n "pci10de,06eb.rom" || exit 1
+		${cbfstool} "${romfile}" remove -n "pci10de,06eb.rom" || \
+		    err "cannot remove pci10de,06eb.rom from file, ${romfile}"
 }
 
 main $@

@@ -38,7 +38,7 @@ firstoption=""
 
 main()
 {
-	[ $# -lt 1 ] && usage && exit 1
+	[ $# -lt 1 ] && usage && err "target not specified"
 
 	firstoption="${1}"
 	[ "${firstoption}" = "help" ] && usage && exit 0

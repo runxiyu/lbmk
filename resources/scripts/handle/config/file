@@ -93,7 +93,7 @@ main()
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ "${mode}" != "all" ] || \
 			./update blobs download ${target} || fail "blobutil"
-		handle_defconfig || exit 1
+		handle_defconfig || err "error handling config file"
 	done
 
 	[ "${mode}" = "all" ] && \
@@ -102,10 +102,11 @@ main()
 
 handle_defconfig()
 {
-	handle_dependencies "${target}" || return 1
+	handle_dependencies "${target}" || \
+	    fail "handle_defconfig: failed call to handle_dependencies"
 
 	for y in "${target_dir}/config"/*; do
-		[ ! -f "${y}" ] && continue
+		[ -f "${y}" ] || continue
 		config="${y}"
 		config_name="${config#$target_dir/config/}"
 
@@ -139,7 +140,8 @@ handle_dependencies()
 
 	codedir="${project}/${tree}"
 	[ -d "${codedir}" ] || \
-		./fetch_trees "${project}" "$target" || exit 1
+		./fetch_trees "${project}" "$target" || \
+		    fail "cannot fetch source tree, ${project}/${target}"
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then

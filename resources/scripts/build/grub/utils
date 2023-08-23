@@ -27,7 +27,7 @@ set -u -e
 main()
 {
 	printf "Building GRUB\n"
-	[ -d "grub/" ] || ./fetch grub || exit 1
+	[ -d "grub/" ] || ./fetch grub || err "cannot fetch grub"
 	build_grub
 }
 

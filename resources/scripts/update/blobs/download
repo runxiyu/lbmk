@@ -237,7 +237,7 @@ bruteforce_extract_blob_intel_me()
 
 	(
 	printf "Entering %s\n" "${cdir}"
-	cd "${cdir}" || exit 1
+	cd "${cdir}" || err "cannot enter directory, ${cdir}"
 	for i in *; do
 		if [ -f "${_me_destination}" ]; then
 			# me.bin found, so avoid needless further traversal
@@ -406,7 +406,8 @@ extract_sch5545ec()
 
 	mkdir -p "${appdir}/"
 	cp "${dl_path}" "${appdir}/"
-	python "${pfs_extract}" "${appdir}/${dlsum}" -e || exit 1
+	python "${pfs_extract}" "${appdir}/${dlsum}" -e || \
+	    err "cannot extract archive (dell, sch5545)"
 
 	# full system ROM (UEFI), to extract with UEFIExtract:
 	_bios="${appdir}/${dlsum}_extracted/Firmware"
@@ -418,9 +419,10 @@ extract_sch5545ec()
 	_sch5545ec_fw="${_sch5545ec_fw}/0 Raw section/body.bin" # <-- this!
 
 	# this makes the file defined by _sch5545ec_fw available to copy
-	"${uefiextract}" "${_bios}" || exit 1
+	"${uefiextract}" "${_bios}" || err "cannot extract dell uefi image"
 
-	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || exit 1
+	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || \
+	    err "cannot copy sch5545ec firmware file"
 }
 
 fetch_update()
