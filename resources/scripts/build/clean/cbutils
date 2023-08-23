@@ -24,26 +24,36 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-# clean coreboot utilities (dependencies for 'build'):
+. "include/err.sh"
 
-printf "Cleaning the previous build of coreboot and its utilities\n"
+main()
+{
+	printf "Cleaning the previous build of coreboot and its utilities\n"
 
-rm -Rf cbutils
+	rm -Rf cbutils || err "cannot remove cbutils/"
+	[ ! -d "coreboot/" ] && exit 0
 
-[ ! -d "coreboot/" ] && exit 0
+	clean_cbutils
+}
 
-for tree in coreboot/*; do
-	[ "${tree##*/}" = "coreboot" ] && continue
-	[ -d "${tree}" ] || continue
+clean_cbutils()
+{
+	for tree in coreboot/*; do
+		[ "${tree##*/}" = "coreboot" ] && continue
+		[ -d "${tree}" ] || continue
 
-	# Clean coreboot, of course
-	make -C "${tree}/" distclean
+		# Clean coreboot, of course
+		make -C "${tree}/" distclean || \
+		    err "cannot distclean coreboot tree, ${tree}"
 
-	# Clean its utilities as well
-	for util in cbfstool ifdtool nvramtool cbmem; do
-		make distclean -C "${tree}/util/${util}/"
+		# Clean its utilities as well
+		for util in cbfstool ifdtool nvramtool cbmem; do
+			make distclean -C "${tree}/util/${util}/" || \
+			    err "cannot clean util, ${util}, at ${tree}"
+		done
+		make distclean -C "${tree}/payloads/libpayload/" || \
+		    err "cannot distclean libpayload, at ${tree}"
 	done
-	make distclean -C "${tree}/payloads/libpayload/"
-done
+}
 
-printf "\n\n"
+main $@

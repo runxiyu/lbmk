@@ -29,9 +29,14 @@ main()
 	printf "Cleaning crossgcc builds in all coreboot archives\n"
 	[ ! -d "coreboot/" ] && exit 0
 
+	clean_crossgcc
+}
+
+clean_crossgcc()
+{
 	for board in coreboot/*; do
+		[ -d "${board}" ] || continue
 		[ "${board##*/}" = "coreboot" ] && continue
-		[ ! -d "${board}" ] && continue
 		make -C "${board}/" crossgcc-clean || err "make-clean"
 	done
 }

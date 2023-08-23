@@ -17,7 +17,7 @@
 #
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
-set -u -e
+set -u
 
 version="version-unknown"
 [ -f version ] && version="$(cat version)"

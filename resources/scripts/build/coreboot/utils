@@ -21,10 +21,12 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-printf "Building coreboot utils\n"
+. "include/err.sh"
 
 main()
 {
+	printf "Building coreboot utils\n"
+
 	if [ $# -gt 0 ]; then
 		for board in "${@}"; do
 			build_for_mainboard ${board} || \
@@ -45,28 +47,28 @@ build_for_mainboard() {
 	[ -f "resources/coreboot/${board}/target.cfg" ] || continue
 	tree="undefined"
 	. "resources/coreboot/${board}/target.cfg" # source
-	if [ "${tree}" = "undefined" ]; then
-		printf "build/cbutils: improper tree definition for '%s'" \
-				"${board}"
-		return 1
-	fi
-	buildutils "${tree}" || return 1
+	[ "${tree}" = "undefined" ] && \
+		err "build/cbutils: improper tree definition for '${board}'"
+	buildutils "${tree}"
 }
 
 buildutils() {
 	tree="${1}"
 	[ -d "coreboot/${tree}/" ] || \
-		./fetch_trees coreboot $tree || return 1
+		./fetch_trees coreboot $tree || \
+		    err "cannot fetch ${tree}"
 	for util in cbfstool ifdtool; do
 		[ -f "cbutils/${tree}/${util}" ] && continue
 		[ -d "cbutils/${tree}" ] || \
-			mkdir -p "cbutils/${tree}" || return 1
+			mkdir -p "cbutils/${tree}" || \
+			    err "cannot create directory, cbutils/${tree}"
 
 		utildir="coreboot/${tree}/util/${util}"
-		make distclean -C "${utildir}" || return 1
-		make -j$(nproc) -C "${utildir}" || return 1
-		mv "${utildir}/${util}" "cbutils/${tree}" || return 1
-		make distclean -C "${utildir}" || return 1
+		make distclean -C "${utildir}" || err "cannot clean ${utildir}"
+		make -j$(nproc) -C "${utildir}" || err "cannot build ${utildir}"
+		cp "${utildir}/${util}" "cbutils/${tree}" || \
+		    err "cannot copy util, ${util}, to cbutils/${tree}/"
+		make distclean -C "${utildir}" || err "can't clean ${utildir}"
 	done
 }
 

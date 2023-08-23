@@ -2,7 +2,7 @@
 
 #  helper script: clean the u-boot builds
 #
-#	   Copyright (C) 2014, 2015, 2016, 2020 Leah Rowe <info@minifree.org>
+#	   Copyright (C) 2014-2016, 2020, 2023 Leah Rowe <info@minifree.org>
 #	   Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 #	   Copyright (C) 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 #
@@ -23,17 +23,28 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-printf "Cleaning u-boot builds for all boards\n"
+. "include/err.sh"
 
-for board in u-boot/*; do
-	if [ "${board##*/}" = "u-boot" ] || [ ! -d "${board}" ]; then
-		continue
-	fi
+main()
+{
+	printf "Cleaning u-boot builds for all boards\n"
+	clean_uboot
+}
 
-	make -C "${board}/" distclean
+clean_uboot()
+{
+	for board in u-boot/*; do
+		if [ "${board##*/}" = "u-boot" ] || [ ! -d "${board}" ]; then
+			continue
+		fi
 
-	[ -e "${board}/.git" ] && \
-		git -C "${board}" clean -fdx
-done
+		make -C "${board}/" distclean || \
+		    err "cannot distclean u-boot dir, ${board}"
 
-printf "\n\n"
+		[ ! -e "${board}/.git" ] || \
+			git -C "${board}" clean -fdx || \
+			    err "cannot clean u-boot git repo, ${board}"
+	done
+}
+
+main $@
