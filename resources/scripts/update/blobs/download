@@ -354,7 +354,7 @@ extract_e6400vga()
 		rm -Rf ${appdir}
 
 	mkdir -p "${appdir}"
-	mv "${dl_path}" "${appdir}"
+	cp "${dl_path}" "${appdir}"
 
 	if [ "${e6400_vga_offset}" = "" ]; then
 		printf "E6400 VGA offset not defined\n"
