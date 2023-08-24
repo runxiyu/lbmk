@@ -10,6 +10,8 @@ git_email="placeholder@lbmkplaceholder.com"
 
 main()
 {
+	[ "$(id -u)" = "0" ] && return 0
+
 	if [ $# -gt 0 ]; then
 		if [ "${1}" = "clean" ]; then
 			clean 1> /dev/null

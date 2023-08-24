@@ -72,23 +72,23 @@ check_existing()
 build_dependencies()
 {
 	[ -d "${cbdir}/" ] || ./fetch_trees coreboot default || \
-	    err "cannot fetch coreboot/default"
+	    err "build_dependencies: cannot fetch coreboot/default"
 	./build coreboot utils default || \
-	    err "cannot build cbutils/default"
+	    err "build_dependencies: cannot build cbutils/default"
 }
 
 fetch_mrc()
 {
-	mkdir -p mrc/haswell/ || err "cannot mkdir mrc/haswell"
+	mkdir -p mrc/haswell/ || err "fetch_mrc: !mkdir mrc/haswell"
 
 	(
-	cd mrc/haswell/
+	cd mrc/haswell/ || err "fetch_mrc: !cd mrc/haswell"
 
 	download_image ${_url} ${_file} ${_sha1sum}
 	[ -f ${_file} ] || \
 		download_image ${_url2} ${_file} ${_sha1sum}
 	[ -f $_file ] || \
-		err "%{_file} not downloaded / verification failed."
+		err "fetch_mrc: ${_file} not downloaded / verification failed."
 
 	extract_partition ROOT-A ${_file} root-a.ext2
 	extract_shellball root-a.ext2 chromeos-firmwareupdate-${_board}
@@ -96,9 +96,9 @@ fetch_mrc()
 	extract_coreboot chromeos-firmwareupdate-${_board}
 
 	../../${cbfstool} coreboot-*.bin extract -f mrc.bin -n mrc.bin \
-	    -r RO_SECTION || err "Could not fetch mrc.bin"
+	    -r RO_SECTION || err "fetch_mrc: could not fetch mrc.bin"
 	rm -f "chromeos-firmwareupdate-${_board}" coreboot-*.bin \
-	    "${_file}" "root-a.ext2"
+	    "${_file}" "root-a.ext2" || err "fetch_mrc: cannot remove files"
 
 	printf "\n\nmrc.bin saved to ${_mrc_complete}\n\n"
 	)
@@ -111,16 +111,16 @@ download_image()
 	_sha1sum=${3}
 
 	printf "Downloading recovery image\n"
-	curl "$url" > "$_file.zip"
+	curl "$url" > "$_file.zip" || err "download_image: curl failed"
 	printf "Verifying recovery image checksum\n"
 	if [ "$(sha1sum ${_file}.zip | awk '{print $1}')" = "${_sha1sum}" ]
 	then
-		unzip -q "${_file}.zip"
-		rm "${_file}.zip"
+		unzip -q "${_file}.zip" || err "download_image: cannot unzip"
+		rm -f "${_file}.zip" || err "download_image: can't rm zip {1}"
 		return 0
 	fi
-	rm "${_file}.zip"
-	err "Bad checksum. Recovery image deleted"
+	rm -f "${_file}.zip" || err "download_image: bad hash, and can't rm zip"
+	err "download_image: Bad checksum. Recovery image deleted"
 }
 
 extract_partition()
@@ -138,7 +138,8 @@ extract_partition()
 	SIZE=$(( $( echo ${ROOTP} | cut -f4 -d\ | tr -d "B" ) ))
 
 	dd if=${FILE} of=${ROOTFS} bs=${_bs} skip=$(( ${START} / ${_bs} )) \
-	    count=$(( ${SIZE} / ${_bs} )) > /dev/null
+	    count=$(( ${SIZE} / ${_bs} )) || \
+	    err "extract_partition: can't extract root file system"
 }
 
 extract_shellball()
@@ -148,7 +149,7 @@ extract_shellball()
 
 	printf "Extracting chromeos-firmwareupdate\n"
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
-	    | debugfs ${ROOTFS} > /dev/null 2>&1
+	    | debugfs ${ROOTFS} || err "extract_shellball: debugfs"
 }
 
 extract_coreboot()
@@ -157,13 +158,27 @@ extract_coreboot()
 	_unpacked=$( mktemp -d )
 
 	printf "Extracting coreboot image\n"
-	sh ${_shellball} --unpack ${_unpacked} > /dev/null
+
+	[ -f "${_shellball}" ] || \
+	    err "extract_coreboot: shellball missing in google peppy image"
+
+	sh ${_shellball} --unpack ${_unpacked} || \
+	    err "extract_coreboot: shellball exits with non-zero status"
+
+	# TODO: audit the f* out of that shellball, for each mrc version.
+	# it has to be updated for each mrc update. we should ideally
+	# implement the functionality ourselves.
+
+	[ -f "${_unpacked}/VERSION" ] || \
+	    err "extract_coreboot: VERSION file missing on google coreboot rom"
 
 	_version=$( cat ${_unpacked}/VERSION | grep BIOS\ version: | \
 	    cut -f2 -d: | tr -d \  )
 
-	cp ${_unpacked}/bios.bin coreboot-${_version}.bin
-	rm -r "${_unpacked}"
+	cp ${_unpacked}/bios.bin coreboot-${_version}.bin || \
+	    err "extract_coreboot: cannot copy google peppy rom"
+	rm -Rf "${_unpacked}" || \
+	    err "extract_coreboot: cannot remove extracted google peppy archive"
 }
 
 main $@

@@ -48,7 +48,7 @@ build_for_mainboard() {
 	tree="undefined"
 	. "resources/coreboot/${board}/target.cfg" # source
 	[ "${tree}" = "undefined" ] && \
-		err "build/cbutils: improper tree definition for '${board}'"
+	    err "build_for_mainboard: improper tree definition for '${board}'"
 	buildutils "${tree}"
 }
 
@@ -56,19 +56,22 @@ buildutils() {
 	tree="${1}"
 	[ -d "coreboot/${tree}/" ] || \
 		./fetch_trees coreboot $tree || \
-		    err "cannot fetch ${tree}"
+		    err "buildutils: cannot fetch ${tree}"
 	for util in cbfstool ifdtool; do
 		[ -f "cbutils/${tree}/${util}" ] && continue
 		[ -d "cbutils/${tree}" ] || \
 			mkdir -p "cbutils/${tree}" || \
-			    err "cannot create directory, cbutils/${tree}"
+			    err "buildutils: can't mkdir cbutils/${tree}"
 
 		utildir="coreboot/${tree}/util/${util}"
-		make distclean -C "${utildir}" || err "cannot clean ${utildir}"
-		make -j$(nproc) -C "${utildir}" || err "cannot build ${utildir}"
+		make distclean -C "${utildir}" || \
+		    err "buildutils: cannot clean ${utildir}"
+		make -j$(nproc) -C "${utildir}" || \
+		    err "buildutils: cannot build ${utildir}"
 		cp "${utildir}/${util}" "cbutils/${tree}" || \
-		    err "cannot copy util, ${util}, to cbutils/${tree}/"
-		make distclean -C "${utildir}" || err "can't clean ${utildir}"
+		    err "buildutils: can't cp ${util} cbutils/${tree}/"
+		make distclean -C "${utildir}" || \
+		    err "buildutils: can't clean ${utildir}"
 	done
 }
 

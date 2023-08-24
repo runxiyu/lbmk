@@ -52,12 +52,15 @@ CONFIG_SMSC_SCH5545_EC_FW_FILE=""
 
 main()
 {
+	[ $# -gt 0 ] || \
+		err "No argument given"
+
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
 
-	[ ! -d "${boarddir}" ] && \
+	[ -d "${boarddir}" ] || \
 		err "Board target, ${board}, not defined"
-	[ ! -f "${boarddir}/target.cfg" ] && \
+	[ -f "${boarddir}/target.cfg" ] || \
 		err "Target missing target.cfg"
 
 	no_config="printf \"No config for target, %s\\n\" ${board} 1>&2; exit 0"
@@ -65,7 +68,7 @@ main()
 		[ -f "${x}" ] && no_config=""
 	done
 	eval "${no_config}"
-	
+
 	detect_firmware || exit 0
 	scan_sources_config
 
@@ -89,7 +92,7 @@ detect_firmware()
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
 	    needs="${needs} SCH5545EC"
 	[ -z ${needs+x} ] && \
-		printf 'No binary blobs needed for this board\n' && \
+		printf "No binary blobs needed for this board\n" && \
 		return 1
 	printf "Firmware needed for board '%s':\n%s\n" ${board} ${needs}
 }
@@ -155,16 +158,19 @@ build_dependencies()
 {
 	[ -d ${cbdir} ] || \
 		./fetch_trees coreboot ${cbdir##*/} || \
-		    err "can't download to ${cbdir}"
+		    err "build_dependencies: can't fetch ${cbdir}"
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "${d}" ] && continue
-		./fetch ${d} || err "can't download ${d}"
+		./fetch "${d}" || \
+		    err "build_dependencies: can't fetch ${d}"
 	done
 	[ -f uefitool/uefiextract ] || \
-		./build src for -b uefitool || err "can't build uefitool"
-	[ -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ] || \
+		./build src for -b uefitool || \
+		    err "build_dependencies: can't build uefitool"
+	if [ ! -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ]; then
 		make -BC ${cbdir}/util/kbc1126 || \
-		    err "can't build kbc1126_ec_dump"
+		    err "build_dependencies: can't build kbc1126_ec_dump"
+	fi
 }
 
 download_blobs()
@@ -184,8 +190,9 @@ download_blobs()
 		esac
 	done
 	
-	[ -z ${_failed+x} ] || \
-		err "failed to obtain ${_failed}\nTry manual extraction?"
+	if [ ! -z ${_failed+x} ]; then
+		err "download_blobs: can't download blobs: ${_failed}\n"
+	fi
 }
 
 download_blob_intel_me()
@@ -203,11 +210,13 @@ extract_blob_intel_me()
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 
 	[ -d "${_me_destination%/*}" ] || \
-		mkdir -p ${_me_destination%/*}
-	[ -d "${appdir}" ] && \
-		rm -Rf ${appdir}
+		mkdir -p ${_me_destination%/*} || \
+		    err "extract_blob_intel_me: mkdir ${_me_destination%/*}"
+	[ ! -d "${appdir}" ] || \
+		rm -Rf "${appdir}" || \
+		    err "extract_blob_intel_me: can't rm -Rf \"${appdir}\""
 	if [ -f "${_me_destination}" ]; then
-		printf 'me already downloaded\n'
+		printf "Intel ME firmware already downloaded\n" 1>&2
 		return 0
 	fi
 
@@ -216,12 +225,16 @@ extract_blob_intel_me()
 	innoextract ${dl_path} -d ${appdir} || \
 	    7z x ${dl_path} -o${appdir} || \
 	    unar "${dl_path}" -o "${appdir}" || \
-	    err "Could not extract vendor update"
+	    err "extract_blob_intel_me: could not extract vendor update"
 
 	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
-	    "$(pwd)/${appdir}" || err "Could not extract Intel ME firmware"
+	    "$(pwd)/${appdir}" || \
+	    err "extract_blob_intel_me: could not extract Intel ME firmware"
 
-	printf "Truncated and cleaned me output to ${_me_destination}\n"
+	[ -f "${_me_destination}" ] || \
+		err "extract_blob_intel_me, ${board}: me.bin missing"
+
+	printf "Truncated and cleaned me output to: %s\n" "${_me_destination}"
 }
 
 # cursed, carcinogenic code. TODO rewrite it better
@@ -237,7 +250,8 @@ bruteforce_extract_blob_intel_me()
 
 	(
 	printf "Entering %s\n" "${cdir}"
-	cd "${cdir}" || err "cannot enter directory, ${cdir}"
+	cd "${cdir}" || \
+	    err "bruteforce_extract_blob_intel_me: can't cd \"${cdir}\""
 	for i in *; do
 		if [ -f "${_me_destination}" ]; then
 			# me.bin found, so avoid needless further traversal
@@ -247,37 +261,33 @@ bruteforce_extract_blob_intel_me()
 			continue
 		elif [ -f "${i}" ]; then
 			"${mecleaner}" -r -t -O "${sdir}/vendorfile" \
-					-M "${_me_destination}" "${i}" \
-				&& break # (we found me.bin)	
+			    -M "${_me_destination}" "${i}" \
+			    && break # (we found me.bin)	
 			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
-				&& break # (we found me.bin)
+			    && break # (we found me.bin)
 			"${me7updateparser}" -O ${_me_destination} "${i}" \
-				&& break # (we found me.bin)
+			    && break # (we found me.bin)
 			_7ztest="${_7ztest}a"
 			7z x "${i}" -o${_7ztest} \
 			    || innoextract "${i}" -d  "${_7ztest}" \
 			    || unar "${i}" -o "${_7ztest}" \
 			    || continue
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
-					"${cdir}/${_7ztest}"
+			    "${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
-					"${cdir}/${i}"
+			    "${cdir}/${i}"
 		else
 			printf "SKIPPING: %s\n" "${i}"
 			continue
 		fi
 		cdir="${1}"
-		cd "${cdir}"
+		cd "${cdir}" # audit note: we already checked this (see above)
 	done
 	)
 
-	rm -Rf "${sdir}"
-
-	if [ ! -f "${_me_destination}" ]; then
-		printf "me.bin not found in vendor update for: %s\n" ${board}
-		return 1
-	fi
+	rm -Rf "${sdir}" || \
+	    err "bruteforce_extract_blob_intel_me: can't rm -Rf \"${sdir}\""
 }
 
 download_ec()
@@ -295,39 +305,48 @@ extract_blob_kbc1126_ec()
 	_ec_destination=${CONFIG_KBC1126_FW1#../../}
 
 	[ -d "${_ec_destination%/*}" ] || \
-		mkdir -p "${_ec_destination%/*}"
-	[ -d "${appdir}" ] && \
-		rm -Rf "${appdir}"
+		mkdir -p "${_ec_destination%/*}" || \
+		    err "extract_blob_kbc1126_ec: !mkdir ${_ec_destination%/*}"
+	[ ! -d "${appdir}" ] || \
+		rm -Rf "${appdir}" || \
+		    err "extract_blob_kbc1126_ec: !rm -Rf ${appdir}"
 	if [ -f "${_ec_destination}" ]; then
-		printf "ec already downloaded\n"
+		printf "KBC1126 EC firmware already downloaded\n" 1>&2
 		return 0
 	fi
 
-	unar "${dl_path}" -o "${appdir}"
+	unar "${dl_path}" -o "${appdir}" || \
+	    err "extract_blob_kbc1126_ec: !unar \"${dl_path}\" -o \"${appdir}\""
 
 	(
-	cd "${appdir}/${dl_path##*/}"
+	cd "${appdir}/${dl_path##*/}" || \
+	    err "extract_blob_kbc1126_ec: !cd \"${appdir}/${dl_path##*/}\""
 
-	mv Rompaq/68*.BIN ec.bin
+	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
 		unar -D ROM.CAB Rom.bin || \
 		    unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin
-		mv Rom.bin ec.bin
+		    unar -D 68*.CAB Rom.bin || \
+		    err "extract_blob_kbc1126_ec: can't extract ec.bin"
+		mv Rom.bin ec.bin || \
+		    err "extract_blob_kbc1126_ec: *didn't* extract ec.bin"
 	fi
+	[ -f ec.bin ] || \
+	    err "extract_blob_kbc1126_ec: ${board}: can't extract ec.bin"
 
-	[ -f ec.bin ] || err "could not extract ec.bin for board, ${board}"
-	"${kbc1126_ec_dump}" ec.bin
+	"${kbc1126_ec_dump}" ec.bin || \
+	    err "extract_blob_kbc1126_ec: ${board}: can't extract ecfw1/2.bin"
 	)
 
+	ec_ex="y"
 	for i in 1 2; do
-		[ -f "${appdir}/${dl_path##*/}/ec.bin.fw${i}" ] && continue
-		printf "Could not extract EC firmware for: %s\n" \
-		    ${board}
-		return 1
+		[ -f "${appdir}/${dl_path##*/}/ec.bin.fw${i}" ] || ec_ex="n"
 	done
+	[ "${ec_ex}" = "y" ] || \
+	    err "extract_blob_kbc1126_ec: ${board}: didn't extract ecfw1/2.bin"
 
-	cp "${appdir}/${dl_path##*/}"/ec.bin.fw* "${_ec_destination%/*}/"
+	cp "${appdir}/${dl_path##*/}"/ec.bin.fw* "${_ec_destination%/*}/" || \
+	    err "extract_blob_kbc1126_ec: cant mv ecfw1/2 ${_ec_destination%/*}"
 }
 
 download_e6400vga()
@@ -345,37 +364,41 @@ extract_e6400vga()
 	_vga_destination=${CONFIG_VGA_BIOS_FILE#../../}
 
 	if [ -f "${_vga_destination}" ]; then
-		printf 'vga rom already downloaded\n'
+		printf "extract_e6400vga: vga rom already downloaded\n" 1>&2
 		return 0
 	fi
 	[ -d "${_vga_destination%/*}" ] || \
-		mkdir -p ${_vga_destination%/*}
-	[ -d "${appdir}" ] && \
-		rm -Rf ${appdir}
+		mkdir -p ${_vga_destination%/*} || \
+		    err "extract_e6400vga: can't mkdir ${_vga_destination%/*}"
+	[ ! -d "${appdir}" ] || \
+		rm -Rf ${appdir} || \
+		    err "extract_e6400vga: can't rm -Rf ${appdir}"
 
-	mkdir -p "${appdir}"
-	cp "${dl_path}" "${appdir}"
+	mkdir -p "${appdir}" || \
+	    err "extract_e6400vga: can't mkdir ${appdir}"
+	cp "${dl_path}" "${appdir}" || \
+	    err "extract_e6400vga: can't copy vendor update"
 
-	if [ "${e6400_vga_offset}" = "" ]; then
-		printf "E6400 VGA offset not defined\n"
-		return 1
-	elif [ "${e6400_vga_romname}" = "" ]; then
-		printf "E6400 VGA ROM name not defined\n"
-		return 1
-	fi
+	[ "${e6400_vga_offset}" = "" ] && \
+		err "extract_e6400vga: E6400 VGA offset not defined"
+	[ "${e6400_vga_romname}" = "" ] && \
+		err "extract_e6400vga: E6400 VGA ROM name not defined"
 
 	(
-	cd "${appdir}"
-	tail -c +${e6400_vga_offset} "${dl_path##*/}" \
-			| gunzip > bios.bin
+	cd "${appdir}" || \
+	    err "extract_e6400vga: can't cd ${appdir}"
+	tail -c +${e6400_vga_offset} "${dl_path##*/}" | gunzip > bios.bin || \
+	    err "extract_e6400vga: can't gunzip > bios.bin"
+
 	[ -f "bios.bin" ] || \
-		err "Could not extract bios.bin from Dell E6400 update"
+		err "extract_e6400vga: can't extract bios.bin from update"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
 	[ -f "${e6400_vga_romname}" ] || \
-		err "Could not extract VGA ROM from Dell E6400 BIOS update"
+		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
 
-	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}"
+	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}" || \
+	    err "extract_e6400vga: can't copy vga rom to ${_vga_destination}"
 
 	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
 }
@@ -398,16 +421,18 @@ extract_sch5545ec()
 	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
 
 	if [ -f "${_sch5545ec_destination}" ]; then
-		printf 'sch5545 firmware already downloaded\n'
+		printf "sch5545 firmware already downloaded\n" 1>&2
 		return 0
 	fi
 
-	[ -d "${appdir}" ] rm -Rf "${appdir}"
+	[ ! -d "${appdir}" ] || rm -Rf "${appdir}" || \
+	    err "extract_sch5545ec: can't remove ${appdir}"
 
-	mkdir -p "${appdir}/"
-	cp "${dl_path}" "${appdir}/"
+	mkdir -p "${appdir}/" || err "extract_sch5545ec: !mkdir ${appdir}"
+	cp "${dl_path}" "${appdir}/" || \
+	    err "extract_sch5545ec: can't copy vendor update file"
 	python "${pfs_extract}" "${appdir}/${dlsum}" -e || \
-	    err "cannot extract archive (dell, sch5545)"
+	    err "extract_sch5545ec: can't extract from vendor update"
 
 	# full system ROM (UEFI), to extract with UEFIExtract:
 	_bios="${appdir}/${dlsum}_extracted/Firmware"
@@ -419,15 +444,16 @@ extract_sch5545ec()
 	_sch5545ec_fw="${_sch5545ec_fw}/0 Raw section/body.bin" # <-- this!
 
 	# this makes the file defined by _sch5545ec_fw available to copy
-	"${uefiextract}" "${_bios}" || err "cannot extract dell uefi image"
+	"${uefiextract}" "${_bios}" || \
+	    err "extract_sch5545ec: cannot extract from uefi image"
 
 	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || \
-	    err "cannot copy sch5545ec firmware file"
+	    err "extract_sch5545ec: cannot copy sch5545ec firmware file"
 }
 
 fetch_update()
 {
-	printf "Fetching vendor update for board: %s\n" ${board}
+	printf "Fetching vendor update for board: %s\n" "${board}"
 
 	fw_type="${1}"
 	dl=""
@@ -450,39 +476,38 @@ fetch_update()
 		dl_bkup="${sch5545ec_dl_url_bkup}"
 		dlsum="${sch5545ec_dl_hash}"
 	else
-		printf "Unsupported download type: %s\n" ${fw_type}
-		return 1
+		err "fetch_update: Unsupported download type: ${fw_type}"
 	fi
 
-	if [ -z "${dl_url+x}" ] && [ "${fw_type}" != "e6400vga" ]; then
-		printf "No vendor update specified for board: %s\n" ${board}
-		return 1
-	fi
+	[ -z "${dl_url+x}" ] && [ "${fw_type}" != "e6400vga" ] && \
+		err "fetch_update ${fw_type}: dl_url unspecified for: ${board}"
 
 	dl_path=${blobdir}/cache/${dlsum}
-	mkdir -p ${blobdir}/cache
+	mkdir -p ${blobdir}/cache || err "fetch_update: !mkdir ${blobdir}/cache"
 
 	dl_fail="y"
 	vendor_checksum ${dlsum} && dl_fail="n"
 	for x in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
-		rm -f "${dl_path}"
-		wget -U "${agent}" ${x} -O ${dl_path}
+		[ -z "${x}" ] && continue
+		rm -f "${dl_path}" || \
+		    err "fetch_update ${fw_type}: !rm -f ${dl_path}"
+		wget -U "${agent}" ${x} -O ${dl_path} || continue
 		vendor_checksum ${dlsum} && dl_fail="n"
 	done
 	if [ "${dl_fail}" = "y" ]; then
-		printf "Could not download blob file\n" 1>&2
-		return 1
+		printf "ERROR: invalid vendor updates for: %s\n" "${board}" 1>&2
+		err "fetch_update ${fw_type}: matched vendor update unavailable"
 	fi
 }
 
 vendor_checksum()
 {
 	if [ ! -f "${dl_path}" ]; then
-		printf "Vendor update not found on disk for: %s\n" ${board}
+		printf "Vendor update not found on disk for: %s\n" ${board} 1>&2
 		return 1
 	elif [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
-		printf "Bad checksum on vendor update for: %s\n" ${board}
+		printf "Bad checksum on vendor update for: %s\n" ${board} 1>&2
 		return 1
 	fi
 }

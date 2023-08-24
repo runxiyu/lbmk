@@ -19,6 +19,10 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u
 
+. "include/err.sh"
+
+project="$(cat projectname)"
+
 version="version-unknown"
 [ -f version ] && version="$(cat version)"
 version_="${version}"
@@ -36,4 +40,9 @@ if [ -e ".git" ]; then
 	versiondate="$(git show --no-patch --no-notes --pretty='%ct' HEAD)" || \
 	    versiondate="${versiondate_}"
 	printf "%s\n" "${versiondate}" > versiondate
+fi
+
+if [ "${versiondate}" = "version-date-unknown" ] || \
+    [ "${version}" = "version-unknown" ]; then
+	err "cannot determine ${projectname} revision"
 fi

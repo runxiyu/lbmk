@@ -29,7 +29,8 @@ main()
 	    err "ich9utils make"
 	[ ! -f "${ich9gen}" ] && err "ich9gen doesn't exist"
 
-	[ -d "descriptors/ich9m/" ] || mkdir -p "descriptors/ich9m/"
+	[ -d "descriptors/ich9m/" ] || mkdir -p "descriptors/ich9m/" || \
+	    err "can't create directory: descriptors/ich9m"
 	rm -f descriptors/ich9m/* || err "rm-rf"
 
 	(

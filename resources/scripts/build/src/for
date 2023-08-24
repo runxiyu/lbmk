@@ -53,24 +53,28 @@ main()
 handle_dependencies()
 {
 	[ -d "${project}" ] || ./fetch "${project%/*}" || \
-	    err "Cannot download project, ${project%/*}"
-	[ -d "${project}" ] || err "Project, ${project%/*}, not downloaded"
+	    err "handle_dependencies: can't fetch ${project%/*}"
+	[ -d "${project}" ] || \
+		err "handle_dependencies: ${project%/*} not downloaded"
 
 	if [ "${project}" = "uefitool" ]; then
 		(
-		cd uefitool || err "cannot cd to uefitool/"
-		cmake UEFIExtract/ || err "cannot cmake UEFIExtract"
+		cd uefitool || err "handle_dependencies: !cd uefitool"
+		cmake UEFIExtract/ || \
+		    err "handle_dependencies: !cmake UEFIExtract/"
 		)
 	fi
 }
 
 run_make_command()
 {
-	[ ! -z "${mode}" ] || \
-		make -C "${project}" || err "'make' failed (${project})"
-	[ -z "${mode}" ] || \
+	if [ -z "${mode}" ]; then
+		make -C "${project}" || \
+		    err "run_make_command: !make -C ${project}"
+	else
 		make -C "${project}" distclean || make -C "${project}" clean \
-		    || err "cannot clean project src, ${project}"
+		    || err "run_make_command: ${project}: make-clean failed"
+	fi
 }
 
 main $@

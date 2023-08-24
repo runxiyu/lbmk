@@ -67,27 +67,28 @@ main()
 
 	printf "Friendly reminder (this is *not* an error message):\n"
 	printf "Please always ensure that the files were inserted correctly.\n"
-	printf "Read https://libreboot.org/docs/install/ivy_has_common.html\n"
+	printf "Read: https://libreboot.org/docs/install/ivy_has_common.html\n"
 }
 
 check_board()
 {
 	if ! check_release ${archive} ; then
 		[ -f "${rom}" ] || \
-			err "\"${rom}\" is not a valid path"
+			err "check_board: \"${rom}\" is not a valid path"
 		[ -z ${rom+x} ] && \
-			err "no rom specified"
+			err "check_board: no rom specified"
 		[ ! -z ${board+x} ] || \
-			board=$(detect_board ${rom}) || \
-			    err "no board specified"
+			board=$(detect_board "${rom}")
 	else
 		release=true
 		releasearchive="${archive}"
-		board=$(detect_board ${archive})
+		board=$(detect_board "${archive}")
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	[ -d "${boarddir}" ] || err "board ${board} not found"
+	if [ ! -d "${boarddir}" ]; then
+		err "check_board: board ${board} not found"
+	fi
 }
 
 check_release()
@@ -122,18 +123,20 @@ detect_board()
 build_dependencies()
 {
 	[ -d "${cbdir}" ] || ./fetch_trees coreboot default
-	./build coreboot utils default || err "could not build cbutils"
+	./build coreboot utils default || \
+	    err "build_dependencies: could not build cbutils"
 	./update blobs download ${board} || \
-	    err "Could not download blobs for ${board}"
+	    err "build_dependencies: Could not download blobs for ${board}"
 }
 
 inject_blobs()
 {
 	if [ "${release}" = "true" ]; then
-		echo 'patching release file'
+		printf "patching release file\n"
 		patch_release_roms
 	else
-		patch_rom ${rom}
+		patch_rom "${rom}" || \
+		    err "inject_blobs: could not patch ${x}"
 	fi
 }
 
@@ -141,17 +144,17 @@ patch_release_roms()
 {
 	_tmpdir=$(mktemp -d "/tmp/${board}_tmpXXXX")
 	tar xf "${releasearchive}" -C "${_tmpdir}" || \
-	err 'could not extract release archive'
+	    err "patch_release_roms: could not extract release archive"
 
 	for x in ${_tmpdir}/bin/*/*.rom ; do
 		echo "patching rom $x"
-		patch_rom ${x} || err "could not patch ${x}"
+		patch_rom ${x} || err "patch_release_roms: could not patch ${x}"
 	done
 
 	(
 	cd ${_tmpdir}/bin/*
 	sha1sum --status -c blobhashes || \
-	err 'ROMs did not match expected hashes'
+	    err "patch_release_roms: ROMs did not match expected hashes"
 	)
 
 	if [ "${modifygbe}" = "true" ]; then
@@ -160,19 +163,31 @@ patch_release_roms()
 		done
 	fi
 
-	[ -d bin/release ] || mkdir -p bin/release
-	mv ${_tmpdir}/bin/* bin/release/ && \
-	    printf '%s\n' 'Success! Your ROMs are in bin/release'
+	[ -d bin/release ] || mkdir -p bin/release || \
+	    err "patch_release_roms: !mkdir -p bin/release"
+	mv "${_tmpdir}"/bin/* bin/release/ || \
+	    err "patch_release_roms: !mv ${_tmpdir}/bin/* bin/release/"
 
-	rm -r "${_tmpdir}"
+	printf "Success! Your ROMs are in bin/release\n"
+
+	rm -Rf "${_tmpdir}" || err "patch_release_roms: !rm -Rf ${_tmpdir}"
 }
 
 patch_rom()
 {
 	rom="${1}"
 
+	no_config="printf \"No configs on target, %s\\n\" ${board} 1>&2; exit 1"
+	for x in "${boarddir}"/config/*; do
+		[ -f "${x}" ] && no_config=""
+	done
+	eval "${no_config}"
+
+	[ -f "${boarddir}/target.cfg" ] || \
+	    err "patch_rom: file missing: ${boarddir}/target.cfg"
+
 	set -- "${boarddir}/config/"*
-	. ${1} 2>/dev/null
+	. "${1}"
 	. "${boarddir}/target.cfg"
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && \
@@ -189,6 +204,8 @@ patch_rom()
 		inject_blob_smsc_sch5545_ec "${rom}"
 	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ] && \
 		modify_gbe ${rom}
+
+	printf "ROM image successfully patched: %s\n" "${rom}"
 }
 
 inject_blob_intel_mrc()
@@ -216,7 +233,7 @@ inject_blob_intel_mrc()
 	# TODO: this logic should be tweaked to handle more platforms
 
 	${cbfstool} ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc \
-		-b 0xfffa0000 || err "cannot insert mrc.bin"
+	    -b 0xfffa0000 || err "inject_blob_intel_mrc: cannot insert mrc.bin"
 }
 
 inject_blob_intel_me()
@@ -225,14 +242,14 @@ inject_blob_intel_me()
 
 	rom="${1}"
 	[ -z ${CONFIG_ME_BIN_PATH} ] && \
-		err "CONFIG_ME_BIN_PATH not set"
+		err "inject_blob_intel_me: CONFIG_ME_BIN_PATH not set"
 
 	_me_location=${CONFIG_ME_BIN_PATH#../../}
 	[ ! -f "${_me_location}" ] && \
-		err "CONFIG_ME_BIN_PATH points to missing file"
+		err "inject_blob_intel_me: per CONFIG_ME_BIN_PATH: file missing"
 
 	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || \
-	    err "cannot insert me.bin"
+	    err "inject_blob_intel_me: cannot insert me.bin"
 }
 
 inject_blob_hp_kbc1126_ec()
@@ -247,19 +264,21 @@ inject_blob_hp_kbc1126_ec()
 	printf "adding hp kbc1126 ec firmware\n"
 
 	if [ "${_ec1_offset}" = "" ] || [ "${_ec1_offset}" = "" ]; then
-		err "EC offsets not declared for board, ${board}"
+		err "inject_blob_hp_kbc1126_ec: ${board}: offset not declared"
 	fi
 	if [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
-		err "EC firmware path not declared for board, ${board}"
+		err "inject_blob_hp_kbc1126_ec: ${board}: EC path not declared"
 	fi
 	if [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
-		err "EC firmware not downloaded for board: ${board}"
+		err "inject_blob_hp_kbc1126_ec: ${board}: ecfw not downloaded"
 	fi
 
 	${cbfstool} "${rom}" add -f ${_ec1_location} -n ecfw1.bin \
-	    -b ${_ec1_offset} -t raw || err "cannot insert ecfw1.bin"
+	    -b ${_ec1_offset} -t raw || \
+	    err "inject_blob_hp_kbc1126_ec: cannot insert ecfw1.bin"
 	${cbfstool} "${rom}" add -f ${_ec2_location} -n ecfw2.bin \
-	    -b ${_ec2_offset} -t raw || err "cannot insert ecfw2.bin"
+	    -b ${_ec2_offset} -t raw || \
+	    err "inject_blob_hp_kbc1126_ec: cannot insert ecfw2.bin"
 }
 
 inject_blob_dell_e6400_vgarom_nvidia()
@@ -273,15 +292,15 @@ inject_blob_dell_e6400_vgarom_nvidia()
 	printf "adding pci option rom\n"
 
 	if [ "${_vga_dir}" != "${pciromsdir}" ]; then
-		err "Invalid PCI ROM directory, ${_vga_dir}"
+		err "inject_blob_dell_e6400vga: invalid pcirom dir: ${_vga_dir}"
 	fi
 	if [ ! -f "${_vga_location}" ]; then
-		err "No such file exists, ${_vga_location}"
+		err "inject_blob_dell_e6400vga: ${_vga_location} doesn't exist"
 	fi
 
 	${cbfstool} ${rom} add -f "${_vga_location}" \
 	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom || \
-	    err "cannot insert e6400 nvidia rom"
+	    err "inject_blob_dell_e6400vga: cannot insert vga oprom"
 }
 
 inject_blob_smsc_sch5545_ec()
@@ -291,11 +310,12 @@ inject_blob_smsc_sch5545_ec()
 	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}"
 
 	if [ ! -f "${_sch5545ec_location}" ]; then
-		err "SCH5545 firmware file missing"
+		err "inject_blob_smsc_sch5545_ec: SCH5545 fw missing"
 	fi
 
 	"${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
-	    -n sch5545_ecfw.bin -t raw || err "cannot insert sch5545_ecfw.bin"
+	    -n sch5545_ecfw.bin -t raw || \
+	    err "inject_blob_smsc_sch5545_ec: can't insert sch5545_ecfw.bin"
 }
 
 modify_gbe()
@@ -305,22 +325,22 @@ modify_gbe()
 	rom=${1}
 
 	[ -z ${CONFIG_GBE_BIN_PATH} ] && \
-		err "CONFIG_GBE_BIN_PATH not set"
+		err "modify_gbe: ${board}: CONFIG_GBE_BIN_PATH not set"
 
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
 
 	[ -f "${_gbe_location}" ] || \
-		err "CONFIG_GBE_BIN_PATH points to missing file"
+		err "modify_gbe: CONFIG_GBE_BIN_PATH points to missing file"
 	[ -f ${nvmutil} ] || \
-		make -C util/nvmutil || err 'failed to build nvmutil'
+		make -C util/nvmutil || err "modify_gbe: couldn't build nvmutil"
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
 	cp ${_gbe_location} ${_gbe_tmp}
-	${nvmutil} "${_gbe_tmp}" setmac ${new_mac} || \
-	    err 'failed to modify mac address'
+	${nvmutil} "${_gbe_tmp}" setmac "${new_mac}" || \
+	    err "modify_gbe: ${board}: failed to modify mac address"
 
 	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" -O "${rom}" || \
-	    err "cannot insert modified gbe.bin"
+	    err "modify_gbe: ${board}: cannot insert modified gbe.bin"
 
 	rm -f ${_gbe_tmp}
 }

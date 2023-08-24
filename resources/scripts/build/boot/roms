@@ -66,11 +66,11 @@ main()
 
 	if [ "${firstoption}" = "all" ]; then
 		for boardname in $(listboards); do
-			buildrom "${boardname}" || err "build/roms: error"
+			buildrom "${boardname}" || err "build/roms (1): error"
 		done
 	else
 		for board in ${boards}; do
-			buildrom "${board}" || err "build/roms: error"
+			buildrom "${board}" || err "build/roms (2): error"
 		done
 	fi
 
@@ -104,7 +104,7 @@ usage()
 listboards()
 {
 	for boarddir in resources/coreboot/*; do
-		[ ! -d "${boarddir}" ] && continue
+		[ -d "${boarddir}" ] || continue
 		board="${boarddir##resources/coreboot/}"
 		board="${board%/}"
 		printf '%s\n' "${board##*/}"
@@ -115,7 +115,7 @@ listboards()
 buildrom() {
 	[ -d "resources/coreboot/${1}/" ] || \
 		err "build/roms: target not defined: ${1}"
-	./build boot roms_helper ${1}${opts}
+	./build boot roms_helper ${1}${opts} || return 1
 }
 
 main $@

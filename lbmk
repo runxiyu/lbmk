@@ -33,11 +33,18 @@ option=""
 
 main()
 {
+	id -u 1>/dev/null 2>/dev/null || \
+	    err "cannot ascertain user id"
+
 	[ "${0##*/}" = "lbmk" ] && err "Don't run this script directly."
 	[ $# -lt 1 ] && err "Too few arguments. Try: ${0} help"
 
-	buildpath="./resources/scripts/${0##*/}"
 	mode="${1}"
+	if [ "$(id -u)" = "0" ] && [ "${mode}" != "dependencies" ]; then
+		err "running lbmk as root as not permitted"
+	fi
+
+	buildpath="./resources/scripts/${0##*/}"
 
 	./.gitcheck || err "/.gitcheck call from main, in /lbmk"
 	[ "${mode}" = "help" ] && usage ${0} && exit 0
@@ -46,12 +53,13 @@ main()
 	if [ "${mode}" = "dependencies" ]; then
 		install_dependencies $@ || err "Could not install dependencies"
 		exit 0
-	else
-		./resources/scripts/misc/versioncheck
 	fi
 
 	option="${2}"
 	shift 2
+
+	./resources/scripts/misc/versioncheck || \
+	    err "Cannot check lbmk version"
 
 	case "${option}" in
 	list)
@@ -59,7 +67,8 @@ main()
 		listoptions "${mode}" ;;
 	all)
 		for option in $(listoptions "${mode}"); do
-			"${buildpath}/${mode}/${option}" $@
+			"${buildpath}/${mode}/${option}" $@ || \
+			    err "script fail: ${buildpath}/${mode}/${option} $@"
 		done
 		;;
 	*)
@@ -84,18 +93,23 @@ install_dependencies()
 	aur_notice=""
 	. "resources/dependencies/${2}"
 
-	${pkg_add} ${pkglist} || err "Error installing dependencies"
-	[ "${aur_notice}" != "" ] && \
-		printf "You must install these AUR packages: %s\n" \
-		    "${aur_notice}" 1>&2
+	${pkg_add} ${pkglist} || \
+	    err "install_dependencies: Error installing dependencies"
+	[ "${aur_notice}" = "" ] || \
+	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
 }
 
 # Takes exactly one mode as parameter
 listoptions()
 {
+	options="n"
 	for option in "${buildpath}/${1}/"*; do
+		[ -f "${option}" ] || continue
 		printf '%s\n' ${option##*/}
+		options="y"
 	done
+	[ "${options}" = "y" ] || \
+	    err "listoptions: No scripts present in directory ${buildpath}/${1}"
 }
 
 usage()
@@ -118,9 +132,14 @@ usage()
 
 listmodes()
 {
+	modes="n"
 	for mode in "${buildpath}"/*; do
+		[ -d "${mode}" ] || continue
 		printf '%s\n' ${mode##*/}
+		modes="y"
 	done
+	[ "${modes}" = "y" ] || \
+	    err "listmodes: No directories present in directory ${buildpath}"
 }
 
 main $@

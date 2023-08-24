@@ -17,23 +17,32 @@ depend=""
 
 main()
 {
-	[ -z "${1+x}" ] && fail 'Error: name not set'
+	id -u 1>/dev/null 2>/dev/null || \
+	    fail "cannot ascertain user id"
+	if [ "$(id -u)" = "0" ]; then
+		fail "running lbmk as root as not permitted"
+	fi
+
+	[ $# -gt 0 ] || fail "no argument given"
+
+	[ -z "${1+x}" ] && fail 'main(): name not set'
 	name=${1}
 
 	read_config
 	verify_config
 
 	clone_project
-	[ "${depend}" = "" ] || ./fetch ${depend} || exit 1
+	[ "${depend}" = "" ] || ./fetch ${depend} || \
+	    fail "Cannot fetch dependency, ${depend}, for project, ${name}"
 
-	rm -Rf ${tmp_dir} >/dev/null 2>&1 || exit 1
+	rm -Rf ${tmp_dir} || fail "cannot remove tmpdir, ${tmp_dir}"
 }
 
 read_config()
 {
 	awkstr=" /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
 	while read -r line ; do
-		set ${line} >/dev/null 2>&1
+		set ${line} || fail "read_config: set line"
 		case ${line} in
 		rev:*)
 			revision=${2} ;;
@@ -53,9 +62,9 @@ EOF
 
 verify_config()
 {
-	[ -z "${revision+x}" ] && fail 'Error: revision not set'
-	[ -z "${location+x}" ] && fail 'Error: location not set'
-	[ -z "${url+x}" ] && fail 'Error: url not set'
+	[ -z "${revision+x}" ] && fail 'verify_config: revision not set'
+	[ -z "${location+x}" ] && fail 'verify_config: location not set'
+	[ -z "${url+x}" ] && fail 'verify_config: url not set'
 }
 
 clone_project()
@@ -63,19 +72,19 @@ clone_project()
 	tmp_dir=$(mktemp -dt "${name}_XXXXX")
 
 	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} || \
-	    fail "ERROR: could not download ${name}"
+	    fail "clone_project: could not download ${name}"
 	(
-	cd ${tmp_dir} || fail "tmpdir not created"
-	git reset --hard ${revision} || fail "Cannot reset revision"
+	cd ${tmp_dir} || fail "clone_project: tmpdir not created"
+	git reset --hard ${revision} || \
+	    fail "clone_project: Cannot reset revision"
 	)
 	patch_project
 
 	[ ! -d "${location}" ] || \
-		rm -Rf ${location} || fail "Can't remove directory '${location}'"
-	mv ${tmp_dir} ${location} && return 0
-
-	printf "ERROR: Could not copy temp file to destination.\n"
-	fail " ${tmp_dir} > ${location} check permissions"
+		rm -Rf ${location} || \
+		    fail "clone_project: Can't remove directory '${location}'"
+	mv "${tmp_dir}" "${location}" || \
+	    fail "clone_project: could not copy temp file to destination"
 }
 
 patch_project()
@@ -85,16 +94,19 @@ patch_project()
 	for patchfile in ${PWD}/${patchdir}/*.patch ; do
 		[ -f "${patchfile}" ] || continue
 		(
-		cd ${tmp_dir} || fail "tmpdir not created"
-		git am ${patchfile} || fail "Cannot patch project: $name"
+		cd "${tmp_dir}" || fail "patch_project: tmpdir unavailable"
+		git am "${patchfile}" || \
+		    fail "patch_project: Cannot patch project: $name"
 		)
 	done
 }
 
 fail()
 {
+	for x in "${location}" "${tmp_dir}"; do
+		[ -z "${x}" ] || [ ! -d "${x}" ] || rm -Rf "${location}" || :
+	done
 	usage
-	rm -Rf "${tmp_dir}" > /dev/null 2>&1 | :
 	err "${1}"
 }
 

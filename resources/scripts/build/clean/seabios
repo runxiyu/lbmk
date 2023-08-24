@@ -40,7 +40,8 @@ clean_seabios()
 	for x in seabios/*; do
 		[ ! -d "${x}" ] && continue
 		[ "${x}" = "seabios/seabios" ] && continue
-		make -C "${x}" distclean || err "cannot distclean tree, ${x}"
+		make -C "${x}" distclean || \
+		    err "clean_seabios: cannot distclean tree, ${x}"
 	done
 }
 

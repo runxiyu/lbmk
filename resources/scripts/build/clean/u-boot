@@ -39,11 +39,12 @@ clean_uboot()
 		fi
 
 		make -C "${board}/" distclean || \
-		    err "cannot distclean u-boot dir, ${board}"
+		    err "clean_uboot: cannot distclean ${board}"
 
-		[ ! -e "${board}/.git" ] || \
+		if [ -e "${board}/.git" ]; then
 			git -C "${board}" clean -fdx || \
-			    err "cannot clean u-boot git repo, ${board}"
+			    err "clean_uboot: ${board}: cannot clean git files"
+		fi
 	done
 }
 

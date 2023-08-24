@@ -37,7 +37,8 @@ clean_crossgcc()
 	for board in coreboot/*; do
 		[ -d "${board}" ] || continue
 		[ "${board##*/}" = "coreboot" ] && continue
-		make -C "${board}/" crossgcc-clean || err "make-clean"
+		make -C "${board}/" crossgcc-clean || \
+		    err "clean_crossgcc: ${board}: !make crossgcc-clean"
 	done
 }
 

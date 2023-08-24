@@ -44,15 +44,15 @@ clean_cbutils()
 
 		# Clean coreboot, of course
 		make -C "${tree}/" distclean || \
-		    err "cannot distclean coreboot tree, ${tree}"
+		    err "clean_cbutils: ${tree}: cannot distclean"
 
 		# Clean its utilities as well
 		for util in cbfstool ifdtool nvramtool cbmem; do
 			make distclean -C "${tree}/util/${util}/" || \
-			    err "cannot clean util, ${util}, at ${tree}"
+			    err "clean_cbutils: ${cbtree} ${util}: can't clean"
 		done
 		make distclean -C "${tree}/payloads/libpayload/" || \
-		    err "cannot distclean libpayload, at ${tree}"
+		    err "clean_cbutils: ${tree}: can't distclean libpayload"
 	done
 }
 

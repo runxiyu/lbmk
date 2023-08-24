@@ -50,20 +50,26 @@ main()
 
 init_check()
 {
-	[ -f version ] && \
+	if [ -f version ]; then
 		version="$(cat version)"
 	[ -f versiondate ] && \
 		versiondate="$(cat versiondate)"
 	[ ! -d "bin/" ] && \
-		err "no ROMs built yet. exiting"
-	[ ! -d "release/" ] && \
-		mkdir -p release/
-	[ ! -d "release/${version}/" ] && \
-		mkdir -p "release/${version}/"
-	[ -d "release/${version}/roms/" ] && \
-		rm -Rf "release/${version}/roms/"
-	[ ! -d "release/${version}/roms/" ] && \
-		mkdir -p "release/${version}/roms/"
+		err "init_check: no ROMs built yet (error)"
+	[ -d "release/" ] || \
+		mkdir -p release/ || \
+		    err "init_check: !mkdir -p release/"
+	[ -d "release/${version}/" ] || \
+		mkdir -p "release/${version}/" || \
+		    err "init_check: !mkdir -p release/${version}/"
+	[ ! -d "release/${version}/roms/" ] || \
+		rm -Rf "release/${version}/roms/" || \
+		    err "init_check: !rm -Rf release/${version}/roms/"
+
+	if [ ! -d "release/${version}/roms/" ]; then
+		mkdir -p "release/${version}/roms/" || \
+		    err "init_check: !mkdir -p release/${version}/roms/"
+	fi
 }
 
 make_archive()
@@ -90,24 +96,28 @@ make_archive()
 	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="n"
 
 	# remove ME/MRC/EC firmware from ROM images
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] \
-			|| [ "${target}" = "e6400nvidia_4mb" ]; then
+	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] || \
+	    [ "${target}" = "e6400nvidia_4mb" ]; then
 		strip_archive "${romdir}"
 	fi
 
 	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
-			"${version}" "${projectname}" \
-			"${version}" "${target##*/}"
-	printf "%s\n" "${version}" > "${romdir}/version"
-	printf "%s\n" "${versiondate}" > "${romdir}/versiondate"
-	printf "%s\n" "${projectname}" > "${romdir}/projectname"
+	    "${version}" "${projectname}" "${version}" "${target##*/}"
+	printf "%s\n" "${version}" > "${romdir}/version" || \
+	    err "make_archive: can't create ${romdir}/version"
+	printf "%s\n" "${versiondate}" > "${romdir}/versiondate" || \
+	    err "make_archive: can't create ${romdir}/versiondate"
+	printf "%s\n" "${projectname}" > "${romdir}/projectname" || \
+	    err "make_archive: can't create ${romdir}/projectname"
 
 	f="release/${version}/roms/${projectname}-${version}_${target##*/}"
-	tar -c "${romdir}/" | xz -9e > "${f}.tar.xz"
+	tar -c "${romdir}/" | xz -9e > "${f}.tar.xz" || \
+	    err "make_archive: can't create ${f}.tar.xz"
 
 	if [ -d "${romdir}_tmp" ]; then
-		rm -Rf "${romdir}"
-		mv "${romdir}_tmp" "${romdir}"
+		rm -Rf "${romdir}" || err "make_archive: !rm -Rf ${romdir}"
+		mv "${romdir}_tmp" "${romdir}" || \
+		    err "make_archive: !mv \"${romdir}_tmp\" \"${romdir}\""
 	fi
 }
 
@@ -117,21 +127,25 @@ strip_archive()
 
 	[ -d coreboot/${tree} ] || \
 		./fetch_trees coreboot ${tree} || \
-		    err "cannot fetch source tree, coreboot/${tree}"
+		    err "strip_archive: coreboot/${tree}: can't fetch source"
 	./build coreboot utils ${tree} || \
-	    err "cannot build utils for coreboot/${tree}"
+	    err "strip_archive: coreboot/${tree}: can't build utils"
 
-	rm -Rf "${romdir}_tmp" # dirty hack, to reduce disk io later
+	# dirty hack, to reduce disk io later
 	# rather than using /tmp, which might not be tmpfs
-	mkdir "${romdir}_tmp"
+	rm -Rf "${romdir}_tmp" || err "strip_archive: !rm -Rf ${romdir}_tmp"
+	mkdir "${romdir}_tmp" || err "strip_archive: !mkdir ${romdir}_tmp"
 
 	# Hash the rom before removing blobs
-	[ -f "${romdir}/blobhashes" ] || \
-		printf "ROMs must match these hashes after blob insertion:" \
-		    > "${romdir}/blobhashes"
+	rm -f "${romdir}/blobhashes" || \
+	    err "strip_archive: !rm -f ${blobdir}/blobhashes"
+	touch "${romdir}/blobhashes" || \
+	    err "strip_archive: !touch ${blobdir}/blobhashes"
+
 	(
-	cd ${romdir} || err "subshell: cd"
-	sha1sum *.rom >> blobhashes || err "subshell: sha1sum"
+	cd ${romdir} || err "strip_archive: !cd ${romdir}"
+	sha1sum *.rom >> blobhashes || \
+	    err "strip_archive: ${romdir}: !sha1sum *.rom >> blobhashes"
 	)
 
 	for romfile in "${romdir}"/*.rom; do
@@ -147,32 +161,35 @@ strip_rom_image()
 
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
 		${ifdtool} --nuke me "${romfile}" || \
-		    err "cannot nuke Intel ME region on file, ${romfile}"
-		mv "${romfile}" "${romdir}_tmp"/
-		mv "${romfile}.new" "${romfile}"
+		    err "strip_rom_images: ${romfile}: cannot nuke Intel ME"
+		mv "${romfile}" "${romdir}_tmp" || \
+		    err "strip_rom_images: !mv ${romfile} ${romdir}_tmp"
+		mv "${romfile}.new" "${romfile}" || \
+		    err "strip_rom_images: !mv ${romfile}.new ${romfile}"
 	fi
 
 	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
 		${cbfstool} "${romfile}" remove -n mrc.bin || \
-		    err "cannot remove mrc.bin from file, ${romfile}"
+		    err "strip_rom_images: ${romfile}: cannot nuke mrc.bin"
 		${cbfstool} "${romfile}" print || :
 	fi
 
 	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
 		${cbfstool} "${romfile}" remove -n ecfw1.bin || \
-		    err "cannot remove ecfw1.bin from file, ${romfile}"
+		    err "strip_rom_images: ${romfile}: can't nuke ecfw1.bin"
 		${cbfstool} "${romfile}" remove -n ecfw2.bin || \
-		    err "cannot remove ecfw2.bin from file, ${romfile}"
+		    err "strip_rom_images: ${romfile}: can't nuke ecfw2.bin"
 	fi
 
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
 		${cbfstool} "${romfile}" remove -n sch5545_ecfw.bin || \
-		    err "cannot remove sch5545_ecfw.bin from file, ${romfile}"
+		    err "strip_rom_images: ${romfile}: can't nuke sch5545ec fw"
 
 	# TODO: replace this board-specific hack
-	[ "${target}" != "e6400nvidia_4mb" ] || \
+	if [ "${target}" = "e6400nvidia_4mb" ]; then
 		${cbfstool} "${romfile}" remove -n "pci10de,06eb.rom" || \
-		    err "cannot remove pci10de,06eb.rom from file, ${romfile}"
+		    err "strip_rom_images: ${romfile}: can't nuke e6400 vga rom"
+	fi
 }
 
 main $@

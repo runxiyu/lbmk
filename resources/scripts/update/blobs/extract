@@ -44,22 +44,27 @@ main()
 
 check_board()
 {
-	[ -f "${vendor_rom}" ] || \
-		err "file does not exist: ${vendor_rom}"
-	[ -d "${boarddir}" ] || \
-		err "build/roms ${board}: target not defined"
-	[ -f "${boarddir}/target.cfg" ] || \
-		err "build/roms ${board}: missing target.cfg"
+	if [ ! -f "${vendor_rom}" ]; then
+		err "check_board: ${board}: file does not exist: ${vendor_rom}"
+	elif [ ! -d "${boarddir}" ]; then
+		err "check_board: ${board}: target not defined"
+	elif [ ! -f "${boarddir}/target.cfg" ]; then
+		err "check_board: ${board}: missing target.cfg"
+	fi
 }
 
 build_dependencies()
 {
-	[ -d me_cleaner ] || \
-		./fetch me_cleaner || err "can't fetch me_cleaner"
-	[ -d ${cbdir} ] || \
-		./fetch_trees coreboot default || err "can't fetch coreboot"
-	[ -f ${ifdtool} ] || \
-		make -C "${ifdtool%/ifdtool}" || err "can't build ifdtool"
+	if [ ! -d me_cleaner ]; then
+		./fetch me_cleaner || \
+		    err "build_dependencies: can't fetch me_cleaner"
+	elif [ ! -d "${cbdir}" ]; then
+		./fetch_trees coreboot default || \
+		    err "build_dependencies: can't fetch coreboot"
+	elif [ ! -f "${ifdtool}" ]; then
+		make -C "${ifdtool%/ifdtool}" || \
+		    err "build_dependencies: can't build ifdtool"
+	fi
 }
 
 extract_blobs()
@@ -67,11 +72,11 @@ extract_blobs()
 	printf "extracting blobs for %s from %s\n" ${board} ${vendor_rom}
 
 	set -- "${boarddir}/config/"*
-	. ${1} 2>/dev/null
+	. "${1}"
 	. "${boarddir}/target.cfg"
 
 	[ "$CONFIG_HAVE_MRC" != "y" ] || \
-		./update blobs mrc || err "could not download mrc"
+		./update blobs mrc || err "extract_blobs: can't fetch mrc"
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 	_gbe_destination=${CONFIG_GBE_BIN_PATH#../../}
@@ -81,11 +86,11 @@ extract_blobs()
 	extract_blob_intel_gbe_nvm
 
 	# Cleans up other files extracted with ifdtool
-	rm -f flashregion*.bin 2> /dev/null
+	rm -f flashregion*.bin || err "extract_blobs: !rm -f flashregion*.bin"
 
-	[ -f ${_ifd_destination} ] || err "Could not extract IFD"
+	[ -f ${_ifd_destination} ] || err "extract_blobs: Could not extract IFD"
 	printf "gbe, ifd, and me extracted to %s\n" \
-	    ${_me_destination%/*}
+	    "${_me_destination%/*}"
 }
 
 extract_blob_intel_me()
@@ -96,15 +101,16 @@ extract_blob_intel_me()
 		-M ${_me_destination} ${vendor_rom} -t -r -S || \
 	    ${me7updateparser} \
 		-O ${_me_destination} ${vendor_rom} || \
-	    err "me_cleaner failed to extract blobs from rom"
+	    err "extract_blob_intel_me: cannot extract from vendor rom"
 }
 
 extract_blob_intel_gbe_nvm()
 {
 	printf "extracting gigabit ethernet firmware"
-	./${ifdtool} -x ${vendor_rom}
+	./${ifdtool} -x ${vendor_rom} || \
+	    err "extract_blob_intel_gbe_nvm: cannot extract gbe.bin from rom"
 	mv flashregion*gbe.bin ${_gbe_destination} || \
-	    err 'could not extract gbe'
+	    err "extract_blob_intel_gbe_nvm: cannot move gbe.bin"
 }
 
 print_help()

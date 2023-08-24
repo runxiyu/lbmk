@@ -65,55 +65,68 @@ create_release_directory()
 	dirname="${projectname}-${version}_src"
 	srcdir="${reldir}/${dirname}"
 
-	[ ! -d "release/" ] && mkdir -p release/
-	[ ! -d "${reldir}/" ] && mkdir -p "${reldir}/"
-	[ -d "${srcdir}/" ] && \
-		rm -Rf "${srcdir}/"
-	[ -f "${srcdir}.tar.xz" ] && \
-		rm -f "${srcdir}.tar.xz/"
+	[ -d "release/" ] || mkdir -p release/ || \
+	    err "create_release_directory: !mkdir -p release/"
+	[ -d "${reldir}/" ] || mkdir -p "${reldir}/" || \
+	    err "create_release_directory: !mkdir -p ${reldir}/"
+	[ ! -d "${srcdir}/" ] || rm -Rf "${srcdir}/" || \
+	    err "create_release_directory: !rm -Rf ${srcdir}/"
+	[ ! -f "${srcdir}.tar.xz" ] || \
+		rm -f "${srcdir}.tar.xz/" || \
+		    err "create_release_directory: !rm -f ${srcdir}.tar.xz/"
 
-	mkdir -p "${srcdir}/"
-	printf "%s" "${version}" > "${srcdir}"/version
+	mkdir -p "${srcdir}/" || \
+	    err "create_release_directory: !mkdir -p ${srcdir}/"
+	printf "%s" "${version}" > "${srcdir}"/version || \
+	    err "create_release_directory: ${srcdir}/version: can't create file"
 }
 
 download_modules()
 {
 	for modname in ${trees_fetch_list}; do
-		[ ! -d "${modname}" ] && ./fetch_trees ${modname}
+		[ -d "${modname}" ] || ./fetch_trees ${modname} || \
+		    err "download_modules: couldn't download ${modname} trees"
 	done
 	for modname in ${simple_fetch_list}; do
-		[ ! -d "${modname}/" ] && ./fetch ${modname}
+		[ -d "${modname}/" ] || ./fetch ${modname} || \
+		    err "download_modules: couldn't download ${modname} repo"
 	done
 }
 
 copy_files()
 {
 	for dir in ${simple_fetch_list} ${dirlist}; do
-		cp -R "${dir}/" "${srcdir}/"
+		cp -R "${dir}/" "${srcdir}/" || \
+		    err "copy_files: !cp -R ${dir}/ ${srcdir}/"
 	done
 
 	copy_blobs
 
 	for i in ${filelist}; do
 		if [ ! -f "${i}" ]; then
-			rm -Rf "${srcdir}"
-			err "file '${1}' does not exist"
+			rm -Rf "${srcdir}" || \
+			    err "copy_files: !rm -Rf ${srcdir}"
+			err "copy_files: file '${1}' does not exist"
 		fi
-		cp ${i} "${srcdir}/"
+		cp "${i}" "${srcdir}/" || \
+		    err "copy_files: !cp ${i} ${srcdir}/"
 	done
 }
 
 copy_blobs()
 {
-	mkdir -p "${srcdir}"/blobs
+	mkdir -p "${srcdir}"/blobs || \
+	    err "copy_blobs: !mkdir -p ${srcdir}/blobs"
 	# do not copy intel ME etc, but do copy ifd/gbe files
 	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
 	    hp8300usdt t1650; do
 		for j in ifd gbe 4_ifd 8_ifd 12_ifd 16_ifd; do
 			[ -f "blobs/${i}/${j}.bin" ] || continue
 			[ -e "${srcdir}/blobs/${i}" ] || \
-				mkdir -p "${srcdir}/blobs/${i}"
-			cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}"
+				mkdir -p "${srcdir}/blobs/${i}" || \
+				    err "copy_blobs: ! -d ${srcdir}/blobs/${i}"
+			cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}" || \
+			    err "copy_blobs: ! -f ${srcdir}/blobs/${i}"
 		done
 	done
 }
@@ -121,45 +134,64 @@ copy_blobs()
 purge_files()
 {
 	(
-	cd "${srcdir}/coreboot/" || err "cd1"
+	cd "${srcdir}/coreboot/" || err "purge_files 1: !cd ${srcdir}/coreboot/"
 	for i in *; do
-		[ ! -d "${i}" ] && continue
+		[ -d "${i}" ] || continue
 		(
-		cd "${i}/" || err "cd2"
-		make distclean || err "make-distclean1"
+		cd "${i}/" || \
+		    err "purge_files 2: !cd ${i}/"
+		make distclean || err "purge_files 1: ${i}: !make distclean"
 		)
-		make clean -BC default/util/kbc1126/ || err "make-clean1"
+		make clean -BC default/util/kbc1126/ || \
+		    err "purge_files 1: default/util/kbc1126: ! make clean"
 	done
 	)
 
 	(
-	cd "${srcdir}/" || err "cd3"
-	./build clean all || err "build-clean1"
+	cd "${srcdir}/" || \
+	    err "purge_files 3: !cd ${srcdir}/"
+	./build clean all || \
+	    err "purge_files 1: ! ./build clean all"
 	for p in bios_extract flashrom grub ich9utils memtest86plus uefitool; do
-		./build src for -c "${p}"
+		./build src for -c "${p}" || \
+		    err "purge_files: !./build src for -c ${p}"
 	done
-	make clean -BC util/nvmutil || err "make-clean2"
-	make clean -BC util/ich9utils || err "make-clean3"
-	make clean -BC util/spkmodem_recv || err "make-clean4"
-	make clean -BC util/e6400-flash-unlock || err "make-clean5"
+	make clean -BC util/nvmutil || \
+	    err "purge_files 2: !make clean -BC util/nvmutil"
+	make clean -BC util/ich9utils || \
+	    err "purge_files 3: !make clean -BC util/ich9utils"
+	make clean -BC util/spkmodem_recv || \
+	    err "purge_files 4: !make clean -BC util/spkmodem_recv"
+	make clean -BC util/e6400-flash-unlock || \
+	    err "purge_files 5: !make clean -BC util/e6400-flash-unlock"
 
-	rm -Rf coreboot/coreboot/ || err "rm-rf1"
+	rm -Rf coreboot/coreboot/ || \
+	    err "purge_files 1: !rm -Rf coreboot/coreboot/"
 	rm -Rf .git .gitignore */.git* coreboot/*/.git* \
-	    coreboot/*/3rdparty/*/.git* || err "rm-rf2"
-	rm -Rf coreboot/*/util/nvidia/cbootimage/.git* || err "rm-rf3"
-	rm -Rf u-boot/u-boot/ u-boot/*/.git* || err "rm-rf4"
+	    coreboot/*/3rdparty/*/.git* || \
+	    err "purge_files rm-rf2: can't purge .git files/directories"
+	rm -Rf coreboot/*/util/nvidia/cbootimage/.git* || \
+	    err "purge_files 3: !rm -Rf coreboot/*/util/nvidia/cbootimage/.git*"
+	rm -Rf u-boot/u-boot/ u-boot/*/.git* || \
+	    err "purge_files 4: ¬rm -Rf u-boot/u-boot/ u-boot/*/.git*"
 	)
 }
 
 create_release_archive()
 {
 	(
-	cd "${reldir}/" || err "cd4"
-	printf "%s\n" "${version}" > "${dirname}/version"
-	printf "%s\n" "${versiondate}" > "${dirname}/versiondate"
-	printf "%s\n" "${projectname}" > "${dirname}/projectname"
-	tar -c "${dirname}/" | xz -9e >"${dirname}.tar.xz" || err "tar"
-	rm -Rf "${dirname}/" || err "rm-rf5"
+	cd "${reldir}/" || \
+	    err "create_release_archive 4: !cd ${reldir}/"
+	printf "%s\n" "${version}" > "${dirname}/version" || \
+	    err "create_release_archive: can't create ${dirname}/version"
+	printf "%s\n" "${versiondate}" > "${dirname}/versiondate" || \
+	    err "create_release_archive: can't create ${dirname}/versiondate"
+	printf "%s\n" "${projectname}" > "${dirname}/projectname" || \
+	    err "create_release_archive: can't create ${dirname}/projectname"
+	tar -c "${dirname}/" | xz -9e >"${dirname}.tar.xz" || \
+	    err "create_release_archive: can't create ${dirname}.tar.xz"
+	rm -Rf "${dirname}/" || \
+	    err "create_release_archive 5: !rm -Rf ${dirname}/"
 	)
 }
 

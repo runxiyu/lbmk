@@ -34,7 +34,13 @@ cfgsdir=""
 
 main()
 {
-	rm -f ${cfgsdir}/*/seen
+	id -u 1>/dev/null 2>/dev/null || \
+	    err "cannot ascertain user id"
+	if [ "$(id -u)" = "0" ]; then
+		err "running lbmk as root as not permitted"
+	fi
+
+	rm -f ${cfgsdir}/*/seen || err_rm_seen "main 1"
 
 	printf "Downloading %s and (if available) applying patches\n" \
 	    ${project}
@@ -50,16 +56,19 @@ main()
 		targets=$@
 	else
 		for x in "${cfgsdir}/"*; do
-			[ ! -d "${x}" ] && continue
+			[ -d "${x}" ] || continue
 			targets="${targets} ${x##*/}"
 		done
 	fi
+	[ -z "${targets}" ] && \
+	    err "No targets available for project: ${project}"
 	for x in ${targets}; do
-		rm -f "${cfgsdir}"/*/seen
-		download_for_target "${x}"
+		rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 2"
+		download_for_target "${x}" || \
+		    err "${project}/${target}: cannot download source tree"
 	done
 
-	rm -f ${cfgsdir}/*/seen
+	rm -f ${cfgsdir}/*/seen || err_rm_seen "main 3"
 }
 
 download_for_target()
@@ -68,20 +77,23 @@ download_for_target()
 	tree="undefined"
 	rev="undefined"
 
-	fetch_config "${_target}" || exit 1
+	fetch_config "${_target}" || \
+	    err "download_for_target: ${project}/${_target}: bad target.cfg"
 
-	rm -f "${cfgsdir}"/*/seen
+	rm -f "${cfgsdir}"/*/seen || err_rm_seen "download_for_target"
 
 	if [ -d "${project}/${tree}" ]; then
 		printf "REMARK: download/%s %s: exists. Skipping.\n" \
-		    ${project} ${tree}
+		    "${project}" "${tree}" 1>&2
 		[ "${tree}" != "${_target}" ] && \
-			printf "(for target: '%s}')\n" ${_target}
+			printf "(for target: '%s}')\n" "${_target}" 1>&2
 		return 0
 	fi
 
-	fetch_from_upstream || exit 1
-	prepare_new_tree "${_target}" "${tree}" "${rev}" || exit 1
+	fetch_from_upstream || \
+	    err "download_for_target: cannot fetch: ${project}"
+	prepare_new_tree "${_target}" "${tree}" "${rev}" || \
+	    err "download_for_target: cannot create tree: ${project}/${tree}"
 }
 
 fetch_config()
@@ -95,20 +107,21 @@ fetch_config()
 		check_config_for_target "${_target}" || return 1
 
 		# This is to override $rev and $tree
-		. "${cfgsdir}/${_target}/target.cfg" || exit 1
+		. "${cfgsdir}/${_target}/target.cfg" || \
+		    err "fetch_config: no \"${cfgsdir}/${_target}/target.cfg\""
 
 		if [ "${_target}" != "${tree}" ]; then
 			_target="${tree}"
 			continue
 		elif [ "${tree}" = "undefined" ]; then
-			printf "ERROR: download/%s:"
+			printf "ERROR (fetch_config): download/%s:" 1>&2
 			printf " tree name undefined for '%s\n'" \
-					${project} ${_target}
+			    "${project}" "${_target}" 1>&2
 			return 1
 		elif [ "${rev}" = "undefined" ]; then
-			printf "ERROR: download/%s:"
+			printf "ERROR (fetch_config): download/%s:" 1>&2
 			printf " commit ID undefined for '%s'\n" \
-					${project} ${_target}
+			    "${project}" "${_target}" 1>&2
 			return 1
 		else
 			break
@@ -121,21 +134,25 @@ check_config_for_target()
 	_target=${1}
 
 	if [ ! -f "${cfgsdir}/${_target}/target.cfg" ]; then
-		printf "ERROR: download/%s: target.cfg does not" ${project}
-		printf " exist for '%s'\n" ${_target}
+		printf "ERROR: download/%s: target.cfg does not" \
+		    "${project}" 1>&2
+		printf " exist for '%s'\n" "${_target}" 1>&2
 		return 1
 	elif [ -f "${cfgsdir}/${_target}/seen" ]; then
-		printf "ERROR: download/%s: logical loop:" ${project}
-		printf " '%s' target.cfg refers to another tree," ${_target}
-		printf " which ultimately refers back to '%s'." ${_target}
+		printf "ERROR: download/%s: logical loop:" "${project}" 1>&2
+		printf " '%s' target.cfg refers to another tree," "${_target}" \
+		    1>&2
+		printf " which ultimately refers back to '%s'." "${_target}" \
+		    1>&2
 		return 1
 	fi
-	touch "${cfgsdir}/${_target}/seen"
+	touch "${cfgsdir}/${_target}/seen" || \
+	    err "${project}/${_target}: touch \"${cfgsdir}/${_target}/seen\""
 }
 
 fetch_from_upstream()
 {
-	[ -d "${project}" ] || mkdir -p "${project}"
+	[ -d "${project}" ] || mkdir -p "${project}" || return 1
 	[ -d "${project}" ] || return 1
 	[ -d "${project}/${project}" ] && return 0
 
@@ -152,7 +169,8 @@ prepare_new_tree()
 	[ "${tree}" != "${target}" ] && \
 		printf "(for target, %s)\n" "${target}"
 
-	cp -R "${project}/${project}" "${project}/${tree}" || exit 1
+	cp -R "${project}/${project}" "${project}/${tree}" || \
+	    err "${project}/${tree}: cannot copy source tree"
 	(
 	cd "${project}/${tree}" || err "cannot cd to ${project}/${tree}"
 	git reset --hard ${rev} || \
@@ -160,11 +178,12 @@ prepare_new_tree()
 	git submodule update --init --checkout || \
 	    err "cannot update ${project} submodules for tree, ${tree}"
 
-	for patch in ../../"${cfgsdir}"/"${tree}"/patches/*.patch; do
-		[ ! -f "${patch}" ] && continue
+	for patch in "../../${cfgsdir}/${tree}/patches/"*.patch; do
+		[ -f "${patch}" ] || continue
 		if ! git am "${patch}"; then
-			git am --abort
-			err "cannot patch ${tree}"
+			git am --abort || \
+			    err "${project}/${tree}: FAILED: git am --abort"
+			err "cannot patch: ${project}/${tree}"
 		fi
 	done
 
@@ -172,9 +191,14 @@ prepare_new_tree()
 	# but should *only* be a last resort
 	if [ -f "../../${cfgsdir}/${tree}/extra.sh" ]; then
 		"../../${cfgsdir}/${tree}/extra.sh" || \
-			err "${tree} extra.sh"
+		    err "prepare_new_tree ${project}/${tree}: extra.sh: error"
 	fi
 	)
+}
+
+err_rm_seen()
+{
+	err "${1}: ${project}/${target}: cannot rm: \"${cfgsdir}/*/seen\""
 }
 
 main $@

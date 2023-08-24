@@ -78,14 +78,13 @@ main()
 	# Build for all targets if no argument is given
 	if [ "$#" -eq 0 ]; then
 		for target_dir in "${cfgsdir}"/*; do
-			[ ! -d "${target_dir}/config/" ] && \
-				continue
+			[ -d "${target_dir}/config/" ] || continue
 			set -- "$@" "${target_dir#${cfgsdir}/}"
 		done
 	fi
 
-	[ ! -d "${elfdir}" ] && [ "${mode}" = "all" ] && \
-		mkdir -p ${elfdir}/
+	[ -d "${elfdir}" ] || [ "${mode}" != "all" ] || \
+		mkdir -p ${elfdir}/ || fail "cannot create directory: ${elfdir}"
 
 	for x in "$@"; do
 		target="${x}"
@@ -93,11 +92,12 @@ main()
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ "${mode}" != "all" ] || \
 			./update blobs download ${target} || fail "blobutil"
-		handle_defconfig || err "error handling config file"
+		handle_defconfig || fail "error handling config file"
 	done
 
-	[ "${mode}" = "all" ] && \
-		printf "Done! The files are stored under %s/\n\n" ${elfdir}
+	if [ "${mode}" = "all" ]; then
+		printf "Done! The files are stored under %s/\n\n" "${elfdir}"
+	fi
 }
 
 handle_defconfig()
@@ -111,7 +111,7 @@ handle_defconfig()
 		config_name="${config#$target_dir/config/}"
 
 		printf "build/defconfig/%s %s: handling config %s\n" \
-		    ${project} ${target} ${config_name}
+		    "${project}" "${target}" "${config_name}"
 
 		[ "${mode}" != "all" ] || check_config || continue
 		run_make_command
@@ -128,24 +128,25 @@ handle_dependencies()
 	arch="undefined"
 
 	[ ! -f "${target_dir}/target.cfg" ] && \
-		fail "build/${project} ${target}: Missing target.cfg"
+		fail "handle_dependencies: ${target_dir}: missing target.cfg"
 
 	# Override the above defaults using target.cfg
 	. "${target_dir}/target.cfg" # source
 
 	[ "${tree}" = "undefined" ] && \
-		fail "build/${project} %{target}: tree undefined"
+		fail "handle_dependencies: ${target_dir}: tree undefined"
 	[ "${arch}" = "undefined" ] && \
-		fail "build/${project} ${target}: undefined cpu type"
+		fail "handle_dependencies: ${target_dir}: undefined cpu type"
 
 	codedir="${project}/${tree}"
 	[ -d "${codedir}" ] || \
-		./fetch_trees "${project}" "$target" || \
-		    fail "cannot fetch source tree, ${project}/${target}"
+		./fetch_trees "${project}" "${target}" || \
+		    fail "handle_dependencies: can't fetch ${project}/${target}"
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
-		[ "${mode}" != "all" ] || check_cross_compiler || fail "crossgcc"
+		[ "${mode}" != "all" ] || check_cross_compiler || \
+		    fail "handle_dependencies ${project}/${target}: crossgcc"
 	fi
 }
 
@@ -164,9 +165,10 @@ check_cross_compiler()
 	[ "${project}" = "u-boot" ] && \
 		cbdir="coreboot/cros" # u-boot only used on coreboot/cros
 	# only true if not building coreboot:
+	ctarget="${cbdir#coreboot/}"
 	[ -d "${cbdir}" ] || \
-		./fetch_trees coreboot ${cbdir#coreboot/} || \
-		    fail "check_cross_compiler"
+		./fetch_trees coreboot ${ctarget} || \
+		    fail "check_cross_compiler: can't fetch coreboot/${ctarget}"
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \
@@ -205,39 +207,50 @@ check_cross_compiler()
 check_config()
 {
 	[ ! -f "${config}" ] && \
-		fail "build/${project} ${target}: configs missing"
+		fail "check_config: ${project}/${target}: configs missing"
 
 	dest_dir="${elfdir}/${target}/${config_name}"
+	# TODO: very hacky check. do it properly (based on build.list)
 	for elftest in "${dest_dir}"/*; do
 		if [ -f "${elftest}" ]; then
 			printf "Build already exists, so skipping build\n" 1>&2
 			return 1
 		fi
 	done
-	mkdir -p "${dest_dir}"
+	mkdir -p "${dest_dir}" || \
+	    fail "check_config: cannot mkdir: ${dest_dir}"
 }
 
 run_make_command()
 {
-	make -C "${codedir}" distclean || fail "run_make_command"
+	make -C "${codedir}" distclean || \
+	    make -C "${codedir}" clean || \
+	    fail "run_make_command: make distclean/clean failed"
 
-	cp "${config}" "${codedir}/.config" || fail "run_make_command"
+	cp "${config}" "${codedir}/.config" || \
+	    fail "run_make_command: can't copy config for: ${project}/${target}"
 	[ "${mode}" != "all" ] || make -C "${codedir}" silentoldconfig || \
 	    make -C "${codedir}" oldconfig || : # don't error on oldconfig
 
-	[ "${project}" = "coreboot" ] && [ "${mode}" = "all" ] && \
-		printf "%s\n" "${our_version}" > "${codedir}/.coreboot-version"
-	make -C "${codedir}" -j$(nproc) ${mode} || fail "run_make_command"
+	if [ "${project}" = "coreboot" ] && [ "${mode}" = "all" ]; then
+		printf "%s\n" "${our_version}" >"${codedir}/.coreboot-version" \
+		    || fail "run_make_command: ${codedir}: can't set version"
+	fi
+	make -C "${codedir}" -j$(nproc) ${mode} || \
+	    fail "run_make_command: make-all: ${codedir} (${project}/${target})"
 }
 
 copy_elf()
 {
 	for f in $(cat "${listfile}"); do
-		[ -f "${codedir}/$f" ] && cp "${codedir}/${f}" "${dest_dir}/"
+		[ ! -f "${codedir}/$f" ] || \
+		    cp "${codedir}/${f}" "${dest_dir}/" || \
+		    fail "copy_elf: cannot copy elf file"
 	done
 
 	make -C "${codedir}" distclean || \
-	    make -C "${codedir}" clean || fail "copy_elf"
+	    make -C "${codedir}" clean || \
+	    fail "copy_elf: clean: ${codedir} (${project}/${target})"
 }
 
 fail()
@@ -246,7 +259,7 @@ fail()
 		make -C "${codedir}" distclean \
 		    || make -C "${codedir}" clean || :
 
-	err "build/defconfig error ${1}"
+	err "${1}"
 }
 
 main $@

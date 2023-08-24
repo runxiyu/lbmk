@@ -34,12 +34,18 @@ main()
 build_grub()
 {
 	(
-	cd grub/ || err "cd"
-	[ ! -d Makefile ] || make distclean || err "make-distclean"
-	./bootstrap --gnulib-srcdir=gnulib/ --no-git || err "bootstrap"
-	./autogen.sh || err "autogen"
-	./configure --with-platform=coreboot || err "configure"
-	make -j$(nproc) || err "make"
+	cd grub/ || \
+	    err "build_grub: cd"
+	[ ! -d Makefile ] || make distclean || \
+	    err "build_grub: make-distclean"
+	./bootstrap --gnulib-srcdir=gnulib/ --no-git || \
+	    err "build_grub: gnulib bootstrap"
+	./autogen.sh || \
+	    err "build_grub: autogen.sh"
+	./configure --with-platform=coreboot || \
+	    err "build_grub: autoconf"
+	make -j$(nproc) || \
+	    err "build_grub: make"
 	)
 }
 
