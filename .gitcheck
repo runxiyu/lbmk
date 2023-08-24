@@ -29,7 +29,7 @@ set_placeholders()
 	[ -d coreboot ] || return 0
 	for x in coreboot/*; do
 		[ -d "${x}" ] || continue
-		[ -e "${x}/.git" ] || break
+		[ -e "${x}/.git" ] || continue
 		(
 		cd "${x}"
 		set_git_credentials
@@ -55,7 +55,7 @@ clean()
 	[ -d coreboot ] || return 0
 	for x in coreboot/*; do
 		[ -d "${x}" ] || continue
-		[ -e "${x}/.git" ] || break
+		[ -e "${x}/.git" ] || continue
 		(
 		cd "${x}"
 		unset_placeholders
