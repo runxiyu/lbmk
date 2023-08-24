@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
 
+. "include/err.sh"
+
 git_name="lbmkplaceholder"
 git_email="placeholder@lbmkplaceholder.com"
 
@@ -12,8 +14,7 @@ main()
 		if [ "${1}" = "clean" ]; then
 			clean 1> /dev/null
 		else
-			printf "%s: Unsupported argument\n" $0
-			exit 1
+			err "unsupported argument, \"${1}\""
 		fi
 	else
 		set_placeholders 1> /dev/null
@@ -25,13 +26,10 @@ set_placeholders()
 	set_git_credentials
 
 	# Check coreboot as well to prevent errors during building
-	if [ ! -d coreboot ]; then
-		return
-	fi
+	[ -d coreboot ] || return 0
 	for x in coreboot/*; do
-		if [ ! -d "${x}" ]; then
-			continue
-		fi
+		[ -d "${x}" ] || continue
+		[ -e "${x}/.git" ] || break
 		(
 		cd "${x}"
 		set_git_credentials
@@ -43,10 +41,10 @@ set_git_credentials()
 {
 	# Check if username and or email is set.
 	if ! git config user.name || git config user.email ; then
-		git config user.name \
-				|| git config user.name "${git_name}"
-		git config user.email \
-				|| git config user.email "${git_email}"
+		git config user.name || git config user.name "${git_name}" || \
+		    err "cannot set local git user.name"
+		git config user.email || git config user.email "${git_email}" \
+		    || err "cannot set local git user.email"
 	fi
 }
 
@@ -54,13 +52,10 @@ clean()
 {
 	unset_placeholders
 
-	if [ ! -d coreboot ]; then
-		return
-	fi
+	[ -d coreboot ] || return 0
 	for x in coreboot/*; do
-		if [ ! -d "${x}" ]; then
-			continue
-		fi
+		[ -d "${x}" ] || continue
+		[ -e "${x}/.git" ] || break
 		(
 		cd "${x}"
 		unset_placeholders
@@ -71,11 +66,13 @@ clean()
 unset_placeholders()
 {
 	if [ "$(git config user.name)" = "${git_name}" ]; then
-		git config --unset user.name
+		git config --unset user.name || \
+		    err "cannot unset local git user.name"
 	fi
 
 	if [ "$(git config user.email)" = "${git_email}" ]; then
-		git config --unset user.email
+		git config --unset user.email || \
+		    err "cannot unset local git user.email"
 	fi
 }
 
