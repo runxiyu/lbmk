@@ -159,7 +159,7 @@ if [ ! -f "${seavgabiosrom}" ] \
     || [ ! -f elf/seabios/default/vgarom/bios.bin.elf ] \
     || [ ! -f elf/seabios/default/normal/bios.bin.elf ]; then
 	[ "${payload_seabios}" != "y" ] || \
-		./handle config file -b seabios || \
+		./handle make config -b seabios || \
 		    err "cannot build seabios"
 fi
 
@@ -207,7 +207,7 @@ if [ "${payload_grub}" = "y" ] || \
 fi
 
 if [ "${payload_uboot}" = "y" ]; then
-	./handle config file -b u-boot ${board} || \
+	./handle make config -b u-boot ${board} || \
 	    err "cannot build u-boot target: ${board}"
 	ubdir="elf/u-boot/${board}/${uboot_config}"
 	ubootelf="${ubdir}/u-boot.elf"
@@ -509,7 +509,7 @@ mkRoms()
 		return 0
 	fi
 
-	./handle config file -b coreboot ${board} || \
+	./handle make config -b coreboot ${board} || \
 	    err "mkRoms: cannot build coreboot for target: ${board}"
 
 	_corebootrom="elf/coreboot/${board}/${initmode}_${displaymode}"
