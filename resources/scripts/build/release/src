@@ -25,8 +25,8 @@ set -u -e
 
 projectname="$(cat projectname)"
 
-trees_fetch_list="coreboot u-boot"
-simple_fetch_list="flashrom grub memtest86plus seabios me_cleaner uefitool"
+trees_fetch_list="coreboot u-boot seabios"
+simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
 simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 
 dirlist="resources util" # do not add blobs directory here. it's handled below
@@ -134,46 +134,40 @@ copy_blobs()
 purge_files()
 {
 	(
-	cd "${srcdir}/coreboot/" || err "purge_files 1: !cd ${srcdir}/coreboot/"
-	for i in *; do
-		[ -d "${i}" ] || continue
-		(
-		cd "${i}/" || \
-		    err "purge_files 2: !cd ${i}/"
-		make distclean || err "purge_files 1: ${i}: !make distclean"
-		)
-		make clean -BC default/util/kbc1126/ || \
-		    err "purge_files 1: default/util/kbc1126: ! make clean"
-	done
-	)
-
-	(
 	cd "${srcdir}/" || \
 	    err "purge_files 3: !cd ${srcdir}/"
+
+	for p in coreboot/*; do
+		[ -d "${p}" ] || continue
+		./build src for -c "${p}" || \
+		    err "purge_files 1: ${p}: !make distclean"
+	done
+
+	./build src for -c coreboot/default/util/kbc1126 || \
+	    err "purge_files 1: default/util/kbc1126: ! make clean"
 	./build clean all || \
 	    err "purge_files 1: ! ./build clean all"
-	for p in bios_extract flashrom grub ich9utils memtest86plus uefitool; do
+
+	for p in bios_extract flashrom grub ich9utils uefitool; do
 		./build src for -c "${p}" || \
 		    err "purge_files: !./build src for -c ${p}"
 	done
-	make clean -BC util/nvmutil || \
-	    err "purge_files 2: !make clean -BC util/nvmutil"
-	make clean -BC util/ich9utils || \
-	    err "purge_files 3: !make clean -BC util/ich9utils"
-	make clean -BC util/spkmodem_recv || \
-	    err "purge_files 4: !make clean -BC util/spkmodem_recv"
-	make clean -BC util/e6400-flash-unlock || \
-	    err "purge_files 5: !make clean -BC util/e6400-flash-unlock"
-
-	rm -Rf coreboot/coreboot/ || \
-	    err "purge_files 1: !rm -Rf coreboot/coreboot/"
-	rm -Rf .git .gitignore */.git* coreboot/*/.git* \
-	    coreboot/*/3rdparty/*/.git* || \
+	for p in 32 64; do
+		./build src for -c "memtest86plus/build${p}" || \
+		    err "purge_files: cannot clean memtest86+ build${p}"
+	done
+	for p in "nvmutil" "ich9utils" "spkmodem_recv" "e6400-flash-unlock"; do
+		make clean -C "util/${p}" || \
+		
+		    err "purge_files 2: !make clean -C ${util}/p"
+	done
+	for p in ${trees_fetch_list}; do
+		rm -Rf "${p}/${p}" "${p}"/*/.git* || \
+		    err "purge_files 1: cannot clean ${p} project files"
+	done
+	rm -Rf .git .gitignore */.git* coreboot/*/3rdparty/*/.git* \
+	    coreboot/*/util/nvidia/cbootimage/.git* || \
 	    err "purge_files rm-rf2: can't purge .git files/directories"
-	rm -Rf coreboot/*/util/nvidia/cbootimage/.git* || \
-	    err "purge_files 3: !rm -Rf coreboot/*/util/nvidia/cbootimage/.git*"
-	rm -Rf u-boot/u-boot/ u-boot/*/.git* || \
-	    err "purge_files 4: ¬rm -Rf u-boot/u-boot/ u-boot/*/.git*"
 	)
 }
 
