@@ -248,7 +248,7 @@ copy_elf()
 		    fail "copy_elf: cannot copy elf file"
 	done
 
-	./handle src for -c "${codedir}" || \
+	./handle make file -c "${codedir}" || \
 	    fail "copy_elf: clean: ${codedir} (${project}/${target})"
 }
 
