@@ -254,7 +254,7 @@ copy_elf()
 
 fail()
 {
-	[ -z "${codedir}" ] || ./handle src for -c "${codedir}" || :
+	[ -z "${codedir}" ] || ./handle make file -c "${codedir}" || :
 	err "${1}"
 }
 
