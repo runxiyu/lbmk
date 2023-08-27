@@ -69,7 +69,7 @@ handle_dependencies()
 run_make_command()
 {
 	if [ -z "${mode}" ]; then
-		make -C "${project}" || \
+		make -C "${project}" -j$(nproc) || \
 		    err "run_make_command: !make -C ${project}"
 	else
 		make -C "${project}" distclean || make -C "${project}" clean \
