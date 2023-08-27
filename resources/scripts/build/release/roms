@@ -125,7 +125,7 @@ strip_archive()
 {
 	romdir=${1}
 
-	[ -d coreboot/${tree} ] || \
+	[ -d "coreboot/${tree}" ] || \
 		./fetch_trees coreboot ${tree} || \
 		    err "strip_archive: coreboot/${tree}: can't fetch source"
 	./build coreboot utils ${tree} || \
@@ -143,7 +143,7 @@ strip_archive()
 	    err "strip_archive: !touch ${blobdir}/blobhashes"
 
 	(
-	cd ${romdir} || err "strip_archive: !cd ${romdir}"
+	cd "${romdir}" || err "strip_archive: !cd ${romdir}"
 	sha1sum *.rom >> blobhashes || \
 	    err "strip_archive: ${romdir}: !sha1sum *.rom >> blobhashes"
 	)
@@ -160,7 +160,7 @@ strip_rom_image()
 	[ -f "${romfile}" ] || return 0
 
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		${ifdtool} --nuke me "${romfile}" || \
+		"${ifdtool}" --nuke me "${romfile}" || \
 		    err "strip_rom_images: ${romfile}: cannot nuke Intel ME"
 		mv "${romfile}" "${romdir}_tmp" || \
 		    err "strip_rom_images: !mv ${romfile} ${romdir}_tmp"
@@ -169,25 +169,25 @@ strip_rom_image()
 	fi
 
 	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
-		${cbfstool} "${romfile}" remove -n mrc.bin || \
+		"${cbfstool}" "${romfile}" remove -n mrc.bin || \
 		    err "strip_rom_images: ${romfile}: cannot nuke mrc.bin"
-		${cbfstool} "${romfile}" print || :
+		"${cbfstool}" "${romfile}" print || :
 	fi
 
 	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		${cbfstool} "${romfile}" remove -n ecfw1.bin || \
+		"${cbfstool}" "${romfile}" remove -n ecfw1.bin || \
 		    err "strip_rom_images: ${romfile}: can't nuke ecfw1.bin"
-		${cbfstool} "${romfile}" remove -n ecfw2.bin || \
+		"${cbfstool}" "${romfile}" remove -n ecfw2.bin || \
 		    err "strip_rom_images: ${romfile}: can't nuke ecfw2.bin"
 	fi
 
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
-		${cbfstool} "${romfile}" remove -n sch5545_ecfw.bin || \
+		"${cbfstool}" "${romfile}" remove -n sch5545_ecfw.bin || \
 		    err "strip_rom_images: ${romfile}: can't nuke sch5545ec fw"
 
 	# TODO: replace this board-specific hack
 	if [ "${target}" = "e6400nvidia_4mb" ]; then
-		${cbfstool} "${romfile}" remove -n "pci10de,06eb.rom" || \
+		"${cbfstool}" "${romfile}" remove -n "pci10de,06eb.rom" || \
 		    err "strip_rom_images: ${romfile}: can't nuke e6400 vga rom"
 	fi
 }

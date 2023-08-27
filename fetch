@@ -35,7 +35,7 @@ main()
 	[ "${depend}" = "" ] || ./fetch ${depend} || \
 	    fail "Cannot fetch dependency, ${depend}, for project, ${name}"
 
-	rm -Rf ${tmp_dir} || fail "cannot remove tmpdir, ${tmp_dir}"
+	rm -Rf "${tmp_dir}" || fail "cannot remove tmpdir, ${tmp_dir}"
 }
 
 read_config()
@@ -71,17 +71,17 @@ clone_project()
 {
 	tmp_dir=$(mktemp -dt "${name}_XXXXX")
 
-	git clone ${url} ${tmp_dir} || git clone ${bkup_url} ${tmp_dir} || \
+	git clone ${url} "${tmp_dir}" || git clone ${bkup_url} "${tmp_dir}" || \
 	    fail "clone_project: could not download ${name}"
 	(
-	cd ${tmp_dir} || fail "clone_project: tmpdir not created"
+	cd "${tmp_dir}" || fail "clone_project: tmpdir not created"
 	git reset --hard ${revision} || \
 	    fail "clone_project: Cannot reset revision"
 	)
 	patch_project
 
 	[ ! -d "${location}" ] || \
-		rm -Rf ${location} || \
+		rm -Rf "${location}" || \
 		    fail "clone_project: Can't remove directory '${location}'"
 	mv "${tmp_dir}" "${location}" || \
 	    fail "clone_project: could not copy temp file to destination"
@@ -91,7 +91,7 @@ patch_project()
 {
 	patchdir="resources/${name}/patches"
 
-	for patchfile in ${PWD}/${patchdir}/*.patch ; do
+	for patchfile in "${PWD}/${patchdir}"/*.patch ; do
 		[ -f "${patchfile}" ] || continue
 		(
 		cd "${tmp_dir}" || fail "patch_project: tmpdir unavailable"

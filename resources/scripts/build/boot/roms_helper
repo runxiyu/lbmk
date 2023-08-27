@@ -189,7 +189,7 @@ if [ "${payload_grub}" = "y" ] || \
 		printf "Required GRUB payloads not yet built. Building now.\n" \
 		    1>&2
 	fi
-	for keymapfile in ${kmapdir}/*; do
+	for keymapfile in "${kmapdir}"/*; do
 		[ -f "${keymapfile}" ] || continue
 
 		keymap="${keymapfile##*/}"
@@ -230,11 +230,11 @@ moverom() {
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
 
 	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
-		dd if=${rompath} of=${newrompath} bs=1 \
-		    skip=$(($(stat -c %s ${rompath}) - 0x400000)) \
+		dd if="${rompath}" of="${newrompath}" bs=1 \
+		    skip=$(($(stat -c %s "${rompath}") - 0x400000)) \
 		    count=4194304 || err "moverom: cannot cut 4MB section"
 	else
-		cp ${rompath} ${newrompath} || err "moverom: cannot copy rom"
+		cp "${rompath}" "${newrompath}" || err "moverom: can't copy rom"
 	fi
 
 	# pike2008 cards cause a system hang when loading option roms in seabios
@@ -245,7 +245,7 @@ moverom() {
 		touch "${emptyrom}" || err "cannot create fake oprom"
 		for deviceID in "0072" "3050"; do
 			"${cbfstool}" "${newrompath}" add -f "${emptyrom}" \
-			    -n pci1000,${deviceID}.rom -t raw || \
+			    -n "pci1000,${deviceID}.rom" -t raw || \
 			    err "moverom: cannot insert fake pike2008 rom"
 		done
 		rm -f "${emptyrom}" || err "moverom: cannot remove pike2008 rom"
@@ -257,7 +257,7 @@ moverom() {
 			[ -f "${ifdgbe}" ] || \
 				./build descriptors ich9m || \
 				    err "moverom: cannot create ich9m ifd"
-			dd if=${ifdgbe} of=${newrompath} bs=1 count=12k \
+			dd if="${ifdgbe}" of="${newrompath}" bs=1 count=12k \
 			    conv=notrunc || err "moverom: cant insert ich9m ifd"
 		fi
 		cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
@@ -266,18 +266,19 @@ moverom() {
 			[ -f "${ifdgbe}" ] || \
 				./build descriptors ich9m || \
 				    err "moverom: cannot create ich9m ifd"
-			dd if=${ifdgbe} of=${newrompath} bs=1 count=4k \
+			dd if="${ifdgbe}" of="${newrompath}" bs=1 count=4k \
 			    conv=notrunc || err "moverom: cant insert ich9m ifd"
 		fi
 	done
 
 	if [ "${cuttype}" = "i945 laptop" ]; then
-		dd if=${newrompath} of=top64k.bin bs=1 \
-		    skip=$(($(stat -c %s ${newrompath}) - 0x10000)) count=64k \
-		    || err "moverom: cannot copy boot block from i945 rom"
-		dd if=top64k.bin of=${newrompath} bs=1 \
-		    seek=$(($(stat -c %s ${newrompath}) - 0x20000)) count=64k \
-		    conv=notrunc || \
+		dd if="${newrompath}" of=top64k.bin bs=1 \
+		    skip=$(($(stat -c %s "${newrompath}") - 0x10000)) \
+		    count=64k || \
+		    err "moverom: cannot copy boot block from i945 rom"
+		dd if=top64k.bin of="${newrompath}" bs=1 \
+		    seek=$(($(stat -c %s "${newrompath}") - 0x20000)) \
+		    count=64k conv=notrunc || \
 		    err "moverom: cannot copy boot block into i945 rom"
 		rm -f top64k.bin || err "moverom: can't remove top64k.bin"
 	fi
@@ -292,7 +293,7 @@ moverom() {
 		if [ "${microcode_present}" = "n" ]; then
 			rm -f "${_newrom_b}" || err "cannot remove ${_newrom_b}"
 			printf "REMARK: '%s' already lacks microcode\n" \
-			    ${newrompath}
+			    "${newrompath}"
 			printf "Renaming default ROM file instead.\n"
 			mv "${newrompath}" "${_newrom_b}" || \
 			    err "moverom: mv \"${newrompath}\" \"${_newrom_b}\""
@@ -520,7 +521,7 @@ mkRoms()
 
 	if [ "${payload_memtest}" = "y" ]; then
 		"${cbfstool}" "${corebootrom}" add-payload \
-		    -f ${memtest_bin} -n img/memtest -c lzma || \
+		    -f "${memtest_bin}" -n img/memtest -c lzma || \
 		    err "mkRoms: cannot add img/memtest to coreboot rom"
 	fi
 

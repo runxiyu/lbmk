@@ -60,10 +60,10 @@ main()
 
 check_existing()
 {
-	[ -f ${_mrc_complete} ] || \
+	[ -f "${_mrc_complete}" ] || \
 		return 0
 	printf 'found existing mrc.bin\n'
-	[ "$(sha1sum ${_mrc_complete} | awk '{print $1}')" \
+	[ "$(sha1sum "${_mrc_complete}" | awk '{print $1}')" \
 	    = "${_mrc_complete_hash}" ] && \
 		return 1
 	printf 'hashes did not match, starting over\n'
@@ -84,18 +84,18 @@ fetch_mrc()
 	(
 	cd mrc/haswell/ || err "fetch_mrc: !cd mrc/haswell"
 
-	download_image ${_url} ${_file} ${_sha1sum}
+	download_image "${_url}" "${_file}" "${_sha1sum}"
 	[ -f ${_file} ] || \
-		download_image ${_url2} ${_file} ${_sha1sum}
+		download_image "${_url2}" "${_file}" "${_sha1sum}"
 	[ -f $_file ] || \
 		err "fetch_mrc: ${_file} not downloaded / verification failed."
 
-	extract_partition ROOT-A ${_file} root-a.ext2
+	extract_partition ROOT-A "${_file}" root-a.ext2
 	extract_shellball root-a.ext2 chromeos-firmwareupdate-${_board}
 
 	extract_coreboot chromeos-firmwareupdate-${_board}
 
-	../../${cbfstool} coreboot-*.bin extract -f mrc.bin -n mrc.bin \
+	../../"${cbfstool}" coreboot-*.bin extract -f mrc.bin -n mrc.bin \
 	    -r RO_SECTION || err "fetch_mrc: could not fetch mrc.bin"
 	rm -f "chromeos-firmwareupdate-${_board}" coreboot-*.bin \
 	    "${_file}" "root-a.ext2" || err "fetch_mrc: cannot remove files"
@@ -113,7 +113,7 @@ download_image()
 	printf "Downloading recovery image\n"
 	curl "$url" > "$_file.zip" || err "download_image: curl failed"
 	printf "Verifying recovery image checksum\n"
-	if [ "$(sha1sum ${_file}.zip | awk '{print $1}')" = "${_sha1sum}" ]
+	if [ "$(sha1sum "${_file}.zip" | awk '{print $1}')" = "${_sha1sum}" ]
 	then
 		unzip -q "${_file}.zip" || err "download_image: cannot unzip"
 		rm -f "${_file}.zip" || err "download_image: can't rm zip {1}"
@@ -132,12 +132,12 @@ extract_partition()
 
 	printf "Extracting ROOT-A partition\n"
 	ROOTP=$( printf "unit\nB\nprint\nquit\n" | \
-	    parted ${FILE} 2>/dev/null | grep ${NAME} )
+	    parted "${FILE}" 2>/dev/null | grep "${NAME}" )
 
 	START=$(( $( echo ${ROOTP} | cut -f2 -d\ | tr -d "B" ) ))
 	SIZE=$(( $( echo ${ROOTP} | cut -f4 -d\ | tr -d "B" ) ))
 
-	dd if=${FILE} of=${ROOTFS} bs=${_bs} skip=$(( ${START} / ${_bs} )) \
+	dd if="${FILE}" of="${ROOTFS}" bs=${_bs} skip=$(( ${START} / ${_bs} )) \
 	    count=$(( ${SIZE} / ${_bs} )) || \
 	    err "extract_partition: can't extract root file system"
 }
@@ -149,7 +149,7 @@ extract_shellball()
 
 	printf "Extracting chromeos-firmwareupdate\n"
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
-	    | debugfs ${ROOTFS} || err "extract_shellball: debugfs"
+	    | debugfs "${ROOTFS}" || err "extract_shellball: debugfs"
 }
 
 extract_coreboot()
@@ -162,7 +162,7 @@ extract_coreboot()
 	[ -f "${_shellball}" ] || \
 	    err "extract_coreboot: shellball missing in google peppy image"
 
-	sh ${_shellball} --unpack ${_unpacked} || \
+	sh "${_shellball}" --unpack "${_unpacked}" || \
 	    err "extract_coreboot: shellball exits with non-zero status"
 
 	# TODO: audit the f* out of that shellball, for each mrc version.
@@ -172,10 +172,10 @@ extract_coreboot()
 	[ -f "${_unpacked}/VERSION" ] || \
 	    err "extract_coreboot: VERSION file missing on google coreboot rom"
 
-	_version=$( cat ${_unpacked}/VERSION | grep BIOS\ version: | \
+	_version=$( cat "${_unpacked}/VERSION" | grep BIOS\ version: | \
 	    cut -f2 -d: | tr -d \  )
 
-	cp ${_unpacked}/bios.bin coreboot-${_version}.bin || \
+	cp "${_unpacked}/bios.bin" "coreboot-${_version}.bin" || \
 	    err "extract_coreboot: cannot copy google peppy rom"
 	rm -Rf "${_unpacked}" || \
 	    err "extract_coreboot: cannot remove extracted google peppy archive"

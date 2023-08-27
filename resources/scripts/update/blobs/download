@@ -79,7 +79,7 @@ main()
 detect_firmware()
 {
 	set -- "${boarddir}/config/"*
-	. ${1} 2>/dev/null
+	. "${1}"
 	. "${boarddir}/target.cfg"
 
 	[ "${CONFIG_HAVE_MRC}" = "y" ] && needs="${needs} MRC"
@@ -94,7 +94,7 @@ detect_firmware()
 	[ -z ${needs+x} ] && \
 		printf "No binary blobs needed for this board\n" && \
 		return 1
-	printf "Firmware needed for board '%s':\n%s\n" ${board} ${needs}
+	printf "Firmware needed for board '%s':\n%s\n" "${board}" "${needs}"
 }
 
 scan_sources_config()
@@ -167,8 +167,8 @@ build_dependencies()
 	[ -f uefitool/uefiextract ] || \
 		./build src for -b uefitool || \
 		    err "build_dependencies: can't build uefitool"
-	if [ ! -f ${cbdir}/util/kbc1126/kbc1126_ec_dump ]; then
-		make -BC ${cbdir}/util/kbc1126 || \
+	if [ ! -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ]; then
+		make -BC "${cbdir}/util/kbc1126" || \
 		    err "build_dependencies: can't build kbc1126_ec_dump"
 	fi
 }
@@ -210,7 +210,7 @@ extract_blob_intel_me()
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 
 	[ -d "${_me_destination%/*}" ] || \
-		mkdir -p ${_me_destination%/*} || \
+		mkdir -p "${_me_destination%/*}" || \
 		    err "extract_blob_intel_me: mkdir ${_me_destination%/*}"
 	[ ! -d "${appdir}" ] || \
 		rm -Rf "${appdir}" || \
@@ -222,8 +222,8 @@ extract_blob_intel_me()
 
 	printf "Extracting and stripping Intel ME firmware\n"
 
-	innoextract ${dl_path} -d ${appdir} || \
-	    7z x ${dl_path} -o${appdir} || \
+	innoextract "${dl_path}" -d "${appdir}" || \
+	    7z x "${dl_path}" -o"${appdir}" || \
 	    unar "${dl_path}" -o "${appdir}" || \
 	    err "extract_blob_intel_me: could not extract vendor update"
 
@@ -265,11 +265,11 @@ bruteforce_extract_blob_intel_me()
 			    && break # (we found me.bin)	
 			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
 			    && break # (we found me.bin)
-			"${me7updateparser}" -O ${_me_destination} "${i}" \
+			"${me7updateparser}" -O "${_me_destination}" "${i}" \
 			    && break # (we found me.bin)
 			_7ztest="${_7ztest}a"
-			7z x "${i}" -o${_7ztest} \
-			    || innoextract "${i}" -d  "${_7ztest}" \
+			7z x "${i}" -o"${_7ztest}" \
+			    || innoextract "${i}" -d "${_7ztest}" \
 			    || unar "${i}" -o "${_7ztest}" \
 			    || continue
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
@@ -368,10 +368,10 @@ extract_e6400vga()
 		return 0
 	fi
 	[ -d "${_vga_destination%/*}" ] || \
-		mkdir -p ${_vga_destination%/*} || \
+		mkdir -p "${_vga_destination%/*}" || \
 		    err "extract_e6400vga: can't mkdir ${_vga_destination%/*}"
 	[ ! -d "${appdir}" ] || \
-		rm -Rf ${appdir} || \
+		rm -Rf "${appdir}" || \
 		    err "extract_e6400vga: can't rm -Rf ${appdir}"
 
 	mkdir -p "${appdir}" || \
@@ -482,18 +482,18 @@ fetch_update()
 	[ -z "${dl_url+x}" ] && [ "${fw_type}" != "e6400vga" ] && \
 		err "fetch_update ${fw_type}: dl_url unspecified for: ${board}"
 
-	dl_path=${blobdir}/cache/${dlsum}
-	mkdir -p ${blobdir}/cache || err "fetch_update: !mkdir ${blobdir}/cache"
+	dl_path="${blobdir}/cache/${dlsum}"
+	mkdir -p "${blobdir}/cache" || err "fetch_update: !mkdir ${blobdir}/cache"
 
 	dl_fail="y"
-	vendor_checksum ${dlsum} && dl_fail="n"
+	vendor_checksum "${dlsum}" && dl_fail="n"
 	for x in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${x}" ] && continue
 		rm -f "${dl_path}" || \
 		    err "fetch_update ${fw_type}: !rm -f ${dl_path}"
-		wget -U "${agent}" ${x} -O ${dl_path} || continue
-		vendor_checksum ${dlsum} && dl_fail="n"
+		wget -U "${agent}" "${x}" -O "${dl_path}" || continue
+		vendor_checksum "${dlsum}" && dl_fail="n"
 	done
 	if [ "${dl_fail}" = "y" ]; then
 		printf "ERROR: invalid vendor updates for: %s\n" "${board}" 1>&2
@@ -504,10 +504,11 @@ fetch_update()
 vendor_checksum()
 {
 	if [ ! -f "${dl_path}" ]; then
-		printf "Vendor update not found on disk for: %s\n" ${board} 1>&2
+		printf "Vendor update not found on disk for: %s\n" "${board}" \
+		    1>&2
 		return 1
 	elif [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
-		printf "Bad checksum on vendor update for: %s\n" ${board} 1>&2
+		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
 		return 1
 	fi
 }

@@ -72,7 +72,7 @@ main()
 
 check_board()
 {
-	if ! check_release ${archive} ; then
+	if ! check_release "${archive}" ; then
 		[ -f "${rom}" ] || \
 			err "check_board: \"${rom}\" is not a valid path"
 		[ -z ${rom+x} ] && \
@@ -102,7 +102,7 @@ check_release()
 # It will only succeed if the filename is not changed from the build/download
 detect_board()
 {
-	path=${1}
+	path="${1}"
 	filename=$(basename ${path})
 	case ${filename} in
 	grub_*)
@@ -146,20 +146,20 @@ patch_release_roms()
 	tar xf "${releasearchive}" -C "${_tmpdir}" || \
 	    err "patch_release_roms: could not extract release archive"
 
-	for x in ${_tmpdir}/bin/*/*.rom ; do
+	for x in "${_tmpdir}"/bin/*/*.rom ; do
 		echo "patching rom $x"
-		patch_rom ${x} || err "patch_release_roms: could not patch ${x}"
+		patch_rom "${x}" || err "patch_release_roms: could not patch ${x}"
 	done
 
 	(
-	cd ${_tmpdir}/bin/*
+	cd "${_tmpdir}"/bin/*
 	sha1sum --status -c blobhashes || \
 	    err "patch_release_roms: ROMs did not match expected hashes"
 	)
 
 	if [ "${modifygbe}" = "true" ]; then
-		for x in ${_tmpdir}/bin/*/*.rom ; do
-			modify_gbe ${x}
+		for x in "${_tmpdir}"/bin/*/*.rom ; do
+			modify_gbe "${x}"
 		done
 	fi
 
@@ -203,7 +203,7 @@ patch_rom()
 	    [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ] && \
 		inject_blob_smsc_sch5545_ec "${rom}"
 	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ] && \
-		modify_gbe ${rom}
+		modify_gbe "${rom}"
 
 	printf "ROM image successfully patched: %s\n" "${rom}"
 }
@@ -232,7 +232,7 @@ inject_blob_intel_mrc()
 	# source code, and it is *always* correct for haswell platform.
 	# TODO: this logic should be tweaked to handle more platforms
 
-	${cbfstool} ${rom} add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc \
+	"${cbfstool}" "${rom}" add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc \
 	    -b 0xfffa0000 || err "inject_blob_intel_mrc: cannot insert mrc.bin"
 }
 
@@ -248,7 +248,7 @@ inject_blob_intel_me()
 	[ ! -f "${_me_location}" ] && \
 		err "inject_blob_intel_me: per CONFIG_ME_BIN_PATH: file missing"
 
-	${ifdtool} -i me:${_me_location} ${rom} -O ${rom} || \
+	"${ifdtool}" -i me:"${_me_location}" "${rom}" -O "${rom}" || \
 	    err "inject_blob_intel_me: cannot insert me.bin"
 }
 
@@ -273,10 +273,10 @@ inject_blob_hp_kbc1126_ec()
 		err "inject_blob_hp_kbc1126_ec: ${board}: ecfw not downloaded"
 	fi
 
-	${cbfstool} "${rom}" add -f ${_ec1_location} -n ecfw1.bin \
+	"${cbfstool}" "${rom}" add -f "${_ec1_location}" -n ecfw1.bin \
 	    -b ${_ec1_offset} -t raw || \
 	    err "inject_blob_hp_kbc1126_ec: cannot insert ecfw1.bin"
-	${cbfstool} "${rom}" add -f ${_ec2_location} -n ecfw2.bin \
+	"${cbfstool}" "${rom}" add -f "${_ec2_location}" -n ecfw2.bin \
 	    -b ${_ec2_offset} -t raw || \
 	    err "inject_blob_hp_kbc1126_ec: cannot insert ecfw2.bin"
 }
@@ -298,7 +298,7 @@ inject_blob_dell_e6400_vgarom_nvidia()
 		err "inject_blob_dell_e6400vga: ${_vga_location} doesn't exist"
 	fi
 
-	${cbfstool} ${rom} add -f "${_vga_location}" \
+	"${cbfstool}" "${rom}" add -f "${_vga_location}" \
 	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom || \
 	    err "inject_blob_dell_e6400vga: cannot insert vga oprom"
 }
@@ -322,7 +322,7 @@ modify_gbe()
 {
 	printf "changing mac address in gbe to ${new_mac}\n"
 
-	rom=${1}
+	rom="${1}"
 
 	[ -z ${CONFIG_GBE_BIN_PATH} ] && \
 		err "modify_gbe: ${board}: CONFIG_GBE_BIN_PATH not set"
@@ -331,27 +331,27 @@ modify_gbe()
 
 	[ -f "${_gbe_location}" ] || \
 		err "modify_gbe: CONFIG_GBE_BIN_PATH points to missing file"
-	[ -f ${nvmutil} ] || \
+	[ -f "${nvmutil}" ] || \
 		make -C util/nvmutil || err "modify_gbe: couldn't build nvmutil"
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
-	cp ${_gbe_location} ${_gbe_tmp}
-	${nvmutil} "${_gbe_tmp}" setmac "${new_mac}" || \
+	cp "${_gbe_location}" "${_gbe_tmp}"
+	"${nvmutil}" "${_gbe_tmp}" setmac "${new_mac}" || \
 	    err "modify_gbe: ${board}: failed to modify mac address"
 
-	${ifdtool} -i GbE:${_gbe_tmp} "${rom}" -O "${rom}" || \
+	"${ifdtool}" -i GbE:"${_gbe_tmp}" "${rom}" -O "${rom}" || \
 	    err "modify_gbe: ${board}: cannot insert modified gbe.bin"
 
-	rm -f ${_gbe_tmp}
+	rm -f "${_gbe_tmp}"
 }
 
 listboards()
 {
-	for boarddir in ${cbcfgsdir}/*; do
+	for boarddir in "${cbcfgsdir}"/*; do
 		[ -d "${boarddir}" ] || continue
 		board="${boarddir##${cbcfgsdir}/}"
 		board="${board%/}"
-		printf '%s\n' "${board##*/}"
+		printf "%s\n" "${board##*/}"
 	done
 }
 

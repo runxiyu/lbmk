@@ -82,22 +82,22 @@ build_grub_elf()
 	grub/grub-mkstandalone \
 	    --grub-mkimage="grub/grub-mkimage" \
 	    -O i386-coreboot \
-	    -o elf/grub/grub_${keymap}.elf \
+	    -o "elf/grub/grub_${keymap}.elf" \
 	    -d grub/grub-core/ \
 	    --fonts= --themes= --locales=  \
 	    --modules="${grub_modules}" \
 	    --install-modules="${grub_install_modules}" \
-	    ${gcfg} ${grubk} || \
+	    "${gcfg}" "${grubk}" || \
 	    err "build_grub_elf: cannot build grub payload (grub-mkstandalone)"
 }
 
 create_grub_config()
 {
-	sed "s/usqwerty/${keymap}/" < ${grubcfgsdir}/config/grub.cfg \
-	    > elf/grub/grub_${keymap}.cfg || \
+	sed "s/usqwerty/${keymap}/" < "${grubcfgsdir}/config/grub.cfg" \
+	    > "elf/grub/grub_${keymap}.cfg" || \
 	    err "create_grub_config: sed failed: grub.cfg"
-	sed "s/grubtest.cfg/grub.cfg/" < elf/grub/grub_${keymap}.cfg \
-	    > elf/grub/grub_${keymap}_test.cfg || \
+	sed "s/grubtest.cfg/grub.cfg/" < "elf/grub/grub_${keymap}.cfg" \
+	    > "elf/grub/grub_${keymap}_test.cfg" || \
 	    err "create_grub_config: sed failed: grubtest.cfg"
 }
 

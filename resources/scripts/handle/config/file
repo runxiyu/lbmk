@@ -84,7 +84,7 @@ main()
 	fi
 
 	[ -d "${elfdir}" ] || [ "${mode}" != "all" ] || \
-		mkdir -p ${elfdir}/ || fail "cannot create directory: ${elfdir}"
+		mkdir -p "${elfdir}/" || fail "can't create directory ${elfdir}"
 
 	for x in "$@"; do
 		target="${x}"

@@ -125,7 +125,7 @@ copy_blobs()
 			[ -e "${srcdir}/blobs/${i}" ] || \
 				mkdir -p "${srcdir}/blobs/${i}" || \
 				    err "copy_blobs: ! -d ${srcdir}/blobs/${i}"
-			cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}" || \
+			cp "blobs/${i}/${j}.bin" "${srcdir}/blobs/${i}" || \
 			    err "copy_blobs: ! -f ${srcdir}/blobs/${i}"
 		done
 	done

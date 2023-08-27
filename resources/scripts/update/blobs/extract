@@ -88,28 +88,27 @@ extract_blobs()
 	# Cleans up other files extracted with ifdtool
 	rm -f flashregion*.bin || err "extract_blobs: !rm -f flashregion*.bin"
 
-	[ -f ${_ifd_destination} ] || err "extract_blobs: Could not extract IFD"
-	printf "gbe, ifd, and me extracted to %s\n" \
-	    "${_me_destination%/*}"
+	[ -f "${_ifd_destination}" ] || err "extract_blobs: Cannot extract IFD"
+	printf "gbe, ifd, and me extracted to %s\n" "${_me_destination%/*}"
 }
 
 extract_blob_intel_me()
 {
 	printf "extracting clean ime and modified ifd\n"
 
-	${mecleaner} -D ${_ifd_destination} \
-		-M ${_me_destination} ${vendor_rom} -t -r -S || \
-	    ${me7updateparser} \
-		-O ${_me_destination} ${vendor_rom} || \
+	"${mecleaner}" -D "${_ifd_destination}" \
+		-M "${_me_destination}" "${vendor_rom}" -t -r -S || \
+	    "${me7updateparser}" \
+		-O "${_me_destination}" "${vendor_rom}" || \
 	    err "extract_blob_intel_me: cannot extract from vendor rom"
 }
 
 extract_blob_intel_gbe_nvm()
 {
 	printf "extracting gigabit ethernet firmware"
-	./${ifdtool} -x ${vendor_rom} || \
+	./"${ifdtool}" -x "${vendor_rom}" || \
 	    err "extract_blob_intel_gbe_nvm: cannot extract gbe.bin from rom"
-	mv flashregion*gbe.bin ${_gbe_destination} || \
+	mv flashregion*gbe.bin "${_gbe_destination}" || \
 	    err "extract_blob_intel_gbe_nvm: cannot move gbe.bin"
 }
 

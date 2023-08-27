@@ -40,7 +40,7 @@ main()
 		err "running lbmk as root as not permitted"
 	fi
 
-	rm -f ${cfgsdir}/*/seen || err_rm_seen "main 1"
+	rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 1"
 
 	printf "Downloading %s and (if available) applying patches\n" \
 	    ${project}
@@ -68,7 +68,7 @@ main()
 		    err "${project}/${target}: cannot download source tree"
 	done
 
-	rm -f ${cfgsdir}/*/seen || err_rm_seen "main 3"
+	rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 3"
 }
 
 download_for_target()
