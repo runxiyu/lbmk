@@ -44,7 +44,7 @@ main()
 		err "running lbmk as root as not permitted"
 	fi
 
-	buildpath="./resources/scripts/${0##*/}"
+	buildpath="./script/${0##*/}"
 
 	./.gitcheck || err "/.gitcheck call from main, in /lbmk"
 	[ "${mode}" = "help" ] && usage ${0} && exit 0
@@ -60,7 +60,7 @@ main()
 	option="${2}"
 	shift 2
 
-	./resources/scripts/misc/versioncheck || \
+	./script/misc/versioncheck || \
 	    err "Cannot check lbmk version"
 
 	case "${option}" in
