@@ -44,7 +44,7 @@ build_grub()
 	    err "build_grub: autogen.sh"
 	./configure --with-platform=coreboot || \
 	    err "build_grub: autoconf"
-	make -j$(nproc) || \
+	make -j$(nproc) FS_PAYLOAD_MODULES="" || \
 	    err "build_grub: make"
 	)
 }
