@@ -25,7 +25,7 @@ ich9gen="util/ich9utils/ich9gen"
 
 main()
 {
-	[ -f "${ich9gen}" ] || ./build src for -b ich9utils || \
+	[ -f "${ich9gen}" ] || ./handle make file -b ich9utils || \
 	    err "ich9utils make"
 	[ ! -f "${ich9gen}" ] && err "ich9gen doesn't exist"
 

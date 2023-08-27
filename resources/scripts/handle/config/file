@@ -223,7 +223,7 @@ check_config()
 
 run_make_command()
 {
-	./build src for -c "${codedir}"
+	./handle make file -c "${codedir}"
 	    fail "run_make_command: make distclean/clean failed"
 
 	cp "${config}" "${codedir}/.config" || \

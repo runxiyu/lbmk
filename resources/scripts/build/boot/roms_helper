@@ -165,7 +165,7 @@ fi
 
 memtest_bin="memtest86plus/build${arch#*_}/memtest.bin"
 [ "${payload_memtest}" != "y" ] || [ -f "${memtest_bin}" ] || \
-	./build src for -b ${memtest_bin%/*} || \
+	./handle make file -b ${memtest_bin%/*} || \
 	    err "cannot build memtest86+"
 
 [ -d "${romdir}/" ] || mkdir -p "${romdir}/" || \

@@ -139,21 +139,21 @@ purge_files()
 
 	for p in coreboot/*; do
 		[ -d "${p}" ] || continue
-		./build src for -c "${p}" || \
+		./handle make file -c "${p}" || \
 		    err "purge_files 1: ${p}: !make distclean"
 	done
 
-	./build src for -c coreboot/default/util/kbc1126 || \
+	./handle make file -c coreboot/default/util/kbc1126 || \
 	    err "purge_files 1: default/util/kbc1126: ! make clean"
 	./build clean all || \
 	    err "purge_files 1: ! ./build clean all"
 
 	for p in bios_extract flashrom grub ich9utils uefitool; do
-		./build src for -c "${p}" || \
-		    err "purge_files: !./build src for -c ${p}"
+		./handle make file -c "${p}" || \
+		    err "purge_files: !./handle make file -c ${p}"
 	done
 	for p in 32 64; do
-		./build src for -c "memtest86plus/build${p}" || \
+		./handle make file -c "memtest86plus/build${p}" || \
 		    err "purge_files: cannot clean memtest86+ build${p}"
 	done
 	for p in "nvmutil" "ich9utils" "spkmodem_recv" "e6400-flash-unlock"; do
