@@ -223,8 +223,7 @@ check_config()
 
 run_make_command()
 {
-	make -C "${codedir}" distclean || \
-	    make -C "${codedir}" clean || \
+	./build src for -c "${codedir}"
 	    fail "run_make_command: make distclean/clean failed"
 
 	cp "${config}" "${codedir}/.config" || \
@@ -248,17 +247,13 @@ copy_elf()
 		    fail "copy_elf: cannot copy elf file"
 	done
 
-	make -C "${codedir}" distclean || \
-	    make -C "${codedir}" clean || \
+	./handle src for -c "${codedir}" || \
 	    fail "copy_elf: clean: ${codedir} (${project}/${target})"
 }
 
 fail()
 {
-	[ -z "${codedir}" ] || \
-		make -C "${codedir}" distclean \
-		    || make -C "${codedir}" clean || :
-
+	[ -z "${codedir}" ] || ./handle src for -c "${codedir}" || :
 	err "${1}"
 }
 
