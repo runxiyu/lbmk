@@ -122,7 +122,8 @@ handle_defconfig()
 handle_dependencies()
 {
 	target_dir="${cfgsdir}/${target}"
-	mkdir -p "${elfdir}/${target}"
+	mkdir -p "${elfdir}/${target}" || \
+	    fail "handle_dependencies: !mkdir -p ${elfdir}/${target}"
 
 	tree="undefined"
 	arch="undefined"
