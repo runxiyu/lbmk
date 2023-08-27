@@ -44,9 +44,10 @@ main()
 		err "running lbmk as root as not permitted"
 	fi
 
+	./checkgit || err "Please read: https://libreboot.org/docs/build/"
+
 	buildpath="./script/${0##*/}"
 
-	./.gitcheck || err "/.gitcheck call from main, in /lbmk"
 	[ "${mode}" = "help" ] && usage ${0} && exit 0
 	[ "${mode}" = "list" ] && ./build command options "${buildpath}" && \
 	    exit 0
@@ -84,8 +85,6 @@ main()
 		fi
 		"${buildpath}/${mode}/${option}" $@ || err "lbmk error"
 	esac
-
-	./.gitcheck clean || err "/.gitcheck clean call from main, in /lbmk"
 }
 
 install_dependencies()

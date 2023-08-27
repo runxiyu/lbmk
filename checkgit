@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
+# SPDX-License-Identifier: MIT
+
+. "include/err.sh"
+
+projectname="$(cat projectname)"
+
+main()
+{
+	which git 1>/dev/null 2>/dev/null || \
+	    fail "git not installed. please install git-scm."
+	git config --global user.name 1>/dev/null 2>/dev/null || \
+	    fail "git config --global user.name \"John Doe\""
+	git config --global user.email 1>/dev/null 2>/dev/null || \
+	    fail "git config --global user.email \"john.doe@example.com\""
+}
+
+fail()
+{
+	printf "You must configure Git, before using %s's build system. Do:\n" \
+	    "${projectname}" 1>&2
+	printf "%s\n\n" "${1}"
+	err "Misconfigured git-scm"
+}
+
+main $@

@@ -39,6 +39,7 @@ main()
 	if [ "$(id -u)" = "0" ]; then
 		err "running lbmk as root as not permitted"
 	fi
+	./checkgit || err "Please read: https://libreboot.org/docs/build/"
 
 	rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 1"
 
