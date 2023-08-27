@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+
+# Copyright (c) 2023 Leah Rowe <info@minifree.org>
+# SPDX-License-Identifier: MIT
+
+. "include/err.sh"
+
+items=1
+
+main()
+{
+	[ $# -gt 0 ] || \
+		err "No argument given"
+	listitems "${1}" || err "No items present under: ${1}"
+}
+
+listitems()
+{
+	[ -d "${1}" ] || \
+		err "Directory not does exist: ${1}"
+	for x in "${1}/"*; do
+		# -e used because this is for files *or* directories
+		[ -e "${x}" ] || continue
+		[ "${x##*/}" = "build.list" ] && continue
+		printf "%s\n" "${x##*/}"
+		items=0
+	done
+	return ${items}
+}
+
+main $@

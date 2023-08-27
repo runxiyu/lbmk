@@ -42,7 +42,8 @@ main()
 
 	firstoption="${1}"
 	[ "${firstoption}" = "help" ] && usage && exit 0
-	[ "${firstoption}" = "list" ] && listboards && exit 0
+	[ "${firstoption}" = "list" ] && \
+	    ./build command options resources/coreboot && exit 0
 
 	while [ $# -gt 0 ]; do
 		case ${1} in
@@ -65,8 +66,8 @@ main()
 	printf "Building %s ROM images\n" "${projectname}"
 
 	if [ "${firstoption}" = "all" ]; then
-		for boardname in $(listboards); do
-			buildrom "${boardname}" || err "build/roms (1): error"
+		for target in $(./build command options resources/coreboot); do
+			buildrom "${target}" || err "build/roms (1): error"
 		done
 	else
 		for board in ${boards}; do
@@ -80,7 +81,7 @@ main()
 usage()
 {
 	cat <<- EOF
-	USAGE:	./build boot roms boardname
+	USAGE:	./build boot roms target
 	To build *all* boards, do this: ./build boot roms all
 	To list *all* boards, do this: ./build boot roms list
 	
@@ -94,21 +95,11 @@ usage()
 		./build boot roms x200_8mb x60
 		./build boot roms x60 -p grub -d corebootfb -k usqwerty
 
-	possible values for 'boardname':
-	$(listboards)
+	possible values for 'target':
+	$(./build command options "resources/coreboot")
 
 	Refer to the ${projectname} documentation for more information.
 	EOF
-}
-
-listboards()
-{
-	for boarddir in resources/coreboot/*; do
-		[ -d "${boarddir}" ] || continue
-		board="${boarddir##resources/coreboot/}"
-		board="${board%/}"
-		printf '%s\n' "${board##*/}"
-	done
 }
 
 # Build ROM images for supported boards

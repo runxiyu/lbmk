@@ -76,17 +76,13 @@ main()
 	[ -f "${listfile}" ] || fail "list file, ${listfile}, does not exist"
 
 	# Build for all targets if no argument is given
-	if [ "$#" -eq 0 ]; then
-		for target_dir in "${cfgsdir}"/*; do
-			[ -d "${target_dir}/config/" ] || continue
-			set -- "$@" "${target_dir#${cfgsdir}/}"
-		done
-	fi
+	targets=$(./build command options "${cfgsdir}")
+	[ $# -gt 0 ] && targets=$@
 
 	[ -d "${elfdir}" ] || [ "${mode}" != "all" ] || \
 		mkdir -p "${elfdir}/" || fail "can't create directory ${elfdir}"
 
-	for x in "$@"; do
+	for x in ${targets}; do
 		target="${x}"
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"

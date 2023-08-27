@@ -44,7 +44,8 @@ main()
 	sname="${0}"
 
 	[ $# -lt 1 ] && err "No options specified."
-	[ "${1}" = "listboards" ] && listboards && exit 0
+	[ "${1}" = "listboards" ] && \
+		./build command options resources/coreboot && exit 0
 
 	archive="${1}"
 
@@ -343,16 +344,6 @@ modify_gbe()
 	    err "modify_gbe: ${board}: cannot insert modified gbe.bin"
 
 	rm -f "${_gbe_tmp}"
-}
-
-listboards()
-{
-	for boarddir in "${cbcfgsdir}"/*; do
-		[ -d "${boarddir}" ] || continue
-		board="${boarddir##${cbcfgsdir}/}"
-		board="${board%/}"
-		printf "%s\n" "${board##*/}"
-	done
 }
 
 usage()

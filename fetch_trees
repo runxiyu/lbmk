@@ -51,17 +51,11 @@ main()
 	[ -d "${cfgsdir}" ] || err "unsupported project name"
 	shift 1
 
-	targets=""
-	if [ $# -gt 0 ]; then
-		targets=$@
-	else
-		for x in "${cfgsdir}/"*; do
-			[ -d "${x}" ] || continue
-			targets="${targets} ${x##*/}"
-		done
-	fi
+	targets=$(./build command options "${cfgsdir}")
+	[ $# -gt 0 ] && targets=$@
 	[ -z "${targets}" ] && \
 	    err "No targets available for project: ${project}"
+
 	for x in ${targets}; do
 		rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 2"
 		download_for_target "${x}" || \
