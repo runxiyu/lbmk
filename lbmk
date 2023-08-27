@@ -41,7 +41,7 @@ main()
 
 	mode="${1}"
 	if [ "$(id -u)" = "0" ] && [ "${mode}" != "dependencies" ]; then
-		err "running lbmk as root as not permitted"
+		err "running lbmk as root is not permitted"
 	fi
 
 	./checkgit || err "Please read: https://libreboot.org/docs/build/"
