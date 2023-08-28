@@ -40,8 +40,19 @@ main()
 	[ $# -lt 1 ] && err "Too few arguments. Try: ${0} help"
 
 	mode="${1}"
-	if [ "$(id -u)" = "0" ] && [ "${mode}" != "dependencies" ]; then
-		err "running lbmk as root is not permitted"
+	if [ "${mode}" = "dependencies" ]; then
+		if [ $# -lt 2 ]; then
+			printf "You must specify a distro, namely:\n" 1>&2
+			printf "Look at files under resources/dependencies/\n" \
+			    1>&2
+			printf "Example: ./build dependencies debian\n" 1>&2
+			err "target not specified"
+		fi
+		install_dependencies $@ || err "Could not install dependencies"
+		exit 0
+	fi
+	if [ "$(id -u)" = "0" ]; then
+		err "running this command as root is not permitted"
 	fi
 
 	buildpath="./script/${0##*/}"
@@ -50,11 +61,6 @@ main()
 	[ "${mode}" = "list" ] && ./build command options "${buildpath}" && \
 	    exit 0
 	[ $# -lt 2 ] && usage ${0} && exit 1
-
-	if [ "${mode}" = "dependencies" ]; then
-		install_dependencies $@ || err "Could not install dependencies"
-		exit 0
-	fi
 
 	./checkgit || err "Please read: https://libreboot.org/docs/build/"
 
