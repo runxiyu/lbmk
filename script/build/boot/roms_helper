@@ -601,7 +601,7 @@ moverom() {
 			[ -f "${ifdgbe}" ] || \
 				./build descriptors ich9m || \
 				    err "moverom: cannot create ich9m ifd"
-			dd if="${ifdgbe}" of="${newrompath}" bs=1 count=12k \
+			dd if="${ifdgbe}" of="${newrompath}" bs=12k count=1 \
 			    conv=notrunc || \
 			    err "moverom: cant insert ich9m ifd"
 		fi
@@ -611,7 +611,7 @@ moverom() {
 			[ -f "${ifdgbe}" ] || \
 				./build descriptors ich9m || \
 				    err "moverom: cannot create ich9m ifd"
-			dd if="${ifdgbe}" of="${newrompath}" bs=1 count=4k \
+			dd if="${ifdgbe}" of="${newrompath}" bs=4k count=1 \
 			    conv=notrunc || \
 			    err "moverom: cant insert ich9m ifd"
 		fi
