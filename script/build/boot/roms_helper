@@ -596,25 +596,21 @@ moverom() {
 	fi
 
 	for romsize in 4 8 16; do
-		ifdgbe="descriptors/ich9m/ich9fdgbe_${romsize}m.bin"
-		if [ "${cuttype}" = "${romsize}MiB ICH9 IFD NOR flash" ]; then
-			[ -f "${ifdgbe}" ] || \
-				./build descriptors ich9m || \
-				    err "moverom: cannot create ich9m ifd"
-			dd if="${ifdgbe}" of="${newrompath}" bs=12k count=1 \
-			    conv=notrunc || \
-			    err "moverom: cant insert ich9m ifd"
-		fi
-		cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
-		ifdgbe="descriptors/ich9m/ich9fdnogbe_${romsize}m.bin"
-		if [ "${cuttype}" = "${cmpstr}" ]; then
-			[ -f "${ifdgbe}" ] || \
-				./build descriptors ich9m || \
-				    err "moverom: cannot create ich9m ifd"
-			dd if="${ifdgbe}" of="${newrompath}" bs=4k count=1 \
-			    conv=notrunc || \
-			    err "moverom: cant insert ich9m ifd"
-		fi
+		ifddir="descriptors/ich9m"
+		for bs in "4" "12"; do
+			ifdgbe="${ifddir}/ich9fdnogbe_${romsize}m.bin"
+			cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
+			if [ "${bs}" = "12" ]; then
+				cmpstr="${romsize}MiB ICH9 IFD NOR flash"
+				ifdgbe="${ifddir}/ich9fdgbe_${romsize}m.bin"
+			fi
+			[ "${cuttype}" = "${cmpstr}" ] || continue
+			[ -f "${ifdgbe}" ] || ./build descriptors ich9m || \
+			    err "moverom: cannot create ich9m ifd"
+			dd if="${ifdgbe}" of="${newrompath}" bs=${bs}k count=1 \
+			    conv=notrunc || err "moverom: cant insert ich9m ifd"
+		done
+
 	done
 
 	if [ "${cuttype}" = "i945 laptop" ]; then
