@@ -44,8 +44,6 @@ main()
 		err "running lbmk as root is not permitted"
 	fi
 
-	./checkgit || err "Please read: https://libreboot.org/docs/build/"
-
 	buildpath="./script/${0##*/}"
 
 	[ "${mode}" = "help" ] && usage ${0} && exit 0
@@ -57,6 +55,8 @@ main()
 		install_dependencies $@ || err "Could not install dependencies"
 		exit 0
 	fi
+
+	./checkgit || err "Please read: https://libreboot.org/docs/build/"
 
 	option="${2}"
 	shift 2
