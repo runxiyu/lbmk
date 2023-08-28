@@ -68,6 +68,8 @@ displaymode=""
 cbcfg=""
 targetdir=""
 
+grubelf="elf/grub/grub.elf"
+
 main()
 {
 	while [ $# -gt 0 ]; do
@@ -215,34 +217,21 @@ build_dependency_grub()
 	[ "${payload_grub}" != "y" ] && \
 	    [ "${payload_seabios_withgrub}" != "y" ] && return 0
 
-	if [ -f "elf/grub/grub_usqwerty.cfg" ]; then
-		sha1sumcmd="sha1sum resources/grub/config/grub.cfg"
-		grubrefchecksum="$(${sha1sumcmd} | awk '{print $1}')"
-
-		sha1sumcmd="sha1sum elf/grub/grub_usqwerty.cfg"
-		grubbuildchecksum="$(${sha1sumcmd} | awk '{print $1}')"
-
-		[ "${grubrefchecksum}" != "${grubbuildchecksum}" ] && \
-			printf "GRUB change detected. Re-building.\n" 1>&2
-	else
-		printf "GRUB not built yet. Building now.\n" 1>&2
-	fi
-	for keymapfile in "${kmapdir}"/*; do
+	rebuild_grub="n"
+	[ ! -f "${grubelf}" ] && rebuild_grub="y"
+	for keymapfile in "${kmapdir}"/*.gkb; do
+		[ "${rebuild_grub}" = "y" ] || break
 		[ -f "${keymapfile}" ] || continue
 
 		keymap="${keymapfile##*/}"
 		keymap="${keymap%.gkb}"
-
-		grubelf="elf/grub/grub_${keymap}.elf"
-		grubcfg="elf/grub/grub_${keymap}.cfg"
-		grubtestcfg="elf/grub/grub_${keymap}_test.cfg"
-
-		if [ ! -f "${grubelf}" ] || [ ! -f "${grubcfg}" ] || \
-		    [ ! -f "${grubtestcfg}" ]; then
-			./build grub payload || \
-			    err "cannot build grub payload"
-		fi
+		[ ! -f "elf/grub/keymap_${keymap}.cfg" ] && \
+		    rebuild_grub="y" && break
 	done
+	if [ "${rebuild_grub}" = "y" ]; then
+		./build grub payload || \
+		    err "build_dependency_grub: cannot build grub payload"
+	fi
 }
 
 build_dependency_uboot()
@@ -324,7 +313,8 @@ build_seabios_roms()
 {
 	if [ "${payload_seabios_withgrub}" = "y" ]; then
 		tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
-		cp "${corebootrom}" "${tmprom}"
+		cp "${corebootrom}" "${tmprom}" || \
+		    err "build_seabios_roms: cannot copy to tmprom"
 		build_grub_roms "${tmprom}" "${initmode}" \
 		    "${displaymode}" "seabios_withgrub" || \
 		    err "build_roms: cannot build grub roms, seabios w/grub"
@@ -356,17 +346,49 @@ build_grub_roms() {
 	displaymode="${3}"
 	firstpayloadname="${4}" # allow values: grub, seabios, seabios_withgrub
 
+	grubelf_cbfs="fallback/payload"
+
 	x=${tmprompath}
 	y=${initmode}
 	if [ "${payload_grub_withseabios}" = "y" ] && \
 	    [ "${firstpayloadname}" = "grub" ]; then
 		mv "$(mkSeabiosRom "${x}" "seabios.elf" "${y}")" "${tmprompath}"
-	elif [ "${payload_seabios_withgrub}" ] && \
+	elif [ "${payload_seabios_withgrub}" = "y" ] && \
 	    [ "${firstpayloadname}" != "grub" ]; then
 		mv "$(mkSeabiosRom "${x}" "fallback/payload" "$y")" \
 		    "${tmprompath}" || \
 		    err "build_grub_roms: cannot move SeaBIOS ROM to tmprom"
+		grubelf_cbfs="img/grub2"
 	fi
+
+	# we only need insert grub.elf once, for each coreboot config:
+	"${cbfstool}" "${tmprompath}" add-payload -f "${grubelf}" \
+	    -n ${grubelf_cbfs} -c lzma || \
+	    err "build_grub_roms: cannot add grub payload to tmprom"
+
+	# we only need insert background.png once, for each coreboot config:
+	if [ "${displaymode}" = "vesafb" ] || \
+	    [ "${displaymode}" = "corebootfb" ]; then
+		backgroundfile="background1280x800.png"
+		if [ "${board}" = "x60" ] \
+		    || [ "${board}" = "t60_intelgpu" ]; then
+			# TODO: don't hardcode this. do it in target.cfg
+			backgroundfile="background1024x768.png"
+		fi
+		backgroundfile="resources/grub/background/${backgroundfile}"
+		"${cbfstool}" "${tmprompath}" add -f ${backgroundfile} \
+		    -n background.png -t raw || \
+		    err "build_grub_roms: cannot add background.png to tmprom"
+
+	fi
+
+	tmpscancfg=$(mktemp -t coreboot_rom.XXXXXXXXXX) || 
+	    err "mkGrubRom: cannot create temporary scan.cfg"
+	printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" > \
+	    "${tmpscancfg}" || \
+	    err "mkGrubRom: cannot insert into temporary scan.cfg"
+	"${cbfstool}" "${tmprompath}" add -f "${tmpscancfg}" -n scan.cfg \
+	    -t raw || err "mkGrubROM: cannot insert scan.cfg into CBFS"
 
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
@@ -386,16 +408,7 @@ build_grub_roms() {
 		keymap="${keymapfile##*/}"
 		keymap="${keymap%.gkb}"
 
-		grub_path_in_cbfs="fallback/payload"
-		[ "${firstpayloadname}" = "grub" ] || \
-			grub_path_in_cbfs="img/grub2"
-
-		# evil bofh rfc 2646 compliance hack
-		x=${keymap}
-		y=${tmprompath}
-		z=${grub_path_in_cbfs}
-
-		tmpgrubrom="$(mkGrubRom "${x}" "${y}" "${z}")"
+		tmpgrubrom="$(mkGrubRom "${keymap}" "${tmprompath}")"
 
 		if [ "${initmode}" = "normal" ]; then
 			newrompath="${romdir}/${firstpayloadname}_${board}_"
@@ -415,61 +428,16 @@ build_grub_roms() {
 mkGrubRom() {
 	target_keymap="${1}"
 	target_cbrom="${2}"
-	target_grubelf_cbfs_path="${3}" # e.g. fallback/payload
 
-	grubelf="elf/grub/grub_${target_keymap}.elf"
-	grubcfg="elf/grub/grub_${target_keymap}.cfg"
-	grubtestcfg="elf/grub/grub_${target_keymap}_test.cfg"
+	keymapcfg="elf/grub/keymap_${target_keymap}.cfg"
 
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX) || \
 	    err "mkGrubRom: cannot create tmprom"
 	cp "${target_cbrom}" "${tmprom}" || \
 	    err "mkGrubRom: cannot copy to tmprom"
 
-	"${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" \
-	    -n ${target_grubelf_cbfs_path} -c lzma || \
-	    err "mkGrubRom: cannot add grub payload to tmprom"
-
-	tmpgrubcfg=$(mktemp -t grub.cfg.XXXXXXXXXX)
-	tmpgrubtestcfg=$(mktemp -t grubtest.cfg.XXXXXXXXXX)
-	if [ "${grub_scan_disk}" = "ahci" ]; then
-		sed \
-		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ahci\"/' \
-		    "${grubcfg}" > "${tmpgrubcfg}" || err "mkGrubRom: sed1"
-		sed \
-		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ahci\"/' \
-		    "${grubtestcfg}" > "${tmpgrubtestcfg}" || \
-		    err "mkGrubRom: sed2"
-	elif [ "${grub_scan_disk}" = "ata" ]; then
-		sed \
-		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ata\"/' \
-		    "${grubcfg}" > "${tmpgrubcfg}" || err "mkGrubRom: sed3"
-		sed \
-		's/set\ grub_scan_disk=\"both\"/set\ grub_scan_disk=\"ata\"/' \
-		    "${grubtestcfg}" > "${tmpgrubtestcfg}" || \
-		    err "mkGrubRom: sed4"
-	else
-		cp "${grubcfg}" "${tmpgrubcfg}" || err "mkGrubRom: grub.cfg cp"
-		cp "${grubtestcfg}" "${tmpgrubtestcfg}" || \
-		    err "mkGrubRom: grubtest.cfg cp"
-	fi
-
-	"${cbfstool}" "${tmprom}" add -f "${tmpgrubcfg}" -n grub.cfg -t raw || \
-	    err "mkGrubRom: cannot add grub.cfg to tmprom"
-
-	"${cbfstool}" "${tmprom}" add -f "${tmpgrubtestcfg}" -n grubtest.cfg \
-	    -t raw || err "mkGrubRom: cannot add grubtest.cfg to tmprom"
-	rm -f "${tmpgrubcfg}" "${tmpgrubtestcfg}" || \
-	    err "mkGrubRom: cannot remove tmp grub.cfg / grubtest.cfg"
-
-	backgroundfile="background1280x800.png"
-	if [ "${board}" = "x60" ] || [ "${board}" = "t60_intelgpu" ]; then
-		# TODO: don't hardcode this. do it in target.cfg per board
-		backgroundfile="background1024x768.png"
-	fi
-	backgroundfile="resources/grub/background/${backgroundfile}"
-	"${cbfstool}" "${tmprom}" add -f ${backgroundfile} -n background.png \
-	    -t raw || err "mkGrubRom: cannot add background.png to tmprom"
+	"${cbfstool}" "${tmprom}" add -f "${keymapcfg}" -n keymap.cfg -t raw \
+	    || err "mkGrubRom: cannot add keymap.cfg to tmprom"
 
 	printf "%s\n" "${tmprom}"
 }
