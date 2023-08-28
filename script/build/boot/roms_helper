@@ -523,8 +523,7 @@ build_uboot_roms()
 	y=${uboot_config}
 	z=${cbfstool}
 	tmprom="$(mkUbootRom "$x" "fallback/payload" "$y" "$z")"
-	newrompath= \
-	    "${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
+	newrompath="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
 	[ "${initmode}" = "normal" ] && \
 		newrompath="${romdir}/uboot_payload_${board}_${initmode}.rom"
 	moverom "${tmprom}" "${newrompath}" "${romtype}" || \
