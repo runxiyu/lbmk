@@ -30,7 +30,7 @@ simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
 simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 
 # do not add blobs directory here. it's handled below
-dirlist="resources util script"
+dirlist="resources util script include"
 
 filelist="lbmk modify build README.md COPYING Makefile update version"
 filelist="${filelist} versiondate projectname .gitcheck fetch fetch_trees"
