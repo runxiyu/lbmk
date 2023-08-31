@@ -44,7 +44,6 @@ keyboard_layouts=""
 
 grub_scan_disk="undefined"
 tree="undefined"
-romtype="normal" # optional parameter in target.cfg. "normal" is default
 arch="undefined"
 
 # Disable all payloads by default.
@@ -332,7 +331,7 @@ build_seabios_roms()
 			newrompath="${newrompath}${displaymode}.rom"
 		fi
 
-		moverom "${t}" "${newrompath}" "${romtype}" || \
+		moverom "${t}" "${newrompath}" || \
 		    err "build_roms: cannot copy rom"
 		rm -f "${t}" || err "cannot rm ${t}"
 	fi
@@ -418,7 +417,7 @@ build_grub_roms() {
 			newrompath="${newrompath}${initmode}_${displaymode}_"
 			newrompath="${newrompath}${keymap}.rom"
 		fi
-		moverom "${tmpgrubrom}" "${newrompath}" "${romtype}" || \
+		moverom "${tmpgrubrom}" "${newrompath}" || \
 		    err "build_grub_roms, moverom"
 		rm -f "${tmpgrubrom}" || err "rm tmpgrubrom, build_grub_roms"
 	done
@@ -494,7 +493,7 @@ build_uboot_roms()
 	newrompath="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
 	[ "${initmode}" = "normal" ] && \
 		newrompath="${romdir}/uboot_payload_${board}_${initmode}.rom"
-	moverom "${tmprom}" "${newrompath}" "${romtype}" || \
+	moverom "${tmprom}" "${newrompath}" || \
 	    err "build_roms: moverom fail (u-boot)"
 	rm -f "${tmprom}" || \
 	    err "build_roms: cannot rm u-boot rom"
@@ -529,68 +528,14 @@ mkUbootRom() {
 # it is assumed that no other work will be done on the ROM
 # after calling this function. therefore this function is "final"
 moverom() {
-	rompath="$1"
-	newrompath="$2"
-	cuttype="$3"
-
+	rompath="${1}"
+	newrompath="${2}"
 	[ "${blobs_required}" = "n" ] && \
 		newrompath="${newrompath%.rom}_noblobs.rom"
 
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
 
-	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
-		dd if="${rompath}" of="${newrompath}" bs=1 \
-		    skip=$(($(stat -c %s "${rompath}") - 0x400000)) \
-		    count=4194304 || err "moverom: cannot cut 4MB section"
-	else
-		cp "${rompath}" "${newrompath}" || \
-		    err "moverom: can't copy rom"
-	fi
-
-	# pike2008 cards cause a system hang when loading option roms in seabios
-	# if there is an empty option rom in cbfs, no option rom will be loaded
-	if [ "${cuttype}" = "d8d16sas" ]; then
-		emptyrom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
-		rm -f "${emptyrom}" || err "cannot remove fake oprom"
-		touch "${emptyrom}" || err "cannot create fake oprom"
-		for deviceID in "0072" "3050"; do
-			"${cbfstool}" "${newrompath}" add -f "${emptyrom}" \
-			    -n "pci1000,${deviceID}.rom" -t raw || \
-			    err "moverom: cannot insert fake pike2008 rom"
-		done
-		rm -f "${emptyrom}" || \
-		    err "moverom: cannot remove pike2008 rom"
-	fi
-
-	for romsize in 4 8 16; do
-		ifddir="descriptors/ich9m"
-		for bs in "4" "12"; do
-			ifdgbe="${ifddir}/ich9fdnogbe_${romsize}m.bin"
-			cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
-			if [ "${bs}" = "12" ]; then
-				cmpstr="${romsize}MiB ICH9 IFD NOR flash"
-				ifdgbe="${ifddir}/ich9fdgbe_${romsize}m.bin"
-			fi
-			[ "${cuttype}" = "${cmpstr}" ] || continue
-			[ -f "${ifdgbe}" ] || ./build descriptors ich9m || \
-			    err "moverom: cannot create ich9m ifd"
-			dd if="${ifdgbe}" of="${newrompath}" bs=${bs}k count=1 \
-			    conv=notrunc || err "moverom: cant insert ich9m ifd"
-		done
-
-	done
-
-	if [ "${cuttype}" = "i945 laptop" ]; then
-		dd if="${newrompath}" of=top64k.bin bs=1 \
-		    skip=$(($(stat -c %s "${newrompath}") - 0x10000)) \
-		    count=64k || \
-		    err "moverom: cannot copy boot block from i945 rom"
-		dd if=top64k.bin of="${newrompath}" bs=1 \
-		    seek=$(($(stat -c %s "${newrompath}") - 0x20000)) \
-		    count=64k conv=notrunc || \
-		    err "moverom: cannot copy boot block into i945 rom"
-		rm -f top64k.bin || err "moverom: can't remove top64k.bin"
-	fi
+	cp "${rompath}" "${newrompath}" || err "moverom: can't copy rom"
 
 	if [ "${microcode_required}" = "n" ]; then
 		_newrom_b="${newrompath%.rom}_nomicrocode.rom"
@@ -598,10 +543,8 @@ moverom() {
 		    err "moverom: cp \"${newrompath}\" \"${_newrom_b}\""
 		microcode_present="y"
 		"${cbfstool}" "${_newrom_b}" remove -n \
-		    cpu_microcode_blob.bin || microcode_present="n"
+		    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
 		if [ "${microcode_present}" = "n" ]; then
-			rm -f "${_newrom_b}" || \
-			    err "cannot remove ${_newrom_b}"
 			printf "REMARK: '%s' already lacks microcode\n" \
 			    "${newrompath}"
 			printf "Renaming default ROM file instead.\n"

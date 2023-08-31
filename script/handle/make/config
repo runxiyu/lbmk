@@ -41,6 +41,7 @@ elfdir=""
 listfile=""
 mode=""
 project=""
+romtype=""
 target=""
 target_dir=""
 tree=""
@@ -123,6 +124,7 @@ handle_dependencies()
 
 	tree="undefined"
 	arch="undefined"
+	romtype="normal"
 
 	[ ! -f "${target_dir}/target.cfg" ] && \
 		fail "handle_dependencies: ${target_dir}: missing target.cfg"
@@ -238,6 +240,11 @@ run_make_command()
 
 copy_elf()
 {
+	if [ "${project}" = "coreboot" ]; then
+		modify_coreboot_rom || \
+		    err "copy_elf: cannot prepare coreboot image"
+	fi
+
 	for f in $(cat "${listfile}"); do
 		[ ! -f "${codedir}/$f" ] || \
 		    cp "${codedir}/${f}" "${dest_dir}/" || \
@@ -246,6 +253,57 @@ copy_elf()
 
 	./handle make file -c "${codedir}" || \
 	    fail "copy_elf: clean: ${codedir} (${project}/${target})"
+}
+
+modify_coreboot_rom()
+{
+	rompath="${codedir}/build/coreboot.rom"
+	[ -f "${rompath}" ] || \
+	    err "modify_coreboot_rom: does not exist: ${rompath}"
+	tmprom="$(mktemp -t rom.XXXXXXXXXX)"
+	rm -f "${tmprom}" || \
+	    err "modify_coreboot_rom prep: cannot remove tmprom"
+
+	if [ "${romtype}" = "d8d16sas" ]; then
+		# pike2008 roms hang seabios. an empty rom will override
+		# the built-in one, thus disabling all execution of it
+		touch "${tmprom}" || \
+		    err "modify_coreboot_rom: cannot create fake oprom"
+		for deviceID in "0072" "3050"; do
+			"${cbfstool}" "${rompath}" add -f "${tmprom}" \
+			    -n "pci1000,${deviceID}.rom" -t raw || \
+			    err "modify_coreboot_rom: can't insert fake rom"
+		done
+	elif [ "${romtype}" = "i945 laptop" ]; then
+		# for bucts-based installation method from factory bios
+		dd if="${rompath}" of="${tmprom}" bs=1 \
+		    skip=$(($(stat -c %s "${rompath}") - 0x10000)) \
+		    count=64k || \
+		    err "modify_coreboot_rom: can't read i945 bootblock"
+		dd if="${tmprom}" of="${rompath}" bs=1 \
+		    seek=$(($(stat -c %s "${rompath}") - 0x20000)) \
+		    count=64k conv=notrunc || \
+		    err "modify_coreboot_rom: can't write i945 bootblock"
+	fi
+	for romsize in 4 8 16; do
+		ifddir="descriptors/ich9m"
+		for bs in "4" "12"; do
+			ifdgbe="${ifddir}/ich9fdnogbe_${romsize}m.bin"
+			cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
+			if [ "${bs}" = "12" ]; then
+				cmpstr="${romsize}MiB ICH9 IFD NOR flash"
+				ifdgbe="${ifddir}/ich9fdgbe_${romsize}m.bin"
+			fi
+			[ "${romtype}" = "${cmpstr}" ] || continue
+			[ -f "${ifdgbe}" ] || ./build descriptors ich9m || \
+			    err "modify_coreboot_rom: can't create ich9m ifd"
+			dd if="${ifdgbe}" of="${rompath}" bs=${bs}k count=1 \
+			    conv=notrunc || \
+			    err "modify_coreboot_rom: can't insert ich9m ifd"
+		done
+	done
+	rm -f "${tmprom}" || \
+	    err "modify_coreboot_rom: cannot remove tmprom"
 }
 
 fail()
