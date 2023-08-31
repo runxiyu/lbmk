@@ -79,7 +79,7 @@ main()
 detect_firmware()
 {
 	set -- "${boarddir}/config/"*
-	. "${1}"
+	. "${1}" 2>/dev/null
 	. "${boarddir}/target.cfg"
 
 	[ "${CONFIG_HAVE_MRC}" = "y" ] && needs="${needs} MRC"

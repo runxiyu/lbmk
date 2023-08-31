@@ -188,7 +188,7 @@ patch_rom()
 	    err "patch_rom: file missing: ${boarddir}/target.cfg"
 
 	set -- "${boarddir}/config/"*
-	. "${1}"
+	. "${1}" 2>/dev/null
 	. "${boarddir}/target.cfg"
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && \

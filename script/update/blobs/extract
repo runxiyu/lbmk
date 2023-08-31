@@ -72,7 +72,7 @@ extract_blobs()
 	printf "extracting blobs for %s from %s\n" ${board} ${vendor_rom}
 
 	set -- "${boarddir}/config/"*
-	. "${1}"
+	. "${1}" 2>/dev/null
 	. "${boarddir}/target.cfg"
 
 	[ "$CONFIG_HAVE_MRC" != "y" ] || \
