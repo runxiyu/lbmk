@@ -50,7 +50,7 @@ main()
 
 init_check()
 {
-	if [ -f version ]; then
+	[ -f version ] && \
 		version="$(cat version)"
 	[ -f versiondate ] && \
 		versiondate="$(cat versiondate)"
