@@ -34,6 +34,7 @@ CONFIG_KBC1126_FIRMWARE=""
 CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=""
 ifdtool="cbutils/${tree}/ifdtool"
 cbfstool="cbutils/${tree}/cbfstool"
+microcode_required="y"
 
 main()
 {
@@ -42,6 +43,7 @@ main()
 	init_check
 
 	for romdir in bin/*; do
+		[ -d "${romdir}" ] || continue
 		make_archive "${romdir}"
 	done
 
@@ -74,11 +76,25 @@ init_check()
 
 make_archive()
 {
-	romdir=${1}
-	target="${romdir##*/}"
+	builddir="${1}"
+	romdir="$(mktemp -d -t coreboot_rom.XXXXXXXXXX)" || \
+	    err "make_archive: cannot create tmpdir"
+	rm -Rf "${romdir}" || err "make_archive: can't remove tmpdir"
+	target="${builddir##*/}"
+	romdir="${romdir}/bin/${target}"
+	mkdir -p "${romdir}" || \
+	    err "make_archive: can't mkdir tmpdir"
+	cp "${builddir}"/* "${romdir}" || \
+	    err "make_archive: cannot copy ROM images directory -> ${romdir}"
 
 	echo ${target}
-	[ -d "${romdir}/" ] || continue
+
+	[ -f "resources/coreboot/${target}/target.cfg" ] || \
+		err "make_archive: ${target}: target.cfg is missing"
+
+	. "resources/coreboot/${target}/target.cfg"
+	[ "${microcode_required}" = "y" ] || \
+	    [ "${microcode_required}" = "n" ] || microcode_required="y"
 
 	CONFIG_HAVE_MRC="y"
 	CONFIG_HAVE_ME_BIN="y"
@@ -97,7 +113,8 @@ make_archive()
 
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] || \
-	    [ "${target}" = "e6400nvidia_4mb" ]; then
+	    [ "${target}" = "e6400nvidia_4mb" ] || \
+	    [ "${microcode_required}" = "n" ]; then
 		strip_archive "${romdir}"
 	fi
 
@@ -110,15 +127,17 @@ make_archive()
 	printf "%s\n" "${projectname}" > "${romdir}/projectname" || \
 	    err "make_archive: can't create ${romdir}/projectname"
 
-	f="release/${version}/roms/${projectname}-${version}_${target##*/}"
-	tar -c "${romdir}/" | xz -9e > "${f}.tar.xz" || \
-	    err "make_archive: can't create ${f}.tar.xz"
-
-	if [ -d "${romdir}_tmp" ]; then
-		rm -Rf "${romdir}" || err "make_archive: !rm -Rf ${romdir}"
-		mv "${romdir}_tmp" "${romdir}" || \
-		    err "make_archive: !mv \"${romdir}_tmp\" \"${romdir}\""
-	fi
+	archivename="${projectname}-${version}_${target##*/}"
+	f="release/${version}/roms/${archivename}"
+	(
+	cd "${romdir%/bin/${target}}" || err "make_archive: can't cd to tmpdir"
+	tar -c "bin/${target}/" | xz -9e > "${archivename}.tar.xz" || \
+	    err "make_archive:cant make ${projectname}-${version}_${target##*/}"
+	)
+	cp "${romdir%/bin/${target}}/${archivename}.tar.xz" "${f}.tar.xz" || \
+	    err "make_archive: can't copy tarball"
+	rm -Rf "${romdir%/bin/${target}}" || \
+	    err "make_archive: can't delete tmpdir"
 }
 
 strip_archive()
@@ -131,10 +150,17 @@ strip_archive()
 	./build coreboot utils ${tree} || \
 	    err "strip_archive: coreboot/${tree}: can't build utils"
 
-	# dirty hack, to reduce disk io later
-	# rather than using /tmp, which might not be tmpfs
-	rm -Rf "${romdir}_tmp" || err "strip_archive: !rm -Rf ${romdir}_tmp"
-	mkdir "${romdir}_tmp" || err "strip_archive: !mkdir ${romdir}_tmp"
+	if [ "${microcode_required}" = "n" ]; then
+		for romfile in "${romdir}"/*.rom; do
+			[ -f "${romfile}" ] || continue
+			strip_ucode "${romfile}"
+		done
+		for romfile in "${romdir}"/*.tmprom; do
+			[ -f "${romfile}" ] || continue
+			mv "${romfile}" "${romfile%.tmprom}.rom" || \
+			    err "can't make no-u rom: ${romfile%.tmprom}.rom"
+		done
+	fi
 
 	# Hash the rom before removing blobs
 	rm -f "${romdir}/blobhashes" || \
@@ -149,8 +175,28 @@ strip_archive()
 	)
 
 	for romfile in "${romdir}"/*.rom; do
+		[ -f "${romfile}" ] || continue
 		strip_rom_image "${romfile}"
 	done
+}
+
+strip_ucode()
+{
+	romfile=${1}
+
+	_newrom_b="${romfile%.rom}_nomicrocode.tmprom"
+	cp "${romfile}" "${_newrom_b}" || \
+	    err "strip_rom_image: cp \"${romfile}\" \"${_newrom_b}\""
+	microcode_present="y"
+	"${cbfstool}" "${_newrom_b}" remove -n \
+	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
+	if [ "${microcode_present}" = "n" ]; then
+		printf "REMARK: '%s' already lacks microcode\n" \
+		    "${romfile}"
+		printf "Renaming default ROM file instead.\n"
+		mv "${romfile}" "${_newrom_b}" || \
+		    err "strip_rom_image: can't rename no-u ${romfile}"
+	fi
 }
 
 strip_rom_image()
@@ -160,12 +206,8 @@ strip_rom_image()
 	[ -f "${romfile}" ] || return 0
 
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		"${ifdtool}" --nuke me "${romfile}" || \
+		"${ifdtool}" --nuke me "${romfile}" -O "${romfile}" || \
 		    err "strip_rom_images: ${romfile}: cannot nuke Intel ME"
-		mv "${romfile}" "${romdir}_tmp" || \
-		    err "strip_rom_images: !mv ${romfile} ${romdir}_tmp"
-		mv "${romfile}.new" "${romfile}" || \
-		    err "strip_rom_images: !mv ${romfile}.new ${romfile}"
 	fi
 
 	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then

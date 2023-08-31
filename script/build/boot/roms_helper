@@ -33,7 +33,6 @@ projectname="$(cat projectname)"
 cfgsdir="resources/coreboot"
 
 blobs_required=""
-microcode_required=""
 
 board=""
 ubdir=""
@@ -150,9 +149,6 @@ configure_target()
 	[ "${payload_uboot}" = "y" ] && [ "${uboot_config}" = "undefined" ] && \
 		uboot_config="default"
 
-	[ "${microcode_required}" != "n" ] && \
-	    [ "${microcode_required}" != "y" ] && \
-		microcode_required="y"
 	[ "${blobs_required}" != "n" ] && [ "${blobs_required}" != "y" ] && \
 		blobs_required="y"
 
@@ -530,28 +526,13 @@ mkUbootRom() {
 moverom() {
 	rompath="${1}"
 	newrompath="${2}"
-	[ "${blobs_required}" = "n" ] && \
-		newrompath="${newrompath%.rom}_noblobs.rom"
 
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
 
-	cp "${rompath}" "${newrompath}" || err "moverom: can't copy rom"
+	[ "${blobs_required}" = "n" ] && \
+		newrompath="${newrompath%.rom}_noblobs.rom"
 
-	if [ "${microcode_required}" = "n" ]; then
-		_newrom_b="${newrompath%.rom}_nomicrocode.rom"
-		cp "${newrompath}" "${_newrom_b}" || \
-		    err "moverom: cp \"${newrompath}\" \"${_newrom_b}\""
-		microcode_present="y"
-		"${cbfstool}" "${_newrom_b}" remove -n \
-		    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
-		if [ "${microcode_present}" = "n" ]; then
-			printf "REMARK: '%s' already lacks microcode\n" \
-			    "${newrompath}"
-			printf "Renaming default ROM file instead.\n"
-			mv "${newrompath}" "${_newrom_b}" || \
-			    err "moverom: mv \"${newrompath}\" \"${_newrom_b}\""
-		fi
-	fi
+	cp "${rompath}" "${newrompath}" || err "moverom: can't copy rom"
 }
 
 main $@
