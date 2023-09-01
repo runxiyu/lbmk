@@ -43,8 +43,10 @@ main()
 
 build_for_mainboard() {
 	board="${1}"
-	[ -d "resources/coreboot/${board}" ] || continue
-	[ -f "resources/coreboot/${board}/target.cfg" ] || continue
+	[ -d "resources/coreboot/${board}" ] || \
+	    err "build_for_mainboard ${board}: boarddir does not exist"
+	[ -f "resources/coreboot/${board}/target.cfg" ] || \
+	    err "build_for_mainboard ${board}: target.cfg does not exist"
 	tree="undefined"
 	. "resources/coreboot/${board}/target.cfg" # source
 	[ "${tree}" = "undefined" ] && \
