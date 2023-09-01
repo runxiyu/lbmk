@@ -55,7 +55,7 @@ build_for_mainboard() {
 buildutils() {
 	tree="${1}"
 	[ -d "coreboot/${tree}/" ] || \
-		./fetch_trees coreboot $tree || \
+		./update project trees coreboot $tree || \
 		    err "buildutils: cannot fetch ${tree}"
 	for util in cbfstool ifdtool; do
 		[ -f "cbutils/${tree}/${util}" ] && continue

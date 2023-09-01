@@ -85,11 +85,11 @@ create_release_directory()
 download_modules()
 {
 	for modname in ${trees_fetch_list}; do
-		[ -d "${modname}" ] || ./fetch_trees ${modname} || \
+		[ -d "${modname}" ] || ./update project trees ${modname} || \
 		    err "download_modules: couldn't download ${modname} trees"
 	done
 	for modname in ${simple_fetch_list}; do
-		[ -d "${modname}/" ] || ./fetch ${modname} || \
+		[ -d "${modname}/" ] || ./update project repo ${modname} || \
 		    err "download_modules: couldn't download ${modname} repo"
 	done
 }

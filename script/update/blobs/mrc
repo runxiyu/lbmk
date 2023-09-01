@@ -71,7 +71,7 @@ check_existing()
 
 build_dependencies()
 {
-	[ -d "${cbdir}/" ] || ./fetch_trees coreboot default || \
+	[ -d "${cbdir}/" ] || ./update project trees coreboot default || \
 	    err "build_dependencies: cannot fetch coreboot/default"
 	./build coreboot utils default || \
 	    err "build_dependencies: cannot build cbutils/default"

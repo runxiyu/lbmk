@@ -123,7 +123,8 @@ detect_board()
 
 build_dependencies()
 {
-	[ -d "${cbdir}" ] || ./fetch_trees coreboot default
+	[ -d "${cbdir}" ] || ./update project trees coreboot default || \
+	    err "build_dependencies: could not download coreboot/default"
 	./build coreboot utils default || \
 	    err "build_dependencies: could not build cbutils"
 	./update blobs download ${board} || \

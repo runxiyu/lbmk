@@ -56,10 +56,10 @@ check_board()
 build_dependencies()
 {
 	if [ ! -d me_cleaner ]; then
-		./fetch me_cleaner || \
+		./update project repo me_cleaner || \
 		    err "build_dependencies: can't fetch me_cleaner"
 	elif [ ! -d "${cbdir}" ]; then
-		./fetch_trees coreboot default || \
+		./update project trees coreboot default || \
 		    err "build_dependencies: can't fetch coreboot"
 	elif [ ! -f "${ifdtool}" ]; then
 		make -C "${ifdtool%/ifdtool}" || \

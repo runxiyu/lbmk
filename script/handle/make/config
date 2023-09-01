@@ -139,7 +139,7 @@ handle_dependencies()
 
 	codedir="${project}/${tree}"
 	[ -d "${codedir}" ] || \
-		./fetch_trees "${project}" "${target}" || \
+		./update project trees "${project}" "${target}" || \
 		    fail "handle_dependencies: can't fetch ${project}/${target}"
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
@@ -166,7 +166,7 @@ check_cross_compiler()
 	# only true if not building coreboot:
 	ctarget="${cbdir#coreboot/}"
 	[ -d "${cbdir}" ] || \
-		./fetch_trees coreboot ${ctarget} || \
+		./update project trees coreboot ${ctarget} || \
 		    fail "check_cross_compiler: can't fetch coreboot/${ctarget}"
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then

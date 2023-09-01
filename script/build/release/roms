@@ -145,7 +145,7 @@ strip_archive()
 	romdir=${1}
 
 	[ -d "coreboot/${tree}" ] || \
-		./fetch_trees coreboot ${tree} || \
+		./update project trees coreboot ${tree} || \
 		    err "strip_archive: coreboot/${tree}: can't fetch source"
 	./build coreboot utils ${tree} || \
 	    err "strip_archive: coreboot/${tree}: can't build utils"

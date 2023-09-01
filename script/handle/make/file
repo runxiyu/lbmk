@@ -52,7 +52,7 @@ main()
 
 handle_dependencies()
 {
-	[ -d "${project}" ] || ./fetch "${project%/*}" || \
+	[ -d "${project}" ] || ./update project repo "${project%/*}" || \
 	    err "handle_dependencies: can't fetch ${project%/*}"
 	[ -d "${project}" ] || \
 		err "handle_dependencies: ${project%/*} not downloaded"

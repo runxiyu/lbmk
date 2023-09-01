@@ -157,11 +157,11 @@ EOF
 build_dependencies()
 {
 	[ -d ${cbdir} ] || \
-		./fetch_trees coreboot ${cbdir##*/} || \
+		./update project trees coreboot ${cbdir##*/} || \
 		    err "build_dependencies: can't fetch ${cbdir}"
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "${d}" ] && continue
-		./fetch "${d}" || \
+		./update project repo "${d}" || \
 		    err "build_dependencies: can't fetch ${d}"
 	done
 	[ -f uefitool/uefiextract ] || \

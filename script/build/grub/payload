@@ -72,7 +72,7 @@ main()
 handle_dependencies()
 {
 	[ -d "grub/" ] || \
-		./fetch grub || \
+		./update project repo grub || \
 		    err "handle_dependencies: cannot fetch grub"
 	[ -f "grub/grub-mkstandalone" ] || \
 		./build grub utils || \
