@@ -33,7 +33,7 @@ simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 dirlist="resources util script include"
 
 filelist="lbmk modify build README.md COPYING Makefile update version"
-filelist="${filelist} versiondate projectname .gitcheck fetch fetch_trees"
+filelist="${filelist} versiondate projectname checkgit"
 
 version="version-unknown"
 versiondate="version-date-unknown"
@@ -159,7 +159,6 @@ purge_files()
 	done
 	for p in "nvmutil" "ich9utils" "spkmodem_recv" "e6400-flash-unlock"; do
 		make clean -C "util/${p}" || \
-		
 		    err "purge_files 2: !make clean -C ${util}/p"
 	done
 	for p in ${trees_fetch_list}; do
