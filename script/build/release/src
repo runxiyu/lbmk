@@ -107,7 +107,7 @@ copy_files()
 		if [ ! -f "${i}" ]; then
 			rm -Rf "${srcdir}" || \
 			    err "copy_files: !rm -Rf ${srcdir}"
-			err "copy_files: file '${1}' does not exist"
+			err "copy_files: file '${i}' does not exist"
 		fi
 		cp "${i}" "${srcdir}/" || \
 		    err "copy_files: !cp ${i} ${srcdir}/"
