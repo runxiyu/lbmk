@@ -96,6 +96,20 @@ download_modules()
 
 copy_files()
 {
+	for dir in ${trees_fetch_list}; do
+		[ -d "${dir}" ] || continue
+		for subdir in "${dir}"/*; do
+			[ -d "${subdir}" ] || continue
+			[ "${subdir##*/}" = "${dir}" ] && continue
+			mkdir -p "${srcdir}/${dir}" || \
+			    err "copy_files: !mkdir -p ${srcdir}/${dir}"
+			[ ! -d "${srcdir}/${dir}/${subdir##*/}" ] || \
+			    rm -Rf "${srcdir}/${dir}/${subdir##*/}" || \
+			    err "copy_f:can't rm ${srcdir}/${dir}/${subdir##*/}"
+			cp -R "${subdir}" "${srcdir}/${dir}/${subdir##*/}" || \
+			    err "copy_f:can't cp ${srcdir}/${dir}/${subdir##*/}"
+		done
+	done
 	for dir in ${simple_fetch_list} ${dirlist}; do
 		cp -R "${dir}/" "${srcdir}/" || \
 		    err "copy_files: !cp -R ${dir}/ ${srcdir}/"
