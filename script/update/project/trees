@@ -151,7 +151,7 @@ fetch_from_upstream()
 	[ -d "${project}" ] || return 1
 	[ -d "${project}/${project}" ] && return 0
 
-	./fetch ${project} || return 1
+	./update project repo ${project} || return 1
 }
 
 prepare_new_tree()

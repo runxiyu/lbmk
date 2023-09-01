@@ -33,7 +33,7 @@ main()
 	verify_config
 
 	clone_project
-	[ "${depend}" = "" ] || ./fetch ${depend} || \
+	[ "${depend}" = "" ] || ./update project repo ${depend} || \
 	    fail "Cannot fetch dependency, ${depend}, for project, ${name}"
 
 	rm -Rf "${tmp_dir}" || fail "cannot remove tmpdir, ${tmp_dir}"
@@ -114,7 +114,7 @@ fail()
 usage()
 {
 	cat <<- EOF
-	Usage: ./fetch [name]
+	Usage: ./update project repo [name]
 
 	Options:
 	name: Module name as specified in resources/git/revisions
