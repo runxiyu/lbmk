@@ -26,6 +26,26 @@ set -u -e
 
 . "include/err.sh"
 
+tmpdir=""
+tmpdir_was_set="y"
+set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
+if [ "${tmpdir_was_set}" = "y" ]; then
+	tmpdir="${TMPDIR##*/}"
+	tmpdir="${TMPDIR%_*}"
+	if [ "${tmpdir}" = "lbmk" ]; then
+		tmpdir=""
+		tmpdir_was_set="n"
+	fi
+fi
+if [ "${tmpdir_was_set}" = "n" ]; then
+	export TMPDIR="/tmp"
+	tmpdir="$(mktemp -d -t lbmk_XXXXXXXX)"
+	export TMPDIR="${tmpdir}"
+else
+	export TMPDIR="${TMPDIR}"
+fi
+tmpdir="${TMPDIR}"
+
 projectname="$(cat projectname)"
 buildpath=""
 mode=""
@@ -34,10 +54,10 @@ option=""
 main()
 {
 	id -u 1>/dev/null 2>/dev/null || \
-	    err "cannot ascertain user id"
+	    fail "cannot ascertain user id"
 
-	[ "${0##*/}" = "lbmk" ] && err "Don't run this script directly."
-	[ $# -lt 1 ] && err "Too few arguments. Try: ${0} help"
+	[ "${0##*/}" = "lbmk" ] && fail "Don't run this script directly."
+	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
 
 	mode="${1}"
 	if [ "${mode}" = "dependencies" ]; then
@@ -46,13 +66,13 @@ main()
 			printf "Look at files under resources/dependencies/\n" \
 			    1>&2
 			printf "Example: ./build dependencies debian\n" 1>&2
-			err "target not specified"
+			fail "target not specified"
 		fi
-		install_dependencies $@ || err "Could not install dependencies"
-		exit 0
+		install_dependencies $@ || fail "Could not install dependencies"
+		lbmk_exit 0
 	fi
 	if [ "$(id -u)" = "0" ]; then
-		err "running this command as root is not permitted"
+		fail "running this command as root is not permitted"
 	fi
 
 	buildpath="./script/${0##*/}"
@@ -62,13 +82,13 @@ main()
 	    exit 0
 	[ $# -lt 2 ] && usage ${0} && exit 1
 
-	./checkgit || err "Please read: https://libreboot.org/docs/build/"
+	./checkgit || fail "Please read: https://libreboot.org/docs/build/"
 
 	option="${2}"
 	shift 2
 
 	./script/misc/versioncheck || \
-	    err "Cannot check lbmk version"
+	    fail "Cannot check lbmk version"
 
 	case "${option}" in
 	list)
@@ -77,31 +97,33 @@ main()
 		for option in $(./build command options "${buildpath}/${mode}")
 		do
 			"${buildpath}/${mode}/${option}" $@ || \
-			    err "script fail: ${buildpath}/${mode}/${option} $@"
+			    fail "script fail: ${buildpath}/${mode}/${option} $@"
 		done
 		;;
 	*)
 		if [ ! -d "${buildpath}/${mode}" ]; then
 			usage $0
-			err "Invalid mode '${mode}'. Run: ${0} help"
+			fail "Invalid mode '${mode}'. Run: ${0} help"
 		elif [ ! -f "${buildpath}/${mode}/${option}" ]; then
 			usage $0
 			printf "Invalid option for '%s'." ${mode}
-			err "Run: ${0} ${mode} list'."
+			fail "Run: ${0} ${mode} list'."
 		fi
-		"${buildpath}/${mode}/${option}" $@ || err "lbmk error"
+		"${buildpath}/${mode}/${option}" $@ || fail "lbmk error"
 	esac
+
+	lbmk_exit 0
 }
 
 install_dependencies()
 {
-	[ -f "resources/dependencies/${2}" ] || err "Unsupported target"
+	[ -f "resources/dependencies/${2}" ] || fail "Unsupported target"
 
 	aur_notice=""
 	. "resources/dependencies/${2}"
 
 	${pkg_add} ${pkglist} || \
-	    err "install_dependencies: Error installing dependencies"
+	    fail "install_dependencies: Error installing dependencies"
 	[ "${aur_notice}" = "" ] || \
 	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
 }
@@ -122,6 +144,26 @@ usage()
 
 	Refer to ${projectname} documentation for more info.
 	EOF
+}
+
+lbmk_exit()
+{
+	tmp_cleanup || err "could not remove tmpdir on lbmk exit: ${tmpdir}"
+	exit $1
+}
+
+fail()
+{
+	tmp_cleanup || printf "WARNING: could not remove tmpdir: %s\n" \
+	    "${tmpdir}" 1>&2
+	err "${1}"
+}
+
+tmp_cleanup()
+{
+	if [ "${tmpdir_was_set}" = "n" ]; then
+		rm -Rf "${tmpdir}" || return 1
+	fi
 }
 
 main $@
