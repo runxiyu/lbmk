@@ -45,6 +45,7 @@ romtype=""
 target=""
 target_dir=""
 tree=""
+cbfstool=""
 
 main()
 {
@@ -146,6 +147,9 @@ handle_dependencies()
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
 		[ "${mode}" != "all" ] || check_cross_compiler || \
 		    fail "handle_dependencies ${project}/${target}: crossgcc"
+		cbfstool="cbutils/${tree}/cbfstool"
+		[ -f "${cbfstool}" ] || ./build coreboot utils "${tree}" || \
+		    fail "handle_dependencies: cannot build cbfstool"
 	fi
 }
 
