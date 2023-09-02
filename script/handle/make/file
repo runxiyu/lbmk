@@ -60,7 +60,7 @@ handle_dependencies()
 	if [ "${project}" = "uefitool" ]; then
 		(
 		cd uefitool || err "handle_dependencies: !cd uefitool"
-		[ ! -f UEFIExtract/Makefile ] || cmake UEFIExtract/ || \
+		cmake UEFIExtract/ || [ -f Makefile ] || \
 		    err "handle_dependencies: !cmake UEFIExtract/"
 		)
 	fi
