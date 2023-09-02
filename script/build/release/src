@@ -152,7 +152,8 @@ purge_files()
 	cd "${srcdir}/" || \
 	    err "purge_files 3: !cd ${srcdir}/"
 
-	./handle make file -c coreboot/default/util/kbc1126 || \
+	[ ! -d "coreboot/default/util/kbc1126" ] || \
+	    ./handle make file -c "coreboot/default/util/kbc1126" || \
 	    err "purge_files 1: default/util/kbc1126: ! make clean"
 	./handle make config -x coreboot || \
 	    err "purge_files: coreboot: cannot clean crossgcc files"
