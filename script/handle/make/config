@@ -49,7 +49,7 @@ cbfstool=""
 
 main()
 {
-	while getopts b:m:u: option
+	while getopts b:m:u:c:x: option
 	do
 		case "${1}" in
 		-b)
@@ -60,6 +60,12 @@ main()
 			shift ;;
 		-m)
 			mode="menuconfig"
+			shift ;;
+		-c)
+			mode="distclean"
+			shift ;;
+		-x)
+			mode="crossgcc-clean"
 			shift ;;
 		*)
 			fail "Invalid option" ;;
@@ -139,9 +145,16 @@ handle_dependencies()
 		fail "handle_dependencies: ${target_dir}: undefined cpu type"
 
 	codedir="${project}/${tree}"
-	[ -d "${codedir}" ] || \
+	if [ ! -d "${codedir}" ]; then
+		if [ "${mode}" = "distclean" ] || \
+		    [ "${mode}" = "crossgcc-clean" ]; then
+			printf "Directory '%s' does not exist; skipping clean" \
+			    "${codedir}" 1>&2
+			exit 0			
+		fi
 		./update project trees "${project}" "${target}" || \
 		    fail "handle_dependencies: can't fetch ${project}/${target}"
+	fi
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
@@ -239,8 +252,12 @@ run_make_command()
 		    || fail "run_make_command: ${codedir}: can't set version"
 	fi
 	make -C "${codedir}" -j$(nproc) ${mode} || \
-	    fail "run_make_command: make-all: ${codedir} (${project}/${target})"
-	if [ "${mode}" = "oldconfig" ] || [ "${mode}" = "menuconfig" ]; then	
+	    fail "run_make: !make-${mode}: ${codedir} (${project}/${target})"
+	if [ -e "${codedir}/.git" ] && [ "${project}" = "u-boot" ] && \
+	    [ "${mode}" = "distclean" ]; then
+		git -C "${codedir}" clean -fdx || \
+		    err "run_make_command: ${codedir}: cannot clean u-boot git"
+	elif [ "${mode}" = "oldconfig" ] || [ "${mode}" = "menuconfig" ]; then	
 		cp "${codedir}/.config" "${config}" || \
 		    fail "run_make: can't edit config: ${project}/${target}"
 	fi

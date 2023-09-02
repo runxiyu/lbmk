@@ -152,16 +152,14 @@ purge_files()
 	cd "${srcdir}/" || \
 	    err "purge_files 3: !cd ${srcdir}/"
 
-	for p in coreboot/*; do
-		[ -d "${p}" ] || continue
-		./handle make file -c "${p}" || \
-		    err "purge_files 1: ${p}: !make distclean"
-	done
-
 	./handle make file -c coreboot/default/util/kbc1126 || \
 	    err "purge_files 1: default/util/kbc1126: ! make clean"
-	./build clean all || \
-	    err "purge_files 1: ! ./build clean all"
+	./handle make config -x coreboot || \
+	    err "purge_files: coreboot: cannot clean crossgcc files"
+	for p in u-boot seabios coreboot; do
+		./handle make config -c "${p}" || \
+		    err "purge_files: ${p}: cannot clean the source trees"
+	done
 
 	for p in bios_extract flashrom grub ich9utils uefitool; do
 		./handle make file -c "${p}" || \
