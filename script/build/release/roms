@@ -113,7 +113,7 @@ make_archive()
 
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] || \
-	    [ "${target}" = "e6400nvidia_4mb" ] || \
+	    [ "${target}" = "e6400_4mb" ] || \
 	    [ "${microcode_required}" = "n" ]; then
 		strip_archive "${romdir}"
 	fi
@@ -228,7 +228,7 @@ strip_rom_image()
 		    err "strip_rom_images: ${romfile}: can't nuke sch5545ec fw"
 
 	# TODO: replace this board-specific hack
-	if [ "${target}" = "e6400nvidia_4mb" ]; then
+	if [ "${target}" = "e6400_4mb" ]; then
 		"${cbfstool}" "${romfile}" remove -n "pci10de,06eb.rom" || \
 		    err "strip_rom_images: ${romfile}: can't nuke e6400 vga rom"
 	fi

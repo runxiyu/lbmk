@@ -200,7 +200,7 @@ patch_rom()
 		inject_blob_hp_kbc1126_ec "${rom}"
 	[ "${CONFIG_VGA_BIOS_FILE}" != "" ] && \
 	    [ "${CONFIG_VGA_BIOS_ID}" != "" ] && \
-		inject_blob_dell_e6400_vgarom_nvidia
+		inject_blob_dell_e6400_vgarom_nvidia "${rom}"
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
 	    [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ] && \
 		inject_blob_smsc_sch5545_ec "${rom}"

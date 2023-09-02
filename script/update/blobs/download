@@ -387,8 +387,7 @@ extract_e6400vga()
 	(
 	cd "${appdir}" || \
 	    err "extract_e6400vga: can't cd ${appdir}"
-	tail -c +${e6400_vga_offset} "${dl_path##*/}" | gunzip > bios.bin || \
-	    err "extract_e6400vga: can't gunzip > bios.bin"
+	tail -c +${e6400_vga_offset} "${dl_path##*/}" | gunzip > bios.bin || :
 
 	[ -f "bios.bin" ] || \
 		err "extract_e6400vga: can't extract bios.bin from update"

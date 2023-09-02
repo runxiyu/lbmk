@@ -97,7 +97,7 @@
 
 # nvidia vga option rom for dgpu models of Dell Latitude E6400
 # for downloading the nvidia rom to pciroms/pci10de,06eb.rom
-{e6400nvidia}{
+{e6400}{
 	E6400_VGA_DL_hash a24ed919e80287b281e407d525af31f307746250
 	E6400_VGA_DL_url https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe
 	E6400_VGA_DL_url_bkup https://web.archive.org/web/20230506014903/https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe
