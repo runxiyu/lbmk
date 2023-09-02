@@ -240,6 +240,10 @@ run_make_command()
 	fi
 	make -C "${codedir}" -j$(nproc) ${mode} || \
 	    fail "run_make_command: make-all: ${codedir} (${project}/${target})"
+	if [ "${mode}" = "oldconfig" ] || [ "${mode}" = "menuconfig" ]; then	
+		cp "${codedir}/.config" "${config}" || \
+		    fail "run_make: can't edit config: ${project}/${target}"
+	fi
 }
 
 copy_elf()
