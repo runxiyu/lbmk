@@ -131,7 +131,7 @@ make_archive()
 	f="release/${version}/roms/${archivename}"
 	(
 	cd "${romdir%/bin/${target}}" || err "make_archive: can't cd to tmpdir"
-	tar -c "bin/${target}/" | xz -9e > "${archivename}.tar.xz" || \
+	tar -c "bin/${target}/" | xz -T0 -9e > "${archivename}.tar.xz" || \
 	    err "make_archive:cant make ${projectname}-${version}_${target##*/}"
 	)
 	cp "${romdir%/bin/${target}}/${archivename}.tar.xz" "${f}.tar.xz" || \
