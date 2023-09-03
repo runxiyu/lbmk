@@ -23,7 +23,7 @@ set -u -e
 
 . "include/err.sh"
 
-serprog_release_dir=$(pwd)/bin/serprog
+serprog_release_dir=bin/serprog
 sdk_dir=$(pwd)/util-fw/pico-sdk
 src_dir=$(pwd)/util-fw/pico-serprog
 
@@ -34,16 +34,19 @@ main()
 	[ -d "${src_dir}/" ] || ./update project repo rpi-pico-serprog \
 		|| err "fetch rpi-pico-serprog failed!\n"
 
-	cd ${src_dir}
-	cmake -DPICO_SDK_PATH=${sdk_dir} .
+	(
+	cd "${src_dir}" || err "can't cd to ${src_dir}"
+	cmake -DPICO_SDK_PATH="${sdk_dir}" . || \
+	    err "can't cmake ${sdk_dir}"
 	make clean
 	make
+	)
 
-	mkdir -p ${serprog_release_dir}
-	mv pico_serprog.uf2 ${serprog_release_dir}/rpi-pico-serprog.uf2 \
-		|| err "rpi-pico serprog build failed!\n"
-
-	printf "\nDone!\n"
+	mkdir -p "${serprog_release_dir}" || \
+	    err "can't create dir: ${serprog_release_dir}"
+	mv "${src_dir}/pico_serprog.uf2" \
+	    "${serprog_release_dir}/rpi-pico-serprog.uf2" || \
+	    err "rpi-pico serprog build failed!\n"
 }
 
 main $@
