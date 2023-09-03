@@ -23,7 +23,7 @@ set -u -e
 
 . "include/err.sh"
 
-projectname="$(cat projectname)"
+read projectname < projectname
 
 trees_fetch_list="coreboot u-boot seabios"
 simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
@@ -46,9 +46,9 @@ printf "Building source code archive, version %s\n" "${version}"
 main()
 {
 	[ -f version ] && \
-		version="$(cat version)"
+		read version < version
 	[ -f versiondate ] && \
-		versiondate="$(cat versiondate)"
+		read versiondate < versiondate
 
 	create_release_directory
 	download_modules

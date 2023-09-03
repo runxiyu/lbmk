@@ -26,8 +26,8 @@ set -u -e
 
 . "include/err.sh"
 
-projectname="$(cat projectname)"
-our_version="$(cat version)"
+read projectname < projectname
+read our_version < version
 
 export LOCALVERSION="-${projectname}-${our_version}"
 
@@ -270,11 +270,11 @@ copy_elf()
 		    err "copy_elf: cannot prepare coreboot image"
 	fi
 
-	for f in $(cat "${listfile}"); do
+	while read f; do
 		[ ! -f "${codedir}/$f" ] || \
 		    cp "${codedir}/${f}" "${dest_dir}/" || \
 		    fail "copy_elf: cannot copy elf file"
-	done
+	done < ${listfile}
 
 	./handle make file -c "${codedir}" || \
 	    fail "copy_elf: clean: ${codedir} (${project}/${target})"

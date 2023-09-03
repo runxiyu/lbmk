@@ -23,7 +23,7 @@ set -u -e
 
 . "include/err.sh"
 
-projectname="$(cat projectname)"
+read projectname < projectname
 version="version-unknown"
 versiondate="version-date-unknown"
 tree="default"
@@ -53,9 +53,9 @@ main()
 init_check()
 {
 	[ -f version ] && \
-		version="$(cat version)"
+		read version < version
 	[ -f versiondate ] && \
-		versiondate="$(cat versiondate)"
+		read versiondate < versiondate
 	[ ! -d "bin/" ] && \
 		err "init_check: no ROMs built yet (error)"
 	[ -d "release/" ] || \

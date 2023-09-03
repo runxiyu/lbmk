@@ -4,7 +4,7 @@
 
 . "include/err.sh"
 
-projectname="$(cat projectname)"
+read projectname < projectname
 
 main()
 {

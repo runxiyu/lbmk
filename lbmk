@@ -27,7 +27,7 @@ set -u -e
 . "include/err.sh"
 . "include/export.sh"
 
-projectname="$(cat projectname)"
+read projectname < projectname
 buildpath=""
 mode=""
 option=""
