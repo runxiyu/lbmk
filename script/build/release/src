@@ -134,8 +134,8 @@ copy_blobs()
 	    err "copy_blobs: !mkdir -p ${srcdir}/blobs"
 	# do not copy intel ME etc, but do copy ifd/gbe files
 	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
-	    hp8300usdt t1650 e6430; do
-		for j in ifd gbe 4_ifd 8_ifd 12_ifd 16_ifd; do
+	    hp8300usdt t1650 e6430 ich9m; do
+		for j in ifd gbe 4_ifd_nogbe 4_ifd 8_ifd 12_ifd 16_ifd; do
 			[ -f "blobs/${i}/${j}.bin" ] || continue
 			[ -e "${srcdir}/blobs/${i}" ] || \
 				mkdir -p "${srcdir}/blobs/${i}" || \
