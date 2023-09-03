@@ -15,4 +15,5 @@ python3-pkg-resources python3-pycryptodome python3-pyelftools swig uuid-dev \
 build-essential libpci-dev pciutils zlib1g-dev libftdi-dev build-essential \
 libusb-1.0-0-dev libusb-1.0 libusb-1.0-0-dev libusb-dev cmake \
 innoextract p7zip p7zip-full unar \
+binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi cmake \
 "

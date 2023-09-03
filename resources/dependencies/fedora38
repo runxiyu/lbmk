@@ -7,4 +7,5 @@ bzip2 unifont-fonts unifont unifont-ttf-fonts autogen help2man gcc bison flex \
 dejavu-fonts-all texinfo rsync python3 libusb xz gawk device-mapper fuse gettext \
 freetype-devel intltool libselinux-devel gcc pciutils-devel zlib-devel \
 libftdi-devel gcc libusb-devel cmake innoextract p7zip p7zip-plugins unar \
+arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-newlib cmake \
 "
