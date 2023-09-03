@@ -104,3 +104,9 @@
 	E6400_VGA_offset 274451
 	E6400_VGA_romname mod_21.bin
 }
+
+{e6430}{
+	DL_hash 039c89c6d44ae11ae2510cbd5fed756e97ed9a31
+	DL_url https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+	DL_url_bkup https://web.archive.org/web/20210706183911/https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
+}
