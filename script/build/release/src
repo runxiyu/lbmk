@@ -162,7 +162,7 @@ purge_files()
 		    err "purge_files: ${p}: cannot clean the source trees"
 	done
 
-	for p in bios_extract flashrom grub ich9utils uefitool; do
+	for p in bios_extract flashrom grub uefitool; do
 		./handle make file -c "${p}" || \
 		    err "purge_files: !./handle make file -c ${p}"
 	done
@@ -170,7 +170,7 @@ purge_files()
 		./handle make file -c "memtest86plus/build${p}" || \
 		    err "purge_files: cannot clean memtest86+ build${p}"
 	done
-	for p in "nvmutil" "ich9utils" "spkmodem_recv" "e6400-flash-unlock"; do
+	for p in "nvmutil" "spkmodem_recv" "e6400-flash-unlock"; do
 		make clean -C "util/${p}" || \
 		    err "purge_files 2: !make clean -C ${util}/p"
 	done

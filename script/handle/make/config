@@ -310,23 +310,6 @@ modify_coreboot_rom()
 		    count=64k conv=notrunc || \
 		    err "modify_coreboot_rom: can't write i945 bootblock"
 	fi
-	for romsize in 4 8 16; do
-		ifddir="descriptors/ich9m"
-		for bs in "4" "12"; do
-			ifdgbe="${ifddir}/ich9fdnogbe_${romsize}m.bin"
-			cmpstr="${romsize}MiB ICH9 IFD NOGBE NOR flash"
-			if [ "${bs}" = "12" ]; then
-				cmpstr="${romsize}MiB ICH9 IFD NOR flash"
-				ifdgbe="${ifddir}/ich9fdgbe_${romsize}m.bin"
-			fi
-			[ "${romtype}" = "${cmpstr}" ] || continue
-			[ -f "${ifdgbe}" ] || ./build descriptors ich9m || \
-			    err "modify_coreboot_rom: can't create ich9m ifd"
-			dd if="${ifdgbe}" of="${rompath}" bs=${bs}k count=1 \
-			    conv=notrunc || \
-			    err "modify_coreboot_rom: can't insert ich9m ifd"
-		done
-	done
 	rm -f "${tmprom}" || \
 	    err "modify_coreboot_rom: cannot remove tmprom"
 }

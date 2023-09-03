@@ -44,7 +44,6 @@ main()
 	done
 
 	[ -z "${project}" ] && err "project name not specified"
-	[ "${project}" = "ich9utils" ] && project="util/ich9utils"
 
 	handle_dependencies
 	run_make_command
