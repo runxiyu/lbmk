@@ -6,5 +6,6 @@ ncurses doxygen acpica-utils gdb flex bison base-devel git openssl gcc-ada \
 ncurses-devel font-unifont-bdf autogen help2man base-devel bison flex \
 dejavu-fonts-ttf texinfo rsync python3 libusb xz gawk device-mapper fuse gettext \
 gettext-devel freetype  base-devel libpciaccess pciutils zlib libftdi1 \
-base-devel libusb cmake innoextract p7zip unar  \
+base-devel libusb cmake innoextract p7zip unar cross-arm-none-eabi-binutils \
+cross-arm-none-eabi-gcc cross-arm-none-eabi-newlib cmake \
 "

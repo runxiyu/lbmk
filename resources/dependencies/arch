@@ -6,5 +6,6 @@ doxygen acpica gdb flex bison base-devel git openssl gcc-ada autogen help2man \
 base-devel bison flex ttf-dejavu texinfo rsync python libusb xz gawk \
 device-mapper fuse2 gettext freetype2 base-devel libpciaccess pciutils zlib \
 libftdi base-devel libusb innoextract p7zip unar cmake swig dtc \
+arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-newlib cmake \
 "
 aur_notice="unifont bdf-unifont"

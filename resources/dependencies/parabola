@@ -7,4 +7,5 @@ base-devel bison flex ttf-dejavu texinfo rsync python libusb xz gawk \
 device-mapper fuse2 gettext freetype2 base-devel libpciaccess pciutils zlib \
 libftdi base-devel libusb innoextract p7zip unar swig dtc cmake unifont-utils \
 bdf-unifont  \
+arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-newlib cmake \
 "

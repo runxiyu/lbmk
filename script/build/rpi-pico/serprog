@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+
+# compile the serprog firmware for raspberry pi pico
+#
+#	Copyright (C) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+. "include/err.sh"
+
+serprog_release_dir=$(pwd)/bin/serprog
+sdk_dir=$(pwd)/util-fw/pico-sdk
+src_dir=$(pwd)/util-fw/pico-serprog
+
+main()
+{
+	printf "Compiling serprog firmware for Raspberry Pi Pico\n"
+
+	[ -d "${src_dir}/" ] || ./update project repo rpi-pico-serprog \
+		|| err "fetch rpi-pico-serprog failed!\n"
+
+	cd ${src_dir}
+	cmake -DPICO_SDK_PATH=${sdk_dir} .
+	make
+
+	mkdir -p ${serprog_release_dir}
+	mv pico_serprog.uf2 ${serprog_release_dir}/rpi-pico-serprog.uf2 \
+		|| err "rpi-pico serprog build failed!\n"
+
+	printf "\nDone!\n"
+}
+
+main $@

@@ -84,6 +84,7 @@ clone_project()
 	[ ! -d "${location}" ] || \
 		rm -Rf "${location}" || \
 		    fail "clone_project: Can't remove directory '${location}'"
+	mkdir -p ${location%/*}
 	mv "${tmp_dir}" "${location}" || \
 	    fail "clone_project: could not copy temp file to destination"
 }
