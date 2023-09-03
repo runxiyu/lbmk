@@ -36,6 +36,7 @@ main()
 
 	cd ${src_dir}
 	cmake -DPICO_SDK_PATH=${sdk_dir} .
+	make clean
 	make
 
 	mkdir -p ${serprog_release_dir}
