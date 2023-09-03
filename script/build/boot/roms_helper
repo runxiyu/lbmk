@@ -28,7 +28,7 @@ set -u -e
 
 . "include/err.sh"
 
-projectname="$(cat projectname)"
+read projectname < projectname
 
 cfgsdir="resources/coreboot"
 

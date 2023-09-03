@@ -21,10 +21,10 @@ set -u
 
 . "include/err.sh"
 
-project="$(cat projectname)"
+read project < projectname
 
 version="version-unknown"
-[ -f version ] && version="$(cat version)"
+[ -f version ] && read version < version
 version_="${version}"
 if [ -e ".git" ]; then
 	version="$(git describe --tags HEAD 2>&1)" || \
@@ -34,7 +34,7 @@ if [ -e ".git" ]; then
 fi
 
 versiondate="version-date-unknown"
-[ -f versiondate ] && versiondate="$(cat versiondate)"
+[ -f versiondate ] && read versiondate < versiondate
 versiondate_="${versiondate}"
 if [ -e ".git" ]; then
 	versiondate="$(git show --no-patch --no-notes --pretty='%ct' HEAD)" || \
