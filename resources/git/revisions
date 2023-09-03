@@ -92,6 +92,7 @@
 {rpi-pico-serprog}{
 	rev: c8c16e9c11fe9e5b7230ff358f79de3f1951e1d9
 	loc: util-fw/pico-serprog
-	url: https://codeberg.org/Riku_V/pico-serprog/
+	url: https://codeberg.org/libreboot/pico-serprog
+	bkup_url: https://notabug.org/libreboot/pico-serprog
 	depend: rpi-pico-sdk
 }
