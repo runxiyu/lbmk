@@ -12,10 +12,10 @@ board=""
 vendor_rom=""
 
 cbdir="coreboot/default"
-cbcfgsdir="resources/coreboot"
+cbcfgsdir="config/coreboot"
 ifdtool="${cbdir}/util/ifdtool/ifdtool"
 mecleaner="me_cleaner/me_cleaner.py"
-me7updateparser="resources/blobs/me7_update_parser.py"
+me7updateparser="config/blobs/me7_update_parser.py"
 
 boarddir=""
 

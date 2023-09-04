@@ -43,7 +43,7 @@ main()
 	firstoption="${1}"
 	[ "${firstoption}" = "help" ] && usage && exit 0
 	[ "${firstoption}" = "list" ] && \
-	    ./build command options resources/coreboot && exit 0
+	    ./build command options config/coreboot && exit 0
 
 	while [ $# -gt 0 ]; do
 		case ${1} in
@@ -66,7 +66,7 @@ main()
 	printf "Building %s ROM images\n" "${projectname}"
 
 	if [ "${firstoption}" = "all" ]; then
-		for target in $(./build command options resources/coreboot); do
+		for target in $(./build command options config/coreboot); do
 			buildrom "${target}" || err "build/roms (1): error"
 		done
 	else
@@ -96,7 +96,7 @@ usage()
 		./build boot roms x60 -p grub -d corebootfb -k usqwerty
 
 	possible values for 'target':
-	$(./build command options "resources/coreboot")
+	$(./build command options "config/coreboot")
 
 	Refer to the ${projectname} documentation for more information.
 	EOF
@@ -104,7 +104,7 @@ usage()
 
 # Build ROM images for supported boards
 buildrom() {
-	[ -d "resources/coreboot/${1}/" ] || \
+	[ -d "config/coreboot/${1}/" ] || \
 		err "build/roms: target not defined: ${1}"
 	./build boot roms_helper ${1}${opts} || return 1
 }

@@ -30,13 +30,13 @@ set -u -e
 
 read projectname < projectname
 
-cfgsdir="resources/coreboot"
+cfgsdir="config/coreboot"
 
 blobs_required=""
 
 board=""
 ubdir=""
-kmapdir="resources/grub/keymap"
+kmapdir="config/grub/keymap"
 displaymodes=""
 payloads=""
 keyboard_layouts=""
@@ -370,7 +370,7 @@ build_grub_roms() {
 			# TODO: don't hardcode this. do it in target.cfg
 			backgroundfile="background1024x768.png"
 		fi
-		backgroundfile="resources/grub/background/${backgroundfile}"
+		backgroundfile="config/grub/background/${backgroundfile}"
 		"${cbfstool}" "${tmprompath}" add -f ${backgroundfile} \
 		    -n background.png -t raw || \
 		    err "build_grub_roms: cannot add background.png to tmprom"

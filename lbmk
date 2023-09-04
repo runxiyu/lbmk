@@ -44,7 +44,7 @@ main()
 	if [ "${mode}" = "dependencies" ]; then
 		if [ $# -lt 2 ]; then
 			printf "You must specify a distro, namely:\n" 1>&2
-			printf "Look at files under resources/dependencies/\n" \
+			printf "Look at files under config/dependencies/\n" \
 			    1>&2
 			printf "Example: ./build dependencies debian\n" 1>&2
 			fail "target not specified"
@@ -98,10 +98,10 @@ main()
 
 install_dependencies()
 {
-	[ -f "resources/dependencies/${2}" ] || fail "Unsupported target"
+	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
 
 	aur_notice=""
-	. "resources/dependencies/${2}"
+	. "config/dependencies/${2}"
 
 	${pkg_add} ${pkglist} || \
 	    fail "install_dependencies: Error installing dependencies"

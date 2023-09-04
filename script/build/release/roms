@@ -89,10 +89,10 @@ make_archive()
 
 	echo ${target}
 
-	[ -f "resources/coreboot/${target}/target.cfg" ] || \
+	[ -f "config/coreboot/${target}/target.cfg" ] || \
 		err "make_archive: ${target}: target.cfg is missing"
 
-	. "resources/coreboot/${target}/target.cfg"
+	. "config/coreboot/${target}/target.cfg"
 	[ "${microcode_required}" = "y" ] || \
 	    [ "${microcode_required}" = "n" ] || microcode_required="y"
 
@@ -100,15 +100,15 @@ make_archive()
 	CONFIG_HAVE_ME_BIN="y"
 	CONFIG_KBC1126_FIRMWARE="y"
 	CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="y"
-	grep "CONFIG_HAVE_ME_BIN=y" "resources/coreboot/${target}/config/"* || \
+	grep "CONFIG_HAVE_ME_BIN=y" "config/coreboot/${target}/config/"* || \
 	    CONFIG_HAVE_ME_BIN="n"
-	grep "CONFIG_HAVE_MRC=y" "resources/coreboot/${target}/config/"* || \
+	grep "CONFIG_HAVE_MRC=y" "config/coreboot/${target}/config/"* || \
 	    CONFIG_HAVE_MRC="n"
 	grep "CONFIG_KBC1126_FIRMWARE=y" \
-	    "resources/coreboot/${target}/config"/* || \
+	    "config/coreboot/${target}/config"/* || \
 	    CONFIG_KBC1126_FIRMWARE="n"
 	grep "CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=y" \
-	    "resources/coreboot/${target}/config"/* || \
+	    "config/coreboot/${target}/config"/* || \
 	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="n"
 
 	# remove ME/MRC/EC firmware from ROM images

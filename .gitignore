@@ -29,7 +29,7 @@
 /crossgcc/
 /depthcharge/
 /flashrom/
-/resources/*/*/seen
+/config/*/*/seen
 /grub/
 /memtest86plus/
 /seabios/

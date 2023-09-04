@@ -23,7 +23,7 @@ set -u -e
 
 . "include/err.sh"
 
-grubcfgsdir="resources/grub"
+grubcfgsdir="config/grub"
 
 . "${grubcfgsdir}/modules.list"
 

@@ -18,7 +18,7 @@ release=""
 releasearchive=""
 
 cbdir="coreboot/default"
-cbcfgsdir="resources/coreboot"
+cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
 cbfstool="cbutils/default/cbfstool"
 nvmutil="util/nvmutil/nvm"
@@ -45,7 +45,7 @@ main()
 
 	[ $# -lt 1 ] && err "No options specified."
 	[ "${1}" = "listboards" ] && \
-		./build command options resources/coreboot && exit 0
+		./build command options config/coreboot && exit 0
 
 	archive="${1}"
 

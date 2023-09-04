@@ -57,7 +57,7 @@ read_config()
 			depend=${2} ;;
 		esac
 	done << EOF
-	$(eval "awk '${awkstr}' resources/git/revisions")
+	$(eval "awk '${awkstr}' config/git/revisions")
 EOF
 }
 
@@ -92,7 +92,7 @@ clone_project()
 
 patch_project()
 {
-	patchdir="resources/${name}/patches"
+	patchdir="config/${name}/patches"
 
 	for patchfile in "${PWD}/${patchdir}"/*.patch ; do
 		[ -f "${patchfile}" ] || continue
@@ -119,7 +119,7 @@ usage()
 	Usage: ./update project repo [name]
 
 	Options:
-	name: Module name as specified in resources/git/revisions
+	name: Module name as specified in config/git/revisions
 	EOF
 }
 

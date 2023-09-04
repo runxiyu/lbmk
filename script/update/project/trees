@@ -48,7 +48,7 @@ main()
 
 	[ -z "${1}" ] && err "project name not specified"
 	project="${1}"
-	cfgsdir="resources/${project}"
+	cfgsdir="config/${project}"
 	[ -d "${cfgsdir}" ] || err "unsupported project name"
 	shift 1
 

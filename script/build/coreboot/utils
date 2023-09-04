@@ -33,7 +33,7 @@ main()
 			    err "cannot build cbutils for target, ${board}"
 		done
 	else
-		for boarddir in resources/coreboot/*; do
+		for boarddir in config/coreboot/*; do
 			[ ! -d "${boarddir}" ] && continue
 			build_for_mainboard ${boarddir##*/} || \
 			    err "cannot build cbutils for target, ${board}"
@@ -43,12 +43,12 @@ main()
 
 build_for_mainboard() {
 	board="${1}"
-	[ -d "resources/coreboot/${board}" ] || \
+	[ -d "config/coreboot/${board}" ] || \
 	    err "build_for_mainboard ${board}: boarddir does not exist"
-	[ -f "resources/coreboot/${board}/target.cfg" ] || \
+	[ -f "config/coreboot/${board}/target.cfg" ] || \
 	    err "build_for_mainboard ${board}: target.cfg does not exist"
 	tree="undefined"
-	. "resources/coreboot/${board}/target.cfg" # source
+	. "config/coreboot/${board}/target.cfg" # source
 	[ "${tree}" = "undefined" ] && \
 	    err "build_for_mainboard: improper tree definition for '${board}'"
 	buildutils "${tree}"
