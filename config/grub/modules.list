@@ -37,6 +37,7 @@ bitmap_scale \
 boot \
 bsd \
 btrfs \
+cat \
 cbfs \
 cbls \
 cbmemc \
@@ -50,6 +51,7 @@ crypto \
 cryptodisk \
 echo \
 ehci \
+eval \
 elf \
 exfat \
 ext2 \
@@ -121,6 +123,7 @@ part_msdos \
 password \
 password_pbkdf2 \
 pata \
+pbkdf2 \
 pcidump \
 pgp \
 png \
