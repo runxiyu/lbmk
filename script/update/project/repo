@@ -12,7 +12,7 @@ revision=""
 location=""
 url=""
 bkup_url=""
-tmp_dir=""
+tmp_dir="tmp/gitclone"
 depend=""
 
 main()
@@ -70,7 +70,8 @@ verify_config()
 
 clone_project()
 {
-	tmp_dir=$(mktemp -dt "${name}_XXXXX")
+	rm -Rf "${tmp_dir}" || fail "clone_project: cannot remove old tmpdir"
+	mkdir -p "${tmp_dir%/*}" || fail "clone_project: can't mkdir"
 
 	git clone ${url} "${tmp_dir}" || git clone ${bkup_url} "${tmp_dir}" || \
 	    fail "clone_project: could not download ${name}"
