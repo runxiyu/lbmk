@@ -92,9 +92,10 @@ make_archive()
 	[ -f "config/coreboot/${target}/target.cfg" ] || \
 		err "make_archive: ${target}: target.cfg is missing"
 
+	microcode_required="y"
 	. "config/coreboot/${target}/target.cfg"
-	[ "${microcode_required}" = "y" ] || \
-	    [ "${microcode_required}" = "n" ] || microcode_required="y"
+	if [ "${microcode_required}" != "y" ] && \
+	    [ "${microcode_required}" != "n" ]; then microcode_required="y"; fi
 
 	for x in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
