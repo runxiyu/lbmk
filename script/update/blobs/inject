@@ -145,7 +145,7 @@ inject_blobs()
 patch_release_roms()
 {
 	_tmpdir=$(mktemp -d "/tmp/${board}_tmpXXXX")
-	tar xf "${releasearchive}" -C "${_tmpdir}" || \
+	tar -xf "${releasearchive}" -C "${_tmpdir}" || \
 	    err "patch_release_roms: could not extract release archive"
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
@@ -185,12 +185,8 @@ patch_rom()
 	done
 	eval "${no_config}"
 
-	[ -f "${boarddir}/target.cfg" ] || \
-	    err "patch_rom: file missing: ${boarddir}/target.cfg"
-
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
-	. "${boarddir}/target.cfg"
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && \
 		inject_blob_intel_mrc "${rom}"
