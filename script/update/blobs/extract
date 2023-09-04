@@ -37,20 +37,10 @@ main()
 	vendor_rom="${2}"
 	boarddir="${cbcfgsdir}/${board}"
 
-	check_board
+	[ -f "${vendor_rom}" ] || \
+		err "${board}: file does not exist: ${vendor_rom}"
 	build_dependencies
 	extract_blobs
-}
-
-check_board()
-{
-	if [ ! -f "${vendor_rom}" ]; then
-		err "check_board: ${board}: file does not exist: ${vendor_rom}"
-	elif [ ! -d "${boarddir}" ]; then
-		err "check_board: ${board}: target not defined"
-	elif [ ! -f "${boarddir}/target.cfg" ]; then
-		err "check_board: ${board}: missing target.cfg"
-	fi
 }
 
 build_dependencies()
@@ -71,9 +61,13 @@ extract_blobs()
 {
 	printf "extracting blobs for %s from %s\n" ${board} ${vendor_rom}
 
+	no_config="printf \"No configs on target, %s\\n\" ${board} 1>&2; exit 1"
+	for x in "${boarddir}"/config/*; do
+		[ -f "${x}" ] && no_config=""
+	done
+	eval "${no_config}"
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
-	. "${boarddir}/target.cfg"
 
 	[ "$CONFIG_HAVE_MRC" != "y" ] || \
 		./update blobs mrc || err "extract_blobs: can't fetch mrc"
