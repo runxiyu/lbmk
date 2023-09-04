@@ -32,7 +32,7 @@ simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 dirlist="config util script include"
 
 filelist="lbmk modify build README.md COPYING update version handle"
-filelist="${filelist} versiondate projectname checkgit"
+filelist="${filelist} versiondate projectname checkgit checkversion"
 
 version="version-unknown"
 versiondate="version-date-unknown"
