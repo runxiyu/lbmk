@@ -29,8 +29,7 @@ trees_fetch_list="coreboot u-boot seabios"
 simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
 simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 
-# do not add blobs directory here. it's handled below
-dirlist="resources util script include"
+dirlist="resources util script include config"
 
 filelist="lbmk modify build README.md COPYING update version handle"
 filelist="${filelist} versiondate projectname checkgit"
@@ -115,8 +114,6 @@ copy_files()
 		    err "copy_files: !cp -R ${dir}/ ${srcdir}/"
 	done
 
-	copy_blobs
-
 	for i in ${filelist}; do
 		if [ ! -f "${i}" ]; then
 			rm -Rf "${srcdir}" || \
@@ -125,24 +122,6 @@ copy_files()
 		fi
 		cp "${i}" "${srcdir}/" || \
 		    err "copy_files: !cp ${i} ${srcdir}/"
-	done
-}
-
-copy_blobs()
-{
-	mkdir -p "${srcdir}"/blobs || \
-	    err "copy_blobs: !mkdir -p ${srcdir}/blobs"
-	# do not copy intel ME etc, but do copy ifd/gbe files
-	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
-	    hp8300usdt t1650 e6430 ich9m; do
-		for j in ifd gbe 4_ifd_nogbe 4_ifd 8_ifd 12_ifd 16_ifd; do
-			[ -f "blobs/${i}/${j}.bin" ] || continue
-			[ -e "${srcdir}/blobs/${i}" ] || \
-				mkdir -p "${srcdir}/blobs/${i}" || \
-				    err "copy_blobs: ! -d ${srcdir}/blobs/${i}"
-			cp "blobs/${i}/${j}.bin" "${srcdir}/blobs/${i}" || \
-			    err "copy_blobs: ! -f ${srcdir}/blobs/${i}"
-		done
 	done
 }
 

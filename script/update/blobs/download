@@ -423,6 +423,9 @@ extract_sch5545ec()
 		printf "sch5545 firmware already downloaded\n" 1>&2
 		return 0
 	fi
+	[ -d "${_sch5545ec_destination%/*}" ] || \
+		mkdir -p "${_sch5545ec_destination%/*}" || \
+		    err "extract_sch: can't mkdir ${_sch5545ec_destination%/*}"
 
 	[ ! -d "${appdir}" ] || rm -Rf "${appdir}" || \
 	    err "extract_sch5545ec: can't remove ${appdir}"

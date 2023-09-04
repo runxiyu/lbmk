@@ -41,8 +41,7 @@
 /push
 /version
 /versiondate
-/blobs/app/
-/blobs/cache/
+/blobs/
 *me.bin
 *sch5545ec.bin
 /mrc/
