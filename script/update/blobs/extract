@@ -15,7 +15,7 @@ cbdir="coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="${cbdir}/util/ifdtool/ifdtool"
 mecleaner="me_cleaner/me_cleaner.py"
-me7updateparser="config/blobs/me7_update_parser.py"
+me7updateparser="util/me7_update_parser/me7_update_parser.py"
 
 boarddir=""
 
