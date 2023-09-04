@@ -96,20 +96,12 @@ make_archive()
 	[ "${microcode_required}" = "y" ] || \
 	    [ "${microcode_required}" = "n" ] || microcode_required="y"
 
-	CONFIG_HAVE_MRC="y"
-	CONFIG_HAVE_ME_BIN="y"
-	CONFIG_KBC1126_FIRMWARE="y"
-	CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="y"
-	grep "CONFIG_HAVE_ME_BIN=y" "config/coreboot/${target}/config/"* || \
-	    CONFIG_HAVE_ME_BIN="n"
-	grep "CONFIG_HAVE_MRC=y" "config/coreboot/${target}/config/"* || \
-	    CONFIG_HAVE_MRC="n"
-	grep "CONFIG_KBC1126_FIRMWARE=y" \
-	    "config/coreboot/${target}/config"/* || \
-	    CONFIG_KBC1126_FIRMWARE="n"
-	grep "CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=y" \
-	    "config/coreboot/${target}/config"/* || \
-	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW="n"
+	for x in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
+	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
+		eval "${x}=\"y\""
+		grep "${x}=y" "config/coreboot/${target}/config/"* || \
+		    eval "${x}=\"n\""
+	done
 
 	# remove ME/MRC/EC firmware from ROM images
 	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] || \
