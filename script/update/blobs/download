@@ -440,7 +440,7 @@ fetch_update()
 		[ -z "${x}" ] && continue
 		rm -f "${dl_path}" || \
 		    err "fetch_update ${fw_type}: !rm -f ${dl_path}"
-		wget -U "${agent}" "${x}" -O "${dl_path}" || continue
+		wget --tries 3 -U "${agent}" "${x}" -O "${dl_path}" || continue
 		vendor_checksum "${dlsum}" && dl_fail="n"
 	done
 	if [ "${dl_fail}" = "y" ]; then

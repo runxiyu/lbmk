@@ -111,7 +111,7 @@ download_image()
 	_sha1sum=${3}
 
 	printf "Downloading recovery image\n"
-	curl "$url" > "$_file.zip" || err "download_image: curl failed"
+	curl --retry 3 "$url" > "$_file.zip" || err "download_image: curl failed"
 	printf "Verifying recovery image checksum\n"
 	if [ "$(sha1sum "${_file}.zip" | awk '{print $1}')" = "${_sha1sum}" ]
 	then
