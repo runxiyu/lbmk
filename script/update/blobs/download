@@ -56,11 +56,6 @@ main()
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
 
-	[ -d "${boarddir}" ] || \
-		err "Board target, ${board}, not defined"
-	[ -f "${boarddir}/target.cfg" ] || \
-		err "Target missing target.cfg"
-
 	no_config="printf \"No config for target, %s\\n\" ${board} 1>&2; exit 0"
 	for x in "${boarddir}"/config/*; do
 		[ -f "${x}" ] && no_config=""
@@ -78,7 +73,6 @@ detect_firmware()
 {
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
-	. "${boarddir}/target.cfg"
 
 	[ "${CONFIG_HAVE_MRC}" = "y" ] && needs="${needs} MRC"
 	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && needs="${needs} ME"
