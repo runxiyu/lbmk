@@ -8,7 +8,6 @@ usbserial_ftdi \
 usbserial_pl2303 \
 usbserial_usbdebug \
 video_colors \
-xnu \
 "
 
 # Modules (and always loaded)
