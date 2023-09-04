@@ -68,8 +68,7 @@ main()
 	option="${2}"
 	shift 2
 
-	./script/misc/versioncheck || \
-	    fail "Cannot check lbmk version"
+	./checkversion || fail "Cannot check lbmk version"
 
 	case "${option}" in
 	list)
