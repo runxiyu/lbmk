@@ -186,8 +186,6 @@ build_dependencies()
 		./handle make file -b ${memtest_bin%/*} || \
 		    err "cannot build memtest86+"
 
-	[ -d "${romdir}/" ] || mkdir -p "${romdir}/" || \
-	    err "cannot create rom directory: \"${romdir}\""
 	rm -f "${romdir}"/* || err "cannot: rm -f \"${romdir}\"/*"
 
 	build_dependency_grub
@@ -528,6 +526,9 @@ moverom() {
 	newrompath="${2}"
 
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
+
+	[ -d "${newrompath%/*}" ] || mkdir -p "${newrompath%/*}/" || \
+	    err "moverom: cannot create rom directory: \"${newrompath%/*}\""
 
 	[ "${blobs_required}" = "n" ] && \
 		newrompath="${newrompath%.rom}_noblobs.rom"

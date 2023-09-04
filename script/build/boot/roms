@@ -35,6 +35,7 @@ read projectname < projectname
 opts=""
 boards=
 firstoption=""
+targets=""
 
 main()
 {
@@ -68,14 +69,19 @@ main()
 	if [ "${firstoption}" = "all" ]; then
 		for target in $(./build command options config/coreboot); do
 			buildrom "${target}" || err "build/roms (1): error"
+			[ -d "bin/${target}" ] && targets="${target} ${targets}"
 		done
 	else
 		for board in ${boards}; do
 			buildrom "${board}" || err "build/roms (2): error"
+			[ -d "bin/${board}" ] && targets="${board} ${targets}"
 		done
 	fi
-
-	printf "\n\nDone! Your ROMs are in bin/\n\n"
+	[ -z "${targets}" ] && err "No ROM images were compiled."
+	printf "\n\nYour ROM images are available in these directories:\n"
+	for x in ${targets}; do
+		printf "* bin/%s\n" "${x}"
+	done
 }
 
 usage()
