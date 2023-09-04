@@ -7,27 +7,7 @@
 
 . "include/err.sh"
 . "include/defconfig.sh"
-
-sname=""
-board=""
-vendor_rom=""
-
-cbdir="coreboot/default"
-cbcfgsdir="config/coreboot"
-ifdtool="${cbdir}/util/ifdtool/ifdtool"
-mecleaner="me_cleaner/me_cleaner.py"
-me7updateparser="util/me7_update_parser/me7_update_parser.py"
-
-boarddir=""
-
-CONFIG_HAVE_MRC=""
-CONFIG_ME_BIN_PATH=""
-CONFIG_GBE_BIN_PATH=""
-CONFIG_IFD_BIN_PATH=""
-
-_me_destination=""
-_gbe_destination=""
-_ifd_destination=""
+. "include/blobutil.sh"
 
 main()
 {
@@ -53,7 +33,7 @@ build_dependencies()
 		./update project trees coreboot default || \
 		    err "build_dependencies: can't fetch coreboot"
 	elif [ ! -f "${ifdtool}" ]; then
-		make -C "${ifdtool%/ifdtool}" || \
+		./build coreboot utils || \
 		    err "build_dependencies: can't build ifdtool"
 	fi
 }
