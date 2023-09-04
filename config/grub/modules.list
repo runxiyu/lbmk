@@ -1,20 +1,8 @@
 # Install modules (installed, but not automatically loaded)
 grub_install_modules=" \
-bfs \
 hexdump \
-hfs \
-hfsplus \
-jfs \
-minix \
-minix2 \
-minix2_be \
-minix3 \
-minix3_be \
-minix_be \
 newc \
-nilfs2 \
 odc \
-reiserfs \
 usbserial_common \
 usbserial_ftdi \
 usbserial_pl2303 \
@@ -26,8 +14,6 @@ xnu \
 # Modules (and always loaded)
 grub_modules=" \
 acpi \
-affs \
-afs \
 ahci \
 at_keyboard \
 all_video \
@@ -53,10 +39,7 @@ echo \
 ehci \
 eval \
 elf \
-exfat \
 ext2 \
-f2fs \
-fat \
 gcry_arcfour \
 gcry_blowfish \
 gcry_camellia \
@@ -114,7 +97,6 @@ multiboot \
 multiboot2 \
 nativedisk \
 normal \
-ntfs \
 ohci \
 part_bsd \
 part_dfly \
@@ -133,7 +115,6 @@ raid6rec \
 reboot \
 regexp \
 romfs \
-scsi \
 search \
 search_fs_file \
 search_fs_uuid \
@@ -143,7 +124,6 @@ syslinuxcfg \
 setpci \
 spkmodem \
 squash4 \
-sfs \
 tar \
 test \
 true \
