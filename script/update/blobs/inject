@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 . "include/err.sh"
+. "include/defconfig.sh"
 
 sname=""
 archive=""
@@ -179,12 +180,7 @@ patch_rom()
 {
 	rom="${1}"
 
-	no_config="printf \"No configs on target, %s\\n\" ${board} 1>&2; exit 1"
-	for x in "${boarddir}"/config/*; do
-		[ -f "${x}" ] && no_config=""
-	done
-	eval "${no_config}"
-
+	check_defconfig "${boarddir}" || exit 1	
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
 

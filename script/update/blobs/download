@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 . "include/err.sh"
+. "include/defconfig.sh"
 
 agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
@@ -56,12 +57,7 @@ main()
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
 
-	no_config="printf \"No config for target, %s\\n\" ${board} 1>&2; exit 0"
-	for x in "${boarddir}"/config/*; do
-		[ -f "${x}" ] && no_config=""
-	done
-	eval "${no_config}"
-
+	check_defconfig "${boarddir}" || exit 0
 	detect_firmware || exit 0
 	scan_sources_config
 
