@@ -77,7 +77,7 @@ init_check()
 make_archive()
 {
 	builddir="${1}"
-	romdir="$(mktemp -d -t coreboot_rom.XXXXXXXXXX)" || \
+	romdir="tmp/romdir" || \
 	    err "make_archive: cannot create tmpdir"
 	rm -Rf "${romdir}" || err "make_archive: can't remove tmpdir"
 	target="${builddir##*/}"
@@ -127,7 +127,7 @@ make_archive()
 	tar -c "bin/${target}/" | xz -T0 -9e > "${archivename}.tar.xz" || \
 	    err "make_archive:cant make ${projectname}-${version}_${target##*/}"
 	)
-	cp "${romdir%/bin/${target}}/${archivename}.tar.xz" "${f}.tar.xz" || \
+	mv "${romdir%/bin/${target}}/${archivename}.tar.xz" "${f}.tar.xz" || \
 	    err "make_archive: can't copy tarball"
 	rm -Rf "${romdir%/bin/${target}}" || \
 	    err "make_archive: can't delete tmpdir"
