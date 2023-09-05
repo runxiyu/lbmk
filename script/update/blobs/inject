@@ -114,7 +114,9 @@ inject_blobs()
 
 patch_release_roms()
 {
-	_tmpdir=$(mktemp -d "/tmp/${board}_tmpXXXX")
+	_tmpdir="tmp/romdir"
+	rm -Rf "${_tmpdir}" || err "patch_release_roms 1: can't prepare tmpdir"
+	mkdir -p "${_tmpdir}" || err "patch_release_roms: can't make tmpdir"
 	tar -xf "${releasearchive}" -C "${_tmpdir}" || \
 	    err "patch_release_roms: could not extract release archive"
 
