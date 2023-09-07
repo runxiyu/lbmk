@@ -85,8 +85,8 @@ clone_project()
 	[ ! -d "${location}" ] || \
 		rm -Rf "${location}" || \
 		    fail "clone_project: Can't remove directory '${location}'"
-	[ "${name}" != "rpi-pico-serprog" ] || mkdir -p ${location%/*} || \
-	    fail "clone_project: cannot make directory for rpi-pico-serprog"
+	[ "${location}" = "${location%/*}" ] || mkdir -p ${location%/*} || \
+	    fail "clone_project: cannot make directory for ${name}"
 	mv "${tmp_dir}" "${location}" || \
 	    fail "clone_project: could not copy temp file to destination"
 }
