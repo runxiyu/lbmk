@@ -383,6 +383,7 @@ build_grub_roms() {
 	[ -z "${grub_timeout}" ] || \
 	    "${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n timeout.cfg \
 	    -t raw || err "mkGrubROM: cannot insert timeout.cfg into CBFS"
+	rm -f "${tmpcfg}" || err "cannot delete tmpcfg"
 
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
