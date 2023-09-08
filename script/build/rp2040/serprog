@@ -23,9 +23,9 @@ set -u -e
 
 . "include/err.sh"
 
-serprog_release_dir=bin/serprog
-sdk_dir=$(pwd)/util-fw/pico-sdk
-src_dir=$(pwd)/util-fw/pico-serprog
+serprog_release_dir=$(pwd)/bin/serprog_rp2040
+sdk_dir=$(pwd)/util-fw/rp2040/pico-sdk
+src_dir=$(pwd)/util-fw/rp2040/pico-serprog
 
 main()
 {
@@ -33,20 +33,32 @@ main()
 
 	[ -d "${src_dir}/" ] || ./update project repo rpi-pico-serprog \
 		|| err "fetch rpi-pico-serprog failed!\n"
-
-	(
-	cd "${src_dir}" || err "can't cd to ${src_dir}"
-	cmake -DPICO_SDK_PATH="${sdk_dir}" . || \
-	    err "can't cmake ${sdk_dir}"
-	make clean
-	make
-	)
-
 	mkdir -p "${serprog_release_dir}" || \
 	    err "can't create dir: ${serprog_release_dir}"
-	mv "${src_dir}/pico_serprog.uf2" \
-	    "${serprog_release_dir}/rpi-pico-serprog.uf2" || \
-	    err "rpi-pico serprog build failed!\n"
+
+	boards_dir=${sdk_dir}/src/boards/include/boards
+
+	if [ $# -gt 0 ] ; then
+		buildrom "${1}"
+	else
+		basename -a -s .h ${boards_dir}/*.h | while read board ; do
+			[ "${board}" = "none" ] || buildrom ${board}
+		done
+	fi
+}
+
+# buildrom <board>
+buildrom()
+{
+	board=${1}
+	(cd ${src_dir}; cmake -DPICO_BOARD="${board}" \
+	      -DPICO_SDK_PATH="${sdk_dir}" "${src_dir}" || \
+		err "can't cmake ${src_dir}")
+	make -C ${src_dir} clean
+	make -C ${src_dir}
+	mv ${src_dir}/pico_serprog.uf2 \
+	   ${serprog_release_dir}/serprog_${board}.uf2 \
+		|| err "${board} serprog build failed!"
 }
 
 main $@
