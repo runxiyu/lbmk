@@ -43,6 +43,7 @@ main()
 	init_check
 
 	for romdir in bin/*; do
+
 		[ -d "${romdir}" ] || continue
 		make_archive "${romdir}"
 	done
@@ -81,6 +82,16 @@ make_archive()
 	    err "make_archive: cannot create tmpdir"
 	rm -Rf "${romdir}" || err "make_archive: can't remove tmpdir"
 	target="${builddir##*/}"
+
+	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
+		# No config, just make a tarball
+		tarball=release/${version}/roms/${target}_${version}.tar.xz
+		tar -c "${builddir}" | xz -6 > ${tarball} || \
+			(rm ${tarball}
+			 err "make_archive: cannot make \"${tarball}\"")
+		return 0
+	fi
+
 	romdir="${romdir}/bin/${target}"
 	mkdir -p "${romdir}" || \
 	    err "make_archive: can't mkdir tmpdir"
@@ -88,9 +99,6 @@ make_archive()
 	    err "make_archive: cannot copy ROM images directory -> ${romdir}"
 
 	echo ${target}
-
-	[ -f "config/coreboot/${target}/target.cfg" ] || \
-		err "make_archive: ${target}: target.cfg is missing"
 
 	microcode_required="y"
 	. "config/coreboot/${target}/target.cfg"
