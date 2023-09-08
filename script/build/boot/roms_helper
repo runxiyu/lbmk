@@ -376,7 +376,8 @@ build_grub_roms() {
 	printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" > \
 	    "${tmpcfg}" || \
 	    err "mkGrubRom: cannot insert into temporary scan.cfg"
-	"${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n scan.cfg \
+	[ "${grub_scan_disk}" = "both" ] || \
+	    "${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n scan.cfg \
 	    -t raw || err "mkGrubROM: cannot insert scan.cfg into CBFS"
 	printf "set timeout=%s\n" "${grub_timeout}" > "${tmpcfg}" || \
 	    err "mkGrubRom: cannot insert into temporary timeout.cfg"
