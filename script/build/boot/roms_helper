@@ -41,6 +41,7 @@ displaymodes=""
 payloads=""
 keyboard_layouts=""
 
+grub_timeout=""
 grub_scan_disk="undefined"
 tree="undefined"
 arch="undefined"
@@ -370,13 +371,18 @@ build_grub_roms() {
 
 	fi
 
-	tmpscancfg=$(mktemp -t coreboot_rom.XXXXXXXXXX) || 
+	tmpcfg=$(mktemp -t coreboot_rom.XXXXXXXXXX) || 
 	    err "mkGrubRom: cannot create temporary scan.cfg"
 	printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" > \
-	    "${tmpscancfg}" || \
+	    "${tmpcfg}" || \
 	    err "mkGrubRom: cannot insert into temporary scan.cfg"
-	"${cbfstool}" "${tmprompath}" add -f "${tmpscancfg}" -n scan.cfg \
+	"${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n scan.cfg \
 	    -t raw || err "mkGrubROM: cannot insert scan.cfg into CBFS"
+	printf "set timeout=%s\n" "${grub_timeout}" > "${tmpcfg}" || \
+	    err "mkGrubRom: cannot insert into temporary timeout.cfg"
+	[ -z "${grub_timeout}" ] || \
+	    "${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n timeout.cfg \
+	    -t raw || err "mkGrubROM: cannot insert timeout.cfg into CBFS"
 
 	keymaps=""
 	if [ -z ${keyboard_layouts} ]; then
