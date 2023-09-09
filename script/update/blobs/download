@@ -114,7 +114,7 @@ build_dependencies()
 		./handle make file -b uefitool || \
 		    err "build_dependencies: can't build uefitool"
 	if [ ! -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ]; then
-		make -BC "${cbdir}/util/kbc1126" || \
+		make -C "${cbdir}/util/kbc1126" || \
 		    err "build_dependencies: can't build kbc1126_ec_dump"
 	fi
 }
