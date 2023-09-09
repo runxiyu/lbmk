@@ -90,7 +90,7 @@ detect_board()
 	esac	
 	[ -d "${boarddir}/" ] || \
 	    err "detect_board: dir, ${boarddir}, doesn't exist"
-	printf '%s\n' "${board}"
+	printf "%s\n" "${board}"
 }
 
 build_dependencies()
@@ -203,7 +203,7 @@ inject_blob_intel_mrc()
 {
 	rom="${1}"
 
-	printf 'adding mrc\n'
+	printf "adding mrc\n"
 
 	# mrc.bin must be inserted at a specific offset. the only
 	# libreboot platform that needs it, at present, is haswell
@@ -229,7 +229,7 @@ inject_blob_intel_mrc()
 
 inject_blob_intel_me()
 {
-	printf 'adding intel management engine\n'
+	printf "adding intel me firmware\n"
 
 	rom="${1}"
 	[ -z ${CONFIG_ME_BIN_PATH} ] && \
