@@ -97,7 +97,7 @@ make_archive()
 	cp "${builddir}"/* "${romdir}" || \
 	    err "make_archive: cannot copy ROM images directory -> ${romdir}"
 
-	echo ${target}
+	printf "%s\n" "${target}"
 
 	microcode_required="y"
 	. "config/coreboot/${target}/target.cfg"

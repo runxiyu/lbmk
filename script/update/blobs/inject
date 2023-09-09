@@ -125,7 +125,7 @@ patch_release_roms()
 	    err "patch_release_roms: could not extract release archive"
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
-		echo "patching rom $x"
+		printf "patching rom: %s\n" "$x"
 		patch_rom "${x}" || err "patch_release_roms: could not patch ${x}"
 	done
 	for x in "${_tmpdir}"/bin/*/*_nomicrocode.rom ; do

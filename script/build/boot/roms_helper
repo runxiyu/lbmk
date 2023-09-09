@@ -156,7 +156,7 @@ configure_target()
 
 	# Override all payload directives with cmdline args
 	if [ ! -z ${payloads} ]; then
-		echo "setting payloads $payloads"
+		printf "setting payloads %s\n" "$payloads"
 		payload_grub="n"
 		payload_grub_withseabios="n" # seabios chainloaded from grub
 		payload_seabios="n"
@@ -397,7 +397,8 @@ build_grub_roms() {
 		done
 	fi
 	for keymapfile in ${keymaps}; do
-		echo "keymaps is $keymaps, keymapfile is $keymapfile"
+		printf "keymaps is %s, keymapfile is %s\n" \
+		    "${keymaps}" "${keymapfile}"
 
 		[ -f "${keymapfile}" ] || continue
 
