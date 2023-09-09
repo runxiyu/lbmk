@@ -333,7 +333,7 @@ modify_gbe()
 	"${ifdtool}" -i GbE:"${_gbe_tmp}" "${rom}" -O "${rom}" || \
 	    err "modify_gbe: ${board}: cannot insert modified gbe.bin"
 
-	rm -f "${_gbe_tmp}"
+	rm -f "${_gbe_tmp}" || err "modify_gbe: can't remove ${_gbe_tmp}"
 }
 
 usage()
