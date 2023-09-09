@@ -1,0 +1,59 @@
+#!/usr/bin/env sh
+
+# compile the serprog firmware for raspberry pi pico
+#
+#	Copyright (C) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+. "include/err.sh"
+
+serprog_release_dir=$(pwd)/bin/serprog_stm32
+src_dir=$(pwd)/util-fw/stm32-vserprog
+
+main()
+{
+	printf "Compiling serprog firmware for STM32\n"
+
+	[ -d "${src_dir}/" ] || ./update project repo stm32-vserprog \
+		|| err "fetch stm32-vserprog failed!\n"
+	mkdir -p "${serprog_release_dir}" || \
+	    err "can't create dir: ${serprog_release_dir}"
+
+	boards_dir=${src_dir}/boards
+
+	if [ $# -gt 0 ] ; then
+		buildrom "${1}"
+	else
+		basename -a -s .h ${boards_dir}/*.h | while read board ; do
+			buildrom ${board}
+		done
+	fi
+}
+
+# buildrom <board>
+buildrom()
+{
+	board=${1}
+	make -C ${src_dir} BOARD=${board}
+	mv ${src_dir}/stm32-vserprog.hex \
+	   ${serprog_release_dir}/serprog_${board}.hex \
+		|| err "${board} serprog build failed!"
+}
+
+main $@
