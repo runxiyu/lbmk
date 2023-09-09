@@ -114,7 +114,7 @@ handle_defconfig()
 		config="${y}"
 		config_name="${config#$target_dir/config/}"
 
-		printf "build/defconfig/%s %s: handling config %s\n" \
+		printf "handle/make/config %s %s: handling config %s\n" \
 		    "${project}" "${target}" "${config_name}"
 
 		[ "${mode}" != "all" ] || check_config || continue

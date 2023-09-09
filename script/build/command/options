@@ -22,7 +22,7 @@ listitems()
 		# -e used because this is for files *or* directories
 		[ -e "${x}" ] || continue
 		[ "${x##*/}" = "build.list" ] && continue
-		printf "%s\n" "${x##*/}"
+		printf "%s\n" "${x##*/}" 2>/dev/null
 		items=0
 	done
 	return ${items}

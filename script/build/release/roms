@@ -191,9 +191,9 @@ strip_ucode()
 	"${cbfstool}" "${_newrom_b}" remove -n \
 	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
 	if [ "${microcode_present}" = "n" ]; then
-		printf "REMARK: '%s' already lacks microcode\n" \
-		    "${romfile}"
-		printf "Renaming default ROM file instead.\n"
+		printf "REMARK: '%s' already lacks microcode\n" "${romfile}" \
+		    1>&2
+		printf "Renaming default ROM file instead.\n" 1>&2
 		mv "${romfile}" "${_newrom_b}" || \
 		    err "strip_rom_image: can't rename no-u ${romfile}"
 	fi

@@ -86,7 +86,7 @@ main()
 			fail "Invalid mode '${mode}'. Run: ${0} help"
 		elif [ ! -f "${buildpath}/${mode}/${option}" ]; then
 			usage $0
-			printf "Invalid option for '%s'." ${mode}
+			printf "Invalid option for '%s'." ${mode} 1>&2
 			fail "Run: ${0} ${mode} list'."
 		fi
 		"${buildpath}/${mode}/${option}" $@ || fail "lbmk error"

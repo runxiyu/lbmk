@@ -62,11 +62,11 @@ check_existing()
 {
 	[ -f "${_mrc_complete}" ] || \
 		return 0
-	printf 'found existing mrc.bin\n'
+	printf "found existing mrc.bin\n" 1>&2
 	[ "$(sha512sum "${_mrc_complete}" | awk '{print $1}')" \
 	    = "${_mrc_complete_hash}" ] && \
 		return 1
-	printf 'hashes did not match, starting over\n'
+	printf "hashes did not match, starting over\n" 1>&2
 }
 
 build_dependencies()

@@ -38,7 +38,8 @@ detect_firmware()
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
 	    needs="${needs} SCH5545EC"
 	[ -z ${needs+x} ] && \
-		printf "No binary blobs needed for this board\n" && \
+		printf "No binary blobs needed for board: %s\n" "${board}" \
+		    1>&2 && \
 		return 1
 	printf "Firmware needed for board '%s':\n%s\n" "${board}" "${needs}"
 }
