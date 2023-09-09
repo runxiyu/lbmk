@@ -20,7 +20,7 @@ fail()
 {
 	printf "You must configure Git, before using %s's build system. Do:\n" \
 	    "${projectname}" 1>&2
-	printf "%s\n\n" "${1}"
+	printf "%s\n\n" "${1}" 1>&2
 	err "Misconfigured git-scm"
 }
 
