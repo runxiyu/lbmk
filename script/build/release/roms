@@ -43,7 +43,6 @@ main()
 	init_check
 
 	for romdir in bin/*; do
-
 		[ -d "${romdir}" ] || continue
 		make_archive "${romdir}"
 	done
