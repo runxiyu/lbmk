@@ -76,7 +76,7 @@
 
 	EC_hash 940e533b6a276c13a6e46a93795ca84b19877b05e82c0c1795b7fea9cbea63c28e606ef994352fc77c4fdfb2e0c31c5edeefa98b989e1990364dfc6417b25460
 	EC_url https://ftp.hp.com/pub/softpaq/sp96001-96500/sp96088.exe
-	EC_url_bkup https://ftp.hp.com/pub/softpaq/sp96001-96500/sp96088.exe
+	EC_url_bkup https://web.archive.org/web/20230909164345/https://ftp.hp.com/pub/softpaq/sp96001-96500/sp96088.exe
 }
 
 {t1650}{
@@ -96,7 +96,7 @@
 
 	EC_hash b95c9cf909ed537fb448e2be69eddcb57459efbaf0a979a73cd2bce90a7014b110f4dbbeecfd596c072636396b8f20c229c59ffe34e45500ce9edb000c6ccaf9
 	EC_url https://ftp.hp.com/pub/softpaq/sp77501-78000/sp77818.exe
-	EC_url_bkup https://ftp.hp.com/pub/softpaq/sp77501-78000/sp77818.exe
+	EC_url_bkup https://web.archive.org/web/20230909173821/https://ftp.hp.com/pub/softpaq/sp77501-78000/sp77818.exe
 }
 
 # nvidia vga option rom for dgpu models of Dell Latitude E6400
