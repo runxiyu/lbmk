@@ -39,8 +39,8 @@ _board="peppy"
 _file="chromeos_12239.92.0_peppy_recovery_stable-channel_mp-v3.bin"
 _url="https://dl.google.com/dl/edgedl/chromeos/recovery/chromeos_12239.92.0_peppy_recovery_stable-channel_mp-v3.bin.zip"
 _url2="https://web.archive.org/web/20200516070928/https://dl.google.com/dl/edgedl/chromeos/recovery/chromeos_12239.92.0_peppy_recovery_stable-channel_mp-v3.bin.zip"
-_sha1sum="cd5917cbe7f821ad769bf0fd87046898f9e175c8"
-_mrc_complete_hash="d18de1e3d52c0815b82ea406ca07897c56c65696"
+_sha512sum="340a1cd41136a3ba0de9d306db0e65f51640a2efe63aee9934f326b276adc1af0a2df80c0731c5a749161ec32546909eedfa8ba95801faeb5dcfe1aa4e0840c7"
+_mrc_complete_hash="e5b6d510a5fdb6a7ba0027588dbceef363a2bf30255e9222020abbe71468822f49962d423d872cc05b37098682281c016445f6aa20f88351a134facfe5f70d5b"
 _mrc_complete="mrc/haswell/mrc.bin"
 
 cbdir="coreboot/default"
@@ -63,7 +63,7 @@ check_existing()
 	[ -f "${_mrc_complete}" ] || \
 		return 0
 	printf 'found existing mrc.bin\n'
-	[ "$(sha1sum "${_mrc_complete}" | awk '{print $1}')" \
+	[ "$(sha512sum "${_mrc_complete}" | awk '{print $1}')" \
 	    = "${_mrc_complete_hash}" ] && \
 		return 1
 	printf 'hashes did not match, starting over\n'
@@ -84,9 +84,9 @@ fetch_mrc()
 	(
 	cd mrc/haswell/ || err "fetch_mrc: !cd mrc/haswell"
 
-	download_image "${_url}" "${_file}" "${_sha1sum}"
+	download_image "${_url}" "${_file}" "${_sha512sum}"
 	[ -f ${_file} ] || \
-		download_image "${_url2}" "${_file}" "${_sha1sum}"
+		download_image "${_url2}" "${_file}" "${_sha512sum}"
 	[ -f $_file ] || \
 		err "fetch_mrc: ${_file} not downloaded / verification failed."
 
@@ -108,12 +108,12 @@ download_image()
 {
 	url=${1}
 	_file=${2}
-	_sha1sum=${3}
+	_sha512sum=${3}
 
 	printf "Downloading recovery image\n"
 	curl --retry 3 "$url" > "$_file.zip" || err "download_image: curl failed"
 	printf "Verifying recovery image checksum\n"
-	if [ "$(sha1sum "${_file}.zip" | awk '{print $1}')" = "${_sha1sum}" ]
+	if [ "$(sha512sum "${_file}.zip" | awk '{print $1}')" = "${_sha512sum}" ]
 	then
 		unzip -q "${_file}.zip" || err "download_image: cannot unzip"
 		rm -f "${_file}.zip" || err "download_image: can't rm zip {1}"

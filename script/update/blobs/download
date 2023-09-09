@@ -455,7 +455,7 @@ vendor_checksum()
 		printf "Vendor update not found on disk for: %s\n" "${board}" \
 		    1>&2
 		return 1
-	elif [ "$(sha1sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
+	elif [ "$(sha512sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
 		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
 		return 1
 	fi

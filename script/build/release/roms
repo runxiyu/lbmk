@@ -171,8 +171,8 @@ strip_archive()
 
 	(
 	cd "${romdir}" || err "strip_archive: !cd ${romdir}"
-	sha1sum *.rom >> blobhashes || \
-	    err "strip_archive: ${romdir}: !sha1sum *.rom >> blobhashes"
+	sha512sum *.rom >> blobhashes || \
+	    err "strip_archive: ${romdir}: !sha512sum *.rom >> blobhashes"
 	)
 
 	for romfile in "${romdir}"/*.rom; do

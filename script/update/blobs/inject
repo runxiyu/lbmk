@@ -127,7 +127,10 @@ patch_release_roms()
 
 	(
 	cd "${_tmpdir}"/bin/*
-	sha1sum --status -c blobhashes || \
+
+	# NOTE: For compatibility with older rom releases, defer to sha1
+	sha512sum --status -c blobhashes || \
+	    sha1sum --statuc -c blobhashes || \
 	    err "patch_release_roms: ROMs did not match expected hashes"
 	)
 
