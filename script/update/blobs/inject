@@ -9,6 +9,8 @@
 . "include/defconfig.sh"
 . "include/blobutil.sh"
 
+release_archive="n"
+
 main()
 {
 	sname="${0}"
@@ -103,8 +105,10 @@ build_dependencies()
 
 inject_blobs()
 {
+	release_archive="n"
 	if [ "${release}" = "true" ]; then
 		printf "patching release file\n"
+		release_archive="y"
 		patch_release_roms
 	else
 		patch_rom "${rom}" || \
@@ -124,13 +128,22 @@ patch_release_roms()
 		echo "patching rom $x"
 		patch_rom "${x}" || err "patch_release_roms: could not patch ${x}"
 	done
+	for x in "${_tmpdir}"/bin/*/*_nomicrocode.rom ; do
+		[ -f "${x}" ] || continue
+		[ -f "${x%_nomicrocode.rom}.rom" ] || continue
+
+		cp "${x%_nomicrocode.rom}.rom" "${x}" || \
+		    err "patch_release_roms: ${x}: can't overwrite no-ucode rom"
+		"${cbfstool}" "${x}" remove -n cpu_microcode_blob.bin || \
+		    err "patch_release_roms: ${x}: cannot remove u-code"
+	done
 
 	(
 	cd "${_tmpdir}"/bin/*
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	sha512sum --status -c blobhashes || \
-	    sha1sum --statuc -c blobhashes || \
+	    sha1sum --status -c blobhashes || \
 	    err "patch_release_roms: ROMs did not match expected hashes"
 	)
 
@@ -153,6 +166,16 @@ patch_release_roms()
 patch_rom()
 {
 	rom="${1}"
+
+	# we don't process no-microcode roms; these are
+	# instead re-created at the end, after re-inserting
+	# on roms with microcode, by copying and then removing,
+	# so that the hashes will match (otherwise, cbfstool
+	# may sometimes insert certain blobs at the wrong offset)
+	# (unless nomicrocode is the only config provided)
+	[ "${rom}" != "${rom%_nomicrocode.rom}.rom" ] && \
+	[ -f "${rom%_nomicrocode.rom}.rom" ] && \
+	[ "${release_archive}" = "y" ] && return 0
 
 	check_defconfig "${boarddir}" || exit 1	
 	set -- "${boarddir}/config/"*
