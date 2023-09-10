@@ -51,14 +51,14 @@ main()
 buildrom()
 {
 	board=${1}
-	(cd ${src_dir}; cmake -DPICO_BOARD="${board}" \
-	      -DPICO_SDK_PATH="${sdk_dir}" "${src_dir}" || \
-		err "can't cmake ${src_dir}")
-	make -C ${src_dir} clean
-	make -C ${src_dir}
-	mv ${src_dir}/pico_serprog.uf2 \
+	cmake -DPICO_BOARD="${board}" -DPICO_SDK_PATH="${sdk_dir}" \
+	      -B "${src_dir}/build" "${src_dir}" \
+		|| err "can't cmake ${src_dir}"
+	cmake --build "${src_dir}/build"
+	mv ${src_dir}/build/pico_serprog.uf2 \
 	   ${serprog_release_dir}/serprog_${board}.uf2 \
 		|| err "${board} serprog build failed!"
+	printf "output to ${serprog_release_dir}/serprog_${board}.uf2\n"
 }
 
 main $@
