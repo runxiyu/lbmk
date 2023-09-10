@@ -43,6 +43,10 @@ _sha512sum="340a1cd41136a3ba0de9d306db0e65f51640a2efe63aee9934f326b276adc1af0a2d
 _mrc_complete_hash="e5b6d510a5fdb6a7ba0027588dbceef363a2bf30255e9222020abbe71468822f49962d423d872cc05b37098682281c016445f6aa20f88351a134facfe5f70d5b"
 _mrc_complete="mrc/haswell/mrc.bin"
 
+# NOTE: the checksums, defined above, are actually sha-2 (sha512sum)
+# but google only defines sha1 and md5. we verify with sha1sum, but then
+# we use sha512sum in lbmk
+
 cbdir="coreboot/default"
 cbfstool="cbutils/default/cbfstool"
 

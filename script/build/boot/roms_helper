@@ -317,7 +317,8 @@ build_seabios_roms()
 	else
 		x=${corebootrom}
 		y=${initmode}
-		t=$(mkSeabiosRom "$x" "fallback/payload" "$y")
+		t=$(mkSeabiosRom "$x" "fallback/payload" "$y") || \
+		    err "build_seabios_roms: cannot build tmprom"
 		if [ "${initmode}" = "normal" ]; then
 			newrompath="${romdir}/seabios_${board}_"
 			newrompath="${newrompath}${initmode}.rom"
@@ -347,7 +348,9 @@ build_grub_roms() {
 	y=${initmode}
 	if [ "${payload_grub_withseabios}" = "y" ] && \
 	    [ "${firstpayloadname}" = "grub" ]; then
-		mv "$(mkSeabiosRom "${x}" "seabios.elf" "${y}")" "${tmprompath}"
+		mv "$(mkSeabiosRom "${x}" "seabios.elf" "${y}")" \
+		    "${tmprompath}" || \
+		    err "build_grub_roms: cannot move tmp rom (seabios.elf)"
 	elif [ "${payload_seabios_withgrub}" = "y" ] && \
 	    [ "${firstpayloadname}" != "grub" ]; then
 		mv "$(mkSeabiosRom "${x}" "fallback/payload" "$y")" \
