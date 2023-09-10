@@ -47,6 +47,9 @@ target_dir=""
 tree=""
 cbfstool=""
 
+tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)" || \
+    err "can't make tmpclean dir"
+
 main()
 {
 	while getopts b:m:u:c:x: option
@@ -153,6 +156,10 @@ handle_dependencies()
 		fi
 		./update project trees "${project}" "${target}" || \
 		    fail "handle_dependencies: can't fetch ${project}/${target}"
+	elif [ "${mode}" = "distclean" ] || \
+	    [ "${mode}" = "crossgcc-clean" ]; then
+		[ -f "${tmpclean}/${tree}" ] && return 1
+		touch "${tmpclean}/${tree}"
 	fi
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
