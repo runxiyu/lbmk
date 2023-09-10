@@ -85,7 +85,7 @@ make_archive()
 	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
 		# No config, just make a tarball
 		tarball=release/${version}/roms/${target}_${version}.tar.xz
-		tar -c "${builddir}" | xz -6 > ${tarball} || \
+		tar -c "${builddir}" | xz -T0 -6 > ${tarball} || \
 			(rm ${tarball}
 			 err "make_archive: cannot make \"${tarball}\"")
 		return 0
