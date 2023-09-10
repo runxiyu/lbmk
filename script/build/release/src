@@ -148,7 +148,7 @@ purge_files()
 		    err "purge_files: ${p}: cannot clean the source trees"
 	done
 
-	for p in bios_extract flashrom grub uefitool; do
+	for p in bios_extract flashrom grub uefitool util-fw/stm32-vserprog; do
 		./handle make file -c "${p}" || \
 		    err "purge_files: !./handle make file -c ${p}"
 	done
