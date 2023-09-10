@@ -164,8 +164,8 @@ purge_files()
 		rm -Rf "${p}/${p}" "${p}"/*/.git* || \
 		    err "purge_files 1: cannot clean ${p} project files"
 	done
-	rm -Rf .git .gitignore */.git* coreboot/*/3rdparty/*/.git* \
-	    coreboot/*/util/nvidia/cbootimage/.git* || \
+	rm -Rf .git* */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
+	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* || \
 	    err "purge_files rm-rf2: can't purge .git files/directories"
 	rm -Rf cbutils || err "purge_files: can't remove ${srcdir}/cbutils/"
 	rm -Rf elf || err "purge_files: can't remove ${srcdir}/elf/"
