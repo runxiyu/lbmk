@@ -168,6 +168,7 @@ purge_files()
 	    coreboot/*/util/nvidia/cbootimage/.git* || \
 	    err "purge_files rm-rf2: can't purge .git files/directories"
 	rm -Rf cbutils || err "purge_files: can't remove ${srcdir}/cbutils/"
+	rm -Rf elf || err "purge_files: can't remove ${srcdir}/elf/"
 	)
 }
 
