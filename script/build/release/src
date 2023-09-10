@@ -175,12 +175,6 @@ create_release_archive()
 	(
 	cd "${reldir}/" || \
 	    err "create_release_archive 4: !cd ${reldir}/"
-	printf "%s\n" "${version}" > "${dirname}/version" || \
-	    err "create_release_archive: can't create ${dirname}/version"
-	printf "%s\n" "${versiondate}" > "${dirname}/versiondate" || \
-	    err "create_release_archive: can't create ${dirname}/versiondate"
-	printf "%s\n" "${projectname}" > "${dirname}/projectname" || \
-	    err "create_release_archive: can't create ${dirname}/projectname"
 	tar -c "${dirname}/" | xz -T0 -9e >"${dirname}.tar.xz" || \
 	    err "create_release_archive: can't create ${dirname}.tar.xz"
 	rm -Rf "${dirname}/" || \
