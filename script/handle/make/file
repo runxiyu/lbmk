@@ -71,8 +71,9 @@ run_make_command()
 		make -C "${project}" -j$(nproc) || \
 		    err "run_make_command: !make -C ${project}"
 	else
-		make -C "${project}" distclean || make -C "${project}" clean \
-		    || err "run_make_command: ${project}: make-clean failed"
+		make -C "${project}" clean || \
+		    err "run_make_command: ${project}: make-clean failed"
+		make -C "${project}" distclean || :
 	fi
 }
 
