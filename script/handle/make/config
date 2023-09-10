@@ -106,8 +106,7 @@ main()
 
 handle_defconfig()
 {
-	handle_dependencies "${target}" || \
-	    fail "handle_defconfig: failed call to handle_dependencies"
+	handle_dependencies "${target}" || return 0
 
 	for y in "${target_dir}/config"/*; do
 		[ -f "${y}" ] || continue
@@ -150,7 +149,7 @@ handle_dependencies()
 		    [ "${mode}" = "crossgcc-clean" ]; then
 			printf "Directory %s doesn't exist; skipping clean\n" \
 			    "${codedir}" 1>&2
-			exit 0
+			return 1
 		fi
 		./update project trees "${project}" "${target}" || \
 		    fail "handle_dependencies: can't fetch ${project}/${target}"
