@@ -115,12 +115,13 @@ usage()
 	USAGE:	${progname} <MODE> <OPTION>
 
 	possible values for 'mode':
-	$(./build command options "${buildpath}/${mode}")
+	$(./build command options "${buildpath}")
 
-	Example:	${progname} module all
-	Example:	${progname} module flashrom [static]
-	Example:	${progname} roms withgrub
-	Example:	${progname} clean all
+	For each of the above modes, you may also do:
+	${progname} <MODE> list
+
+	Example: ./build grub list, which would yield:
+	$(./build grub list)
 
 	Refer to ${projectname} documentation for more info.
 	EOF
