@@ -148,9 +148,9 @@ handle_dependencies()
 	if [ ! -d "${codedir}" ]; then
 		if [ "${mode}" = "distclean" ] || \
 		    [ "${mode}" = "crossgcc-clean" ]; then
-			printf "Directory '%s' does not exist; skipping clean" \
+			printf "Directory %s doesn't exist; skipping clean\n" \
 			    "${codedir}" 1>&2
-			exit 0			
+			exit 0
 		fi
 		./update project trees "${project}" "${target}" || \
 		    fail "handle_dependencies: can't fetch ${project}/${target}"
