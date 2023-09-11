@@ -25,21 +25,23 @@ set -u -e
 
 serprog_release_dir=$(pwd)/bin/serprog_stm32
 src_dir=$(pwd)/util-fw/stm32-vserprog
+boards_dir=${src_dir}/boards
 
 main()
 {
-	printf "Compiling serprog firmware for STM32\n"
-
 	[ -d "${src_dir}/" ] || ./update project repo stm32-vserprog \
 		|| err "fetch stm32-vserprog failed!\n"
 	mkdir -p "${serprog_release_dir}" || \
 	    err "can't create dir: ${serprog_release_dir}"
 
-	boards_dir=${src_dir}/boards
-
 	if [ $# -gt 0 ] ; then
-		buildrom "${1}"
+		if [ "${1}" = "list" ] ; then
+			list_boards
+		else
+			buildrom "${1}"
+		fi
 	else
+		printf "Building stm32-vserprog for all boards\n"
 		basename -a -s .h ${boards_dir}/*.h | while read board ; do
 			buildrom ${board}
 		done
@@ -50,12 +52,19 @@ main()
 buildrom()
 {
 	board=${1}
+	printf "Building stm32-vserprog for ${board}\n"
 	make -C ${src_dir} libopencm3-just-make BOARD=${board}
 	make -C ${src_dir} BOARD=${board}
 	mv ${src_dir}/stm32-vserprog.hex \
 	   ${serprog_release_dir}/serprog_${board}.hex \
 		|| err "${board} serprog build failed!"
 	printf "output to ${serprog_release_dir}/serprog_${board}.hex\n"
+}
+
+list_boards()
+{
+	printf "Available boards for stm32-vserprog:\n"
+	basename -a -s .h ${boards_dir}/*.h
 }
 
 main $@
