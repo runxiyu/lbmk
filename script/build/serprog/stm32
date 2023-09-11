@@ -50,10 +50,12 @@ main()
 buildrom()
 {
 	board=${1}
+	make -C ${src_dir} libopencm3-just-make BOARD=${board}
 	make -C ${src_dir} BOARD=${board}
 	mv ${src_dir}/stm32-vserprog.hex \
 	   ${serprog_release_dir}/serprog_${board}.hex \
 		|| err "${board} serprog build failed!"
+	printf "output to ${serprog_release_dir}/serprog_${board}.hex\n"
 }
 
 main $@

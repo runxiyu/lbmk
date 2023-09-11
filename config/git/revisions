@@ -99,7 +99,7 @@
 }
 
 {stm32-vserprog}{
-	rev: 60c6274f7f5d45d01c64b7acdc5b0e4ed71caa96
+	rev: 8fcf0a4d41800631b571fa7bbd1d8b251f0a2111
 	loc: util-fw/stm32-vserprog
 	url: https://codeberg.org/libreboot/stm32-vserprog
 	bkup_url: https://notabug.org/libreboot/stm32-vserprog
