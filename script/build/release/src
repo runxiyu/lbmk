@@ -149,9 +149,13 @@ purge_files()
 		    err "purge_files: ${p}: cannot clean the source trees"
 	done
 
-	for p in bios_extract flashrom grub uefitool util-fw/stm32-vserprog; do
+	for p in bios_extract flashrom grub uefitool; do
 		./handle make file -c "${p}" || \
 		    err "purge_files: !./handle make file -c ${p}"
+	done
+	for p in "stm32-serprog" "stm32-serprog/libopencm3"; do
+		./handle make file -c "util-fw/${p}" || \
+		    err "purge_files !./handle make file util-fw/${p}"
 	done
 	for p in 32 64; do
 		./handle make file -c "memtest86plus/build${p}" || \
