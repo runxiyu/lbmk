@@ -4,11 +4,6 @@
 /cbutils/
 /pciroms/
 /util/e6400-flash-unlock/e6400_flash_unlock
-/util/ich9utils/*.bin
-/util/ich9utils/demefactory
-/util/ich9utils/ich9deblob
-/util/ich9utils/ich9show
-/util/ich9utils/ich9gen
 /TODO
 /bios_extract/
 /ec/
