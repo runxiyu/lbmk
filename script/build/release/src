@@ -28,8 +28,9 @@ read projectname < projectname
 trees_fetch_list="coreboot u-boot seabios"
 simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
 simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
+download_only_list="pico-serprog stm32-vserprog"
 
-dirlist="config util script include"
+dirlist="config util script include util-fw"
 linklist="build update handle" # symlinks in main directory, to script: lbmk
 filelist="lbmk README.md COPYING version versiondate projectname checkgit"
 filelist="${filelist} checkversion"
@@ -87,7 +88,7 @@ download_modules()
 		[ -d "${modname}" ] || ./update project trees ${modname} || \
 		    err "download_modules: couldn't download ${modname} trees"
 	done
-	for modname in ${simple_fetch_list}; do
+	for modname in ${simple_fetch_list} ${download_only_list}; do
 		[ -d "${modname}/" ] || ./update project repo ${modname} || \
 		    err "download_modules: couldn't download ${modname} repo"
 	done
@@ -152,6 +153,10 @@ purge_files()
 		./handle make file -c "${p}" || \
 		    err "purge_files: !./handle make file -c ${p}"
 	done
+	for p in "stm32-vserprog" "stm32-vserprog/libopencm3"; do
+		./handle make file -c "util-fw/${p}" || \
+		    err "purge_files !./handle make file util-fw/${p}"
+	done
 	for p in 32 64; do
 		./handle make file -c "memtest86plus/build${p}" || \
 		    err "purge_files: cannot clean memtest86+ build${p}"
@@ -169,6 +174,8 @@ purge_files()
 	    err "purge_files rm-rf2: can't purge .git files/directories"
 	rm -Rf cbutils || err "purge_files: can't remove ${srcdir}/cbutils/"
 	rm -Rf elf || err "purge_files: can't remove ${srcdir}/elf/"
+	rm -Rf util-fw/rp2040/pico-serprog/build
+		|| err "purge_files: can't remove pico-serprog/build"
 	)
 }
 

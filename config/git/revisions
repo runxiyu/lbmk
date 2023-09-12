@@ -76,6 +76,7 @@
 	url: https://github.com/LongSoft/UEFITool
 }
 
+
 {rpi-pico-sdk}{
 	rev: 6a7db34ff63345a7badec79ebea3aaef1712f374
 	loc: util-fw/rp2040/pico-sdk
@@ -98,8 +99,15 @@
 }
 
 {stm32-vserprog}{
-	rev: 60c6274f7f5d45d01c64b7acdc5b0e4ed71caa96
+	rev: 8fcf0a4d41800631b571fa7bbd1d8b251f0a2111
 	loc: util-fw/stm32-vserprog
 	url: https://codeberg.org/libreboot/stm32-vserprog
 	bkup_url: https://notabug.org/libreboot/stm32-vserprog
+	depend: libopencm3
+}
+
+{libopencm3}{
+	rev: 458250dc6147dc807eec9e4d5a6caf38a699ecb1
+	loc: util-fw/stm32-vserprog/libopencm3
+	url: https://github.com/libopencm3/libopencm3
 }

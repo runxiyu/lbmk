@@ -24,23 +24,25 @@ set -u -e
 . "include/err.sh"
 
 serprog_release_dir=$(pwd)/bin/serprog_rp2040
-sdk_dir=$(pwd)/util-fw/rp2040/pico-sdk
 src_dir=$(pwd)/util-fw/rp2040/pico-serprog
+sdk_dir=$(pwd)/util-fw/rp2040/pico-sdk
+boards_dir=${sdk_dir}/src/boards/include/boards
 
 main()
 {
-	printf "Compiling serprog firmware for Raspberry Pi Pico\n"
-
 	[ -d "${src_dir}/" ] || ./update project repo rpi-pico-serprog \
 		|| err "fetch rpi-pico-serprog failed!\n"
 	mkdir -p "${serprog_release_dir}" || \
 	    err "can't create dir: ${serprog_release_dir}"
 
-	boards_dir=${sdk_dir}/src/boards/include/boards
-
 	if [ $# -gt 0 ] ; then
-		buildrom "${1}"
+		if [ "${1}" = "list" ] ; then
+			list_boards
+		else
+			buildrom "${1}"
+		fi
 	else
+		printf "Building pico-serprog for all boards\n"
 		basename -a -s .h ${boards_dir}/*.h | while read board ; do
 			[ "${board}" = "none" ] || buildrom ${board}
 		done
@@ -51,14 +53,21 @@ main()
 buildrom()
 {
 	board=${1}
-	(cd ${src_dir}; cmake -DPICO_BOARD="${board}" \
-	      -DPICO_SDK_PATH="${sdk_dir}" "${src_dir}" || \
-		err "can't cmake ${src_dir}")
-	make -C ${src_dir} clean
-	make -C ${src_dir}
-	mv ${src_dir}/pico_serprog.uf2 \
+	printf "Building pico-serprog for ${board}\n"
+	cmake -DPICO_BOARD="${board}" -DPICO_SDK_PATH="${sdk_dir}" \
+	      -B "${src_dir}/build" "${src_dir}" \
+		|| err "can't cmake ${src_dir}"
+	cmake --build "${src_dir}/build"
+	mv ${src_dir}/build/pico_serprog.uf2 \
 	   ${serprog_release_dir}/serprog_${board}.uf2 \
 		|| err "${board} serprog build failed!"
+	printf "output to ${serprog_release_dir}/serprog_${board}.uf2\n"
+}
+
+list_boards()
+{
+	printf "Available boards for pico-serprog:\n"
+	basename -a -s .h ${boards_dir}/*.h
 }
 
 main $@
