@@ -97,11 +97,10 @@ execute_command()
 		./build command options "${buildpath}/${mode}" || \
 		    fail "execute_command: cannot list command options"
 		lbmk_exit 0
-	elif [ ! -f "${buildpath}/${mode}/${option}" ]; then
-		fail "Invalid command. Run: ${linkpath} help"
-	else
-		"${buildpath}/${mode}/${option}" $@ || fail "lbmk error"
 	fi
+	[ -f "${buildpath}/${mode}/${option}" ] || \
+		fail "Invalid command. Run: ${linkpath} help"
+	"${buildpath}/${mode}/${option}" $@ || fail "lbmk error"
 }
 
 usage()
