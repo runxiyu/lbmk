@@ -96,13 +96,6 @@ execute_command()
 	case "${option}" in
 	list)
 		./build command options "${buildpath}/${mode}" ;;
-	all)
-		for option in $(./build command options "${buildpath}/${mode}")
-		do
-			"${buildpath}/${mode}/${option}" $@ || \
-			    fail "script fail: ${buildpath}/${mode}/${option} $@"
-		done
-		;;
 	*)
 		if [ ! -d "${buildpath}/${mode}" ]; then
 			usage $0
