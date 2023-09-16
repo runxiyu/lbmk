@@ -28,7 +28,9 @@ set -u -e
 . "include/export.sh"
 
 read projectname < projectname
-buildpath=""
+linkpath="${0}"
+linkname="${linkpath##*/}"
+buildpath="./script/${linkname}"
 mode=""
 option=""
 
@@ -37,39 +39,60 @@ main()
 	id -u 1>/dev/null 2>/dev/null || \
 	    fail "cannot ascertain user id"
 
-	[ "${0##*/}" = "lbmk" ] && fail "Don't run this script directly."
+	initialise_command $@
+	shift 2
+
+	./checkgit || fail "Please read: https://libreboot.org/docs/build/"
+	./checkversion || fail "Cannot check ${projectname} version"
+
+	execute_command $@
+	lbmk_exit 0
+}
+
+initialise_command()
+{
+	[ "${linkname}" = "lbmk" ] && fail "Don't run this script directly."
 	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
 
 	mode="${1}"
-	if [ "${mode}" = "dependencies" ]; then
-		if [ $# -lt 2 ]; then
-			printf "You must specify a distro, namely:\n" 1>&2
-			printf "Look at files under config/dependencies/\n" \
-			    1>&2
-			printf "Example: ./build dependencies debian\n" 1>&2
-			fail "target not specified"
-		fi
-		install_dependencies $@ || fail "Could not install dependencies"
-		lbmk_exit 0
-	fi
-	if [ "$(id -u)" = "0" ]; then
+	[ "${mode}" != "dependencies" ] || \
+		install_packages $@ || fail "Can't install dependencies"
+	[ "$(id -u)" != "0" ] || \
 		fail "running this command as root is not permitted"
-	fi
-
-	buildpath="./script/${0##*/}"
 
 	[ "${mode}" = "help" ] && usage ${0} && lbmk_exit 0
 	[ "${mode}" = "list" ] && ./build command options "${buildpath}" && \
 	    lbmk_exit 0
 	[ $# -lt 2 ] && usage ${0} && lbmk_exit 1
 
-	./checkgit || fail "Please read: https://libreboot.org/docs/build/"
-
 	option="${2}"
-	shift 2
+}
 
-	./checkversion || fail "Cannot check lbmk version"
+install_packages()
+{
+	if [ $# -lt 2 ]; then
+		printf "You must specify a distro, namely:\n" 1>&2
+		printf "Look at files under config/dependencies/\n" \
+		    1>&2
+		printf "Example: ./build dependencies debian\n" 1>&2
+		fail "target not specified"
+	fi
 
+	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
+
+	aur_notice=""
+	. "config/dependencies/${2}"
+
+	${pkg_add} ${pkglist} || \
+	    fail "install_packages: Error installing dependencies"
+	[ "${aur_notice}" = "" ] || \
+	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
+
+	lbmk_exit 0
+}
+
+execute_command()
+{
 	case "${option}" in
 	list)
 		./build command options "${buildpath}/${mode}" ;;
@@ -91,21 +114,6 @@ main()
 		fi
 		"${buildpath}/${mode}/${option}" $@ || fail "lbmk error"
 	esac
-
-	lbmk_exit 0
-}
-
-install_dependencies()
-{
-	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
-
-	aur_notice=""
-	. "config/dependencies/${2}"
-
-	${pkg_add} ${pkglist} || \
-	    fail "install_dependencies: Error installing dependencies"
-	[ "${aur_notice}" = "" ] || \
-	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
 }
 
 usage()
