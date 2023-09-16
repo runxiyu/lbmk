@@ -1,0 +1,106 @@
+#!/usr/bin/env sh
+
+# compile serprog firmware for rp2040 and stm32 boards
+#
+#	Copyright (C) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+. "include/err.sh"
+
+pico_src_dir=util-fw/rp2040/pico-serprog
+pico_sdk_dir=util-fw/rp2040/pico-sdk
+
+stm32_src_dir=util-fw/stm32-vserprog
+
+usage="usage: ./build fw serprog <rp2040|stm32> [board]"
+
+main()
+{
+	[ -z "${1+x}" ] && err "${usage}"
+	if [ "${1}" = "rp2040" ]; then
+		platform="rp2040"
+		boards_dir=${pico_sdk_dir}/src/boards/include/boards
+		[ -d "${pico_src_dir}/" ] || fetch_repo rpi-pico-serprog
+	elif [ "${1}" = "stm32" ]; then
+		platform="stm32"
+		boards_dir=${stm32_src_dir}/boards
+		[ -d "${stm32_src_dir}/" ] || fetch_repo stm32-vserprog
+	else
+		err "${usage}"
+	fi
+	mkdir -p "bin/serprog_${platform}" || \
+	    err "can't create dir: bin/serprog_${platform}"
+
+	if [ $# -gt 1 ] ; then
+		if [ "${2}" = "list" ] ; then
+			print_boards ${boards_dir}
+		else
+			build_${platform}_rom "${2}"
+		fi
+	else
+		printf "Building all serprog targets\n"
+		list_boards "${boards_dir}" | while read board; do
+			build_${platform}_rom "${board}"
+		done
+	fi
+}
+
+fetch_repo()
+{
+	./update project repo "${1}" || err "fetch ${1} failed!\n"
+}
+
+build_rp2040_rom()
+{
+	board=${1}
+	printf "Building pico-serprog for ${board}\n"
+	cmake -DPICO_BOARD="${board}" -DPICO_SDK_PATH="${pico_sdk_dir}" \
+	      -B "${pico_src_dir}/build" "${pico_src_dir}" \
+		|| err "can't cmake ${pico_src_dir}"
+	cmake --build "${pico_src_dir}/build"
+	mv ${pico_src_dir}/build/pico_serprog.uf2 \
+	   bin/serprog_rp2040/serprog_${board}.uf2 \
+		|| err "${board} serprog build failed!"
+	printf "output to bin/serprog_rp2040/serprog_${board}.uf2\n"
+}
+
+build_stm32_rom()
+{
+	board=${1}
+	printf "Building stm32-vserprog for ${board}\n"
+	make -C ${stm32_src_dir} libopencm3-just-make BOARD=${board}
+	make -C ${stm32_src_dir} BOARD=${board}
+	mv ${stm32_src_dir}/stm32-vserprog.hex \
+	   bin/serprog_stm32/serprog_${board}.hex \
+		|| err "${board} serprog build failed!"
+	printf "output to bin/serprog_stm32/serprog_${board}.hex\n"
+}
+
+print_boards()
+{
+	printf "Available boards:\n"
+	list_boards "${1}"
+}
+
+list_boards()
+{
+	basename -a -s .h ${1}/*.h
+}
+
+main $@
