@@ -75,7 +75,7 @@ install_packages()
 		printf "Look at files under config/dependencies/\n" \
 		    1>&2
 		printf "Example: ./build dependencies debian\n" 1>&2
-		fail "target not specified"
+		fail "install_packages: target not specified"
 	fi
 
 	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
@@ -100,7 +100,8 @@ execute_command()
 	fi
 	[ -f "${buildpath}/${mode}/${option}" ] || \
 		fail "Invalid command. Run: ${linkpath} help"
-	"${buildpath}/${mode}/${option}" $@ || fail "lbmk error"
+	"${buildpath}/${mode}/${option}" $@ || \
+	    fail "execute_command: ${buildpath}/${mode}/${option} ${@}"
 }
 
 usage()
@@ -124,13 +125,14 @@ usage()
 
 lbmk_exit()
 {
-	tmp_cleanup || err "could not remove tmpdir on lbmk exit: ${tmpdir}"
+	tmp_cleanup || \
+	    err "lbmk_exit: could not remove tmpdir upon exit $1: ${tmpdir}"
 	exit $1
 }
 
 fail()
 {
-	tmp_cleanup || printf "WARNING: could not remove tmpdir: %s\n" \
+	tmp_cleanup || printf "fail(): WARNING: cannot remove tmpdir: %s\n" \
 	    "${tmpdir}" 1>&2
 	err "${1}"
 }
