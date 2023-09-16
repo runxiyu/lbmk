@@ -94,7 +94,8 @@ install_packages()
 execute_command()
 {
 	if [ "${option}" = "list" ]; then
-		./build command options "${buildpath}/${mode}"
+		./build command options "${buildpath}/${mode}" || \
+		    fail "execute_command: cannot list command options"
 		lbmk_exit 0
 	elif [ ! -f "${buildpath}/${mode}/${option}" ]; then
 		fail "Invalid command. Run: ${linkpath} help"
