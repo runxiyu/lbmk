@@ -70,7 +70,6 @@ void (*cmd)(void) = NULL;
 #define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define handle_endianness(r) if (((uint8_t *) &endian)[0] ^ 1) xorswap_buf(r)
 #define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
-#define xclose(f, l) if (close(f) == -1) err(ERR(), "%s", l)
 
 #define xorswap(x, y) x ^= y, y ^= x, x ^= y
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
@@ -297,5 +296,5 @@ writeGbeFile(const char *filename)
 		handle_endianness(x);
 		xpwrite(fd, (uint8_t *) gbe[x], nf, x << 12, filename);
 	}
-	xclose(fd, filename);
+	err_if(close(fd) == -1);
 }
