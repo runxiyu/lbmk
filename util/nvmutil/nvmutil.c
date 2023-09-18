@@ -36,7 +36,6 @@ void writeGbeFile(void);
 #define MAC_ADDRESS argv[3]
 #define PARTNUM argv[3]
 #define SIZE_4KB 0x1000
-#define SIZE_8KB 0x2000
 
 uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
@@ -113,7 +112,7 @@ openFiles(const char *path)
 {
 	struct stat st;
 	xopen(fd, path, flags);
-	if ((st.st_size != SIZE_8KB))
+	if ((st.st_size != (SIZE_4KB << 1)))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	xopen(rfd, "/dev/urandom", O_RDONLY);
 	errno = errno != ENOTDIR ? errno : 0;
