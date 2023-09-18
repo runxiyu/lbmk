@@ -30,8 +30,6 @@ int validChecksum(int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
 void xorswap_buf(int partnum);
 void writeGbeFile(const char *filename);
-void xpledge(const char *promises, const char *execpromises);
-void xunveil(const char *path, const char *permissions);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -80,19 +78,18 @@ void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
-	xpledge("stdio rpath wpath unveil", NULL);
-	xunveil("/dev/urandom", "r");
 	err_if((errno = argc < 3 ? EINVAL : errno));
-	if ((flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags)
-	    == O_RDONLY) {
-		xunveil(FILENAME, "r");
-		xpledge("stdio rpath", NULL);
-	} else {
-		xunveil(FILENAME, "rw");
-		xpledge("stdio rpath wpath", NULL);
-	}
+	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
+#ifdef __OpenBSD__
+	err_if(unveil("/dev/urandom", "r") == -1);
+	err_if(unveil(FILENAME, flags == O_RDONLY ? "r" : "rw") == -1);
+	err_if(pledge(flags == O_RDONLY ? "stdio rpath" : "stdio rpath wpath",
+	    NULL) == -1);
+#endif
 	openFiles(FILENAME);
-	xpledge("stdio", NULL);
+#ifdef __OpenBSD__
+	err_if(pledge("stdio", NULL) == -1);
+#endif
 
 	for (int i = 0; i < 6; i++)
 		if (strcmp(COMMAND, op[i].str) == 0)
@@ -301,24 +298,4 @@ writeGbeFile(const char *filename)
 		xpwrite(fd, (uint8_t *) gbe[x], nf, x << 12, filename);
 	}
 	xclose(fd, filename);
-}
-
-void
-xpledge(const char *promises, const char *execpromises)
-{
-	(void)promises; (void)execpromises;
-#ifdef __OpenBSD__
-	if (pledge(promises, execpromises) == -1)
-		err(ERR(), "pledge");
-#endif
-}
-
-void
-xunveil(const char *path, const char *permissions)
-{
-	(void)path; (void)permissions;
-#ifdef __OpenBSD__
-	if (unveil(path, permissions) == -1)
-		err(ERR(), "unveil");
-#endif
 }
