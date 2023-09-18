@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 void openFiles(const char *path);
-void readGbeFile(const char *path);
+void readGbeFile(void);
 void cmd_setmac(void);
 int invalidMacAddress(const char *strMac, uint16_t *mac);
 uint8_t hextonum(char chs);
@@ -29,7 +29,7 @@ void cmd_copy(void);
 int validChecksum(int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
 void xorswap_buf(int partnum);
-void writeGbeFile(const char *filename);
+void writeGbeFile(void);
 
 #define FILENAME argv[1]
 #define COMMAND argv[2]
@@ -67,9 +67,7 @@ void (*cmd)(void) = NULL;
 #define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
 	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
 	if (fstat(f, &st) == -1) err(ERR(), "%s", l)
-#define xpread(f, b, n, o, l) if (pread(f, b, n, o) == -1) err(ERR(), "%s", l)
 #define handle_endianness(r) if (((uint8_t *) &endian)[0] ^ 1) xorswap_buf(r)
-#define xpwrite(f, b, n, o, l) if (pwrite(f, b, n, o) == -1) err(ERR(), "%s", l)
 
 #define xorswap(x, y) x ^= y, y ^= x, x ^= y
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
@@ -101,11 +99,11 @@ main(int argc, char *argv[])
 		    || PARTNUM[1] ? EINVAL : errno));
 	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 
-	readGbeFile(FILENAME);
+	readGbeFile();
 	(*cmd)();
 
 	if ((gbeFileModified) && (flags != O_RDONLY))
-		writeGbeFile(FILENAME);
+		writeGbeFile();
 	err_if((errno != 0) && (cmd != &cmd_dump));
 	return errno;
 }
@@ -122,7 +120,7 @@ openFiles(const char *path)
 }
 
 void
-readGbeFile(const char *path)
+readGbeFile(void)
 {
 	nf = ((cmd == cmd_swap) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
 	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
@@ -131,7 +129,7 @@ readGbeFile(const char *path)
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
 			continue;
-		xpread(fd, (uint8_t *) gbe[p], nf, p << 12, path);
+		err_if(pread(fd, (uint8_t *) gbe[p], nf, p << 12) == -1);
 		handle_endianness(p);
 	}
 }
@@ -190,7 +188,7 @@ rhex(void)
 {
 	static uint8_t n = 0, rnum[16];
 	if (!n)
-		xpread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0, "/dev/urandom");
+		err_if(pread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0) == -1);
 	return rnum[n--] & 0xf;
 }
 
@@ -287,14 +285,14 @@ xorswap_buf(int partnum)
 }
 
 void
-writeGbeFile(const char *filename)
+writeGbeFile(void)
 {
 	errno = 0;
 	for (int x = gbe[0] > gbe[1] ? 1 : 0, p = 0; p < 2; p++, x ^= 1) {
 		if (!nvmPartModified[x])
 			continue;
 		handle_endianness(x);
-		xpwrite(fd, (uint8_t *) gbe[x], nf, x << 12, filename);
+		err_if(pwrite(fd, (uint8_t *) gbe[x], nf, x << 12) == -1);
 	}
 	err_if(close(fd) == -1);
 }
