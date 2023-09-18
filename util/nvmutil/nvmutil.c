@@ -31,7 +31,6 @@ void setWord(int pos16, int partnum, uint16_t val16);
 void xorswap_buf(int partnum);
 void writeGbeFile(void);
 
-#define FILENAME argv[1]
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTNUM argv[3]
@@ -43,7 +42,7 @@ size_t nf = 128, gbe[2];
 uint8_t nvmPartModified[2] = {0, 0}, skipread[2] = {0, 0};
 int endian = 1, flags = O_RDWR, rfd, fd, part, gbeFileModified = 0;
 
-const char *strMac = NULL, *strRMac = "??:??:??:??:??:??";
+const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
 
 typedef struct op {
 	char *str;
@@ -61,7 +60,7 @@ op_t op[] = {
 void (*cmd)(void) = NULL;
 
 #define ERR() errno = errno ? errno : ECANCELED
-#define err_if(x) if (x) err(ERR(), NULL)
+#define err_if(x) if (x) err(ERR(), "%s", filename)
 
 #define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
 	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
@@ -76,13 +75,14 @@ main(int argc, char *argv[])
 {
 	err_if((errno = argc < 3 ? EINVAL : errno));
 	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
+	filename = argv[1];
 #ifdef __OpenBSD__
 	err_if(unveil("/dev/urandom", "r") == -1);
-	err_if(unveil(FILENAME, flags == O_RDONLY ? "r" : "rw") == -1);
+	err_if(unveil(filename, flags == O_RDONLY ? "r" : "rw") == -1);
 	err_if(pledge(flags == O_RDONLY ? "stdio rpath" : "stdio rpath wpath",
 	    NULL) == -1);
 #endif
-	openFiles(FILENAME);
+	openFiles(filename);
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
