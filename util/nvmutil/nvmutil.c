@@ -73,7 +73,8 @@ void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
-	err_if((errno = argc < 3 ? EINVAL : errno));
+	if (argc < 3)
+		err(errno = ECANCELED, "Too few arguments");
 	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
 	filename = argv[1];
 #ifdef __OpenBSD__
