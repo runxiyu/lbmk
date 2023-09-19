@@ -26,7 +26,6 @@ void cmd_setchecksum(void);
 void cmd_brick(void);
 void cmd_copy(void);
 int validChecksum(int partnum);
-void setWord(int pos16, int partnum, uint16_t val16);
 void xorswap_buf(int partnum);
 void writeGbeFile(void);
 
@@ -62,12 +61,14 @@ void (*cmd)(void) = NULL;
 #define err_if(x) if (x) err(ERR(), "%s", filename)
 
 #define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
-	if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
-	if (fstat(f, &st) == -1) err(ERR(), "%s", l)
+    if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
+    if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 #define handle_endianness(r) if (((uint8_t *) &endian)[0] ^ 1) xorswap_buf(r)
 
 #define xorswap(x, y) x ^= y, y ^= x, x ^= y
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
+#define setWord(pos16, p, val16) if ((gbeFileModified = 1) && \
+    word(pos16, p) != val16) nvmPartModified[p] = 1 | (word(pos16, p) = val16)
 
 int
 main(int argc, char *argv[])
@@ -238,7 +239,7 @@ void
 cmd_brick(void)
 {
 	if (validChecksum(part))
-		setWord(0x3F, part, (word(0x3F, part)) ^ 0xFF);
+		setWord(0x3F, part, ((word(0x3F, part)) ^ 0xFF));
 }
 
 void
@@ -258,13 +259,6 @@ validChecksum(int partnum)
 		return 1;
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
 	return (errno = ECANCELED) & 0;
-}
-
-void
-setWord(int pos16, int partnum, uint16_t val16)
-{
-	if ((gbeFileModified = 1) && word(pos16, partnum) != val16)
-		nvmPartModified[partnum] = 1 | (word(pos16, partnum) = val16);
 }
 
 void
