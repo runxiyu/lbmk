@@ -24,7 +24,6 @@ void showmac(int partnum);
 void hexdump(int partnum);
 void cmd_setchecksum(void);
 void cmd_brick(void);
-void cmd_swap(void);
 void cmd_copy(void);
 int validChecksum(int partnum);
 void setWord(int pos16, int partnum, uint16_t val16);
@@ -52,7 +51,7 @@ typedef struct op {
 op_t op[] = {
 { .str = "dump", .cmd = cmd_dump, .args = 3},
 { .str = "setmac", .cmd = cmd_setmac, .args = 3},
-{ .str = "swap", .cmd = cmd_swap, .args = 3},
+{ .str = "swap", .cmd = writeGbeFile, .args = 3},
 { .str = "copy", .cmd = cmd_copy, .args = 4},
 { .str = "brick", .cmd = cmd_brick, .args = 4},
 { .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4},
@@ -102,7 +101,7 @@ main(int argc, char *argv[])
 	readGbeFile();
 	(*cmd)();
 
-	if ((gbeFileModified) && (flags != O_RDONLY))
+	if ((gbeFileModified) && (flags != O_RDONLY) && (cmd != writeGbeFile))
 		writeGbeFile();
 	err_if((errno != 0) && (cmd != &cmd_dump));
 	return errno;
@@ -122,7 +121,7 @@ openFiles(const char *path)
 void
 readGbeFile(void)
 {
-	nf = ((cmd == cmd_swap) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
+	nf = ((cmd == writeGbeFile) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
 	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
 	    | (cmd == &cmd_brick);
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
@@ -243,14 +242,6 @@ cmd_brick(void)
 }
 
 void
-cmd_swap(void)
-{
-	if ((gbeFileModified = nvmPartModified[0] = nvmPartModified[1]
-	    = validChecksum(1) | validChecksum(0)))
-		xorswap(gbe[0], gbe[1]); /* speedhack: swap ptr, not words */
-}
-
-void
 cmd_copy(void)
 {
 	if ((gbeFileModified = nvmPartModified[part ^ 1] = validChecksum(part)))
@@ -288,11 +279,15 @@ void
 writeGbeFile(void)
 {
 	errno = 0;
-	for (int x = gbe[0] > gbe[1] ? 1 : 0, p = 0; p < 2; p++, x ^= 1) {
-		if (!nvmPartModified[x])
+	if (cmd == writeGbeFile) {
+		err_if(!(validChecksum(0) || validChecksum(1)));
+		xorswap(gbe[0], gbe[1]);
+	}
+	for (int p = 0; p < 2; p++) {
+		if ((!nvmPartModified[p]) && (gbe[0] <= gbe[1]))
 			continue;
-		handle_endianness(x);
-		err_if(pwrite(fd, (uint8_t *) gbe[x], nf, x << 12) == -1);
+		handle_endianness(p);
+		err_if(pwrite(fd, (uint8_t *) gbe[p], nf, p << 12) == -1);
 	}
 	err_if(close(fd) == -1);
 }
