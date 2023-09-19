@@ -65,7 +65,6 @@ void (*cmd)(void) = NULL;
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 #define handle_endianness(r) if (((uint8_t *) &endian)[0] ^ 1) xorswap_buf(r)
 
-#define xorswap(x, y) x ^= y, y ^= x, x ^= y
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
 #define setWord(pos16, p, val16) if ((gbeFileModified = 1) && \
     word(pos16, p) != val16) nvmPartModified[p] = 1 | (word(pos16, p) = val16)
@@ -264,9 +263,9 @@ validChecksum(int partnum)
 void
 xorswap_buf(int partnum)
 {
-	uint8_t *nbuf = (uint8_t *) gbe[partnum];
-	for (size_t w = 0; w < (nf >> 1); w++)
-		xorswap(nbuf[w << 1], nbuf[(w << 1) + 1]);
+	uint8_t *n = (uint8_t *) gbe[partnum];
+	for (size_t w = 0, x = 1; w < nf; w += 2, x += 2)
+		n[w] ^= n[x], n[x] ^= n[w], n[w] ^= n[x];
 }
 
 void
