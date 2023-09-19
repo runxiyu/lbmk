@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 
 	if ((gbeFileModified) && (flags != O_RDONLY) && (cmd != writeGbeFile))
 		writeGbeFile();
-	err_if((errno != 0) && (cmd != &cmd_dump));
+	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno;
 }
 
@@ -122,8 +122,8 @@ void
 readGbeFile(void)
 {
 	nf = ((cmd == writeGbeFile) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
-	skipread[part ^ 1] = (cmd == &cmd_copy) | (cmd == &cmd_setchecksum)
-	    | (cmd == &cmd_brick);
+	skipread[part ^ 1] = (cmd == cmd_copy) | (cmd == cmd_setchecksum)
+	    | (cmd == cmd_brick);
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
