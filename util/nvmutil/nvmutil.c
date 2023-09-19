@@ -279,15 +279,12 @@ void
 writeGbeFile(void)
 {
 	errno = 0;
-	if (cmd == writeGbeFile) {
-		err_if(!(validChecksum(0) || validChecksum(1)));
-		xorswap(gbe[0], gbe[1]);
-	}
-	for (int p = 0; p < 2; p++) {
-		if ((!nvmPartModified[p]) && (gbe[0] <= gbe[1]))
+	err_if((cmd == writeGbeFile) && !(validChecksum(0) || validChecksum(1)));
+	for (int p = 0, x = (cmd == writeGbeFile) ? 1 : 0; p < 2; p++) {
+		if ((!nvmPartModified[p]) && (cmd != writeGbeFile))
 			continue;
-		handle_endianness(p);
-		err_if(pwrite(fd, (uint8_t *) gbe[p], nf, p << 12) == -1);
+		handle_endianness(p^x);
+		err_if(pwrite(fd, (uint8_t *) gbe[p^x], nf, p << 12) == -1);
 	}
 	err_if(close(fd) == -1);
 }
