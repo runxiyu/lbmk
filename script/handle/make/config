@@ -48,7 +48,7 @@ tree=""
 cbfstool=""
 
 tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)" || \
-    err "can't make tmpclean dir"
+    fail "can't make tmpclean dir"
 
 main()
 {
@@ -262,7 +262,7 @@ run_make_command()
 	if [ -e "${codedir}/.git" ] && [ "${project}" = "u-boot" ] && \
 	    [ "${mode}" = "distclean" ]; then
 		git -C "${codedir}" clean -fdx || \
-		    err "run_make_command: ${codedir}: cannot clean u-boot git"
+		    fail "run_make_command: ${codedir}: cannot clean u-boot git"
 	elif [ "${mode}" = "oldconfig" ] || [ "${mode}" = "menuconfig" ]; then	
 		cp "${codedir}/.config" "${config}" || \
 		    fail "run_make: can't edit config: ${project}/${target}"
@@ -273,7 +273,7 @@ copy_elf()
 {
 	if [ "${project}" = "coreboot" ]; then
 		modify_coreboot_rom || \
-		    err "copy_elf: cannot prepare coreboot image"
+		    fail "copy_elf: cannot prepare coreboot image"
 	fi
 
 	while read f; do
@@ -290,34 +290,34 @@ modify_coreboot_rom()
 {
 	rompath="${codedir}/build/coreboot.rom"
 	[ -f "${rompath}" ] || \
-	    err "modify_coreboot_rom: does not exist: ${rompath}"
+	    fail "modify_coreboot_rom: does not exist: ${rompath}"
 	tmprom="$(mktemp -t rom.XXXXXXXXXX)"
 	rm -f "${tmprom}" || \
-	    err "modify_coreboot_rom prep: cannot remove tmprom"
+	    fail "modify_coreboot_rom prep: cannot remove tmprom"
 
 	if [ "${romtype}" = "d8d16sas" ]; then
 		# pike2008 roms hang seabios. an empty rom will override
 		# the built-in one, thus disabling all execution of it
 		touch "${tmprom}" || \
-		    err "modify_coreboot_rom: cannot create fake oprom"
+		    fail "modify_coreboot_rom: cannot create fake oprom"
 		for deviceID in "0072" "3050"; do
 			"${cbfstool}" "${rompath}" add -f "${tmprom}" \
 			    -n "pci1000,${deviceID}.rom" -t raw || \
-			    err "modify_coreboot_rom: can't insert fake rom"
+			    fail "modify_coreboot_rom: can't insert fake rom"
 		done
 	elif [ "${romtype}" = "i945 laptop" ]; then
 		# for bucts-based installation method from factory bios
 		dd if="${rompath}" of="${tmprom}" bs=1 \
 		    skip=$(($(stat -c %s "${rompath}") - 0x10000)) \
 		    count=64k || \
-		    err "modify_coreboot_rom: can't read i945 bootblock"
+		    fail "modify_coreboot_rom: can't read i945 bootblock"
 		dd if="${tmprom}" of="${rompath}" bs=1 \
 		    seek=$(($(stat -c %s "${rompath}") - 0x20000)) \
 		    count=64k conv=notrunc || \
-		    err "modify_coreboot_rom: can't write i945 bootblock"
+		    fail "modify_coreboot_rom: can't write i945 bootblock"
 	fi
 	rm -f "${tmprom}" || \
-	    err "modify_coreboot_rom: cannot remove tmprom"
+	    fail "modify_coreboot_rom: cannot remove tmprom"
 }
 
 fail()
