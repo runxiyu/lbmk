@@ -1,0 +1,5 @@
+{bios_extract}{
+	rev: 0a7bc1d71735ef97b00dfec0fd54a02fcc5d1bb0
+	loc: bios_extract
+	url: https://review.coreboot.org/bios_extract
+}

@@ -1,0 +1,34 @@
+{rpi-pico-sdk}{
+	rev: 6a7db34ff63345a7badec79ebea3aaef1712f374
+	loc: util-fw/rp2040/pico-sdk
+	url: https://github.com/raspberrypi/pico-sdk
+}
+
+{rpi-pico-tinyusb}{
+	rev: 86c416d4c0fb38432460b3e11b08b9de76941bf5
+	loc: util-fw/rp2040/pico-sdk/lib/tinyusb
+	url: https://github.com/hathach/tinyusb.git
+}
+
+{rpi-pico-serprog}{
+	rev: c8c16e9c11fe9e5b7230ff358f79de3f1951e1d9
+	loc: util-fw/rp2040/pico-serprog
+	url: https://codeberg.org/libreboot/pico-serprog
+	bkup_url: https://notabug.org/libreboot/pico-serprog
+	depend: rpi-pico-sdk
+	depend: rpi-pico-tinyusb
+}
+
+{stm32-vserprog}{
+	rev: 8fcf0a4d41800631b571fa7bbd1d8b251f0a2111
+	loc: util-fw/stm32-vserprog
+	url: https://codeberg.org/libreboot/stm32-vserprog
+	bkup_url: https://notabug.org/libreboot/stm32-vserprog
+	depend: libopencm3
+}
+
+{libopencm3}{
+	rev: 458250dc6147dc807eec9e4d5a6caf38a699ecb1
+	loc: util-fw/stm32-vserprog/libopencm3
+	url: https://github.com/libopencm3/libopencm3
+}

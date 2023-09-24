@@ -36,6 +36,12 @@ main()
 
 read_config()
 {
+	revfile="$(mktemp -t gitrevisions.XXXXXXXXXX)" || \
+	    fail "read_config: Cannot initialise tmpfile"
+
+	cat config/git/* > "${revfile}" || \
+	    fail "read_config: Cannot concatenate revision files"
+
 	awkstr=" /\{.*${name}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
 	while read -r line ; do
 		set ${line} || fail "read_config: set line"
@@ -52,8 +58,11 @@ read_config()
 			depend="${depend} ${2} " ;;
 		esac
 	done << EOF
-	$(eval "awk '${awkstr}' config/git/revisions")
+	$(eval "awk \"${awkstr}\" \"${revfile}\"")
 EOF
+
+	rm -f "${revfile}" || \
+	    fail "read_config: can't remove tmp revfile"
 }
 
 verify_config()
@@ -115,7 +124,7 @@ usage()
 	Usage: ./update project repo [name]
 
 	Options:
-	name: Module name as specified in config/git/revisions
+	name: Module name as specified in files under config/git/
 	EOF
 }
 

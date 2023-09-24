@@ -1,0 +1,13 @@
+{grub}{
+	rev: db1faedccdce3cf83336155a95c04a8db03744c5
+	loc: grub
+	url: git://git.savannah.gnu.org/grub.git
+	bkup_url: http://git.savannah.gnu.org/r/grub.git
+	depend: gnulib
+}
+
+{gnulib}{
+	rev: 9f48fb992a3d7e96610c4ce8be969cff2d61a01b
+	loc: grub/gnulib
+	url: git://git.sv.gnu.org/gnulib 
+}

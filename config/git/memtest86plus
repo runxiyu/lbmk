@@ -1,0 +1,5 @@
+{memtest86plus}{
+	rev: 5dcd424ea7afb857c1171e747ef064d98d26afeb
+	loc: memtest86plus
+	url: https://github.com/memtest86plus/memtest86plus.git
+}
