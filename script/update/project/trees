@@ -8,6 +8,7 @@
 set -u -e
 
 . "include/err.sh"
+. "include/git.sh"
 
 _target=""
 tree=""
@@ -148,16 +149,10 @@ prepare_new_tree()
 	    err "cannot reset ${project} revision for tree, ${tree}"
 	git submodule update --init --checkout || \
 	    err "cannot update ${project} submodules for tree, ${tree}"
-
-	for patch in "../../${cfgsdir}/${tree}/patches/"*.patch; do
-		[ -f "${patch}" ] || continue
-		if ! git am "${patch}"; then
-			git am --abort || \
-			    err "${project}/${tree}: FAILED: git am --abort"
-			err "cannot patch: ${project}/${tree}"
-		fi
-	done
 	)
+	git_am_patches "${PWD}/${project}/${tree}" \
+	    "${PWD}/${cfgsdir}/${tree}/patches" "err" || \
+	    err "prepare_new_trees ${project}/${tree}: cannot apply patches"
 }
 
 err_rm_seen()
