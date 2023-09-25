@@ -5,15 +5,15 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+elfdir="elf/grub"
 grubcfgsdir="config/grub"
+layoutdir="/boot/grub/layouts"
 
 . "include/err.sh"
 . "${grubcfgsdir}/modules.list"
 
 main()
 {
-	printf "Creating GRUB payloads and configuration files\n"
-
 	handle_dependencies
 	build_keymap_configs
 	build_grub_payload
@@ -27,11 +27,11 @@ handle_dependencies()
 	[ -f "grub/grub-mkstandalone" ] || \
 		./build grub utils || \
 		    err "handle_dependencies: cannot build grub utils"
-	[ -d "elf/grub" ] || \
-		mkdir -p elf/grub || \
-		    err "handle_dependencies: cannot mkdir elf/grub"
-	rm -f elf/grub/* || \
-	    err "handle_dependencies: cannot rm inside: elf/grub/"
+	[ -d "${elfdir}" ] || \
+		mkdir -p "${elfdir}" || \
+		    err "handle_dependencies: cannot mkdir ${elfdir}"
+	rm -f "${elfdir}/"* || \
+	    err "handle_dependencies: cannot rm inside: ${elfdir}/"
 }
 
 build_keymap_configs()
@@ -41,8 +41,8 @@ build_keymap_configs()
 		keymap="${keylayoutfile##${grubcfgsdir}/keymap/}"
 		keymap="${keymap%.gkb}"
 		printf "keymap %s\n" "${keymap}" > \
-		    "elf/grub/keymap_${keymap}.cfg" || \
-		    err "make_keymapcfgs: cannot create elf/grub/keymap_${keymap}.cfg"
+		    "${elfdir}/keymap_${keymap}.cfg" || \
+		    err "mk_keymap: can't make ${elfdir}/keymap_${keymap}.cfg"
 	done
 }
 
@@ -51,23 +51,23 @@ build_grub_payload()
 	grub/grub-mkstandalone \
 	    --grub-mkimage="grub/grub-mkimage" \
 	    -O i386-coreboot \
-	    -o "elf/grub/grub.elf" \
+	    -o "${elfdir}/grub.elf" \
 	    -d grub/grub-core/ \
 	    --fonts= --themes= --locales=  \
 	    --modules="${grub_modules}" \
 	    --install-modules="${grub_install_modules}" \
-	    "/boot/grub/layouts/colemak.gkb=${grubcfgsdir}/keymap/colemak.gkb" \
-	    "/boot/grub/layouts/deqwertz.gkb=${grubcfgsdir}/keymap/deqwertz.gkb" \
-	    "/boot/grub/layouts/esqwerty.gkb=${grubcfgsdir}/keymap/esqwerty.gkb" \
-	    "/boot/grub/layouts/frazerty.gkb=${grubcfgsdir}/keymap/frazerty.gkb" \
-	    "/boot/grub/layouts/frdvbepo.gkb=${grubcfgsdir}/keymap/frdvbepo.gkb" \
-	    "/boot/grub/layouts/itqwerty.gkb=${grubcfgsdir}/keymap/itqwerty.gkb" \
-	    "/boot/grub/layouts/svenska.gkb=${grubcfgsdir}/keymap/svenska.gkb" \
-	    "/boot/grub/layouts/trqwerty.gkb=${grubcfgsdir}/keymap/trqwerty.gkb" \
-	    "/boot/grub/layouts/ukdvorak.gkb=${grubcfgsdir}/keymap/ukdvorak.gkb" \
-	    "/boot/grub/layouts/ukqwerty.gkb=${grubcfgsdir}/keymap/ukqwerty.gkb" \
-	    "/boot/grub/layouts/usdvorak.gkb=${grubcfgsdir}/keymap/usdvorak.gkb" \
-	    "/boot/grub/layouts/usqwerty.gkb=${grubcfgsdir}/keymap/usqwerty.gkb" \
+	    "${layoutdir}/colemak.gkb=${grubcfgsdir}/keymap/colemak.gkb" \
+	    "${layoutdir}/deqwertz.gkb=${grubcfgsdir}/keymap/deqwertz.gkb" \
+	    "${layoutdir}/esqwerty.gkb=${grubcfgsdir}/keymap/esqwerty.gkb" \
+	    "${layoutdir}/frazerty.gkb=${grubcfgsdir}/keymap/frazerty.gkb" \
+	    "${layoutdir}/frdvbepo.gkb=${grubcfgsdir}/keymap/frdvbepo.gkb" \
+	    "${layoutdir}/itqwerty.gkb=${grubcfgsdir}/keymap/itqwerty.gkb" \
+	    "${layoutdir}/svenska.gkb=${grubcfgsdir}/keymap/svenska.gkb" \
+	    "${layoutdir}/trqwerty.gkb=${grubcfgsdir}/keymap/trqwerty.gkb" \
+	    "${layoutdir}/ukdvorak.gkb=${grubcfgsdir}/keymap/ukdvorak.gkb" \
+	    "${layoutdir}/ukqwerty.gkb=${grubcfgsdir}/keymap/ukqwerty.gkb" \
+	    "${layoutdir}/usdvorak.gkb=${grubcfgsdir}/keymap/usdvorak.gkb" \
+	    "${layoutdir}/usqwerty.gkb=${grubcfgsdir}/keymap/usqwerty.gkb" \
 	    "/boot/grub/grub.cfg=${grubcfgsdir}/config/grub_memdisk.cfg" \
 	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" || \
 	    err "build_grub_elf: cannot build grub payload (grub-mkstandalone)"
