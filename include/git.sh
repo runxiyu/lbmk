@@ -1,6 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
+git_reset_rev()
+{
+	sdir="${1}"
+	_rev="${2}"
+	_fail="${3}"
+	(
+	cd "${sdir}" || "${_fail}" "cannot cd to ${sdir}"
+	git reset --hard ${_rev} || \
+	    "${_fail}" "cannot git reset ${sdir} <- ${rev}"
+	git submodule update --init --checkout || \
+	    "${_fail}" "cannot update git modules <- ${sdir}"
+	)
+}
+
 git_am_patches()
 {
 	sdir="${1}" # assumed to be absolute path

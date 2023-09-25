@@ -79,11 +79,8 @@ clone_project()
 
 	git clone ${url} "${tmp_dir}" || git clone ${bkup_url} "${tmp_dir}" || \
 	    fail "clone_project: could not download ${name}"
-	(
-	cd "${tmp_dir}" || fail "clone_project: tmpdir not created"
-	git reset --hard ${revision} || \
-	    fail "clone_project: Cannot reset revision"
-	)
+	git_reset_rev "${tmp_dir}" "${revision}" "fail" || \
+	    fail "clone_project ${location}/: cannot reset <- ${revision}"
 	git_am_patches "${tmp_dir}" "${PWD}/config/${name}/patches" "fail" || \
 	    fail "clone_project ${location}/: cannot apply patches"
 
