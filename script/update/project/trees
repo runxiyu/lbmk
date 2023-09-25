@@ -157,13 +157,6 @@ prepare_new_tree()
 			err "cannot patch: ${project}/${tree}"
 		fi
 	done
-
-	# extra.sh can be used for anything
-	# but should *only* be a last resort
-	if [ -f "../../${cfgsdir}/${tree}/extra.sh" ]; then
-		"../../${cfgsdir}/${tree}/extra.sh" || \
-		    err "prepare_new_tree ${project}/${tree}: extra.sh: error"
-	fi
 	)
 }
 
