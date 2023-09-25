@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2014, 2015, 2020, 2023 Leah Rowe <info@minifree.org>
+# SPDX-FileCopyrightText: 2014, 2015, 2020, 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2015, 2016 Klemens Nanni <contact@autoboot.org>
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v

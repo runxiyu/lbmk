@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, 2023 Leah Rowe <info@minifree.org> */
+/* Copyright (c) 2022, 2023 Leah Rowe <leah@libreboot.org> */
 /* SPDX-License-Identifier: MIT */
 
 #include <sys/stat.h>
