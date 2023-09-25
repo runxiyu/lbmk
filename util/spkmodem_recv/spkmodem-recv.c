@@ -1,20 +1,6 @@
-/* spkmodem-recv.c - decode spkmodem signals */
-/*
- *  Copyright (C) 2013  Free Software Foundation, Inc.
- *
- *  spkmodem-recv is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  spkmodem-recv is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with spkmodem-recv.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* SPDX-FileCopyrightText: 2013 Free Software Foundation, Inc. */
+/* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
 
 #include <err.h>
 #include <errno.h>
@@ -22,9 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-/* Compilation:	cc -o spkmodem-recv spkmodem-recv.c */
-/* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
 
 #define SAMPLES_PER_FRAME 240
 #define MAX_SAMPLES (2 * SAMPLES_PER_FRAME)

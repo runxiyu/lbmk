@@ -1,5 +1,5 @@
-/* Copyright (c) 2022, 2023 Leah Rowe <leah@libreboot.org> */
 /* SPDX-License-Identifier: MIT */
+/* SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org> */
 
 #include <sys/stat.h>
 
