@@ -18,4 +18,10 @@ git_am_patches()
 		fi
 	done
 	)
+	for patches in "${patchdir}/"*; do
+		[ -L "${patches}" ] && continue
+		[ ! -d "${patches}" ] || \
+			git_am_patches "${sdir}" "${patches}" "${_fail}" || \
+			    "${_fail}" "apply_patches: !${sdir}/ ${patches}/"
+	done
 }
