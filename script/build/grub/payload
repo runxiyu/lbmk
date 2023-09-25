@@ -5,10 +5,9 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
-. "include/err.sh"
-
 grubcfgsdir="config/grub"
 
+. "include/err.sh"
 . "${grubcfgsdir}/modules.list"
 
 main()
@@ -16,7 +15,27 @@ main()
 	printf "Creating GRUB payloads and configuration files\n"
 
 	handle_dependencies
+	build_keymap_configs
+	build_grub_payload
+}
 
+handle_dependencies()
+{
+	[ -d "grub/" ] || \
+		./update project repo grub || \
+		    err "handle_dependencies: cannot fetch grub"
+	[ -f "grub/grub-mkstandalone" ] || \
+		./build grub utils || \
+		    err "handle_dependencies: cannot build grub utils"
+	[ -d "elf/grub" ] || \
+		mkdir -p elf/grub || \
+		    err "handle_dependencies: cannot mkdir elf/grub"
+	rm -f elf/grub/* || \
+	    err "handle_dependencies: cannot rm inside: elf/grub/"
+}
+
+build_keymap_configs()
+{
 	for keylayoutfile in "${grubcfgsdir}/keymap/"*.gkb; do
 		[ -f "${keylayoutfile}" ] || continue
 		keymap="${keylayoutfile##${grubcfgsdir}/keymap/}"
@@ -25,7 +44,10 @@ main()
 		    "elf/grub/keymap_${keymap}.cfg" || \
 		    err "make_keymapcfgs: cannot create elf/grub/keymap_${keymap}.cfg"
 	done
+}
 
+build_grub_payload()
+{
 	grub/grub-mkstandalone \
 	    --grub-mkimage="grub/grub-mkimage" \
 	    -O i386-coreboot \
@@ -47,25 +69,8 @@ main()
 	    "/boot/grub/layouts/usdvorak.gkb=${grubcfgsdir}/keymap/usdvorak.gkb" \
 	    "/boot/grub/layouts/usqwerty.gkb=${grubcfgsdir}/keymap/usqwerty.gkb" \
 	    "/boot/grub/grub.cfg=${grubcfgsdir}/config/grub_memdisk.cfg" \
-	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" \
+	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" || \
 	    err "build_grub_elf: cannot build grub payload (grub-mkstandalone)"
-
-	printf "\nDone! Check elf/grub/\n\n"
-}
-
-handle_dependencies()
-{
-	[ -d "grub/" ] || \
-		./update project repo grub || \
-		    err "handle_dependencies: cannot fetch grub"
-	[ -f "grub/grub-mkstandalone" ] || \
-		./build grub utils || \
-		    err "handle_dependencies: cannot build grub utils"
-	[ -d "elf/grub" ] || \
-		mkdir -p elf/grub || \
-		    err "handle_dependencies: cannot mkdir elf/grub"
-	rm -f elf/grub/* || \
-	    err "handle_dependencies: cannot rm inside: elf/grub/"
 }
 
 main $@
