@@ -1,19 +1,9 @@
 #!/usr/bin/env sh
+# SPDX-License-Identifier: GPL-2.0-only
 
-# Download Intel MRC images
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, version 2 of the License.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Forked from util/chromeos/crosfirmware.sh in coreboot cfc26ce278. Changes to
+# it in this version are exclusively by Leah Rowe, copyright as of 2021 and
+# 2023, on top of original coreboot copyright auditable in coreboot.git.
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
@@ -21,10 +11,6 @@ set -u -e
 . "include/err.sh"
 
 export PATH="${PATH}:/sbin"
-
-# This file is forked from util/chromeos/crosfirmware.sh in coreboot cfc26ce278
-# Changes to it in *this version* are copyright 2021 and 2023 Leah Rowe, under
-# the same license as above.
 
 # use updated manifest from wayback machine, when updating mrc.bin,
 # and update the other variables below accordingly. current manifest used:

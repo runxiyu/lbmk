@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
-
-# Copyright (c) 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2023 Leah Rowe <info@minifree.org>
 
 . "include/err.sh"
 

@@ -1,5 +1,5 @@
-# Copyright (c) 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: GPL-3.0-only
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 

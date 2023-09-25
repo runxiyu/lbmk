@@ -1,5 +1,5 @@
-# Copyright (c) 2022, 2023 Leah Rowe <info@minifree.org>
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <info@minifree.org>
 
 err()
 {

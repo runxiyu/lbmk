@@ -1,25 +1,9 @@
 #!/usr/bin/env sh
-
-#  generic script for calling other scripts in lbmk
-#
-#	Copyright (C) 2014,2015,2020,2021,2023 Leah Rowe <info@minifree.org>
-#	Copyright (C) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
-#	Copyright (C) 2015, 2016 Klemens Nanni <contact@autoboot.org>
-#	Copyright (C) 2022, Caleb La Grange <thonkpeasant@protonmail.com>
-#
-#	This program is free software: you can redistribute it and/or modify
-#	it under the terms of the GNU General Public License as published by
-#	the Free Software Foundation, either version 3 of the License, or
-#	(at your option) any later version.
-#
-#	This program is distributed in the hope that it will be useful,
-#	but WITHOUT ANY WARRANTY; without even the implied warranty of
-#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#	GNU General Public License for more details.
-#
-#	You should have received a copy of the GNU General Public License
-#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2014,2015,2020,2021,2023 Leah Rowe <info@minifree.org>
+# SPDX-FileCopyrightText: 2015 Patrick "P. J." McDermott <pj@pehjota.net>
+# SPDX-FileCopyrightText: 2015, 2016 Klemens Nanni <contact@autoboot.org>
+# SPDX-FileCopyrightText: 2022, Caleb La Grange <thonkpeasant@protonmail.com>
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e

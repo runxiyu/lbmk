@@ -1,5 +1,5 @@
-# Copyright (c) 2023 Leah Rowe <leah@libreboot.org>
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 tmpdir=""
 tmpdir_was_set="y"
