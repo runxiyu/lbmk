@@ -10,8 +10,6 @@ git_reset_rev()
 	cd "${sdir}" || "${_fail}" "cannot cd to ${sdir}"
 	git reset --hard ${_rev} || \
 	    "${_fail}" "cannot git reset ${sdir} <- ${rev}"
-	git submodule update --init --checkout || \
-	    "${_fail}" "cannot update git modules <- ${sdir}"
 	)
 }
 

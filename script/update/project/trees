@@ -146,6 +146,13 @@ prepare_new_tree()
 	git_reset_rev "${project}/${tree}" "${rev}" "err" || \
 	    err "prepare_new_trees ${project}/${tree}: cannot reset <- ${rev}"
 
+	(
+	cd "${project}/${tree}" || \
+	    err "prepare_new_tree: !cd \"${project}/${tree}\""
+	git submodule update --init --checkout || \
+	    err "prepare_new_tree ${project}/${tree}: can't update git modules"
+	)
+
 	git_am_patches "${PWD}/${project}/${tree}" \
 	    "${PWD}/${cfgsdir}/${tree}/patches" "err" || \
 	    err "prepare_new_trees ${project}/${tree}: cannot apply patches"
