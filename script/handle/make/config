@@ -27,6 +27,7 @@ project=""
 romtype=""
 target=""
 target_dir=""
+targets=""
 tree=""
 cbfstool=""
 
@@ -47,8 +48,14 @@ main()
 		esac
 		shift; project="${OPTARG}"; shift
 	done
-	[ -z "${mode}" ] && fail "mode not given (-m, -u or -b)"
+	[ -z "${mode}" ] && fail "mode not given (-m, -u, -b, -c or -x)"
 
+	handle_dependencies $@
+	handle_targets
+}
+
+handle_dependencies()
+{
 	elfdir="elf/${project}"
 
 	cfgsdir="config/${project}"
@@ -58,12 +65,16 @@ main()
 	[ -f "${listfile}" ] || fail "list file, ${listfile}, does not exist"
 
 	# Build for all targets if no argument is given
-	targets=$(./build command options "${cfgsdir}")
+	targets=$(./build command options "${cfgsdir}") || \
+	    fail "Cannot get options for ${cfgsdir}"
 	[ $# -gt 0 ] && targets=$@
 
 	[ -d "${elfdir}" ] || [ "${mode}" != "all" ] || \
 		mkdir -p "${elfdir}/" || fail "can't create directory ${elfdir}"
+}
 
+handle_targets()
+{
 	for x in ${targets}; do
 		target="${x}"
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
@@ -80,7 +91,7 @@ main()
 
 handle_defconfig()
 {
-	handle_dependencies "${target}" || return 0
+	handle_src_tree "${target}" || return 0
 
 	for y in "${target_dir}/config"/*; do
 		[ -f "${y}" ] || continue
@@ -96,26 +107,26 @@ handle_defconfig()
 	done
 }
 
-handle_dependencies()
+handle_src_tree()
 {
 	target_dir="${cfgsdir}/${target}"
 	mkdir -p "${elfdir}/${target}" || \
-	    fail "handle_dependencies: !mkdir -p ${elfdir}/${target}"
+	    fail "handle_src_tree: !mkdir -p ${elfdir}/${target}"
 
 	tree="undefined"
 	arch="undefined"
 	romtype="normal"
 
 	[ ! -f "${target_dir}/target.cfg" ] && \
-		fail "handle_dependencies: ${target_dir}: missing target.cfg"
+		fail "handle_src_tree: ${target_dir}: missing target.cfg"
 
 	# Override the above defaults using target.cfg
 	. "${target_dir}/target.cfg" # source
 
 	[ "${tree}" = "undefined" ] && \
-		fail "handle_dependencies: ${target_dir}: tree undefined"
+		fail "handle_src_tree: ${target_dir}: tree undefined"
 	[ "${arch}" = "undefined" ] && \
-		fail "handle_dependencies: ${target_dir}: undefined cpu type"
+		fail "handle_src_tree: ${target_dir}: undefined cpu type"
 
 	codedir="${project}/${tree}"
 	if [ ! -d "${codedir}" ]; then
@@ -126,7 +137,7 @@ handle_dependencies()
 			return 1
 		fi
 		./update project trees "${project}" "${target}" || \
-		    fail "handle_dependencies: can't fetch ${project}/${target}"
+		    fail "handle_src_tree: can't fetch ${project}/${target}"
 	elif [ "${mode}" = "distclean" ] || \
 	    [ "${mode}" = "crossgcc-clean" ]; then
 		[ -f "${tmpclean}/${tree}" ] && return 1
@@ -136,10 +147,10 @@ handle_dependencies()
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
 		[ "${mode}" != "all" ] || check_cross_compiler || \
-		    fail "handle_dependencies ${project}/${target}: crossgcc"
+		    fail "handle_src_tree ${project}/${target}: crossgcc"
 		cbfstool="cbutils/${tree}/cbfstool"
 		[ -f "${cbfstool}" ] || ./build coreboot utils "${tree}" || \
-		    fail "handle_dependencies: cannot build cbfstool"
+		    fail "handle_src_tree: cannot build cbfstool"
 	fi
 }
 
