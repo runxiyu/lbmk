@@ -15,16 +15,11 @@ main()
 	while getopts b:c: option
 	do
 		case "${1}" in
-		-b)
-			shift ;;
-		-c)
-			mode="distclean"
-			shift ;;
-		*)
-			err "Invalid option" ;;
+		-b) : ;;
+		-c) mode="distclean" ;;
+		*) err "Invalid option" ;;
 		esac
-		project="${OPTARG}"
-		shift
+		shift; project="${OPTARG}"; shift
 	done
 
 	[ -z "${project}" ] && err "project name not specified"
