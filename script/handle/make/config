@@ -49,6 +49,7 @@ main()
 		shift; project="${OPTARG}"; shift
 	done
 	[ -z "${mode}" ] && fail "mode not given (-m, -u, -b, -c or -x)"
+	[ -z "${project}" ] && fail "project name not specified"
 
 	handle_dependencies $@
 	handle_targets
