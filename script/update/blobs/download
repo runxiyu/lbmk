@@ -84,7 +84,7 @@ download_blobs()
 
 download_blob_intel_me()
 {
-	printf "Downloading neutered ME for board: %s\n" ${board}
+	printf "Downloading neutered ME for board: %s\n" "${board}"
 
 	fetch_update "${DL_url}" "${DL_url_bkup}" "${DL_hash}" || return 1
 	extract_blob_intel_me || return 1
@@ -92,18 +92,10 @@ download_blob_intel_me()
 
 extract_blob_intel_me()
 {
-	printf "Extracting neutered ME for ${board}\n"
+	printf "Extracting neutered ME for %s\n" "${board}"
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
-
-	[ -d "${_me_destination%/*}" ] || \
-		mkdir -p "${_me_destination%/*}" || \
-		    err "extract_blob_intel_me: mkdir ${_me_destination%/*}"
-	[ -f "${_me_destination}" ] && \
-		printf "Intel ME firmware already downloaded\n" 1>&2 && \
-		    return 0
-
-	printf "Extracting and stripping Intel ME firmware\n"
+	mk_blobdir "${_me_destination}" "extract_blob_intel_me" || return 0
 	mk_appdir "extract_blob_intel_me"
 	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
 	    "$(pwd)/${appdir}" || \
@@ -178,15 +170,7 @@ extract_blob_kbc1126_ec()
 	printf "Extracting KBC1126 EC firmware for board: %s\n" ${board}
 
 	_ec_destination=${CONFIG_KBC1126_FW1#../../}
-
-	[ -d "${_ec_destination%/*}" ] || \
-		mkdir -p "${_ec_destination%/*}" || \
-		    err "extract_blob_kbc1126_ec: !mkdir ${_ec_destination%/*}"
-	if [ -f "${_ec_destination}" ]; then
-		printf "KBC1126 EC firmware already downloaded\n" 1>&2
-		return 0
-	fi
-
+	mk_blobdir "${_ec_destination}" "extract_blob_kbc1126_ec" || return 0
 	mk_appdir "extract_blob_kbc1126_ec"
 	(
 	cd "${appdir}/" || \
@@ -233,16 +217,9 @@ extract_e6400vga()
 	printf "Extracting Nvidia VGA ROM for ${board}\n"
 
 	_vga_destination=${CONFIG_VGA_BIOS_FILE#../../}
-
-	if [ -f "${_vga_destination}" ]; then
-		printf "extract_e6400vga: vga rom already downloaded\n" 1>&2
-		return 0
-	fi
-	[ -d "${_vga_destination%/*}" ] || \
-		mkdir -p "${_vga_destination%/*}" || \
-		    err "extract_e6400vga: can't mkdir ${_vga_destination%/*}"
-
+	mk_blobdir "${_vga_destination}" "extract_e6400vga" || return 0
 	mk_appdir "extract_e6400vga"
+
 	[ "${E6400_VGA_offset}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA offset not defined"
 	[ "${E6400_VGA_romname}" = "" ] && \
@@ -280,16 +257,10 @@ extract_sch5545ec()
 	printf "Extracting SCH5545 Environment Controller firmware for '%s'\n" \
 	    ${board}
 
-	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
-
-	[ -f "${_sch5545ec_destination}" ] && \
-		printf "sch5545 firmware already downloaded\n" 1>&2 && \
-		    return 0
-	[ -d "${_sch5545ec_destination%/*}" ] || \
-		mkdir -p "${_sch5545ec_destination%/*}" || \
-		    err "extract_sch: can't mkdir ${_sch5545ec_destination%/*}"
-
 	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
+
+	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
+	mk_blobdir "${_sch5545ec_destination}" "extract_sch5545ec" || return 0
 	mk_appdir "extract_sch5545ec"
 
 	# full system ROM (UEFI), to extract with UEFIExtract:
@@ -344,6 +315,15 @@ vendor_checksum()
 	elif [ "$(sha512sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
 		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
 		return 1
+	fi
+}
+
+mk_blobdir()
+{
+	[ -f "${1}" ] && \
+		printf "${2} firmware already downloaded\n" 1>&2 && return 1
+	if [ ! -d "${1%/*}" ]; then
+		mkdir -p "${1%/*}" || err "${2}: mkdir ${1%/*}"
 	fi
 }
 
