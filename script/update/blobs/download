@@ -86,8 +86,8 @@ download_blob_intel_me()
 {
 	printf "Downloading neutered ME for board: %s\n" "${board}"
 
-	fetch_update "${DL_url}" "${DL_url_bkup}" "${DL_hash}" || return 1
-	extract_blob_intel_me || return 1
+	fetch_update "${DL_url}" "${DL_url_bkup}" "${DL_hash}"
+	extract_blob_intel_me
 }
 
 extract_blob_intel_me()
@@ -160,8 +160,8 @@ download_ec()
 {
 	printf "Downloading KBC1126 EC firmware for HP laptop\n"
 
-	fetch_update "${EC_url}" "${EC_url_bkup}" "${EC_hash}" || return 1
-	extract_blob_kbc1126_ec || return 1
+	fetch_update "${EC_url}" "${EC_url_bkup}" "${EC_hash}"
+	extract_blob_kbc1126_ec
 }
 
 extract_blob_kbc1126_ec()
@@ -206,8 +206,8 @@ download_e6400vga()
 	printf "Downloading Nvidia VGA ROM for Dell Latitude E6400\n"
 
 	fetch_update "${E6400_VGA_DL_url}" "${E6400_VGA_DL_url_bkup}" \
-	    "${E6400_VGA_DL_hash}" || return 1
-	extract_e6400vga || return 1
+	    "${E6400_VGA_DL_hash}"
+	extract_e6400vga
 }
 
 extract_e6400vga()
@@ -243,8 +243,8 @@ download_sch5545ec()
 	printf "Downloading SMSC SCH5545 Environment Controller firmware\n"
 
 	fetch_update "${SCH5545EC_DL_url}" "${SCH5545EC_DL_url_bkup}" \
-	    "${SCH5545EC_DL_hash}" || return 1
-	extract_sch5545ec || return 1
+	    "${SCH5545EC_DL_hash}"
+	extract_sch5545ec
 }
 
 # TODO: this code is cancer. hardcoded is bad, and stupid.
