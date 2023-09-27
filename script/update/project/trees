@@ -9,6 +9,7 @@ set -u -e
 
 . "include/err.sh"
 . "include/git.sh"
+. "include/option.sh"
 
 _target=""
 tree=""
@@ -29,7 +30,7 @@ main()
 	[ -d "${cfgsdir}" ] || err "unsupported project name"
 	shift 1
 
-	targets=$(./build command options "${cfgsdir}")
+	targets=$(listitems "${cfgsdir}")
 	[ $# -gt 0 ] && targets=$@
 	[ -z "${targets}" ] && \
 	    err "No targets available for project: ${project}"

@@ -8,6 +8,7 @@
 set -u -e
 
 . "include/err.sh"
+. "include/option.sh"
 
 read projectname < projectname
 read our_version < version
@@ -66,7 +67,7 @@ handle_dependencies()
 	[ -f "${listfile}" ] || fail "list file, ${listfile}, does not exist"
 
 	# Build for all targets if no argument is given
-	targets=$(./build command options "${cfgsdir}") || \
+	targets=$(listitems "${cfgsdir}") || \
 	    fail "Cannot get options for ${cfgsdir}"
 	[ $# -gt 0 ] && targets=$@
 

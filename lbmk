@@ -10,6 +10,7 @@ set -u -e
 
 . "include/err.sh"
 . "include/export.sh"
+. "include/option.sh"
 
 read projectname < projectname
 linkpath="${0}"
@@ -45,7 +46,7 @@ initialise_command()
 		fail "running this command as root is not permitted"
 
 	[ "${mode}" = "help" ] && usage ${0} && lbmk_exit 0
-	[ "${mode}" = "list" ] && ./build command options "${buildpath}" && \
+	[ "${mode}" = "list" ] && listitems "${buildpath}" && \
 	    lbmk_exit 0
 	[ $# -lt 2 ] && usage ${0} && lbmk_exit 1
 
@@ -78,7 +79,7 @@ install_packages()
 execute_command()
 {
 	if [ "${option}" = "list" ]; then
-		./build command options "${buildpath}/${mode}" || \
+		listitems "${buildpath}/${mode}" || \
 		    fail "execute_command: cannot list command options"
 		lbmk_exit 0
 	fi
@@ -95,7 +96,7 @@ usage()
 	USAGE:	${progname} <MODE> <OPTION>
 
 	possible values for 'mode':
-	$(./build command options "${buildpath}")
+	$(listitems "${buildpath}")
 
 	For each of the above modes, you may also do:
 	${progname} <MODE> list

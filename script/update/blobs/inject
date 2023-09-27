@@ -7,6 +7,7 @@
 . "include/err.sh"
 . "include/defconfig.sh"
 . "include/blobutil.sh"
+. "include/option.sh"
 
 release_archive="n"
 
@@ -16,7 +17,7 @@ main()
 
 	[ $# -lt 1 ] && err "No options specified."
 	[ "${1}" = "listboards" ] && \
-		./build command options config/coreboot && exit 0
+		listitems config/coreboot && exit 0
 
 	archive="${1}"
 

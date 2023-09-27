@@ -1,30 +1,18 @@
-#!/usr/bin/env sh
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-. "include/err.sh"
-
-items=1
-
-main()
-{
-	[ $# -gt 0 ] || \
-		err "No argument given"
-	listitems "${1}" || err "No items present under: ${1}"
-}
-
 listitems()
 {
-	[ -d "${1}" ] || \
-		err "Directory not does exist: ${1}"
+	rval=1
+	[ ! -d "${1}" ] && \
+		printf "listitems: directory '%s' doesn't exist" "${1}" && \
+		    return 1
 	for x in "${1}/"*; do
 		# -e used because this is for files *or* directories
 		[ -e "${x}" ] || continue
 		[ "${x##*/}" = "build.list" ] && continue
 		printf "%s\n" "${x##*/}" 2>/dev/null
-		items=0
+		rval=0
 	done
-	return ${items}
+	return ${rval}
 }
-
-main $@

@@ -9,6 +9,7 @@
 set -u -e
 
 . "include/err.sh"
+. "include/option.sh"
 
 read projectname < projectname
 opts=""
@@ -23,7 +24,7 @@ main()
 	firstoption="${1}"
 	[ "${firstoption}" = "help" ] && usage && exit 0
 	[ "${firstoption}" = "list" ] && \
-	    ./build command options config/coreboot && exit 0
+	    listitems config/coreboot && exit 0
 
 	while [ $# -gt 0 ]; do
 		case ${1} in
@@ -46,7 +47,7 @@ main()
 	printf "Building %s ROM images\n" "${projectname}"
 
 	if [ "${firstoption}" = "all" ]; then
-		for target in $(./build command options config/coreboot); do
+		for target in $(listitems config/coreboot); do
 			buildrom "${target}" || err "build/roms (1): error"
 			[ -d "bin/${target}" ] && targets="${target} ${targets}"
 		done
@@ -81,7 +82,7 @@ usage()
 		./build boot roms x60 -p grub -d corebootfb -k usqwerty
 
 	possible values for 'target':
-	$(./build command options "config/coreboot")
+	$(listitems "config/coreboot")
 
 	Refer to the ${projectname} documentation for more information.
 	EOF
