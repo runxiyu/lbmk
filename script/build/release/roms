@@ -185,36 +185,26 @@ strip_ucode()
 
 strip_rom_image()
 {
-	romfile=${1}
-
-	[ -f "${romfile}" ] || return 0
-
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		"${ifdtool}" --nuke me "${romfile}" -O "${romfile}" || \
-		    err "strip_rom_images: ${romfile}: cannot nuke Intel ME"
-	fi
-
-	if [ "${CONFIG_HAVE_MRC}" = "y" ]; then
-		"${cbfstool}" "${romfile}" remove -n mrc.bin || \
-		    err "strip_rom_images: ${romfile}: cannot nuke mrc.bin"
-		"${cbfstool}" "${romfile}" print || :
-	fi
-
-	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		"${cbfstool}" "${romfile}" remove -n ecfw1.bin || \
-		    err "strip_rom_images: ${romfile}: can't nuke ecfw1.bin"
-		"${cbfstool}" "${romfile}" remove -n ecfw2.bin || \
-		    err "strip_rom_images: ${romfile}: can't nuke ecfw2.bin"
-	fi
-
+	[ -f "${1}" ] || return 0
+	[ "${CONFIG_HAVE_ME_BIN}" != "y" ] || \
+		"${ifdtool}" --nuke me "${1}" -O "${1}" || \
+		    err "strip_rom_images: ${1}: cannot nuke Intel ME"
+	[ "${CONFIG_HAVE_MRC}" != "y" ] || \
+		"${cbfstool}" "${1}" remove -n mrc.bin || \
+		    err "strip_rom_images: ${1}: cannot nuke mrc.bin"
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
-		"${cbfstool}" "${romfile}" remove -n sch5545_ecfw.bin || \
-		    err "strip_rom_images: ${romfile}: can't nuke sch5545ec fw"
-
+		"${cbfstool}" "${1}" remove -n sch5545_ecfw.bin || \
+		    err "strip_rom_images: ${1}: can't nuke sch5545ec fw"
+	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
+		"${cbfstool}" "${1}" remove -n ecfw1.bin || \
+		    err "strip_rom_images: ${1}: can't nuke ecfw1.bin"
+		"${cbfstool}" "${1}" remove -n ecfw2.bin || \
+		    err "strip_rom_images: ${1}: can't nuke ecfw2.bin"
+	fi
 	# TODO: replace this board-specific hack
 	if [ "${target}" = "e6400_4mb" ]; then
-		"${cbfstool}" "${romfile}" remove -n "pci10de,06eb.rom" || \
-		    err "strip_rom_images: ${romfile}: can't nuke e6400 vga rom"
+		"${cbfstool}" "${1}" remove -n "pci10de,06eb.rom" || \
+		    err "strip_rom_images: ${1}: can't nuke e6400 vga rom"
 	fi
 }
 
