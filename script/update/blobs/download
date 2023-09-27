@@ -99,21 +99,12 @@ extract_blob_intel_me()
 	[ -d "${_me_destination%/*}" ] || \
 		mkdir -p "${_me_destination%/*}" || \
 		    err "extract_blob_intel_me: mkdir ${_me_destination%/*}"
-	[ ! -d "${appdir}" ] || \
-		rm -Rf "${appdir}" || \
-		    err "extract_blob_intel_me: can't rm -Rf \"${appdir}\""
-	if [ -f "${_me_destination}" ]; then
-		printf "Intel ME firmware already downloaded\n" 1>&2
-		return 0
-	fi
+	[ -f "${_me_destination}" ] && \
+		printf "Intel ME firmware already downloaded\n" 1>&2 && \
+		    return 0
 
 	printf "Extracting and stripping Intel ME firmware\n"
-
-	innoextract "${dl_path}" -d "${appdir}" || \
-	    7z x "${dl_path}" -o"${appdir}" || \
-	    unar "${dl_path}" -o "${appdir}" || \
-	    err "extract_blob_intel_me: could not extract vendor update"
-
+	mk_appdir "extract_blob_intel_me"
 	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
 	    "$(pwd)/${appdir}" || \
 	    err "extract_blob_intel_me: could not extract Intel ME firmware"
@@ -155,10 +146,7 @@ bruteforce_extract_blob_intel_me()
 			"${me7updateparser}" -O "${_me_destination}" "${i}" \
 			    && break # (we found me.bin)
 			_7ztest="${_7ztest}a"
-			7z x "${i}" -o"${_7ztest}" \
-			    || innoextract "${i}" -d "${_7ztest}" \
-			    || unar "${i}" -o "${_7ztest}" \
-			    || continue
+			extract_archive "${i}" "${_7ztest}" || continue
 			bruteforce_extract_blob_intel_me "${_me_destination}" \
 			    "${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
@@ -194,20 +182,15 @@ extract_blob_kbc1126_ec()
 	[ -d "${_ec_destination%/*}" ] || \
 		mkdir -p "${_ec_destination%/*}" || \
 		    err "extract_blob_kbc1126_ec: !mkdir ${_ec_destination%/*}"
-	[ ! -d "${appdir}" ] || \
-		rm -Rf "${appdir}" || \
-		    err "extract_blob_kbc1126_ec: !rm -Rf ${appdir}"
 	if [ -f "${_ec_destination}" ]; then
 		printf "KBC1126 EC firmware already downloaded\n" 1>&2
 		return 0
 	fi
 
-	unar "${dl_path}" -o "${appdir}" || \
-	    err "extract_blob_kbc1126_ec: !unar \"${dl_path}\" -o \"${appdir}\""
-
+	mk_appdir "extract_blob_kbc1126_ec"
 	(
-	cd "${appdir}/${dl_path##*/}" || \
-	    err "extract_blob_kbc1126_ec: !cd \"${appdir}/${dl_path##*/}\""
+	cd "${appdir}/" || \
+	    err "extract_blob_kbc1126_ec: !cd \"${appdir}/\""
 
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
@@ -227,12 +210,12 @@ extract_blob_kbc1126_ec()
 
 	ec_ex="y"
 	for i in 1 2; do
-		[ -f "${appdir}/${dl_path##*/}/ec.bin.fw${i}" ] || ec_ex="n"
+		[ -f "${appdir}/ec.bin.fw${i}" ] || ec_ex="n"
 	done
 	[ "${ec_ex}" = "y" ] || \
 	    err "extract_blob_kbc1126_ec: ${board}: didn't extract ecfw1/2.bin"
 
-	cp "${appdir}/${dl_path##*/}"/ec.bin.fw* "${_ec_destination%/*}/" || \
+	cp "${appdir}/"ec.bin.fw* "${_ec_destination%/*}/" || \
 	    err "extract_blob_kbc1126_ec: cant mv ecfw1/2 ${_ec_destination%/*}"
 }
 
@@ -258,27 +241,18 @@ extract_e6400vga()
 	[ -d "${_vga_destination%/*}" ] || \
 		mkdir -p "${_vga_destination%/*}" || \
 		    err "extract_e6400vga: can't mkdir ${_vga_destination%/*}"
-	[ ! -d "${appdir}" ] || \
-		rm -Rf "${appdir}" || \
-		    err "extract_e6400vga: can't rm -Rf ${appdir}"
 
-	mkdir -p "${appdir}" || \
-	    err "extract_e6400vga: can't mkdir ${appdir}"
-	cp "${dl_path}" "${appdir}" || \
-	    err "extract_e6400vga: can't copy vendor update"
-
+	mk_appdir "extract_e6400vga"
 	[ "${E6400_VGA_offset}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA offset not defined"
 	[ "${E6400_VGA_romname}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA ROM name not defined"
 
+	tail -c +${E6400_VGA_offset} "${dl_path}" | \
+	    gunzip >"${appdir}/bios.bin" || :
 	(
-	cd "${appdir}" || \
-	    err "extract_e6400vga: can't cd ${appdir}"
-	tail -c +${E6400_VGA_offset} "${dl_path##*/}" | gunzip > bios.bin || :
-
-	[ -f "bios.bin" ] || \
-		err "extract_e6400vga: can't extract bios.bin from update"
+	cd "${appdir}" || err "extract_e6400vga: can't cd ${appdir}"
+	[ -f "bios.bin" ] || err "extract_e6400vga: can't extract bios.bin"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
@@ -308,27 +282,19 @@ extract_sch5545ec()
 
 	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
 
-	if [ -f "${_sch5545ec_destination}" ]; then
-		printf "sch5545 firmware already downloaded\n" 1>&2
-		return 0
-	fi
+	[ -f "${_sch5545ec_destination}" ] && \
+		printf "sch5545 firmware already downloaded\n" 1>&2 && \
+		    return 0
 	[ -d "${_sch5545ec_destination%/*}" ] || \
 		mkdir -p "${_sch5545ec_destination%/*}" || \
 		    err "extract_sch: can't mkdir ${_sch5545ec_destination%/*}"
 
-	[ ! -d "${appdir}" ] || rm -Rf "${appdir}" || \
-	    err "extract_sch5545ec: can't remove ${appdir}"
-
-	mkdir -p "${appdir}/" || err "extract_sch5545ec: !mkdir ${appdir}"
-	cp "${dl_path}" "${appdir}/" || \
-	    err "extract_sch5545ec: can't copy vendor update file"
-	python "${pfs_extract}" "${appdir}/${dlsum}" -e || \
-	    err "extract_sch5545ec: can't extract from vendor update"
+	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
+	mk_appdir "extract_sch5545ec"
 
 	# full system ROM (UEFI), to extract with UEFIExtract:
-	_bios="${appdir}/${dlsum}_extracted/Firmware"
+	_bios="${dl_path}_extracted/Firmware"
 	_bios="${_bios}/1 ${dlsum} -- 1 System BIOS vA.28.bin"
-
 	# this is the SCH5545 firmware, inside of the extracted UEFI ROM:
 	_sch5545ec_fw="${_bios}.dump/4 7A9354D9-0468-444A-81CE-0BF617D890DF"
 	_sch5545ec_fw="${_sch5545ec_fw}/54 D386BEB8-4B54-4E69-94F5-06091F67E0D3"
@@ -379,6 +345,22 @@ vendor_checksum()
 		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
 		return 1
 	fi
+}
+
+mk_appdir()
+{
+	[ ! -d "${appdir}" ] || rm -Rf "${appdir}" || \
+	    err "${1}: can't remove ${appdir}"
+	mkdir -p "${appdir}/" || err "${1}: !mkdir ${appdir}"
+	extract_archive "${dl_path}" "${appdir}" || \
+	    [ "${1}" = "extract_e6400vga" ] || err "${1}: can't extract update"
+}
+
+extract_archive()
+{
+	innoextract "${1}" -d "${2}" || 7z x "${1}" -o"${2}" || \
+	    unar "${1}" -o "${2}" || \
+	    python "${pfs_extract}" "${1}" -e || return 1
 }
 
 main $@
