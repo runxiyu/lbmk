@@ -17,7 +17,7 @@ main()
 	boarddir="${cbcfgsdir}/${board}"
 
 	check_defconfig "${boarddir}" || exit 0
-	detect_firmware || exit 0
+	detect_firmware && exit 0
 	scan_sources_config
 
 	build_dependencies
@@ -29,18 +29,12 @@ detect_firmware()
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
 
-	[ "${CONFIG_HAVE_MRC}" = "y" ] && needs="${needs} MRC"
-	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && needs="${needs} ME"
-	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && needs="${needs} EC"
-	[ "${CONFIG_BOARD_DELL_E6400}" = "y" ] && \
-	    [ "${CONFIG_VGA_BIOS_FILE}" != "" ] && needs="${needs} E6400VGA"
-	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
-	    needs="${needs} SCH5545EC"
-	[ -z ${needs+x} ] && \
-		printf "No binary blobs needed for board: %s\n" "${board}" \
-		    1>&2 && \
-		return 1
-	printf "Firmware needed for board '%s':\n%s\n" "${board}" "${needs}"
+	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
+	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
+		eval "[ -z \"\${${c}}\" ] || return 1"
+	done
+
+	printf "Blobs not needed for: %s\n" "${board}" 1>&2
 }
 
 scan_sources_config()
@@ -121,23 +115,16 @@ build_dependencies()
 
 download_blobs()
 {
-	for need in ${needs}; do
-		case ${need} in
-		*ME*)
-			download_blob_intel_me || _failed="${_failed} me" ;;
-		*SCH5545EC*)
-			download_sch5545ec || failed="${_failed} sch5545ec" ;;
-		*EC*)
-			download_ec || _failed="${_failed} ec" ;;
-		*E6400VGA*)
-			download_e6400vga || _failed="${_failed} e6400vga" ;;
-		*MRC*)
-			./update blobs mrc || _failed="${_failed} mrc" ;;
-		esac
-	done
-	
-	if [ ! -z ${_failed+x} ]; then
-		err "download_blobs: can't download blobs: ${_failed}\n"
+	[ -z "${CONFIG_HAVE_ME_BIN}" ] || \
+		download_blob_intel_me || err "download_blobs ${board}: !me"
+	[ -z "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" ] || \
+		download_sch5545ec || err "download_blobs ${board}: !sch5545"
+	[ -z "${CONFIG_KBC1126_FIRMWARE}" ] || \
+		download_ec || err "download_blobs ${board}: kbc1126"
+	[ -z "${CONFIG_VGA_BIOS_FILE}" ] || \
+		download_e6400vga || err "download_blobs ${board}: !e6400vga"
+	if [ ! -z "${CONFIG_HAVE_MRC}" ]; then
+		./update blobs mrc || err "download_blobs ${board}: !mrc"
 	fi
 }
 
