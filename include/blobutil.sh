@@ -9,10 +9,10 @@ _b=""
 blobdir="blobs"
 appdir="${blobdir}/app"
 
-for x in ec_url ec_url_bkup ec_hash dl_hash dl_url dl_url_bkup dl_path \
-    e6400_vga_dl_hash e6400_vga_dl_url e6400_vga_dl_url_bkup e6400_vga_offset \
-    e6400_vga_romname sch5545ec_dl_url sch5545ec_dl_url_bkup \
-    sch5545ec_dl_hash; do
+for x in EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup dl_path \
+    E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
+    E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup \
+    SCH5545EC_DL_hash; do
 	eval "${x}=\"\""
 done
 

@@ -39,56 +39,12 @@ detect_firmware()
 
 scan_sources_config()
 {
-	# Shorthand (avoid duplicating configs per flash size)
-	_b=${board%%_*mb}
-
+	_b=${board%%_*mb} # shorthand to avoid duplicating config per rom size
 	awkstr=" /\{.*${_b}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
-
 	while read -r line ; do
-		case ${line} in
-		EC_url_bkup*)
-			set ${line}
-			ec_url_bkup=${2} ;;
-		EC_url*)
-			set ${line}
-			ec_url=${2} ;;
-		EC_hash*)
-			set ${line}
-			ec_hash=${2} ;;
-		DL_hash*)
-			set ${line}
-			dl_hash=${2} ;;
-		DL_url_bkup*)
-			set ${line}
-			dl_url_bkup=${2} ;;
-		DL_url*)
-			set ${line}
-			dl_url=${2} ;;
-		E6400_VGA_DL_hash*)
-			set ${line}
-			e6400_vga_dl_hash=${2} ;;
-		E6400_VGA_DL_url_bkup*)
-			set ${line}
-			e6400_vga_dl_url_bkup=${2} ;;
-		E6400_VGA_DL_url*)
-			set ${line}
-			e6400_vga_dl_url=${2} ;;
-		E6400_VGA_offset*)
-			set ${line}
-			e6400_vga_offset=${2} ;;
-		E6400_VGA_romname*)
-			set ${line}
-			e6400_vga_romname=${2} ;;
-		SCH5545EC_DL_hash*)
-			set ${line}
-			sch5545ec_dl_hash=${2} ;;
-		SCH5545EC_DL_url_bkup*)
-			set ${line}
-			sch5545ec_dl_url_bkup=${2} ;;
-		SCH5545EC_DL_url*)
-			set ${line}
-			sch5545ec_dl_url=${2} ;;
-		esac
+		set ${line} 1>/dev/null 2>/dev/null
+		eval "${1}=\"${2}\""
+		echo "${1}=\"${2}\""
 	done << EOF
 	$(eval "awk '${awkstr}' config/blobs/sources")
 EOF
@@ -312,24 +268,24 @@ extract_e6400vga()
 	cp "${dl_path}" "${appdir}" || \
 	    err "extract_e6400vga: can't copy vendor update"
 
-	[ "${e6400_vga_offset}" = "" ] && \
+	[ "${E6400_VGA_offset}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA offset not defined"
-	[ "${e6400_vga_romname}" = "" ] && \
+	[ "${E6400_VGA_romname}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA ROM name not defined"
 
 	(
 	cd "${appdir}" || \
 	    err "extract_e6400vga: can't cd ${appdir}"
-	tail -c +${e6400_vga_offset} "${dl_path##*/}" | gunzip > bios.bin || :
+	tail -c +${E6400_VGA_offset} "${dl_path##*/}" | gunzip > bios.bin || :
 
 	[ -f "bios.bin" ] || \
 		err "extract_e6400vga: can't extract bios.bin from update"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
-	[ -f "${e6400_vga_romname}" ] || \
+	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
 
-	cp "${appdir}"/"${e6400_vga_romname}" "${_vga_destination}" || \
+	cp "${appdir}"/"${E6400_VGA_romname}" "${_vga_destination}" || \
 	    err "extract_e6400vga: can't copy vga rom to ${_vga_destination}"
 
 	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
@@ -395,27 +351,27 @@ fetch_update()
 	dl_bkup=""
 	dlsum=""
 	if [ "${fw_type}" = "me" ]; then
-		dl=${dl_url}
-		dl_bkup=${dl_url_bkup}
-		dlsum=${dl_hash}
+		dl=${DL_url}
+		dl_bkup=${DL_url_bkup}
+		dlsum=${DL_hash}
 	elif [ "${fw_type}" = "ec" ]; then
-		dl=${ec_url}
-		dl_bkup=${ec_url_bkup}
-		dlsum=${ec_hash}
+		dl=${EC_url}
+		dl_bkup=${EC_url_bkup}
+		dlsum=${EC_hash}
 	elif [ "${fw_type}" = "e6400vga" ]; then
-		dl=${e6400_vga_dl_url}
-		dl_bkup=${e6400_vga_dl_url_bkup}
-		dlsum=${e6400_vga_dl_hash}
+		dl=${E6400_VGA_DL_url}
+		dl_bkup=${E6400_VGA_DL_url_bkup}
+		dlsum=${E6400_VGA_DL_hash}
 	elif [ "${fw_type}" = "sch5545ec" ]; then
-		dl="${sch5545ec_dl_url}"
-		dl_bkup="${sch5545ec_dl_url_bkup}"
-		dlsum="${sch5545ec_dl_hash}"
+		dl="${SCH5545EC_DL_url}"
+		dl_bkup="${SCH5545EC_DL_url_bkup}"
+		dlsum="${SCH5545EC_DL_hash}"
 	else
 		err "fetch_update: Unsupported download type: ${fw_type}"
 	fi
 
-	[ -z "${dl_url+x}" ] && [ "${fw_type}" != "e6400vga" ] && \
-		err "fetch_update ${fw_type}: dl_url unspecified for: ${board}"
+	[ -z "${DL_url+x}" ] && [ "${fw_type}" != "e6400vga" ] && \
+		err "fetch_update ${fw_type}: DL_url unspecified for: ${board}"
 
 	dl_path="${blobdir}/cache/${dlsum}"
 	mkdir -p "${blobdir}/cache" || err "fetch_update: !mkdir ${blobdir}/cache"
