@@ -88,7 +88,7 @@ download_blob_intel_me()
 {
 	printf "Downloading neutered ME for board: %s\n" ${board}
 
-	fetch_update me || return 1
+	fetch_update "${DL_url}" "${DL_url_bkup}" "${DL_hash}" || return 1
 	extract_blob_intel_me || return 1
 }
 
@@ -183,7 +183,7 @@ download_ec()
 {
 	printf "Downloading KBC1126 EC firmware for HP laptop\n"
 
-	fetch_update ec || return 1
+	fetch_update "${EC_url}" "${EC_url_bkup}" "${EC_hash}" || return 1
 	extract_blob_kbc1126_ec || return 1
 }
 
@@ -242,7 +242,8 @@ download_e6400vga()
 {
 	printf "Downloading Nvidia VGA ROM for Dell Latitude E6400\n"
 
-	fetch_update e6400vga || return 1
+	fetch_update "${E6400_VGA_DL_url}" "${E6400_VGA_DL_url_bkup}" \
+	    "${E6400_VGA_DL_hash}" || return 1
 	extract_e6400vga || return 1
 }
 
@@ -295,7 +296,8 @@ download_sch5545ec()
 {
 	printf "Downloading SMSC SCH5545 Environment Controller firmware\n"
 
-	fetch_update sch5545ec || return 1
+	fetch_update "${SCH5545EC_DL_url}" "${SCH5545EC_DL_url_bkup}" \
+	    "${SCH5545EC_DL_hash}" || return 1
 	extract_sch5545ec || return 1
 }
 
@@ -346,32 +348,9 @@ fetch_update()
 {
 	printf "Fetching vendor update for board: %s\n" "${board}"
 
-	fw_type="${1}"
-	dl=""
-	dl_bkup=""
-	dlsum=""
-	if [ "${fw_type}" = "me" ]; then
-		dl=${DL_url}
-		dl_bkup=${DL_url_bkup}
-		dlsum=${DL_hash}
-	elif [ "${fw_type}" = "ec" ]; then
-		dl=${EC_url}
-		dl_bkup=${EC_url_bkup}
-		dlsum=${EC_hash}
-	elif [ "${fw_type}" = "e6400vga" ]; then
-		dl=${E6400_VGA_DL_url}
-		dl_bkup=${E6400_VGA_DL_url_bkup}
-		dlsum=${E6400_VGA_DL_hash}
-	elif [ "${fw_type}" = "sch5545ec" ]; then
-		dl="${SCH5545EC_DL_url}"
-		dl_bkup="${SCH5545EC_DL_url_bkup}"
-		dlsum="${SCH5545EC_DL_hash}"
-	else
-		err "fetch_update: Unsupported download type: ${fw_type}"
-	fi
-
-	[ -z "${DL_url+x}" ] && [ "${fw_type}" != "e6400vga" ] && \
-		err "fetch_update ${fw_type}: DL_url unspecified for: ${board}"
+	dl="${1}"
+	dl_bkup="${2}"
+	dlsum="${3}"
 
 	dl_path="${blobdir}/cache/${dlsum}"
 	mkdir -p "${blobdir}/cache" || err "fetch_update: !mkdir ${blobdir}/cache"
@@ -382,13 +361,13 @@ fetch_update()
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${x}" ] && continue
 		rm -f "${dl_path}" || \
-		    err "fetch_update ${fw_type}: !rm -f ${dl_path}"
+		    err "fetch_update: !rm -f ${dl_path}"
 		wget --tries 3 -U "${agent}" "${x}" -O "${dl_path}" || continue
 		vendor_checksum "${dlsum}" && dl_fail="n"
 	done
 	if [ "${dl_fail}" = "y" ]; then
 		printf "ERROR: invalid vendor updates for: %s\n" "${board}" 1>&2
-		err "fetch_update ${fw_type}: matched vendor update unavailable"
+		err "fetch_update ${dlsum}: matched vendor update unavailable"
 	fi
 }
 
