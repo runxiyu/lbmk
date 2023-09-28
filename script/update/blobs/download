@@ -124,18 +124,14 @@ vendor_checksum()
 
 extract_intel_me()
 {
-	printf "Extracting neutered ME for %s\n" "${board}"
-
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
 	mkdirs "${_me_destination}" "extract_intel_me" || return 0
 	bruteforce_extract_intel_me "$(pwd)/${_me_destination}" \
 	    "$(pwd)/${appdir}" || \
 	    err "extract_intel_me: could not extract Intel ME firmware"
-
-	[ -f "${_me_destination}" ] || \
+	if [ ! -f "${_me_destination}" ]; then
 		err "extract_intel_me, ${board}: me.bin missing"
-
-	printf "Truncated and cleaned me output to: %s\n" "${_me_destination}"
+	fi
 }
 
 # cursed, carcinogenic code. TODO rewrite it better
@@ -143,14 +139,11 @@ bruteforce_extract_intel_me()
 {
 	_me_destination="${1}"
 	cdir="${2}" # must be an absolute path, not relative
-
 	[ -f "${_me_destination}" ] && return 0
 
 	sdir="$(mktemp -d)"
 	mkdir -p "${sdir}" || return 1
-
 	(
-	printf "Entering %s\n" "${cdir}"
 	cd "${cdir}" || \
 	    err "bruteforce_extract_intel_me: can't cd \"${cdir}\""
 	for i in *; do
@@ -183,15 +176,11 @@ bruteforce_extract_intel_me()
 		cd "${cdir}" # audit note: we already checked this (see above)
 	done
 	)
-
-	rm -Rf "${sdir}" || \
-	    err "bruteforce_extract_intel_me: can't rm -Rf \"${sdir}\""
+	rm -Rf "${sdir}" || err "bruteforce_extract_intel_me: !rm -Rf ${sdir}"
 }
 
 extract_kbc1126ec()
 {
-	printf "Extracting KBC1126 EC firmware for board: %s\n" ${board}
-
 	_ec_destination=${CONFIG_KBC1126_FW1#../../}
 	mkdirs "${_ec_destination}" "extract_kbc1126_ec" || return 0
 	(
@@ -227,8 +216,6 @@ extract_kbc1126ec()
 
 extract_e6400vga()
 {
-	printf "Extracting Nvidia VGA ROM for ${board}\n"
-
 	_vga_destination=${CONFIG_VGA_BIOS_FILE#../../}
 	mkdirs "${_vga_destination}" "extract_e6400vga" || return 0
 
@@ -249,17 +236,12 @@ extract_e6400vga()
 
 	cp "${appdir}"/"${E6400_VGA_romname}" "${_vga_destination}" || \
 	    err "extract_e6400vga: can't copy vga rom to ${_vga_destination}"
-
-	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
 }
 
 # TODO: this code is cancer. hardcoded is bad, and stupid.
 # TODO: make it *scan* (based on signature, in each file)
 extract_sch5545ec()
 {
-	printf "Extracting SCH5545 Environment Controller firmware for '%s'\n" \
-	    ${board}
-
 	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
 
 	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
