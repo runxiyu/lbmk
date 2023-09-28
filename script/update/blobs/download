@@ -70,44 +70,76 @@ build_dependencies()
 download_blobs()
 {
 	[ -z "${CONFIG_HAVE_ME_BIN}" ] || \
-		download_blob_intel_me || err "download_blobs ${board}: !me"
+		fetch "intel_me" "${DL_url}" "${DL_url_bkup}" "${DL_hash}"
 	[ -z "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" ] || \
-		download_sch5545ec || err "download_blobs ${board}: !sch5545"
+		fetch "sch5545ec" "${SCH5545EC_DL_url}" \
+		    "${SCH5545EC_DL_url_bkup}" "${SCH5545EC_DL_hash}"
 	[ -z "${CONFIG_KBC1126_FIRMWARE}" ] || \
-		download_ec || err "download_blobs ${board}: kbc1126"
+		fetch "kbc1126ec" "${EC_url}" "${EC_url_bkup}" "${EC_hash}"
 	[ -z "${CONFIG_VGA_BIOS_FILE}" ] || \
-		download_e6400vga || err "download_blobs ${board}: !e6400vga"
+		fetch "e6400vga" "${E6400_VGA_DL_url}" \
+		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}"
 	if [ ! -z "${CONFIG_HAVE_MRC}" ]; then
 		./update blobs mrc || err "download_blobs ${board}: !mrc"
 	fi
 }
 
-download_blob_intel_me()
+fetch()
 {
-	printf "Downloading neutered ME for board: %s\n" "${board}"
+	dl_type="${1}"
+	dl="${2}"
+	dl_bkup="${3}"
+	dlsum="${4}"
 
-	fetch_update "${DL_url}" "${DL_url_bkup}" "${DL_hash}"
-	extract_blob_intel_me
+	dl_path="${blobdir}/cache/${dlsum}"
+	mkdir -p "${blobdir}/cache" || err "fetch: !mkdir ${blobdir}/cache"
+
+	dl_fail="y"
+	vendor_checksum "${dlsum}" && dl_fail="n"
+	for x in "${dl}" "${dl_bkup}"; do
+		[ "${dl_fail}" = "n" ] && break
+		[ -z "${x}" ] && continue
+		rm -f "${dl_path}" || err "fetch: !rm -f ${dl_path}"
+		wget --tries 3 -U "${agent}" "${x}" -O "${dl_path}" || continue
+		vendor_checksum "${dlsum}" && dl_fail="n"
+	done
+	if [ "${dl_fail}" = "y" ]; then
+		printf "ERROR: invalid vendor updates for: %s\n" "${board}" 1>&2
+		err "fetch ${dlsum}: matched vendor update unavailable"
+	fi
+
+	eval "extract_${dl_type}"
 }
 
-extract_blob_intel_me()
+vendor_checksum()
+{
+	if [ ! -f "${dl_path}" ]; then
+		printf "Vendor update not found for: %s\n" "${board}" 1>&2
+		return 1
+	elif [ "$(sha512sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
+		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
+		return 1
+	fi
+}
+
+extract_intel_me()
 {
 	printf "Extracting neutered ME for %s\n" "${board}"
 
 	_me_destination=${CONFIG_ME_BIN_PATH#../../}
-	mkdirs "${_me_destination}" "extract_blob_intel_me" || return 0
-	bruteforce_extract_blob_intel_me "$(pwd)/${_me_destination}" \
+	mkdirs "${_me_destination}" "extract_intel_me" || return 0
+	bruteforce_extract_intel_me "$(pwd)/${_me_destination}" \
 	    "$(pwd)/${appdir}" || \
-	    err "extract_blob_intel_me: could not extract Intel ME firmware"
+	    err "extract_intel_me: could not extract Intel ME firmware"
 
 	[ -f "${_me_destination}" ] || \
-		err "extract_blob_intel_me, ${board}: me.bin missing"
+		err "extract_intel_me, ${board}: me.bin missing"
 
 	printf "Truncated and cleaned me output to: %s\n" "${_me_destination}"
 }
 
 # cursed, carcinogenic code. TODO rewrite it better
-bruteforce_extract_blob_intel_me()
+bruteforce_extract_intel_me()
 {
 	_me_destination="${1}"
 	cdir="${2}" # must be an absolute path, not relative
@@ -120,7 +152,7 @@ bruteforce_extract_blob_intel_me()
 	(
 	printf "Entering %s\n" "${cdir}"
 	cd "${cdir}" || \
-	    err "bruteforce_extract_blob_intel_me: can't cd \"${cdir}\""
+	    err "bruteforce_extract_intel_me: can't cd \"${cdir}\""
 	for i in *; do
 		if [ -f "${_me_destination}" ]; then
 			# me.bin found, so avoid needless further traversal
@@ -138,10 +170,10 @@ bruteforce_extract_blob_intel_me()
 			    && break # (we found me.bin)
 			_7ztest="${_7ztest}a"
 			extract_archive "${i}" "${_7ztest}" || continue
-			bruteforce_extract_blob_intel_me "${_me_destination}" \
+			bruteforce_extract_intel_me "${_me_destination}" \
 			    "${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
-			bruteforce_extract_blob_intel_me "${_me_destination}" \
+			bruteforce_extract_intel_me "${_me_destination}" \
 			    "${cdir}/${i}"
 		else
 			printf "SKIPPING: %s\n" "${i}"
@@ -153,41 +185,33 @@ bruteforce_extract_blob_intel_me()
 	)
 
 	rm -Rf "${sdir}" || \
-	    err "bruteforce_extract_blob_intel_me: can't rm -Rf \"${sdir}\""
+	    err "bruteforce_extract_intel_me: can't rm -Rf \"${sdir}\""
 }
 
-download_ec()
-{
-	printf "Downloading KBC1126 EC firmware for HP laptop\n"
-
-	fetch_update "${EC_url}" "${EC_url_bkup}" "${EC_hash}"
-	extract_blob_kbc1126_ec
-}
-
-extract_blob_kbc1126_ec()
+extract_kbc1126ec()
 {
 	printf "Extracting KBC1126 EC firmware for board: %s\n" ${board}
 
 	_ec_destination=${CONFIG_KBC1126_FW1#../../}
-	mkdirs "${_ec_destination}" "extract_blob_kbc1126_ec" || return 0
+	mkdirs "${_ec_destination}" "extract_kbc1126_ec" || return 0
 	(
 	cd "${appdir}/" || \
-	    err "extract_blob_kbc1126_ec: !cd \"${appdir}/\""
+	    err "extract_kbc1126_ec: !cd \"${appdir}/\""
 
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
 		unar -D ROM.CAB Rom.bin || \
 		    unar -D Rom.CAB Rom.bin || \
 		    unar -D 68*.CAB Rom.bin || \
-		    err "extract_blob_kbc1126_ec: can't extract ec.bin"
+		    err "extract_kbc1126_ec: can't extract ec.bin"
 		mv Rom.bin ec.bin || \
-		    err "extract_blob_kbc1126_ec: *didn't* extract ec.bin"
+		    err "extract_kbc1126_ec: *didn't* extract ec.bin"
 	fi
 	[ -f ec.bin ] || \
-	    err "extract_blob_kbc1126_ec: ${board}: can't extract ec.bin"
+	    err "extract_kbc1126_ec: ${board}: can't extract ec.bin"
 
 	"${kbc1126_ec_dump}" ec.bin || \
-	    err "extract_blob_kbc1126_ec: ${board}: can't extract ecfw1/2.bin"
+	    err "extract_kbc1126_ec: ${board}: can't extract ecfw1/2.bin"
 	)
 
 	ec_ex="y"
@@ -195,19 +219,10 @@ extract_blob_kbc1126_ec()
 		[ -f "${appdir}/ec.bin.fw${i}" ] || ec_ex="n"
 	done
 	[ "${ec_ex}" = "y" ] || \
-	    err "extract_blob_kbc1126_ec: ${board}: didn't extract ecfw1/2.bin"
+	    err "extract_kbc1126_ec: ${board}: didn't extract ecfw1/2.bin"
 
 	cp "${appdir}/"ec.bin.fw* "${_ec_destination%/*}/" || \
-	    err "extract_blob_kbc1126_ec: cant mv ecfw1/2 ${_ec_destination%/*}"
-}
-
-download_e6400vga()
-{
-	printf "Downloading Nvidia VGA ROM for Dell Latitude E6400\n"
-
-	fetch_update "${E6400_VGA_DL_url}" "${E6400_VGA_DL_url_bkup}" \
-	    "${E6400_VGA_DL_hash}"
-	extract_e6400vga
+	    err "extract_kbc1126_ec: cant mv ecfw1/2 ${_ec_destination%/*}"
 }
 
 extract_e6400vga()
@@ -238,15 +253,6 @@ extract_e6400vga()
 	printf "E6400 Nvidia ROM saved to: %s\n" "${_vga_destination}"
 }
 
-download_sch5545ec()
-{
-	printf "Downloading SMSC SCH5545 Environment Controller firmware\n"
-
-	fetch_update "${SCH5545EC_DL_url}" "${SCH5545EC_DL_url_bkup}" \
-	    "${SCH5545EC_DL_hash}"
-	extract_sch5545ec
-}
-
 # TODO: this code is cancer. hardcoded is bad, and stupid.
 # TODO: make it *scan* (based on signature, in each file)
 extract_sch5545ec()
@@ -273,43 +279,6 @@ extract_sch5545ec()
 
 	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || \
 	    err "extract_sch5545ec: cannot copy sch5545ec firmware file"
-}
-
-fetch_update()
-{
-	printf "Fetching vendor update for board: %s\n" "${board}"
-
-	dl="${1}"
-	dl_bkup="${2}"
-	dlsum="${3}"
-
-	dl_path="${blobdir}/cache/${dlsum}"
-	mkdir -p "${blobdir}/cache" || err "fetch_update: !mkdir ${blobdir}/cache"
-
-	dl_fail="y"
-	vendor_checksum "${dlsum}" && dl_fail="n"
-	for x in "${dl}" "${dl_bkup}"; do
-		[ "${dl_fail}" = "n" ] && break
-		[ -z "${x}" ] && continue
-		rm -f "${dl_path}" || err "fetch_update: !rm -f ${dl_path}"
-		wget --tries 3 -U "${agent}" "${x}" -O "${dl_path}" || continue
-		vendor_checksum "${dlsum}" && dl_fail="n"
-	done
-	if [ "${dl_fail}" = "y" ]; then
-		printf "ERROR: invalid vendor updates for: %s\n" "${board}" 1>&2
-		err "fetch_update ${dlsum}: matched vendor update unavailable"
-	fi
-}
-
-vendor_checksum()
-{
-	if [ ! -f "${dl_path}" ]; then
-		printf "Vendor update not found for: %s\n" "${board}" 1>&2
-		return 1
-	elif [ "$(sha512sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
-		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
-		return 1
-	fi
 }
 
 mkdirs()
