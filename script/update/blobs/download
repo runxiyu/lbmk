@@ -10,9 +10,7 @@
 
 main()
 {
-	[ $# -gt 0 ] || \
-		err "No argument given"
-
+	[ $# -gt 0 ] || err "No argument given"
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
 
@@ -50,17 +48,15 @@ EOF
 
 build_dependencies()
 {
-	[ -d ${cbdir} ] || \
-		./update project trees coreboot ${cbdir##*/} || \
-		    err "build_dependencies: can't fetch ${cbdir}"
+	[ -d ${cbdir} ] || ./update project trees coreboot ${cbdir##*/} || \
+	    err "build_dependencies: can't fetch ${cbdir}"
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "${d}" ] && continue
 		./update project repo "${d}" || \
 		    err "build_dependencies: can't fetch ${d}"
 	done
-	[ -f uefitool/uefiextract ] || \
-		./handle make file -b uefitool || \
-		    err "build_dependencies: can't build uefitool"
+	[ -f uefitool/uefiextract ] || ./handle make file -b uefitool || \
+	    err "build_dependencies: can't build uefitool"
 	if [ ! -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ]; then
 		make -C "${cbdir}/util/kbc1126" || \
 		    err "build_dependencies: can't build kbc1126_ec_dump"
@@ -144,23 +140,17 @@ bruteforce_extract_intel_me()
 	sdir="$(mktemp -d)"
 	mkdir -p "${sdir}" || return 1
 	(
-	cd "${cdir}" || \
-	    err "bruteforce_extract_intel_me: can't cd \"${cdir}\""
+	cd "${cdir}" || err "bruteforce_extract_intel_me: !cd \"${cdir}\""
 	for i in *; do
-		if [ -f "${_me_destination}" ]; then
-			# me.bin found, so avoid needless further traversal
-			break
-		elif [ -L "${i}" ]; then
-			# symlinks are a security risk, in this context
-			continue
-		elif [ -f "${i}" ]; then
+		[ -f "${_me_destination}" ] && break
+		[ -L "${i}" ] && continue
+		if [ -f "${i}" ]; then
 			"${mecleaner}" -r -t -O "${sdir}/vendorfile" \
-			    -M "${_me_destination}" "${i}" \
-			    && break # (we found me.bin)	
-			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" \
-			    && break # (we found me.bin)
-			"${me7updateparser}" -O "${_me_destination}" "${i}" \
-			    && break # (we found me.bin)
+			    -M "${_me_destination}" "${i}" && break
+			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" && \
+			    break
+			"${me7updateparser}" -O "${_me_destination}" "${i}" && \
+			    break
 			_7ztest="${_7ztest}a"
 			extract_archive "${i}" "${_7ztest}" || continue
 			bruteforce_extract_intel_me "${_me_destination}" \
@@ -169,11 +159,10 @@ bruteforce_extract_intel_me()
 			bruteforce_extract_intel_me "${_me_destination}" \
 			    "${cdir}/${i}"
 		else
-			printf "SKIPPING: %s\n" "${i}"
 			continue
 		fi
 		cdir="${1}"
-		cd "${cdir}" # audit note: we already checked this (see above)
+		cd "${cdir}"
 	done
 	)
 	rm -Rf "${sdir}" || err "bruteforce_extract_intel_me: !rm -Rf ${sdir}"
@@ -186,30 +175,22 @@ extract_kbc1126ec()
 	(
 	cd "${appdir}/" || \
 	    err "extract_kbc1126_ec: !cd \"${appdir}/\""
-
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
-		unar -D ROM.CAB Rom.bin || \
-		    unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || \
-		    err "extract_kbc1126_ec: can't extract ec.bin"
-		mv Rom.bin ec.bin || \
-		    err "extract_kbc1126_ec: *didn't* extract ec.bin"
+		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
+		    unar -D 68*.CAB Rom.bin || err "extract_kbc1126_ec !extract"
+		mv Rom.bin ec.bin || err "extract_kbc1126_ec: *didn't* extract"
 	fi
-	[ -f ec.bin ] || \
-	    err "extract_kbc1126_ec: ${board}: can't extract ec.bin"
-
+	[ -f ec.bin ] || err "extract_kbc1126_ec ${board}: can't extract"
 	"${kbc1126_ec_dump}" ec.bin || \
-	    err "extract_kbc1126_ec: ${board}: can't extract ecfw1/2.bin"
+	    err "extract_kbc1126_ec ${board}: can't extract ecfw1/2.bin"
 	)
-
 	ec_ex="y"
 	for i in 1 2; do
 		[ -f "${appdir}/ec.bin.fw${i}" ] || ec_ex="n"
 	done
 	[ "${ec_ex}" = "y" ] || \
-	    err "extract_kbc1126_ec: ${board}: didn't extract ecfw1/2.bin"
-
+	    err "extract_kbc1126_ec ${board}: didn't extract ecfw1/2.bin"
 	cp "${appdir}/"ec.bin.fw* "${_ec_destination%/*}/" || \
 	    err "extract_kbc1126_ec: cant mv ecfw1/2 ${_ec_destination%/*}"
 }
@@ -218,12 +199,10 @@ extract_e6400vga()
 {
 	_vga_destination=${CONFIG_VGA_BIOS_FILE#../../}
 	mkdirs "${_vga_destination}" "extract_e6400vga" || return 0
-
 	[ "${E6400_VGA_offset}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA offset not defined"
 	[ "${E6400_VGA_romname}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA ROM name not defined"
-
 	tail -c +${E6400_VGA_offset} "${dl_path}" | \
 	    gunzip >"${appdir}/bios.bin" || :
 	(
@@ -233,7 +212,6 @@ extract_e6400vga()
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
-
 	cp "${appdir}"/"${E6400_VGA_romname}" "${_vga_destination}" || \
 	    err "extract_e6400vga: can't copy vga rom to ${_vga_destination}"
 }
@@ -243,7 +221,6 @@ extract_e6400vga()
 extract_sch5545ec()
 {
 	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
-
 	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
 	mkdirs "${_sch5545ec_destination}" "extract_sch5545ec" || return 0
 
@@ -258,7 +235,6 @@ extract_sch5545ec()
 	# this makes the file defined by _sch5545ec_fw available to copy
 	"${uefiextract}" "${_bios}" || \
 	    err "extract_sch5545ec: cannot extract from uefi image"
-
 	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || \
 	    err "extract_sch5545ec: cannot copy sch5545ec firmware file"
 }
