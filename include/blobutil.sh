@@ -9,16 +9,17 @@ _b=""
 blobdir="blobs"
 appdir="${blobdir}/app"
 
-for x in EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup dl_path \
+setvars="EC_url=\"\""
+for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup dl_path \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup \
     SCH5545EC_DL_hash; do
-	eval "${x}=\"\""
+	setvars="${setvars}; ${x}=\"\""
 done
 
 for x in sname archive _filetype rom board modifygbe new_mac release \
     releasearchive vendor_rom; do
-	eval "${x}=\"\""
+	setvars="${setvars}; ${x}=\"\""
 done
 
 cbdir="coreboot/default"
@@ -43,5 +44,7 @@ for x in _me_destination _gbe_destination _ifd_destination \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE \
     CONFIG_IFD_BIN_PATH; do
-	eval "${x}=\"\""
+	setvars="${setvars}; ${x}=\"\""
 done
+
+eval "${setvars}"
