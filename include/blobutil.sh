@@ -26,7 +26,7 @@ setvars="EC_url=\"\""
 for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup E6400_VGA_DL_hash \
     E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset E6400_VGA_romname \
     SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash MRC_url \
-    MRC_url_bkup MRC_hash MRC_board _me_destination; do
+    MRC_url_bkup MRC_hash MRC_board _dest; do
 	setvars="${setvars}; ${x}=\"\""
 done
 
@@ -61,23 +61,27 @@ fetch()
 	dl_bkup="${3}"
 	dlsum="${4}"
 	dl_path="${5}"
-	_fail="${6}"
+	[ "${6# }" = "${6}" ] || err "fetch: space not allowed in _dest: '${6}'"
+	[ "${6#/}" = "${6}" ] || err "fetch: absolute path not allowed: '${6}'"
+	_dest="${6##*../}"
 
-	mkdir -p "${dl_path%/*}" || "${_fail}" "fetch: !mkdir ${dl_path%/*}"
+	mkdir -p "${dl_path%/*}" || err "fetch: !mkdir ${dl_path%/*}"
 
 	dl_fail="y"
 	vendor_checksum "${dlsum}" "${dl_path}" && dl_fail="n"
 	for url in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${url}" ] && continue
-		rm -f "${dl_path}" || "${_fail}" "fetch: !rm -f ${dl_path}"
+		rm -f "${dl_path}" || err "fetch: !rm -f ${dl_path}"
 		wget --tries 3 -U "${agent}" "${url}" -O "${dl_path}" || \
 		    continue
 		vendor_checksum "${dlsum}" "${dl_path}" && dl_fail="n"
 	done
 	[ "${dl_fail}" = "y" ] && \
-		"${_fail}" "fetch ${dlsum}: matched file unavailable"
+		err "fetch ${dlsum}: matched file unavailable"
 
+	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
+	mkdirs "${_dest}" "extract_${dl_type}" || return 0
 	eval "extract_${dl_type}"
 }
 

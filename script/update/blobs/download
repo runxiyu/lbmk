@@ -70,34 +70,32 @@ download_blobs()
 {
 	[ -z "${CONFIG_HAVE_ME_BIN}" ] || \
 		fetch "intel_me" "${DL_url}" "${DL_url_bkup}" "${DL_hash}" \
-		    "${blobdir}/cache/${DL_hash}" "err"
+		    "${blobdir}/cache/${DL_hash}" "${CONFIG_ME_BIN_PATH}"
 	[ -z "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" ] || \
 		fetch "sch5545ec" "${SCH5545EC_DL_url}" \
 		    "${SCH5545EC_DL_url_bkup}" "${SCH5545EC_DL_hash}" \
-		    "${blobdir}/cache/${SCH5545EC_DL_hash}" "err"
+		    "${blobdir}/cache/${SCH5545EC_DL_hash}" \
+		    "${CONFIG_SMSC_SCH5545_EC_FW_FILE}"
 	[ -z "${CONFIG_KBC1126_FIRMWARE}" ] || \
 		fetch "kbc1126ec" "${EC_url}" "${EC_url_bkup}" "${EC_hash}" \
-		    "${blobdir}/cache/${EC_hash}" "err"
+		    "${blobdir}/cache/${EC_hash}" "${CONFIG_KBC1126_FW1}"
 	[ -z "${CONFIG_VGA_BIOS_FILE}" ] || \
 		fetch "e6400vga" "${E6400_VGA_DL_url}" \
 		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}" \
-		    "${blobdir}/cache/${E6400_VGA_DL_hash}" "err"
+		    "${blobdir}/cache/${E6400_VGA_DL_hash}" \
+		    "${CONFIG_VGA_BIOS_FILE}"
 	if [ ! -z "${CONFIG_HAVE_MRC}" ]; then
 		fetch "mrc" "${MRC_url}" "${MRC_url_bkup}" "${MRC_hash}" \
-		    "${blobdir}/cache/${MRC_hash}" "err"
+		    "${blobdir}/cache/${MRC_hash}" "${CONFIG_MRC_FILE}"
 	fi
 }
 
 extract_intel_me()
 {
-	_me_destination=${CONFIG_ME_BIN_PATH#../../}
-	mkdirs "${_me_destination}" "extract_intel_me" || return 0
-	bruteforce_extract_intel_me "$(pwd)/${_me_destination}" \
-	    "$(pwd)/${appdir}" || \
+	bruteforce_extract_intel_me "$(pwd)/${_dest}" "$(pwd)/${appdir}" || \
 	    err "extract_intel_me: could not extract Intel ME firmware"
-	if [ ! -f "${_me_destination}" ]; then
-		err "extract_intel_me, ${board}: me.bin missing"
-	fi
+	[ -f "${_dest}" ] && return 0
+	err "extract_intel_me, ${board}: '${_dest}' missing"
 }
 
 # cursed, carcinogenic code. TODO rewrite it better
@@ -140,8 +138,6 @@ bruteforce_extract_intel_me()
 
 extract_kbc1126ec()
 {
-	_ec_destination=${CONFIG_KBC1126_FW1#../../}
-	mkdirs "${_ec_destination}" "extract_kbc1126_ec" || return 0
 	(
 	cd "${appdir}/" || \
 	    err "extract_kbc1126_ec: !cd \"${appdir}/\""
@@ -161,14 +157,12 @@ extract_kbc1126ec()
 	done
 	[ "${ec_ex}" = "y" ] || \
 	    err "extract_kbc1126_ec ${board}: didn't extract ecfw1/2.bin"
-	cp "${appdir}/"ec.bin.fw* "${_ec_destination%/*}/" || \
-	    err "extract_kbc1126_ec: cant mv ecfw1/2 ${_ec_destination%/*}"
+	cp "${appdir}/"ec.bin.fw* "${_dest%/*}/" || \
+	    err "extract_kbc1126_ec: cant mv ecfw1/2 ${_dest%/*}"
 }
 
 extract_e6400vga()
 {
-	_vga_destination=${CONFIG_VGA_BIOS_FILE#../../}
-	mkdirs "${_vga_destination}" "extract_e6400vga" || return 0
 	[ "${E6400_VGA_offset}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA offset not defined"
 	[ "${E6400_VGA_romname}" = "" ] && \
@@ -182,18 +176,14 @@ extract_e6400vga()
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
-	cp "${appdir}"/"${E6400_VGA_romname}" "${_vga_destination}" || \
-	    err "extract_e6400vga: can't copy vga rom to ${_vga_destination}"
+	cp "${appdir}"/"${E6400_VGA_romname}" "${_dest}" || \
+	    err "extract_e6400vga: can't copy vga rom to ${_dest}"
 }
 
 # TODO: this code is cancer. hardcoded is bad, and stupid.
 # TODO: make it *scan* (based on signature, in each file)
 extract_sch5545ec()
 {
-	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
-	_sch5545ec_destination=${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}
-	mkdirs "${_sch5545ec_destination}" "extract_sch5545ec" || return 0
-
 	# full system ROM (UEFI), to extract with UEFIExtract:
 	_bios="${dl_path}_extracted/Firmware"
 	_bios="${_bios}/1 ${dlsum} -- 1 System BIOS vA.28.bin"
@@ -205,7 +195,7 @@ extract_sch5545ec()
 	# this makes the file defined by _sch5545ec_fw available to copy
 	"${uefiextract}" "${_bios}" || \
 	    err "extract_sch5545ec: cannot extract from uefi image"
-	cp "${_sch5545ec_fw}" "${_sch5545ec_destination}" || \
+	cp "${_sch5545ec_fw}" "${_dest}" || \
 	    err "extract_sch5545ec: cannot copy sch5545ec firmware file"
 }
 

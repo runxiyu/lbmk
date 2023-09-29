@@ -12,8 +12,6 @@ extract_mrc()
 
 	_file="${MRC_url##*/}"
 	_file="${_file%.zip}"
-	_mrc_destination="${CONFIG_MRC_FILE#../../}"
-	mkdirs "${_mrc_destination}" "extract_mrc" || return 0
 
 	(
 	cd "${appdir}" || err "extract_mrc: !cd ${appdir}"
@@ -23,7 +21,7 @@ extract_mrc()
 	)
 
 	"${cbfstool}" "${appdir}/"coreboot-*.bin extract -n mrc.bin \
-	    -f "${_mrc_destination}" -r RO_SECTION || \
+	    -f "${_dest}" -r RO_SECTION || \
 	    err "extract_mrc: could not fetch mrc.bin"
 }
 
