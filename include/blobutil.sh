@@ -47,11 +47,10 @@ eval "${setvars}"
 
 check_defconfig()
 {
-	no_config="printf \"No target defconfig in %s\\n\" ${1} 1>&2; return 1"
 	for x in "${1}"/config/*; do
-		[ -f "${x}" ] && no_config=""
+		[ -f "${x}" ] && return 0
 	done
-	eval "${no_config}"
+	return 1
 }
 
 fetch()

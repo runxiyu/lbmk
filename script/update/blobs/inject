@@ -171,7 +171,8 @@ patch_rom()
 	[ -f "${rom%_nomicrocode.rom}.rom" ] && \
 	[ "${release_archive}" = "y" ] && return 0
 
-	check_defconfig "${boarddir}" || exit 1	
+	check_defconfig "${boarddir}" || err "patch_rom ${rom}: no defconfig"
+
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
 
