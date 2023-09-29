@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 _7ztest="a"
 _b=""
@@ -30,7 +30,7 @@ for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup E6400_VGA_DL_hash \
 	setvars="${setvars}; ${x}=\"\""
 done
 
-for x in archive rom board modifygbe new_mac release releasearchive dl_path; do
+for x in archive rom board modifygbe new_mac release releasearchive _dl; do
 	setvars="${setvars}; ${x}=\"\""
 done
 
@@ -62,24 +62,25 @@ fetch()
 	[ "${5# }" = "${5}" ] || err "fetch: space not allowed in _dest: '${5}'"
 	[ "${5#/}" = "${5}" ] || err "fetch: absolute path not allowed: '${5}'"
 	_dest="${5##*../}"
-	dl_path="${blobdir}/cache/${dlsum}"
+	_dl="${blobdir}/cache/${dlsum}"
 
-	mkdir -p "${dl_path%/*}" || err "fetch: !mkdir ${dl_path%/*}"
+	mkdir -p "${_dl%/*}" || err "fetch: !mkdir ${_dl%/*}"
 
 	dl_fail="y"
-	vendor_checksum "${dlsum}" "${dl_path}" && dl_fail="n"
+	vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
 	for url in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${url}" ] && continue
-		rm -f "${dl_path}" || err "fetch: !rm -f ${dl_path}"
-		wget --tries 3 -U "${agent}" "${url}" -O "${dl_path}" || \
+		rm -f "${_dl}" || err "fetch: !rm -f ${_dl}"
+		curl --location --retry 3 -A "${_ua}" "${url}" -o "${_dl}" || \
+		    wget --tries 3 -U "${_ua}" "${url}" -O "${_dl}" || \
 		    continue
-		vendor_checksum "${dlsum}" "${dl_path}" && dl_fail="n"
+		vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
 	done
 	[ "${dl_fail}" = "y" ] && \
 		err "fetch ${dlsum}: matched file unavailable"
 
-	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
+	rm -Rf "${_dl}_extracted" || err "!rm ${_dl}_extracted"
 	mkdirs "${_dest}" "extract_${dl_type}" || return 0
 	eval "extract_${dl_type}"
 

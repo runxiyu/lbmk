@@ -154,7 +154,7 @@ extract_e6400vga()
 		err "extract_e6400vga: E6400 VGA offset not defined"
 	[ "${E6400_VGA_romname}" = "" ] && \
 		err "extract_e6400vga: E6400 VGA ROM name not defined"
-	tail -c +${E6400_VGA_offset} "${dl_path}" | \
+	tail -c +${E6400_VGA_offset} "${_dl}" | \
 	    gunzip >"${appdir}/bios.bin" || :
 	(
 	cd "${appdir}" || err "extract_e6400vga: can't cd ${appdir}"
@@ -172,7 +172,7 @@ extract_e6400vga()
 extract_sch5545ec()
 {
 	# full system ROM (UEFI), to extract with UEFIExtract:
-	_bios="${dl_path}_extracted/Firmware"
+	_bios="${_dl}_extracted/Firmware"
 	_bios="${_bios}/1 ${dlsum} -- 1 System BIOS vA.28.bin"
 	# this is the SCH5545 firmware, inside of the extracted UEFI ROM:
 	_sch5545ec_fw="${_bios}.dump/4 7A9354D9-0468-444A-81CE-0BF617D890DF"
@@ -193,7 +193,7 @@ mkdirs()
 	mkdir -p "${1%/*}" || err "mkdirs ${1} ${2}: !mkdir ${1%/*}"
 	rm -Rf "${appdir}" || err "mkdirs ${1} ${2}: can't remove ${appdir}"
 	mkdir -p "${appdir}/" || err "mkdirs ${1} ${2}: !mkdir ${appdir}"
-	extract_archive "${dl_path}" "${appdir}" || \
+	extract_archive "${_dl}" "${appdir}" || \
 	    [ "${2}" = "extract_e6400vga" ] || err "mkdirs ${1} ${2}: !extract"
 }
 
