@@ -60,10 +60,10 @@ fetch()
 	dl="${2}"
 	dl_bkup="${3}"
 	dlsum="${4}"
-	dl_path="${5}"
-	[ "${6# }" = "${6}" ] || err "fetch: space not allowed in _dest: '${6}'"
-	[ "${6#/}" = "${6}" ] || err "fetch: absolute path not allowed: '${6}'"
-	_dest="${6##*../}"
+	[ "${5# }" = "${5}" ] || err "fetch: space not allowed in _dest: '${5}'"
+	[ "${5#/}" = "${5}" ] || err "fetch: absolute path not allowed: '${5}'"
+	_dest="${5##*../}"
+	dl_path="${blobdir}/cache/${dlsum}"
 
 	mkdir -p "${dl_path%/*}" || err "fetch: !mkdir ${dl_path%/*}"
 
