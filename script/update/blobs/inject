@@ -12,8 +12,6 @@ release_archive="n"
 
 main()
 {
-	sname="${0}"
-
 	[ $# -lt 1 ] && err "No options specified."
 	[ "${1}" = "listboards" ] && \
 		listitems config/coreboot && exit 0
