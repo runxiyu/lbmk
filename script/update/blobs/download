@@ -90,38 +90,29 @@ download_blobs()
 
 extract_intel_me()
 {
-	bruteforce_extract_intel_me "$(pwd)/${_dest}" "$(pwd)/${appdir}" || \
-	    err "extract_intel_me: could not extract Intel ME firmware"
-}
-
-# cursed, carcinogenic code. TODO rewrite it better
-bruteforce_extract_intel_me()
-{
-	_me_destination="${1}"
-	cdir="${2}" # must be an absolute path, not relative
-	[ -f "${_me_destination}" ] && return 0
+	_me="${PWD}/${_dest}" # must always be an absolute path
+	cdir="${PWD}/${appdir}" # must always be an absolute path
+	[ $# -gt 0 ] && _me="${1}"
+	[ $# -gt 0 ] && cdir="${2}"
+	[ -f "${_me}" ] && return 0
 
 	sdir="$(mktemp -d)"
-	mkdir -p "${sdir}" || return 1
+	mkdir -p "${sdir}" || err "extract_intel_me: !mkdir -p \"${sdir}\""
 	(
-	cd "${cdir}" || err "bruteforce_extract_intel_me: !cd \"${cdir}\""
+	cd "${cdir}" || err "extract_intel_me: !cd \"${cdir}\""
 	for i in *; do
-		[ -f "${_me_destination}" ] && break
+		[ -f "${_me}" ] && break
 		[ -L "${i}" ] && continue
 		if [ -f "${i}" ]; then
 			"${mecleaner}" -r -t -O "${sdir}/vendorfile" \
-			    -M "${_me_destination}" "${i}" && break
-			"${mecleaner}" -r -t -O "${_me_destination}" "${i}" && \
-			    break
-			"${me7updateparser}" -O "${_me_destination}" "${i}" && \
-			    break
+			    -M "${_me}" "${i}" && break
+			"${mecleaner}" -r -t -O "${_me}" "${i}" && break
+			"${me7updateparser}" -O "${_me}" "${i}" && break
 			_7ztest="${_7ztest}a"
 			extract_archive "${i}" "${_7ztest}" || continue
-			bruteforce_extract_intel_me "${_me_destination}" \
-			    "${cdir}/${_7ztest}"
+			extract_intel_me "${_me}" "${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
-			bruteforce_extract_intel_me "${_me_destination}" \
-			    "${cdir}/${i}"
+			extract_intel_me "${_me}" "${cdir}/${i}"
 		else
 			continue
 		fi
@@ -129,7 +120,7 @@ bruteforce_extract_intel_me()
 		cd "${cdir}"
 	done
 	)
-	rm -Rf "${sdir}" || err "bruteforce_extract_intel_me: !rm -Rf ${sdir}"
+	rm -Rf "${sdir}" || err "extract_intel_me: !rm -Rf ${sdir}"
 }
 
 extract_kbc1126ec()
