@@ -8,6 +8,9 @@
 . "include/defconfig.sh"
 . "include/blobutil.sh"
 . "include/fetch.sh"
+. "include/mrc.sh"
+
+export PATH="${PATH}:/sbin"
 
 main()
 {
@@ -58,10 +61,11 @@ build_dependencies()
 	done
 	[ -f uefitool/uefiextract ] || ./handle make file -b uefitool || \
 	    err "build_dependencies: can't build uefitool"
-	if [ ! -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ]; then
+	[ -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ] || \
 		make -C "${cbdir}/util/kbc1126" || \
 		    err "build_dependencies: can't build kbc1126_ec_dump"
-	fi
+	./build coreboot utils default || \
+	    err "build_dependencies: cannot build utils in cbutils/default/"
 }
 
 download_blobs()
@@ -81,7 +85,8 @@ download_blobs()
 		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}" \
 		    "${blobdir}/cache/${E6400_VGA_DL_hash}" "err"
 	if [ ! -z "${CONFIG_HAVE_MRC}" ]; then
-		./update blobs mrc || err "download_blobs ${board}: !mrc"
+		fetch "mrc" "${MRC_url}" "${MRC_url_bkup}" "${MRC_hash}" \
+		    "${blobdir}/cache/${MRC_hash}" "err"
 	fi
 }
 
@@ -220,7 +225,8 @@ mkdirs()
 extract_archive()
 {
 	innoextract "${1}" -d "${2}" || python "${pfs_extract}" "${1}" -e || \
-	     7z x "${1}" -o"${2}" || unar "${1}" -o "${2}" || return 1
+	    7z x "${1}" -o"${2}" || unar "${1}" -o "${2}" || \
+	    unzip "${1}" -d "${2}" || return 1
 }
 
 main $@

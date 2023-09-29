@@ -21,10 +21,16 @@
 	DL_url_bkup https://web.archive.org/web/20220202201637/https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
 }
 
+# NOTE: google's manifest for archives containing mrc.bin, used here:
+# https://web.archive.org/web/20210211071412/https://dl.google.com/dl/edgedl/chromeos/recovery/recovery.conf
 {t440pmrc w541mrc t440plibremrc w541}{
 	DL_hash f3d79aec805c8b0094a4081be76b3a22d329c479ad18210449b7acc3236ccfc4a2103eaa7c5b79a4872bfd699eede047efd46dfb06dc8f47e3216fc254612998
 	DL_url https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
 	DL_url_bkup https://web.archive.org/web/20211120031520/https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
+	MRC_url https://dl.google.com/dl/edgedl/chromeos/recovery/chromeos_12239.92.0_peppy_recovery_stable-channel_mp-v3.bin.zip
+	MRC_url_bkup https://web.archive.org/web/20200516070928/https://dl.google.com/dl/edgedl/chromeos/recovery/chromeos_12239.92.0_peppy_recovery_stable-channel_mp-v3.bin.zip
+	MRC_hash 340a1cd41136a3ba0de9d306db0e65f51640a2efe63aee9934f326b276adc1af0a2df80c0731c5a749161ec32546909eedfa8ba95801faeb5dcfe1aa4e0840c7
+	MRC_board peppy
 }
 
 {hp8200sff}{

@@ -10,7 +10,8 @@ appdir="${blobdir}/app"
 setvars="EC_url=\"\""
 for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup E6400_VGA_DL_hash \
     E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset E6400_VGA_romname \
-    SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash; do
+    SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash MRC_url \
+    MRC_url_bkup MRC_hash MRC_board; do
 	setvars="${setvars}; ${x}=\"\""
 done
 
@@ -40,7 +41,7 @@ for x in _me_destination _gbe_destination _ifd_destination \
     CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE \
-    CONFIG_IFD_BIN_PATH; do
+    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE; do
 	setvars="${setvars}; ${x}=\"\""
 done
 
