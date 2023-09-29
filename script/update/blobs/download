@@ -92,8 +92,6 @@ extract_intel_me()
 {
 	bruteforce_extract_intel_me "$(pwd)/${_dest}" "$(pwd)/${appdir}" || \
 	    err "extract_intel_me: could not extract Intel ME firmware"
-	[ -f "${_dest}" ] && return 0
-	err "extract_intel_me, ${board}: '${_dest}' missing"
 }
 
 # cursed, carcinogenic code. TODO rewrite it better

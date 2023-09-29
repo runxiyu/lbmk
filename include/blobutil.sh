@@ -83,6 +83,9 @@ fetch()
 	rm -Rf "${dl_path}_extracted" || err "!rm ${dl_path}_extracted"
 	mkdirs "${_dest}" "extract_${dl_type}" || return 0
 	eval "extract_${dl_type}"
+
+	[ -f "${_dest}" ] && return 0
+	err "extract_${dl_type} (fetch): missing file: '${_dest}'"
 }
 
 vendor_checksum()
