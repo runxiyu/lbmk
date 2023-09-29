@@ -186,22 +186,4 @@ extract_sch5545ec()
 	    err "extract_sch5545ec: cannot copy sch5545ec firmware file"
 }
 
-mkdirs()
-{
-	[ -f "${1}" ] && \
-		printf "mkdirs ${1} ${2}: already downloaded\n" 1>&2 && return 1
-	mkdir -p "${1%/*}" || err "mkdirs ${1} ${2}: !mkdir ${1%/*}"
-	rm -Rf "${appdir}" || err "mkdirs ${1} ${2}: can't remove ${appdir}"
-	mkdir -p "${appdir}/" || err "mkdirs ${1} ${2}: !mkdir ${appdir}"
-	extract_archive "${_dl}" "${appdir}" || \
-	    [ "${2}" = "extract_e6400vga" ] || err "mkdirs ${1} ${2}: !extract"
-}
-
-extract_archive()
-{
-	innoextract "${1}" -d "${2}" || python "${pfs_extract}" "${1}" -e || \
-	    7z x "${1}" -o"${2}" || unar "${1}" -o "${2}" || \
-	    unzip "${1}" -d "${2}" || return 1
-}
-
 main $@
