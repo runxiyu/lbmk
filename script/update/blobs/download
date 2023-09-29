@@ -5,9 +5,7 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 . "include/err.sh"
-. "include/defconfig.sh"
 . "include/blobutil.sh"
-. "include/fetch.sh"
 . "include/mrc.sh"
 
 export PATH="${PATH}:/sbin"

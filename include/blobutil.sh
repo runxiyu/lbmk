@@ -1,25 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-_7ztest="a"
+agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
+_7ztest="a"
 _b=""
 blobdir="blobs"
 appdir="${blobdir}/app"
-
-setvars="EC_url=\"\""
-for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup E6400_VGA_DL_hash \
-    E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset E6400_VGA_romname \
-    SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash MRC_url \
-    MRC_url_bkup MRC_hash MRC_board; do
-	setvars="${setvars}; ${x}=\"\""
-done
-
-for x in sname archive _filetype rom board modifygbe new_mac release \
-    releasearchive vendor_rom; do
-	setvars="${setvars}; ${x}=\"\""
-done
-
 cbdir="coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
@@ -35,6 +22,19 @@ kbc1126_ec_dump="$(pwd)/${cbdir}/util/kbc1126/kbc1126_ec_dump"
 pfs_extract="$(pwd)/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$(pwd)/uefitool/uefiextract"
 
+setvars="EC_url=\"\""
+for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup E6400_VGA_DL_hash \
+    E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset E6400_VGA_romname \
+    SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash MRC_url \
+    MRC_url_bkup MRC_hash MRC_board; do
+	setvars="${setvars}; ${x}=\"\""
+done
+
+for x in sname archive _filetype rom board modifygbe new_mac release \
+    releasearchive vendor_rom dl_path; do
+	setvars="${setvars}; ${x}=\"\""
+done
+
 for x in _me_destination _gbe_destination _ifd_destination \
     CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
@@ -46,3 +46,48 @@ for x in _me_destination _gbe_destination _ifd_destination \
 done
 
 eval "${setvars}"
+
+check_defconfig()
+{
+	no_config="printf \"No target defconfig in %s\\n\" ${1} 1>&2; return 1"
+	for x in "${1}"/config/*; do
+		[ -f "${x}" ] && no_config=""
+	done
+	eval "${no_config}"
+}
+
+fetch()
+{
+	dl_type="${1}"
+	dl="${2}"
+	dl_bkup="${3}"
+	dlsum="${4}"
+	dl_path="${5}"
+	_fail="${6}"
+
+	mkdir -p "${dl_path%/*}" || "${_fail}" "fetch: !mkdir ${dl_path%/*}"
+
+	dl_fail="y"
+	vendor_checksum "${dlsum}" "${dl_path}" && dl_fail="n"
+	for url in "${dl}" "${dl_bkup}"; do
+		[ "${dl_fail}" = "n" ] && break
+		[ -z "${url}" ] && continue
+		rm -f "${dl_path}" || "${_fail}" "fetch: !rm -f ${dl_path}"
+		wget --tries 3 -U "${agent}" "${url}" -O "${dl_path}" || \
+		    continue
+		vendor_checksum "${dlsum}" "${dl_path}" && dl_fail="n"
+	done
+	[ "${dl_fail}" = "y" ] && \
+		"${_fail}" "fetch ${dlsum}: matched file unavailable"
+
+	eval "extract_${dl_type}"
+}
+
+vendor_checksum()
+{
+	if [ "$(sha512sum ${2} | awk '{print $1}')" != "${1}" ]; then
+		printf "Bad checksum for file: %s\n" "${2}" 1>&2
+		rm -f "${2}" || :
+		return 1
+	fi
+}
