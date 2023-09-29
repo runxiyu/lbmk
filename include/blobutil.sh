@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-agent="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-
 _7ztest="a"
 
 _b=""
@@ -10,10 +8,9 @@ blobdir="blobs"
 appdir="${blobdir}/app"
 
 setvars="EC_url=\"\""
-for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup dl_path \
-    E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
-    E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup \
-    SCH5545EC_DL_hash; do
+for x in EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup E6400_VGA_DL_hash \
+    E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset E6400_VGA_romname \
+    SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash; do
 	setvars="${setvars}; ${x}=\"\""
 done
 

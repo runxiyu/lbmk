@@ -7,6 +7,7 @@
 . "include/err.sh"
 . "include/defconfig.sh"
 . "include/blobutil.sh"
+. "include/fetch.sh"
 
 main()
 {
@@ -66,55 +67,21 @@ build_dependencies()
 download_blobs()
 {
 	[ -z "${CONFIG_HAVE_ME_BIN}" ] || \
-		fetch "intel_me" "${DL_url}" "${DL_url_bkup}" "${DL_hash}"
+		fetch "intel_me" "${DL_url}" "${DL_url_bkup}" "${DL_hash}" \
+		    "${blobdir}/cache/${DL_hash}" "err"
 	[ -z "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" ] || \
 		fetch "sch5545ec" "${SCH5545EC_DL_url}" \
-		    "${SCH5545EC_DL_url_bkup}" "${SCH5545EC_DL_hash}"
+		    "${SCH5545EC_DL_url_bkup}" "${SCH5545EC_DL_hash}" \
+		    "${blobdir}/cache/${SCH5545EC_DL_hash}" "err"
 	[ -z "${CONFIG_KBC1126_FIRMWARE}" ] || \
-		fetch "kbc1126ec" "${EC_url}" "${EC_url_bkup}" "${EC_hash}"
+		fetch "kbc1126ec" "${EC_url}" "${EC_url_bkup}" "${EC_hash}" \
+		    "${blobdir}/cache/${EC_hash}" "err"
 	[ -z "${CONFIG_VGA_BIOS_FILE}" ] || \
 		fetch "e6400vga" "${E6400_VGA_DL_url}" \
-		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}"
+		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}" \
+		    "${blobdir}/cache/${E6400_VGA_DL_hash}" "err"
 	if [ ! -z "${CONFIG_HAVE_MRC}" ]; then
 		./update blobs mrc || err "download_blobs ${board}: !mrc"
-	fi
-}
-
-fetch()
-{
-	dl_type="${1}"
-	dl="${2}"
-	dl_bkup="${3}"
-	dlsum="${4}"
-
-	dl_path="${blobdir}/cache/${dlsum}"
-	mkdir -p "${blobdir}/cache" || err "fetch: !mkdir ${blobdir}/cache"
-
-	dl_fail="y"
-	vendor_checksum "${dlsum}" && dl_fail="n"
-	for x in "${dl}" "${dl_bkup}"; do
-		[ "${dl_fail}" = "n" ] && break
-		[ -z "${x}" ] && continue
-		rm -f "${dl_path}" || err "fetch: !rm -f ${dl_path}"
-		wget --tries 3 -U "${agent}" "${x}" -O "${dl_path}" || continue
-		vendor_checksum "${dlsum}" && dl_fail="n"
-	done
-	if [ "${dl_fail}" = "y" ]; then
-		printf "ERROR: invalid vendor updates for: %s\n" "${board}" 1>&2
-		err "fetch ${dlsum}: matched vendor update unavailable"
-	fi
-
-	eval "extract_${dl_type}"
-}
-
-vendor_checksum()
-{
-	if [ ! -f "${dl_path}" ]; then
-		printf "Vendor update not found for: %s\n" "${board}" 1>&2
-		return 1
-	elif [ "$(sha512sum ${dl_path} | awk '{print $1}')" != "${1}" ]; then
-		printf "Bad checksum on vendor update for: %s\n" "${board}" 1>&2
-		return 1
 	fi
 }
 
