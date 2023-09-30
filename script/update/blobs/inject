@@ -53,9 +53,8 @@ check_board()
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	if [ ! -d "${boarddir}" ]; then
-		err "check_board: board ${board} not found"
-	fi
+	[ -d "${boarddir}" ] && return 0
+	err "check_board: board ${board} not found"
 }
 
 check_release()

@@ -37,7 +37,6 @@ handle_targets()
 	board="${boards%% *}"
 	configure_target
 	build_dependencies
-
 	build_target
 }
 
@@ -47,7 +46,6 @@ configure_target()
 
 	[ -d "${targetdir}" ] || \
 		err "Target not defined: ${board}"
-
 	[ -f "${targetdir}/target.cfg" ] || \
 		err "Missing target.cfg for target: ${board}"
 
@@ -93,18 +91,15 @@ configure_target()
 		payload_uboot="n"
 	[ "${payload_uboot}" = "y" ] && [ "${uboot_config}" = "undefined" ] && \
 		uboot_config="default"
-
 	[ "${blobs_required}" != "n" ] && [ "${blobs_required}" != "y" ] && \
 		blobs_required="y"
 
 	# Override all payload directives with cmdline args
-	if [ ! -z ${_payload} ]; then
-		printf "setting payload to: %s\n" "${_payload}"
-		eval "$(setvars "n" payload_grub payload_grub_withseabios \
-		    payload_seabios payload_seabios_withgrub payload_uboot \
-		    payload_memtest)"
-		eval "payload_${_payload}=y"
-	fi
+	[ -z ${_payload} ] && return 0
+	printf "setting payload to: %s\n" "${_payload}"
+	eval "$(setvars "n" payload_grub payload_memtest payload_seabios \
+	    payload_seabios_withgrub payload_uboot payload_grub_withseabios)"
+	eval "payload_${_payload}=y"
 }
 
 build_dependencies()
@@ -160,10 +155,9 @@ build_dependency_grub()
 		[ ! -f "elf/grub/keymap_${keymap}.cfg" ] && \
 		    rebuild_grub="y" && break
 	done
-	if [ "${rebuild_grub}" = "y" ]; then
-		./build grub payload || \
-		    err "build_dependency_grub: cannot build grub payload"
-	fi
+	[ "${rebuild_grub}" = "y" ] || return 0
+	./build grub payload || \
+	    err "build_dependency_grub: cannot build grub payload"
 }
 
 build_dependency_uboot()
@@ -176,9 +170,8 @@ build_dependency_uboot()
 	ubootelf="${ubdir}/u-boot.elf"
 	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot.bin" ] && \
 		ubootelf="${ubdir}/u-boot.bin"
-	if [ ! -f "${ubootelf}" ]; then
-		err "Could not find u-boot build for board, ${board}"
-	fi
+	[ -f "${ubootelf}" ] && return 0
+	err "Could not find u-boot build for board, ${board}"
 }
 
 build_target()
@@ -227,18 +220,14 @@ build_roms()
 		"${cbfstool}" "${corebootrom}" add-payload \
 		    -f "${memtest_bin}" -n img/memtest -c lzma || \
 		    err "build_roms: cannot add img/memtest to coreboot rom"
-
 	[ "${payload_seabios}" = "y" ] && \
 		build_seabios_roms
-
 	[ "${payload_grub}" != "y" ] || \
 		build_grub_roms "${corebootrom}" "${initmode}" \
 		    "${displaymode}" "grub" || \
 		    err "build_roms: build_grub_roms failed"
-
-	if [ "${payload_uboot}" = "y" ]; then
-		build_uboot_roms
-	fi
+	[ "${payload_uboot}" = "y" ] && return 0
+	build_uboot_roms
 }
 
 build_seabios_roms()
@@ -369,7 +358,6 @@ mkGrubRom() {
 	    err "mkGrubRom: cannot create tmprom"
 	cp "${target_cbrom}" "${tmprom}" || \
 	    err "mkGrubRom: cannot copy to tmprom"
-
 	"${cbfstool}" "${tmprom}" add -f "${keymapcfg}" -n keymap.cfg -t raw \
 	    || err "mkGrubRom: cannot add keymap.cfg to tmprom"
 
@@ -382,18 +370,14 @@ mkSeabiosRom() {
 		# (a tmpfile will be made instead)
 	target_seabios_cbfs_path="${2}" # e.g. fallback/payload
 	target_initmode="${3}" # e.g. libgfxinit
-
 	target_seabioself="elf/seabios/default/${target_initmode}/bios.bin.elf"
-
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	cp "${target_cbrom}" "${tmprom}" || \
 	    err "mkSeabiosRom: cannot copy to tmprom"
-
 	"${cbfstool}" "${tmprom}" add-payload -f "${target_seabioself}" \
 	    -n ${target_seabios_cbfs_path} -c lzma || \
 	    err "mkSeabiosRom: can't add payload, ${target_seabioself}, to rom"
-
 	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup \
 	    || err "mkSeabiosRom: cbfs add-int etc/ps2-keyboard-spinup 3000"
 
@@ -410,7 +394,6 @@ mkSeabiosRom() {
 
 	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || \
 	    err "mkSeabiosRom: cbfs add-int etc/optionroms-checksum 0"
-
 	[ "${target_initmode}" != "libgfxinit" ] || \
 		"${cbfstool}" "${tmprom}" add -f "${seavgabiosrom}" \
 		    -n vgaroms/seavgabios.bin -t raw || \
@@ -430,8 +413,7 @@ build_uboot_roms()
 		newrompath="${romdir}/uboot_payload_${board}_${initmode}.rom"
 	moverom "${tmprom}" "${newrompath}" || \
 	    err "build_roms: moverom fail (u-boot)"
-	rm -f "${tmprom}" || \
-	    err "build_roms: cannot rm u-boot rom"
+	rm -f "${tmprom}" || err "build_roms: cannot rm u-boot rom"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM

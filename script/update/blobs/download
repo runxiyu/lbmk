@@ -74,10 +74,9 @@ download_blobs()
 		fetch "e6400vga" "${E6400_VGA_DL_url}" \
 		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}" \
 		    "${CONFIG_VGA_BIOS_FILE}"
-	if [ ! -z "${CONFIG_HAVE_MRC}" ]; then
-		fetch "mrc" "${MRC_url}" "${MRC_url_bkup}" "${MRC_hash}" \
-		    "${CONFIG_MRC_FILE}"
-	fi
+	[ -z "${CONFIG_HAVE_MRC}" ] && return 0
+	fetch "mrc" "${MRC_url}" "${MRC_url_bkup}" "${MRC_hash}" \
+	    "${CONFIG_MRC_FILE}"
 }
 
 extract_intel_me()

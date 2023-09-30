@@ -46,10 +46,9 @@ init_check()
 	[ ! -d "release/${version}/roms/" ] || \
 		rm -Rf "release/${version}/roms/" || \
 		    err "init_check: !rm -Rf release/${version}/roms/"
-	if [ ! -d "release/${version}/roms/" ]; then
-		mkdir -p "release/${version}/roms/" || \
-		    err "init_check: !mkdir -p release/${version}/roms/"
-	fi
+	[ -d "release/${version}/roms/" ] && return 0
+	mkdir -p "release/${version}/roms/" || \
+	    err "init_check: !mkdir -p release/${version}/roms/"
 }
 
 make_archive()
@@ -161,20 +160,17 @@ strip_archive()
 strip_ucode()
 {
 	romfile=${1}
-
 	_newrom_b="${romfile%.rom}_nomicrocode.tmprom"
 	cp "${romfile}" "${_newrom_b}" || \
 	    err "strip_rom_image: cp \"${romfile}\" \"${_newrom_b}\""
 	microcode_present="y"
 	"${cbfstool}" "${_newrom_b}" remove -n \
 	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
-	if [ "${microcode_present}" = "n" ]; then
-		printf "REMARK: '%s' already lacks microcode\n" "${romfile}" \
-		    1>&2
-		printf "Renaming default ROM file instead.\n" 1>&2
-		mv "${romfile}" "${_newrom_b}" || \
-		    err "strip_rom_image: can't rename no-u ${romfile}"
-	fi
+	[ "${microcode_present}" = "n" ] || return 0
+	printf "REMARK: '%s' already lacks microcode\n" "${romfile}" 1>&2
+	printf "Renaming default ROM file instead.\n" 1>&2
+	mv "${romfile}" "${_newrom_b}" || \
+	    err "strip_rom_image: can't rename no-u ${romfile}"
 }
 
 strip_rom_image()
@@ -196,10 +192,9 @@ strip_rom_image()
 		    err "strip_rom_images: ${1}: can't nuke ecfw2.bin"
 	fi
 	# TODO: replace this board-specific hack
-	if [ "${target}" = "e6400_4mb" ]; then
-		"${cbfstool}" "${1}" remove -n "pci10de,06eb.rom" || \
-		    err "strip_rom_images: ${1}: can't nuke e6400 vga rom"
-	fi
+	[ "${target}" = "e6400_4mb" ] || return 0
+	"${cbfstool}" "${1}" remove -n "pci10de,06eb.rom" || \
+	    err "strip_rom_images: ${1}: can't nuke e6400 vga rom"
 }
 
 main $@

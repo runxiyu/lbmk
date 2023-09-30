@@ -71,9 +71,8 @@ handle_targets()
 		handle_defconfig || fail "error handling config file"
 	done
 
-	if [ "${mode}" = "all" ]; then
-		printf "Done! The files are stored under %s/\n\n" "${elfdir}"
-	fi
+	[ "${mode}" = "all" ] || return 0
+	printf "Done! The files are stored under %s/\n\n" "${elfdir}"
 }
 
 handle_defconfig()

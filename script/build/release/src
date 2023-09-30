@@ -36,7 +36,6 @@ main()
 	purge_files
 
 	create_release_archive
-
 	printf "Source code archive available at %s.tar.xz\n\n" "${srcdir}"
 }
 
@@ -116,9 +115,7 @@ copy_files()
 purge_files()
 {
 	(
-	cd "${srcdir}/" || \
-	    err "purge_files 3: !cd ${srcdir}/"
-
+	cd "${srcdir}/" || err "purge_files 3: !cd ${srcdir}/"
 	[ ! -d "coreboot/default/util/kbc1126" ] || \
 	    ./handle make file -c "coreboot/default/util/kbc1126" || \
 	    err "purge_files 1: default/util/kbc1126: ! make clean"
@@ -128,7 +125,6 @@ purge_files()
 		./handle make config -c "${p}" || \
 		    err "purge_files: ${p}: cannot clean the source trees"
 	done
-
 	for p in bios_extract flashrom grub uefitool; do
 		./handle make file -c "${p}" || \
 		    err "purge_files: !./handle make file -c ${p}"

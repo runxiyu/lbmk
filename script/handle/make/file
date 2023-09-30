@@ -34,13 +34,12 @@ handle_dependencies()
 	[ -d "${project}" ] || \
 		err "handle_dependencies: ${project%/*} not downloaded"
 
-	if [ "${project}" = "uefitool" ]; then
-		(
-		cd uefitool || err "handle_dependencies: !cd uefitool"
-		cmake UEFIExtract/ || [ -f Makefile ] || \
-		    err "handle_dependencies: !cmake UEFIExtract/"
-		)
-	fi
+	[ "${project}" = "uefitool" ] || return 0 # TODO: remove hardcoding
+	(
+	cd uefitool || err "handle_dependencies: !cd uefitool"
+	cmake UEFIExtract/ || [ -f Makefile ] || \
+	    err "handle_dependencies: !cmake UEFIExtract/"
+	)
 }
 
 run_make_command()
