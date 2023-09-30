@@ -46,7 +46,7 @@ main()
 	done
 
 	handle_targets
-	display_targets
+	confirm_targets
 }
 
 handle_targets()
@@ -61,7 +61,6 @@ handle_targets()
 		build_target "${board}" || err "handle_targets: build error"
 		[ -d "bin/${board}" ] && targets="${board} ${targets}"
 	done
-	confirm_targets
 }
 
 build_target() {
