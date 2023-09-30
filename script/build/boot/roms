@@ -13,18 +13,16 @@ set -u -e
 . "include/boot.sh"
 
 read projectname < projectname
-opts=""
-first=""
 targets=""
 
 # main() is in include/boot.sh
 
 handle_targets()
 {
-	[ -z "${displaymodes}" ] || opts="-d \"${displaymodes}\" ${opts}"
-	[ -z "${payloads}" ] || opts="-p \"${payloads}\" ${opts}"
-	[ -z "${keyboard_layouts}" ] || \
-		opts="-k \"${keyboard_layouts}\" ${opts}"
+	[ -z "${_displaymode}" ] || _displaymode="-d ${_displaymode}"
+	[ -z "${_payload}" ] || _payload="-p ${_payload}"
+	[ -z "${_keyboard_layout}" ] || \
+		_keyboard_layout="-k ${_keyboard_layout}"
 
 	printf "Building %s ROM images\n" "${projectname}"
 
@@ -46,8 +44,10 @@ check_targets()
 
 build_bootroms()
 {
+	opts="${_displaymode} ${_payload} ${_keyboard_layout}"
 	for x in ${boards}; do
-		./build boot roms_helper ${opts} ${x} || \
+		./build boot roms_helper ${_displaymode} ${_payload} \
+		    ${_keyboard_layout} ${x} || \
 		    err "handle_targets ${opts} ${x}: build error"
 		[ -d "bin/${x}" ] && targets="${x} ${targets}"
 	done

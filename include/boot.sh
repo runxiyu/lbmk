@@ -3,11 +3,12 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
+first=""
 board=""
 boards=""
-displaymodes=""
-payloads=""
-keyboard_layouts=""
+_displaymode=""
+_payload=""
+_keyboard_layout=""
 
 main()
 {
@@ -21,13 +22,13 @@ main()
 	while [ $# -gt 0 ]; do
 		case ${1} in
 		-d)
-			displaymodes="${2} ${displaymodes}"
+			_displaymode="${2}"
 			shift ;;
 		-p)
-			payloads="${2} ${payloads}"
+			_payload="${2}"
 			shift ;;
 		-k)
-			keyboard_layouts="${2} ${keyboard_layouts}"
+			_keyboard_layout="${2}"
 			shift ;;
 		all)
 			first="all" ;;

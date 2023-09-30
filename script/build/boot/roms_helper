@@ -63,9 +63,6 @@ handle_targets()
 
 configure_target()
 {
-	printf "\n\nboard %s, kb %s, displaymode %s, payloads %s\n" \
-	    "${board}" "${keyboard_layouts}" "${displaymodes}" "${payloads}"
-
 	targetdir="${cfgsdir}/${board}"
 
 	[ -d "${targetdir}" ] || \
@@ -121,8 +118,8 @@ configure_target()
 		blobs_required="y"
 
 	# Override all payload directives with cmdline args
-	if [ ! -z ${payloads} ]; then
-		printf "setting payloads %s\n" "$payloads"
+	if [ ! -z ${_payload} ]; then
+		printf "setting payload to: %s\n" "${_payload}"
 		payload_grub="n"
 		payload_grub_withseabios="n" # seabios chainloaded from grub
 		payload_seabios="n"
@@ -130,9 +127,7 @@ configure_target()
 		payload_uboot="n"
 		payload_memtest="n"
 
-		for payload in ${payloads} ; do
-			eval "payload_${payload}=y"
-		done
+		eval "payload_${_payload}=y"
 	fi
 }
 
@@ -217,7 +212,7 @@ build_target()
 		hmode="vesafb"
 		[ "${initmode}" = "vgarom" ] || hmode="corebootfb"
 		modes="${hmode} txtmode"
-		[ -z ${displaymodes} ] || modes="${displaymodes}"
+		[ -z ${_displaymode} ] || modes="${_displaymode}"
 		for y in ${modes}; do
 			displaymode="${y}"
 			[ "${initmode}" = "normal" ] && \
@@ -356,15 +351,12 @@ build_grub_roms() {
 	rm -f "${tmpcfg}" || err "cannot delete tmpcfg"
 
 	keymaps=""
-	if [ -z ${keyboard_layouts} ]; then
-		for kmapfile in "${kmapdir}"/*; do
-			keymaps="${keymaps} ${kmapfile}"
-		done
-	else
-		for keymapname in ${keyboard_layouts}; do
-			keymaps="${keymaps} ${kmapdir}/${keymapname}.gkb"
-		done
-	fi
+	for kmapfile in "${kmapdir}"/*; do
+		keymaps="${keymaps} ${kmapfile}"
+	done
+	[ -z ${_keyboard_layout} ] || \
+		keymaps="${kmapdir}/${_keyboard_layout}.gkb"
+
 	for keymapfile in ${keymaps}; do
 		printf "keymaps is %s, keymapfile is %s\n" \
 		    "${keymaps}" "${keymapfile}"
