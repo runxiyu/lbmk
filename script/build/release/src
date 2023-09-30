@@ -21,18 +21,14 @@ filelist="${filelist} checkversion"
 
 version="version-unknown"
 versiondate="version-date-unknown"
-reldir=""
-dirname=""
-srcdir=""
+eval "$(setvars "" reldir dirname srcdir)"
 
 printf "Building source code archive, version %s\n" "${version}"
 
 main()
 {
-	[ -f version ] && \
-		read version < version
-	[ -f versiondate ] && \
-		read versiondate < versiondate
+	[ -f version ] && read version < version
+	[ -f versiondate ] && read versiondate < versiondate
 
 	create_release_directory
 	download_modules

@@ -15,25 +15,10 @@ read our_version < version
 
 export LOCALVERSION="-${projectname}-${our_version}"
 
-arch=""
-cfgsdir=""
-codedir=""
-config=""
-config_name=""
-crossgcc_ada=""
-elfdir=""
-listfile=""
-mode=""
-project=""
-romtype=""
-target=""
-target_dir=""
-targets=""
-tree=""
-cbfstool=""
+eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
+    elfdir listfile project romtype target target_dir targets tree cbfstool)"
 
-tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)" || \
-    fail "can't make tmpclean dir"
+tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)" || fail "!mkdir tmpclean"
 
 main()
 {
@@ -115,8 +100,7 @@ handle_src_tree()
 	mkdir -p "${elfdir}/${target}" || \
 	    fail "handle_src_tree: !mkdir -p ${elfdir}/${target}"
 
-	tree="undefined"
-	arch="undefined"
+	eval "$(setvars "undefined" arch tree)"
 	romtype="normal"
 
 	[ ! -f "${target_dir}/target.cfg" ] && \
@@ -218,10 +202,9 @@ check_config()
 	dest_dir="${elfdir}/${target}/${config_name}"
 	# TODO: very hacky check. do it properly (based on build.list)
 	for elftest in "${dest_dir}"/*; do
-		if [ -f "${elftest}" ]; then
-			printf "Build already exists, so skipping build\n" 1>&2
-			return 1
-		fi
+		[ -f "${elftest}" ] || continue
+		printf "Build already exists, so skipping build\n" 1>&2
+		return 1
 	done
 	mkdir -p "${dest_dir}" || \
 	    fail "check_config: cannot mkdir: ${dest_dir}"
@@ -255,15 +238,12 @@ run_make_command()
 
 copy_elf()
 {
-	if [ "${project}" = "coreboot" ]; then
-		modify_coreboot_rom || \
-		    fail "copy_elf: cannot prepare coreboot image"
-	fi
+	[ "${project}" != "coreboot" ] || modify_coreboot_rom || \
+	    fail "copy_elf: cannot prepare coreboot image"
 
 	while read f; do
-		[ ! -f "${codedir}/$f" ] || \
-		    cp "${codedir}/${f}" "${dest_dir}/" || \
-		    fail "copy_elf: cannot copy elf file"
+		[ ! -f "${codedir}/$f" ] || cp "${codedir}/${f}" \
+		    "${dest_dir}/" || fail "copy_elf: cannot copy elf file"
 	done < ${listfile}
 
 	./handle make file -c "${codedir}" || \

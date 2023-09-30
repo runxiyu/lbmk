@@ -8,13 +8,8 @@
 . "include/git.sh"
 . "include/option.sh"
 
-name=""
-rev=""
-loc=""
-url=""
-bkup_url=""
+eval "$(setvars "" name rev loc url bkup_url depend)"
 tmp_dir="${PWD}/tmp/gitclone"
-depend=""
 
 main()
 {

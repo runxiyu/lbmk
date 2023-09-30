@@ -11,11 +11,7 @@ set -u -e
 . "include/git.sh"
 . "include/option.sh"
 
-_target=""
-tree=""
-rev=""
-project=""
-cfgsdir=""
+eval "$(setvars "" _target tree rev project cfgsdir)"
 
 main()
 {
@@ -40,7 +36,6 @@ main()
 		download_for_target "${x}" || \
 		    err "${project}/${target}: cannot download source tree"
 	done
-
 	rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 3"
 }
 

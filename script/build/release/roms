@@ -11,11 +11,8 @@ read projectname < projectname
 version="version-unknown"
 versiondate="version-date-unknown"
 tree="default"
-target=""
-CONFIG_HAVE_MRC=""
-CONFIG_HAVE_ME_BIN=""
-CONFIG_KBC1126_FIRMWARE=""
-CONFIG_INCLUDE_SMSC_SCH5545_EC_FW=""
+eval "$(setvars "" target CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
+    CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
 ifdtool="cbutils/${tree}/ifdtool"
 cbfstool="cbutils/${tree}/cbfstool"
 microcode_required="y"
@@ -25,12 +22,10 @@ main()
 	printf "Building ROM image archives for version %s\n" "${version}"
 
 	init_check
-
 	for romdir in bin/*; do
 		[ -d "${romdir}" ] || continue
 		make_archive "${romdir}"
 	done
-
 	printf "\nROM archives available at release/%s/roms/\n\n" "${version}"
 }
 
@@ -51,7 +46,6 @@ init_check()
 	[ ! -d "release/${version}/roms/" ] || \
 		rm -Rf "release/${version}/roms/" || \
 		    err "init_check: !rm -Rf release/${version}/roms/"
-
 	if [ ! -d "release/${version}/roms/" ]; then
 		mkdir -p "release/${version}/roms/" || \
 		    err "init_check: !mkdir -p release/${version}/roms/"

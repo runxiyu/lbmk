@@ -7,8 +7,7 @@ set -u -e
 
 . "include/err.sh"
 
-mode=""
-project=""
+eval "$(setvars "" mode project)"
 
 main()
 {
