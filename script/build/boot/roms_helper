@@ -240,19 +240,13 @@ build_seabios_roms()
 		    err "build_roms: cannot build grub roms, seabios w/grub"
 		rm -f "${tmprom}" || err "build_roms: can't remove tmprom"
 	else
-		x=${corebootrom}
-		y=${initmode}
-		t=$(mkSeabiosRom "$x" "fallback/payload" "$y") || \
+		t=$(mkSeabiosRom "${corebootrom}" "fallback/payload" \
+		    "${initmode}") || \
 		    err "build_seabios_roms: cannot build tmprom"
-		if [ "${initmode}" = "normal" ]; then
-			newrompath="${romdir}/seabios_${board}_"
-			newrompath="${newrompath}${initmode}.rom"
-		else
-			newrompath="${romdir}/seabios_${board}_"
-			newrompath="${newrompath}${initmode}_"
-			newrompath="${newrompath}${displaymode}.rom"
-		fi
-		moverom "${t}" "${newrompath}" || \
+		newrom="${romdir}/seabios_${board}_${initmode}_${displaymode}"
+		[ "${initmode}" = "normal" ] && newrom="${romdir}/seabios" \
+			&& newrom="${newrom}_${board}_${initmode}"
+		moverom "${t}" "${newrom}.rom" || \
 		    err "build_roms: cannot copy rom"
 		rm -f "${t}" || err "cannot rm ${t}"
 	fi
@@ -296,17 +290,18 @@ build_grub_roms() {
 	fi
 
 	tmpcfg=$(mktemp -t coreboot_rom.XXXXXXXXXX) || 
-	    err "mkGrubRom: cannot create temporary scan.cfg"
+	    err "build_grub_roms: cannot create temporary scan.cfg"
 	printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" > \
-	    "${tmpcfg}" || err "mkGrubRom: cannot insert to temporary scan.cfg"
+	    "${tmpcfg}" || err "build_grub_roms: cannot create scan.cfg"
 	[ "${grub_scan_disk}" = "both" ] || \
 	    "${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n scan.cfg \
-	    -t raw || err "mkGrubROM: cannot insert scan.cfg into CBFS"
+	    -t raw || err "build_grub_roms: cannot insert scan.cfg into CBFS"
+
 	printf "set timeout=%s\n" "${grub_timeout}" > "${tmpcfg}" || \
-	    err "mkGrubRom: cannot insert into temporary timeout.cfg"
+	    err "build_grub_roms: cannot insert into temporary timeout.cfg"
 	[ -z "${grub_timeout}" ] || \
 	    "${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n timeout.cfg \
-	    -t raw || err "mkGrubROM: cannot insert timeout.cfg into CBFS"
+	    -t raw || err "build_grub_roms: cannot create timeout.cfg"
 	rm -f "${tmpcfg}" || err "cannot delete tmpcfg"
 
 	keymaps=""
@@ -327,15 +322,12 @@ build_grub_roms() {
 
 		tmpgrubrom="$(mkGrubRom "${keymap}" "${tmprompath}")"
 
-		if [ "${initmode}" = "normal" ]; then
-			newrompath="${romdir}/${firstpayloadname}_${board}_"
-			newrompath="${newrompath}${initmode}_${keymap}.rom"
-		else
-			newrompath="${romdir}/${firstpayloadname}_${board}_"
-			newrompath="${newrompath}${initmode}_${displaymode}_"
-			newrompath="${newrompath}${keymap}.rom"
-		fi
-		moverom "${tmpgrubrom}" "${newrompath}" || \
+		newrom="${romdir}/${firstpayloadname}_${board}_${initmode}_"
+		newrom="${newrom}${displaymode}_${keymap}.rom"
+		[ "${initmode}" = "normal" ] && \
+			newrom="${romdir}/${firstpayloadname}_${board}_" && \
+			newrom="${newrom}${initmode}_${keymap}.rom"
+		moverom "${tmpgrubrom}" "${newrom}" || \
 		    err "build_grub_roms, moverom"
 		rm -f "${tmpgrubrom}" || err "rm tmpgrubrom, build_grub_roms"
 	done
@@ -392,10 +384,10 @@ build_uboot_roms()
 {
 	tmprom="$(mkUbootRom "${corebootrom}" "fallback/payload" \
 	    "${uboot_config}" "${cbfstool}")"
-	newrompath="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
+	newrom="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
 	[ "${initmode}" = "normal" ] && \
-		newrompath="${romdir}/uboot_payload_${board}_${initmode}.rom"
-	moverom "${tmprom}" "${newrompath}" || \
+		newrom="${romdir}/uboot_payload_${board}_${initmode}.rom"
+	moverom "${tmprom}" "${newrom}" || \
 	    err "build_roms: moverom fail (u-boot)"
 	rm -f "${tmprom}" || err "build_roms: cannot rm u-boot rom"
 }
@@ -430,15 +422,15 @@ mkUbootRom() {
 # after calling this function. therefore this function is "final"
 moverom() {
 	rompath="${1}"
-	newrompath="${2}"
+	newrom="${2}"
 
-	printf "\nCreating new ROM image: %s\n" "${newrompath}"
+	printf "\nCreating new ROM image: %s\n" "${newrom}"
 
-	[ -d "${newrompath%/*}" ] || mkdir -p "${newrompath%/*}/" || \
-	    err "moverom: cannot create rom directory: \"${newrompath%/*}\""
+	[ -d "${newrom%/*}" ] || mkdir -p "${newrom%/*}/" || \
+	    err "moverom: cannot create rom directory: \"${newrom%/*}\""
 	[ "${blobs_required}" = "n" ] && \
-		newrompath="${newrompath%.rom}_noblobs.rom"
-	cp "${rompath}" "${newrompath}" || err "moverom: can't copy rom"
+		newrom="${newrom%.rom}_noblobs.rom"
+	cp "${rompath}" "${newrom}" || err "moverom: can't copy rom"
 }
 
 main $@
