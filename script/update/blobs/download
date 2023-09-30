@@ -7,6 +7,7 @@
 . "include/err.sh"
 . "include/blobutil.sh"
 . "include/mrc.sh"
+. "include/option.sh"
 
 export PATH="${PATH}:/sbin"
 
@@ -15,10 +16,11 @@ main()
 	[ $# -gt 0 ] || err "No argument given"
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
+	_b="${board%%_*mb}" # shorthand (avoid duplicating config per rom size)
 
 	check_defconfig "${boarddir}" || exit 0
 	detect_firmware && exit 0
-	scan_sources_config
+	scan_config "${_b}" "config/blobs" "err"
 
 	build_dependencies
 	download_blobs
@@ -36,29 +38,19 @@ detect_firmware()
 	printf "Blobs not needed for: %s\n" "${board}" 1>&2
 }
 
-scan_sources_config()
-{
-	_b=${board%%_*mb} # shorthand to avoid duplicating config per rom size
-	awkstr=" /\{.*${_b}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
-	while read -r line ; do
-		set ${line} 1>/dev/null 2>/dev/null
-		eval "${1}=\"${2}\""
-	done << EOF
-	$(eval "awk '${awkstr}' config/blobs/sources")
-EOF
-}
-
 build_dependencies()
 {
-	[ -d ${cbdir} ] || ./update project trees coreboot ${cbdir##*/} || \
-	    err "build_dependencies: can't fetch ${cbdir}"
+	[ -d ${cbdir} ] || \
+		./update project trees coreboot ${cbdir##*/} || \
+		    err "build_dependencies: can't fetch ${cbdir}"
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "${d}" ] && continue
 		./update project repo "${d}" || \
 		    err "build_dependencies: can't fetch ${d}"
 	done
-	[ -f uefitool/uefiextract ] || ./handle make file -b uefitool || \
-	    err "build_dependencies: can't build uefitool"
+	[ -f uefitool/uefiextract ] || \
+		./handle make file -b uefitool || \
+		    err "build_dependencies: can't build uefitool"
 	[ -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ] || \
 		make -C "${cbdir}/util/kbc1126" || \
 		    err "build_dependencies: can't build kbc1126_ec_dump"
