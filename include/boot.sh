@@ -39,3 +39,27 @@ main()
 
 	handle_targets
 }
+
+usage()
+{
+	cat <<- EOF
+	USAGE:	./build boot roms target
+	To build *all* boards, do this: ./build boot roms all
+	To list *all* boards, do this: ./build boot roms list
+	
+	Optional Flags:
+	-d: displaymode
+	-p: payload
+	-k: keyboard layout
+
+	Example commands:
+		./build boot roms x60
+		./build boot roms x200_8mb x60
+		./build boot roms x60 -p grub -d corebootfb -k usqwerty
+
+	possible values for 'target':
+	$(listitems "config/coreboot")
+
+	Refer to the ${projectname} documentation for more information.
+	EOF
+}
