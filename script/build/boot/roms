@@ -45,22 +45,23 @@ main()
 		shift
 	done
 
+	handle_targets
+	display_targets
+}
+
+handle_targets()
+{
 	[ -z ${opts+x} ] && opts=""
 	printf "Building %s ROM images\n" "${projectname}"
 
 	[ "${first}" != "all" ] || boards="$(listitems config/coreboot)" || \
-	    err "Cannot get list of boards"
+	    err "handle_targets: Cannot get list of boards"
 
 	for board in ${boards}; do
-		buildrom "${board}" || err "build/roms: error"
+		buildrom "${board}" || err "handle_targets: build error"
 		[ -d "bin/${board}" ] && targets="${board} ${targets}"
 	done
-
-	[ -z "${targets}" ] && err "No ROM images were compiled."
-	printf "\n\nYour ROM images are available in these directories:\n"
-	for x in ${targets}; do
-		printf "* bin/%s\n" "${x}"
-	done
+	confirm_targets
 }
 
 # Build ROM images for supported boards
@@ -68,6 +69,15 @@ buildrom() {
 	[ -d "config/coreboot/${1}/" ] || \
 		err "build/roms: target not defined: ${1}"
 	./build boot roms_helper ${1}${opts} || return 1
+}
+
+confirm_targets()
+{
+	[ -z "${targets}" ] && err "No ROM images were compiled."
+	printf "\n\nYour ROM images are available in these directories:\n"
+	for x in ${targets}; do
+		printf "* bin/%s\n" "${x}"
+	done
 }
 
 usage()
