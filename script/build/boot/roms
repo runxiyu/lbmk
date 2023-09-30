@@ -37,6 +37,8 @@ main()
 		-k)
 			opts="${opts} -k ${2}"
 			shift ;;
+		all)
+			firstoption="all" ;;
 		*)
 			boards="${boards} ${1} " ;;
 		esac
