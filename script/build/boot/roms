@@ -10,48 +10,22 @@ set -u -e
 
 . "include/err.sh"
 . "include/option.sh"
+. "include/boot.sh"
 
 read projectname < projectname
 opts=""
-boards=
 first=""
 targets=""
 
-main()
-{
-	[ $# -lt 1 ] && usage && err "target not specified"
-
-	first="${1}"
-	[ "${first}" = "help" ] && usage && exit 0
-	[ "${first}" = "list" ] && \
-	    listitems config/coreboot && exit 0
-
-	while [ $# -gt 0 ]; do
-		case ${1} in
-		-d)
-			opts="${opts} -d ${2}"
-			shift ;;
-		-p)
-			opts="${opts} -p ${2}"
-			shift ;;
-		-k)
-			opts="${opts} -k ${2}"
-			shift ;;
-		all)
-			first="all" ;;
-		*)
-			boards="${boards} ${1} " ;;
-		esac
-		shift
-	done
-
-	handle_targets
-	confirm_targets
-}
+# main() is in include/boot.sh
 
 handle_targets()
 {
-	[ -z ${opts+x} ] && opts=""
+	[ -z "${displaymodes}" ] || opts="-d \"${displaymodes}\" ${opts}"
+	[ -z "${payloads}" ] || opts="-p \"${payloads}\" ${opts}"
+	[ -z "${keyboard_layouts}" ] || \
+		opts="-k \"${keyboard_layouts}\" ${opts}"
+
 	printf "Building %s ROM images\n" "${projectname}"
 
 	[ "${first}" != "all" ] || boards="$(listitems config/coreboot)" || \
@@ -59,22 +33,23 @@ handle_targets()
 
 	check_targets
 	build_bootroms
+	confirm_targets
 }
 
 check_targets()
 {
-	for board in ${boards}; do
-		[ -d "config/coreboot/${board}/" ] || \
-			err "check_targets: target not defined: ${board}"
+	for x in ${boards}; do
+		[ -d "config/coreboot/${x}/" ] || \
+			err "check_targets: target not defined: ${x}"
 	done
 }
 
 build_bootroms()
 {
-	for board in ${boards}; do
-		./build boot roms_helper ${board}${opts} || \
-		    err "handle_targets ${board}${opts}: build error"
-		[ -d "bin/${board}" ] && targets="${board} ${targets}"
+	for x in ${boards}; do
+		./build boot roms_helper ${opts} ${x} || \
+		    err "handle_targets ${opts} ${x}: build error"
+		[ -d "bin/${x}" ] && targets="${x} ${targets}"
 	done
 }
 

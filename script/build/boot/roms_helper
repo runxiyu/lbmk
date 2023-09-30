@@ -10,6 +10,7 @@
 set -u -e
 
 . "include/err.sh"
+. "include/boot.sh"
 
 read projectname < projectname
 
@@ -17,12 +18,8 @@ cfgsdir="config/coreboot"
 
 blobs_required=""
 
-board=""
 ubdir=""
 kmapdir="config/grub/keymap"
-displaymodes=""
-payloads=""
-keyboard_layouts=""
 
 grub_timeout=""
 grub_scan_disk="undefined"
@@ -53,28 +50,11 @@ targetdir=""
 
 grubelf="elf/grub/grub.elf"
 
-main()
+# main() is in include/boot.sh
+
+handle_targets()
 {
-	while [ $# -gt 0 ]; do
-		case ${1} in
-		-d)
-			displaymodes="${displaymodes}${2}"
-			shift ;;
-		-p)
-			payloads="${payloads}${2}"
-			shift ;;
-		-k)
-			keyboard_layouts="${keyboard_layouts}${2}"
-			shift ;;
-		*)
-			board=${1} ;;
-		esac
-		shift
-	done
-
-	printf "\n\nboard %s, kb %s, displaymode %s, payloads %s\n" \
-	    "${board}" "${keyboard_layouts}" "${displaymodes}" "${payloads}"
-
+	board="${boards%% *}"
 	configure_target
 	build_dependencies
 
@@ -83,6 +63,9 @@ main()
 
 configure_target()
 {
+	printf "\n\nboard %s, kb %s, displaymode %s, payloads %s\n" \
+	    "${board}" "${keyboard_layouts}" "${displaymodes}" "${payloads}"
+
 	targetdir="${cfgsdir}/${board}"
 
 	[ -d "${targetdir}" ] || \
