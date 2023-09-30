@@ -14,16 +14,16 @@ set -u -e
 read projectname < projectname
 opts=""
 boards=
-firstoption=""
+first=""
 targets=""
 
 main()
 {
 	[ $# -lt 1 ] && usage && err "target not specified"
 
-	firstoption="${1}"
-	[ "${firstoption}" = "help" ] && usage && exit 0
-	[ "${firstoption}" = "list" ] && \
+	first="${1}"
+	[ "${first}" = "help" ] && usage && exit 0
+	[ "${first}" = "list" ] && \
 	    listitems config/coreboot && exit 0
 
 	while [ $# -gt 0 ]; do
@@ -38,7 +38,7 @@ main()
 			opts="${opts} -k ${2}"
 			shift ;;
 		all)
-			firstoption="all" ;;
+			first="all" ;;
 		*)
 			boards="${boards} ${1} " ;;
 		esac
@@ -48,17 +48,14 @@ main()
 	[ -z ${opts+x} ] && opts=""
 	printf "Building %s ROM images\n" "${projectname}"
 
-	if [ "${firstoption}" = "all" ]; then
-		for target in $(listitems config/coreboot); do
-			buildrom "${target}" || err "build/roms (1): error"
-			[ -d "bin/${target}" ] && targets="${target} ${targets}"
-		done
-	else
-		for board in ${boards}; do
-			buildrom "${board}" || err "build/roms (2): error"
-			[ -d "bin/${board}" ] && targets="${board} ${targets}"
-		done
-	fi
+	[ "${first}" != "all" ] || boards="$(listitems config/coreboot)" || \
+	    err "Cannot get list of boards"
+
+	for board in ${boards}; do
+		buildrom "${board}" || err "build/roms: error"
+		[ -d "bin/${board}" ] && targets="${board} ${targets}"
+	done
+
 	[ -z "${targets}" ] && err "No ROM images were compiled."
 	printf "\n\nYour ROM images are available in these directories:\n"
 	for x in ${targets}; do
