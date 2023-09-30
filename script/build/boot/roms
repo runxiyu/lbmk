@@ -57,12 +57,20 @@ handle_targets()
 	[ "${first}" != "all" ] || boards="$(listitems config/coreboot)" || \
 	    err "handle_targets: Cannot get list of boards"
 
+	check_targets
+
 	for board in ${boards}; do
-		[ -d "config/coreboot/${board}/" ] || \
-			err "handle_targets: target not defined: ${board}"
 		./build boot roms_helper ${board}${opts} || \
 		    err "handle_targets ${board}${opts}: build error"
 		[ -d "bin/${board}" ] && targets="${board} ${targets}"
+	done
+}
+
+check_targets()
+{
+	for board in ${boards}; do
+		[ -d "config/coreboot/${board}/" ] || \
+			err "check_targets: target not defined: ${board}"
 	done
 }
 
