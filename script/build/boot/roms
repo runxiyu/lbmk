@@ -64,6 +64,13 @@ main()
 	done
 }
 
+# Build ROM images for supported boards
+buildrom() {
+	[ -d "config/coreboot/${1}/" ] || \
+		err "build/roms: target not defined: ${1}"
+	./build boot roms_helper ${1}${opts} || return 1
+}
+
 usage()
 {
 	cat <<- EOF
@@ -86,13 +93,6 @@ usage()
 
 	Refer to the ${projectname} documentation for more information.
 	EOF
-}
-
-# Build ROM images for supported boards
-buildrom() {
-	[ -d "config/coreboot/${1}/" ] || \
-		err "build/roms: target not defined: ${1}"
-	./build boot roms_helper ${1}${opts} || return 1
 }
 
 main $@
