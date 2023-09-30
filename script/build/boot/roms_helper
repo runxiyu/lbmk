@@ -106,8 +106,7 @@ build_dependencies()
 {
 	romdir="bin/${board}"
 	cbdir="coreboot/${board}"
-	[ "${board}" = "${tree}" ] || \
-		cbdir="coreboot/${tree}"
+	[ "${board}" = "${tree}" ] || cbdir="coreboot/${tree}"
 	cbfstool="cbutils/${tree}/cbfstool"
 	corebootrom="${cbdir}/build/coreboot.rom"
 
@@ -226,7 +225,7 @@ build_roms()
 		build_grub_roms "${corebootrom}" "${initmode}" \
 		    "${displaymode}" "grub" || \
 		    err "build_roms: build_grub_roms failed"
-	[ "${payload_uboot}" = "y" ] && return 0
+	[ "${payload_uboot}" = "y" ] || return 0
 	build_uboot_roms
 }
 
@@ -253,7 +252,6 @@ build_seabios_roms()
 			newrompath="${newrompath}${initmode}_"
 			newrompath="${newrompath}${displaymode}.rom"
 		fi
-
 		moverom "${t}" "${newrompath}" || \
 		    err "build_roms: cannot copy rom"
 		rm -f "${t}" || err "cannot rm ${t}"
@@ -267,20 +265,17 @@ build_grub_roms() {
 	initmode="${2}"
 	displaymode="${3}"
 	firstpayloadname="${4}" # allow values: grub, seabios, seabios_withgrub
-
 	grubelf_cbfs="fallback/payload"
 
-	x=${tmprompath}
-	y=${initmode}
 	if [ "${payload_grub_withseabios}" = "y" ] && \
 	    [ "${firstpayloadname}" = "grub" ]; then
-		mv "$(mkSeabiosRom "${x}" "seabios.elf" "${y}")" \
-		    "${tmprompath}" || \
+		mv "$(mkSeabiosRom "${tmprompath}" "seabios.elf" \
+		    "${initmode}")" "${tmprompath}" || \
 		    err "build_grub_roms: cannot move tmp rom (seabios.elf)"
 	elif [ "${payload_seabios_withgrub}" = "y" ] && \
 	    [ "${firstpayloadname}" != "grub" ]; then
-		mv "$(mkSeabiosRom "${x}" "fallback/payload" "$y")" \
-		    "${tmprompath}" || \
+		mv "$(mkSeabiosRom "${tmprompath}" "fallback/payload" \
+		    "${initmode}")" "${tmprompath}" || \
 		    err "build_grub_roms: cannot move SeaBIOS ROM to tmprom"
 		grubelf_cbfs="img/grub2"
 	fi
@@ -303,8 +298,7 @@ build_grub_roms() {
 	tmpcfg=$(mktemp -t coreboot_rom.XXXXXXXXXX) || 
 	    err "mkGrubRom: cannot create temporary scan.cfg"
 	printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" > \
-	    "${tmpcfg}" || \
-	    err "mkGrubRom: cannot insert into temporary scan.cfg"
+	    "${tmpcfg}" || err "mkGrubRom: cannot insert to temporary scan.cfg"
 	[ "${grub_scan_disk}" = "both" ] || \
 	    "${cbfstool}" "${tmprompath}" add -f "${tmpcfg}" -n scan.cfg \
 	    -t raw || err "mkGrubROM: cannot insert scan.cfg into CBFS"
@@ -381,17 +375,9 @@ mkSeabiosRom() {
 	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup \
 	    || err "mkSeabiosRom: cbfs add-int etc/ps2-keyboard-spinup 3000"
 
-	if [ "${target_initmode}" = "normal" ] || \
-	    [ "${target_initmode}" = "libgfxinit" ]; then
-		"${cbfstool}" "${tmprom}" add-int -i 2 \
-		    -n etc/pci-optionrom-exec || \
-		    err "mkSeabiosRom: cbfs add-int etc/pci-optionrom-exec 2"
-	elif [ "${target_initmode}" = "vgarom" ]; then # coreboot executes it
-		"${cbfstool}" "${tmprom}" add-int -i 0 \
-		    -n etc/pci-optionrom-exec || \
-		    err "mkSeabiosRom: cbfs add-int etc/pci-optionrom-exec 0"
-	fi # for undefined modes, don't add this integer. use SeaBIOS defaults
-
+	z="2"; [ "${target_initmode}" = "vgarom" ] && z="0"
+	"${cbfstool}" "${tmprom}" add-int -i $z -n etc/pci-optionrom-exec || \
+	    err "mkSeabiosRom: cbfs add-int etc/pci-optionrom-exec 0"
 	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || \
 	    err "mkSeabiosRom: cbfs add-int etc/optionroms-checksum 0"
 	[ "${target_initmode}" != "libgfxinit" ] || \
@@ -404,10 +390,8 @@ mkSeabiosRom() {
 
 build_uboot_roms()
 {
-	x=${corebootrom}
-	y=${uboot_config}
-	z=${cbfstool}
-	tmprom="$(mkUbootRom "$x" "fallback/payload" "$y" "$z")"
+	tmprom="$(mkUbootRom "${corebootrom}" "fallback/payload" \
+	    "${uboot_config}" "${cbfstool}")"
 	newrompath="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
 	[ "${initmode}" = "normal" ] && \
 		newrompath="${romdir}/uboot_payload_${board}_${initmode}.rom"
