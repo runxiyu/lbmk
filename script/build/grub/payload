@@ -22,16 +22,12 @@ main()
 handle_dependencies()
 {
 	[ -d "grub/" ] || \
-		./update project repo grub || \
-		    err "handle_dependencies: cannot fetch grub"
+		x_ ./update project repo grub
 	[ -f "grub/grub-mkstandalone" ] || \
-		./build grub utils || \
-		    err "handle_dependencies: cannot build grub utils"
+		x_ ./build grub utils
 	[ -d "${elfdir}" ] || \
-		mkdir -p "${elfdir}" || \
-		    err "handle_dependencies: cannot mkdir ${elfdir}"
-	rm -f "${elfdir}/"* || \
-	    err "handle_dependencies: cannot rm inside: ${elfdir}/"
+		x_ mkdir -p "${elfdir}"
+	x_ rm -f "${elfdir}/"*
 }
 
 build_keymap_configs()
@@ -40,9 +36,8 @@ build_keymap_configs()
 		[ -f "${keylayoutfile}" ] || continue
 		keymap="${keylayoutfile##${grubcfgsdir}/keymap/}"
 		keymap="${keymap%.gkb}"
-		printf "keymap %s\n" "${keymap}" > \
-		    "${elfdir}/keymap_${keymap}.cfg" || \
-		    err "mk_keymap: can't make ${elfdir}/keymap_${keymap}.cfg"
+		x_ printf "keymap %s\n" "${keymap}" > \
+		    "${elfdir}/keymap_${keymap}.cfg"
 	done
 }
 

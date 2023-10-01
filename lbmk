@@ -21,9 +21,7 @@ option=""
 
 main()
 {
-	id -u 1>/dev/null 2>/dev/null || \
-	    fail "cannot ascertain user id"
-
+	xx_ id -u 1>/dev/null 2>/dev/null
 	initialise_command $@
 	shift 2
 
@@ -40,8 +38,7 @@ initialise_command()
 	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
 
 	mode="${1}"
-	[ "${mode}" != "dependencies" ] || \
-		install_packages $@ || fail "Can't install dependencies"
+	[ "${mode}" != "dependencies" ] || xx_ install_packages $@
 	[ "$(id -u)" != "0" ] || \
 		fail "running this command as root is not permitted"
 
@@ -68,8 +65,7 @@ install_packages()
 	aur_notice=""
 	. "config/dependencies/${2}"
 
-	${pkg_add} ${pkglist} || \
-	    fail "install_packages: Error installing dependencies"
+	xx_ ${pkg_add} ${pkglist}
 	[ "${aur_notice}" = "" ] || \
 	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
 
@@ -79,8 +75,7 @@ install_packages()
 execute_command()
 {
 	if [ "${option}" = "list" ]; then
-		listitems "${buildpath}/${mode}" || \
-		    fail "execute_command: cannot list command options"
+		xx_ listitems "${buildpath}/${mode}"
 		lbmk_exit 0
 	fi
 	[ -f "${buildpath}/${mode}/${option}" ] || \

@@ -82,18 +82,15 @@ detect_board()
 		err "detect_board: could not detect board type"
 	esac	
 	[ -d "${boarddir}/" ] || \
-	    err "detect_board: dir, ${boarddir}, doesn't exist"
+		err "detect_board: dir, ${boarddir}, doesn't exist"
 	printf "%s\n" "${board}"
 }
 
 build_dependencies()
 {
-	[ -d "${cbdir}" ] || ./update project trees coreboot default || \
-	    err "build_dependencies: could not download coreboot/default"
-	./build coreboot utils default || \
-	    err "build_dependencies: could not build cbutils"
-	./update blobs download ${board} || \
-	    err "build_dependencies: Could not download blobs for ${board}"
+	[ -d "${cbdir}" ] || x_ ./update project trees coreboot default
+	x_ ./build coreboot utils default
+	x_ ./update blobs download ${board}
 }
 
 inject_blobs()
@@ -104,35 +101,31 @@ inject_blobs()
 		release_archive="y"
 		patch_release_roms
 	else
-		patch_rom "${rom}" || \
-		    err "inject_blobs: could not patch ${x}"
+		x_ patch_rom "${rom}"
 	fi
 }
 
 patch_release_roms()
 {
 	_tmpdir="tmp/romdir"
-	rm -Rf "${_tmpdir}" || err "patch_release_roms 1: can't prepare tmpdir"
-	mkdir -p "${_tmpdir}" || err "patch_release_roms: can't make tmpdir"
-	tar -xf "${releasearchive}" -C "${_tmpdir}" || \
-	    err "patch_release_roms: could not extract release archive"
+	x_ rm -Rf "${_tmpdir}"
+	x_ mkdir -p "${_tmpdir}"
+	x_ tar -xf "${releasearchive}" -C "${_tmpdir}"
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
 		printf "patching rom: %s\n" "$x"
-		patch_rom "${x}" || err "patch_release_roms: could not patch ${x}"
+		x_ patch_rom "${x}"
 	done
 	for x in "${_tmpdir}"/bin/*/*_nomicrocode.rom ; do
 		[ -f "${x}" ] || continue
 		[ -f "${x%_nomicrocode.rom}.rom" ] || continue
 
-		cp "${x%_nomicrocode.rom}.rom" "${x}" || \
-		    err "patch_release_roms: ${x}: can't overwrite no-ucode rom"
-		"${cbfstool}" "${x}" remove -n cpu_microcode_blob.bin || \
-		    err "patch_release_roms: ${x}: cannot remove u-code"
+		x_ cp "${x%_nomicrocode.rom}.rom" "${x}"
+		x_ "${cbfstool}" "${x}" remove -n cpu_microcode_blob.bin
 	done
 
 	(
-	cd "${_tmpdir}"/bin/*
+	x_ cd "${_tmpdir}/bin/"*
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	sha512sum --status -c blobhashes || \
@@ -146,14 +139,12 @@ patch_release_roms()
 		done
 	fi
 
-	[ -d bin/release ] || mkdir -p bin/release || \
-	    err "patch_release_roms: !mkdir -p bin/release"
-	mv "${_tmpdir}"/bin/* bin/release/ || \
-	    err "patch_release_roms: !mv ${_tmpdir}/bin/* bin/release/"
+	[ -d bin/release ] || x_ mkdir -p bin/release
+	x_ mv "${_tmpdir}"/bin/* bin/release/
 
 	printf "Success! Your ROMs are in bin/release\n"
 
-	rm -Rf "${_tmpdir}" || err "patch_release_roms: !rm -Rf ${_tmpdir}"
+	x_ rm -Rf "${_tmpdir}"
 }
 
 patch_rom()
@@ -170,7 +161,7 @@ patch_rom()
 	[ -f "${rom%_nomicrocode.rom}.rom" ] && \
 	[ "${release_archive}" = "y" ] && return 0
 
-	check_defconfig "${boarddir}" || err "patch_rom ${rom}: no defconfig"
+	x_ check_defconfig "${boarddir}"
 
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
@@ -217,8 +208,8 @@ inject_blob_intel_mrc()
 	# source code, and it is *always* correct for haswell platform.
 	# TODO: this logic should be tweaked to handle more platforms
 
-	"${cbfstool}" "${rom}" add -f mrc/haswell/mrc.bin -n mrc.bin -t mrc \
-	    -b 0xfffa0000 || err "inject_blob_intel_mrc: cannot insert mrc.bin"
+	x_ "${cbfstool}" "${rom}" add -f mrc/haswell/mrc.bin -n mrc.bin \
+	    -t mrc -b 0xfffa0000
 }
 
 inject_blob_intel_me()
@@ -233,8 +224,7 @@ inject_blob_intel_me()
 	[ ! -f "${_me_location}" ] && \
 		err "inject_blob_intel_me: per CONFIG_ME_BIN_PATH: file missing"
 
-	"${ifdtool}" -i me:"${_me_location}" "${rom}" -O "${rom}" || \
-	    err "inject_blob_intel_me: cannot insert me.bin"
+	x_ "${ifdtool}" -i me:"${_me_location}" "${rom}" -O "${rom}"
 }
 
 inject_blob_hp_kbc1126_ec()
@@ -258,12 +248,10 @@ inject_blob_hp_kbc1126_ec()
 		err "inject_blob_hp_kbc1126_ec: ${board}: ecfw not downloaded"
 	fi
 
-	"${cbfstool}" "${rom}" add -f "${_ec1_location}" -n ecfw1.bin \
-	    -b ${_ec1_offset} -t raw || \
-	    err "inject_blob_hp_kbc1126_ec: cannot insert ecfw1.bin"
-	"${cbfstool}" "${rom}" add -f "${_ec2_location}" -n ecfw2.bin \
-	    -b ${_ec2_offset} -t raw || \
-	    err "inject_blob_hp_kbc1126_ec: cannot insert ecfw2.bin"
+	x_ "${cbfstool}" "${rom}" add -f "${_ec1_location}" -n ecfw1.bin \
+	    -b ${_ec1_offset} -t raw
+	x_ "${cbfstool}" "${rom}" add -f "${_ec2_location}" -n ecfw2.bin \
+	    -b ${_ec2_offset} -t raw
 }
 
 inject_blob_dell_e6400_vgarom_nvidia()
@@ -276,29 +264,24 @@ inject_blob_dell_e6400_vgarom_nvidia()
 
 	printf "adding pci option rom\n"
 
-	if [ "${_vga_dir}" != "${pciromsdir}" ]; then
+	[ "${_vga_dir}" = "${pciromsdir}" ] || \
 		err "inject_blob_dell_e6400vga: invalid pcirom dir: ${_vga_dir}"
-	fi
-	if [ ! -f "${_vga_location}" ]; then
+	[ -f "${_vga_location}" ] || \
 		err "inject_blob_dell_e6400vga: ${_vga_location} doesn't exist"
-	fi
 
-	"${cbfstool}" "${rom}" add -f "${_vga_location}" \
-	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom || \
-	    err "inject_blob_dell_e6400vga: cannot insert vga oprom"
+	x_ "${cbfstool}" "${rom}" add -f "${_vga_location}" \
+	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom
 }
 
 inject_blob_smsc_sch5545_ec()
 {
 	rom="${1}"
 	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}"
-
 	[ -f "${_sch5545ec_location}" ] || \
 		err "inject_blob_smsc_sch5545_ec: SCH5545 fw missing"
 
-	"${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
-	    -n sch5545_ecfw.bin -t raw || \
-	    err "inject_blob_smsc_sch5545_ec: can't insert sch5545_ecfw.bin"
+	x_ "${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
+	    -n sch5545_ecfw.bin -t raw
 }
 
 modify_gbe()
@@ -309,21 +292,17 @@ modify_gbe()
 
 	rom="${1}"
 	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
-
 	[ -f "${_gbe_location}" ] || \
 		err "modify_gbe: CONFIG_GBE_BIN_PATH points to missing file"
 	[ -f "${nvmutil}" ] || \
-		make -C util/nvmutil || err "modify_gbe: couldn't build nvmutil"
+		x_ make -C util/nvmutil
 
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
-	cp "${_gbe_location}" "${_gbe_tmp}"
-	"${nvmutil}" "${_gbe_tmp}" setmac "${new_mac}" || \
-	    err "modify_gbe: ${board}: failed to modify mac address"
+	x_ cp "${_gbe_location}" "${_gbe_tmp}"
+	x_ "${nvmutil}" "${_gbe_tmp}" setmac "${new_mac}"
+	x_ "${ifdtool}" -i GbE:"${_gbe_tmp}" "${rom}" -O "${rom}"
 
-	"${ifdtool}" -i GbE:"${_gbe_tmp}" "${rom}" -O "${rom}" || \
-	    err "modify_gbe: ${board}: cannot insert modified gbe.bin"
-
-	rm -f "${_gbe_tmp}" || err "modify_gbe: can't remove ${_gbe_tmp}"
+	x_ rm -f "${_gbe_tmp}"
 }
 
 usage()

@@ -38,41 +38,33 @@ init_check()
 	[ ! -d "bin/" ] && \
 		err "init_check: no ROMs built yet (error)"
 	[ -d "release/" ] || \
-		mkdir -p release/ || \
-		    err "init_check: !mkdir -p release/"
+		x_ mkdir -p release/
 	[ -d "release/${version}/" ] || \
-		mkdir -p "release/${version}/" || \
-		    err "init_check: !mkdir -p release/${version}/"
+		x_ mkdir -p "release/${version}/"
 	[ ! -d "release/${version}/roms/" ] || \
-		rm -Rf "release/${version}/roms/" || \
-		    err "init_check: !rm -Rf release/${version}/roms/"
+		x_ rm -Rf "release/${version}/roms/"
 	[ -d "release/${version}/roms/" ] && return 0
-	mkdir -p "release/${version}/roms/" || \
-	    err "init_check: !mkdir -p release/${version}/roms/"
+	x_ mkdir -p "release/${version}/roms/"
 }
 
 make_archive()
 {
 	builddir="${1}"
-	romdir="tmp/romdir" || \
-	    err "make_archive: cannot create tmpdir"
-	rm -Rf "${romdir}" || err "make_archive: can't remove tmpdir"
+	romdir="tmp/romdir"
+	x_ rm -Rf "${romdir}"
 	target="${builddir##*/}"
 
 	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
 		# No config, just make a tarball
 		tarball=release/${version}/roms/${target}_${version}.tar.xz
-		tar -c "${builddir}" | xz -T0 -6 > ${tarball} || \
-			(rm ${tarball}
-			 err "make_archive: cannot make \"${tarball}\"")
+		x_ tar -c "${builddir}" | xz -T0 -6 > ${tarball} || \
+		    x_ rm -f ${tarball}
 		return 0
 	fi
 
 	romdir="${romdir}/bin/${target}"
-	mkdir -p "${romdir}" || \
-	    err "make_archive: can't mkdir tmpdir"
-	cp "${builddir}"/* "${romdir}" || \
-	    err "make_archive: cannot copy ROM images directory -> ${romdir}"
+	x_ mkdir -p "${romdir}"
+	x_ cp "${builddir}"/* "${romdir}"
 
 	printf "%s\n" "${target}"
 
@@ -97,24 +89,18 @@ make_archive()
 
 	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
 	    "${version}" "${projectname}" "${version}" "${target##*/}"
-	printf "%s\n" "${version}" > "${romdir}/version" || \
-	    err "make_archive: can't create ${romdir}/version"
-	printf "%s\n" "${versiondate}" > "${romdir}/versiondate" || \
-	    err "make_archive: can't create ${romdir}/versiondate"
-	printf "%s\n" "${projectname}" > "${romdir}/projectname" || \
-	    err "make_archive: can't create ${romdir}/projectname"
+	x_ printf "%s\n" "${version}" > "${romdir}/version"
+	x_ printf "%s\n" "${versiondate}" > "${romdir}/versiondate"
+	x_ printf "%s\n" "${projectname}" > "${romdir}/projectname"
 
 	archivename="${projectname}-${version}_${target##*/}"
 	f="release/${version}/roms/${archivename}"
 	(
-	cd "${romdir%/bin/${target}}" || err "make_archive: can't cd to tmpdir"
-	tar -c "bin/${target}/" | xz -T0 -9e > "${archivename}.tar.xz" || \
-	    err "make_archive:cant make ${projectname}-${version}_${target##*/}"
+	x_ cd "${romdir%/bin/${target}}"
+	x_ tar -c "bin/${target}/" | xz -T0 -9e > "${archivename}.tar.xz"
 	)
-	mv "${romdir%/bin/${target}}/${archivename}.tar.xz" "${f}.tar.xz" || \
-	    err "make_archive: can't copy tarball"
-	rm -Rf "${romdir%/bin/${target}}" || \
-	    err "make_archive: can't delete tmpdir"
+	x_ mv "${romdir%/bin/${target}}/${archivename}.tar.xz" "${f}.tar.xz"
+	x_ rm -Rf "${romdir%/bin/${target}}"
 }
 
 strip_archive()
@@ -122,10 +108,8 @@ strip_archive()
 	romdir=${1}
 
 	[ -d "coreboot/${tree}" ] || \
-		./update project trees coreboot ${tree} || \
-		    err "strip_archive: coreboot/${tree}: can't fetch source"
-	./build coreboot utils ${tree} || \
-	    err "strip_archive: coreboot/${tree}: can't build utils"
+		x_ ./update project trees coreboot ${tree}
+	x_ ./build coreboot utils ${tree}
 
 	if [ "${microcode_required}" = "n" ]; then
 		for romfile in "${romdir}"/*.rom; do
@@ -134,21 +118,17 @@ strip_archive()
 		done
 		for romfile in "${romdir}"/*.tmprom; do
 			[ -f "${romfile}" ] || continue
-			mv "${romfile}" "${romfile%.tmprom}.rom" || \
-			    err "can't make no-u rom: ${romfile%.tmprom}.rom"
+			x_ mv "${romfile}" "${romfile%.tmprom}.rom"
 		done
 	fi
 
 	# Hash the rom before removing blobs
-	rm -f "${romdir}/blobhashes" || \
-	    err "strip_archive: !rm -f ${blobdir}/blobhashes"
-	touch "${romdir}/blobhashes" || \
-	    err "strip_archive: !touch ${blobdir}/blobhashes"
+	x_ rm -f "${romdir}/blobhashes"
+	x_ touch "${romdir}/blobhashes"
 
 	(
-	cd "${romdir}" || err "strip_archive: !cd ${romdir}"
-	sha512sum *.rom >> blobhashes || \
-	    err "strip_archive: ${romdir}: !sha512sum *.rom >> blobhashes"
+	x_ cd "${romdir}"
+	x_ sha512sum *.rom >> blobhashes
 	)
 
 	for romfile in "${romdir}"/*.rom; do
@@ -161,40 +141,32 @@ strip_ucode()
 {
 	romfile=${1}
 	_newrom_b="${romfile%.rom}_nomicrocode.tmprom"
-	cp "${romfile}" "${_newrom_b}" || \
-	    err "strip_rom_image: cp \"${romfile}\" \"${_newrom_b}\""
+	x_ cp "${romfile}" "${_newrom_b}"
 	microcode_present="y"
 	"${cbfstool}" "${_newrom_b}" remove -n \
 	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
 	[ "${microcode_present}" = "n" ] || return 0
 	printf "REMARK: '%s' already lacks microcode\n" "${romfile}" 1>&2
 	printf "Renaming default ROM file instead.\n" 1>&2
-	mv "${romfile}" "${_newrom_b}" || \
-	    err "strip_rom_image: can't rename no-u ${romfile}"
+	x_ mv "${romfile}" "${_newrom_b}"
 }
 
 strip_rom_image()
 {
 	[ -f "${1}" ] || return 0
 	[ "${CONFIG_HAVE_ME_BIN}" != "y" ] || \
-		"${ifdtool}" --nuke me "${1}" -O "${1}" || \
-		    err "strip_rom_images: ${1}: cannot nuke Intel ME"
+		x_ "${ifdtool}" --nuke me "${1}" -O "${1}"
 	[ "${CONFIG_HAVE_MRC}" != "y" ] || \
-		"${cbfstool}" "${1}" remove -n mrc.bin || \
-		    err "strip_rom_images: ${1}: cannot nuke mrc.bin"
+		x_ "${cbfstool}" "${1}" remove -n mrc.bin
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
-		"${cbfstool}" "${1}" remove -n sch5545_ecfw.bin || \
-		    err "strip_rom_images: ${1}: can't nuke sch5545ec fw"
+		x_ "${cbfstool}" "${1}" remove -n sch5545_ecfw.bin
 	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		"${cbfstool}" "${1}" remove -n ecfw1.bin || \
-		    err "strip_rom_images: ${1}: can't nuke ecfw1.bin"
-		"${cbfstool}" "${1}" remove -n ecfw2.bin || \
-		    err "strip_rom_images: ${1}: can't nuke ecfw2.bin"
+		x_ "${cbfstool}" "${1}" remove -n ecfw1.bin
+		x_ "${cbfstool}" "${1}" remove -n ecfw2.bin
 	fi
 	# TODO: replace this board-specific hack
 	[ "${target}" = "e6400_4mb" ] || return 0
-	"${cbfstool}" "${1}" remove -n "pci10de,06eb.rom" || \
-	    err "strip_rom_images: ${1}: can't nuke e6400 vga rom"
+	x_ "${cbfstool}" "${1}" remove -n "pci10de,06eb.rom"
 }
 
 main $@

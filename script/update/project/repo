@@ -23,11 +23,9 @@ main()
 
 	clone_project
 	[ "${depend}" = "" ] || for d in ${depend} ; do
-		./update project repo ${d} || \
-		  fail "Cannot fetch dependency, ${d}, for project, ${name}"
+		xx_ ./update project repo ${d}
 	done
-
-	rm -Rf "${tmp_dir}" || fail "cannot remove tmpdir, ${tmp_dir}"
+	xx_ rm -Rf "${tmp_dir}"
 }
 
 verify_config()
@@ -39,8 +37,8 @@ verify_config()
 
 clone_project()
 {
-	rm -Rf "${tmp_dir}" || fail "clone_project: cannot remove old tmpdir"
-	mkdir -p "${tmp_dir%/*}" || fail "clone_project: can't mkdir"
+	xx_ rm -Rf "${tmp_dir}"
+	xx_ mkdir -p "${tmp_dir%/*}"
 
 	git clone ${url} "${tmp_dir}" || git clone ${bkup_url} "${tmp_dir}" || \
 	    fail "clone_project: could not download ${name}"
@@ -50,12 +48,9 @@ clone_project()
 	    fail "clone_project ${loc}/: cannot apply patches"
 
 	[ ! -d "${loc}" ] || \
-		rm -Rf "${loc}" || \
-		    fail "clone_project: Can't remove directory '${loc}'"
-	[ "${loc}" = "${loc%/*}" ] || mkdir -p ${loc%/*} || \
-	    fail "clone_project: cannot make directory for ${name}"
-	mv "${tmp_dir}" "${loc}" || \
-	    fail "clone_project: could not copy temp file to destination"
+		xx_ rm -Rf "${loc}"
+	[ "${loc}" = "${loc%/*}" ] || xx_ mkdir -p ${loc%/*}
+	xx_ mv "${tmp_dir}" "${loc}"
 }
 
 fail()

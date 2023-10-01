@@ -10,25 +10,19 @@ set -u -e
 
 main()
 {
-	[ -d "grub/" ] || ./update project repo grub || err "cannot fetch grub"
+	[ -d "grub/" ] || x_ ./update project repo grub
 	build_grub
 }
 
 build_grub()
 {
 	(
-	cd grub/ || \
-	    err "build_grub: cd"
-	[ ! -d Makefile ] || make distclean || \
-	    err "build_grub: make-distclean"
-	./bootstrap --gnulib-srcdir=gnulib/ --no-git || \
-	    err "build_grub: gnulib bootstrap"
-	./autogen.sh || \
-	    err "build_grub: autogen.sh"
-	./configure --with-platform=coreboot || \
-	    err "build_grub: autoconf"
-	make -j$(nproc) FS_PAYLOAD_MODULES="" || \
-	    err "build_grub: make"
+	x_ cd grub/
+	[ ! -d Makefile ] || x_ make distclean
+	x_ ./bootstrap --gnulib-srcdir=gnulib/ --no-git
+	x_ ./autogen.sh
+	x_ ./configure --with-platform=coreboot
+	x_ make -j$(nproc) FS_PAYLOAD_MODULES=""
 	)
 }
 

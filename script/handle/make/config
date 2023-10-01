@@ -56,8 +56,7 @@ handle_dependencies()
 	    fail "Cannot get options for ${cfgsdir}"
 	[ $# -gt 0 ] && targets=$@
 
-	[ -d "${elfdir}" ] || [ "${mode}" != "all" ] || \
-		mkdir -p "${elfdir}/" || fail "can't create directory ${elfdir}"
+	[ "${mode}" = "all" ] && xx_ mkdir -p "${elfdir}/"
 }
 
 handle_targets()
@@ -67,8 +66,8 @@ handle_targets()
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ "${mode}" != "all" ] || \
-			./update blobs download ${target} || fail "blobutil"
-		handle_defconfig || fail "error handling config file"
+			xx_ ./update blobs download ${target}
+		xx_ handle_defconfig
 	done
 
 	[ "${mode}" = "all" ] || return 0
@@ -96,8 +95,7 @@ handle_defconfig()
 handle_src_tree()
 {
 	target_dir="${cfgsdir}/${target}"
-	mkdir -p "${elfdir}/${target}" || \
-	    fail "handle_src_tree: !mkdir -p ${elfdir}/${target}"
+	xx_ mkdir -p "${elfdir}/${target}"
 
 	eval "$(setvars "undefined" arch tree)"
 	romtype="normal"
@@ -121,8 +119,7 @@ handle_src_tree()
 			    "${codedir}" 1>&2
 			return 1
 		fi
-		./update project trees "${project}" "${target}" || \
-		    fail "handle_src_tree: can't fetch ${project}/${target}"
+		xx_ ./update project trees "${project}" "${target}"
 	elif [ "${mode}" = "distclean" ] || \
 	    [ "${mode}" = "crossgcc-clean" ]; then
 		[ -f "${tmpclean}/${tree}" ] && return 1
@@ -134,8 +131,7 @@ handle_src_tree()
 		[ "${mode}" != "all" ] || check_cross_compiler || \
 		    fail "handle_src_tree ${project}/${target}: crossgcc"
 		cbfstool="cbutils/${tree}/cbfstool"
-		[ -f "${cbfstool}" ] || ./build coreboot utils "${tree}" || \
-		    fail "handle_src_tree: cannot build cbfstool"
+		[ -f "${cbfstool}" ] || xx_ ./build coreboot utils "${tree}"
 	fi
 }
 
@@ -156,8 +152,7 @@ check_cross_compiler()
 	# only true if not building coreboot:
 	ctarget="${cbdir#coreboot/}"
 	[ -d "${cbdir}" ] || \
-		./update project trees coreboot ${ctarget} || \
-		    fail "check_cross_compiler: can't fetch coreboot/${ctarget}"
+		xx_ ./update project trees coreboot ${ctarget}
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \
@@ -205,17 +200,13 @@ check_config()
 		printf "Build already exists, so skipping build\n" 1>&2
 		return 1
 	done
-	mkdir -p "${dest_dir}" || \
-	    fail "check_config: cannot mkdir: ${dest_dir}"
+	xx_ mkdir -p "${dest_dir}"
 }
 
 run_make_command()
 {
-	./handle make file -c "${codedir}" || \
-	    fail "run_make_command: make distclean/clean failed"
-
-	cp "${config}" "${codedir}/.config" || \
-	    fail "run_make_command: can't copy config for: ${project}/${target}"
+	xx_ ./handle make file -c "${codedir}"
+	xx_ cp "${config}" "${codedir}/.config"
 	[ "${mode}" != "all" ] || make -C "${codedir}" silentoldconfig || \
 	    make -C "${codedir}" oldconfig || : # don't error on oldconfig
 
@@ -223,30 +214,26 @@ run_make_command()
 		printf "%s\n" "${our_version}" >"${codedir}/.coreboot-version" \
 		    || fail "run_make_command: ${codedir}: can't set version"
 	fi
-	make -C "${codedir}" -j$(nproc) ${mode} || \
-	    fail "run_make: !make-${mode}: ${codedir} (${project}/${target})"
+	xx_ make -C "${codedir}" -j$(nproc) ${mode}
+
 	if [ -e "${codedir}/.git" ] && [ "${project}" = "u-boot" ] && \
 	    [ "${mode}" = "distclean" ]; then
-		git -C "${codedir}" clean -fdx || \
-		    fail "run_make_command: ${codedir}: cannot clean u-boot git"
+		xx_ git -C "${codedir}" clean -fdx
 	elif [ "${mode}" = "oldconfig" ] || [ "${mode}" = "menuconfig" ]; then	
-		cp "${codedir}/.config" "${config}" || \
-		    fail "run_make: can't edit config: ${project}/${target}"
+		xx_ cp "${codedir}/.config" "${config}"
 	fi
 }
 
 copy_elf()
 {
-	[ "${project}" != "coreboot" ] || modify_coreboot_rom || \
-	    fail "copy_elf: cannot prepare coreboot image"
+	[ "${project}" != "coreboot" ] || xx_ modify_coreboot_rom
 
 	while read f; do
-		[ ! -f "${codedir}/$f" ] || cp "${codedir}/${f}" \
-		    "${dest_dir}/" || fail "copy_elf: cannot copy elf file"
+		[ ! -f "${codedir}/$f" ] || \
+			xx_ cp "${codedir}/${f}" "${dest_dir}/"
 	done < ${listfile}
 
-	./handle make file -c "${codedir}" || \
-	    fail "copy_elf: clean: ${codedir} (${project}/${target})"
+	xx_ ./handle make file -c "${codedir}"
 }
 
 modify_coreboot_rom()
@@ -255,32 +242,26 @@ modify_coreboot_rom()
 	[ -f "${rompath}" ] || \
 	    fail "modify_coreboot_rom: does not exist: ${rompath}"
 	tmprom="$(mktemp -t rom.XXXXXXXXXX)"
-	rm -f "${tmprom}" || \
-	    fail "modify_coreboot_rom prep: cannot remove tmprom"
+	xx_ rm -f "${tmprom}"
 
 	if [ "${romtype}" = "d8d16sas" ]; then
 		# pike2008 roms hang seabios. an empty rom will override
 		# the built-in one, thus disabling all execution of it
-		touch "${tmprom}" || \
-		    fail "modify_coreboot_rom: cannot create fake oprom"
+		xx_ touch "${tmprom}"
 		for deviceID in "0072" "3050"; do
-			"${cbfstool}" "${rompath}" add -f "${tmprom}" \
-			    -n "pci1000,${deviceID}.rom" -t raw || \
-			    fail "modify_coreboot_rom: can't insert fake rom"
+			xx_ "${cbfstool}" "${rompath}" add -f "${tmprom}" \
+			    -n "pci1000,${deviceID}.rom" -t raw
 		done
 	elif [ "${romtype}" = "i945 laptop" ]; then
 		# for bucts-based installation method from factory bios
-		dd if="${rompath}" of="${tmprom}" bs=1 \
+		xx_ dd if="${rompath}" of="${tmprom}" bs=1 \
 		    skip=$(($(stat -c %s "${rompath}") - 0x10000)) \
-		    count=64k || \
-		    fail "modify_coreboot_rom: can't read i945 bootblock"
-		dd if="${tmprom}" of="${rompath}" bs=1 \
+		    count=64k
+		xx_ dd if="${tmprom}" of="${rompath}" bs=1 \
 		    seek=$(($(stat -c %s "${rompath}") - 0x20000)) \
-		    count=64k conv=notrunc || \
-		    fail "modify_coreboot_rom: can't write i945 bootblock"
+		    count=64k conv=notrunc
 	fi
-	rm -f "${tmprom}" || \
-	    fail "modify_coreboot_rom: cannot remove tmprom"
+	xx_ rm -f "${tmprom}"
 }
 
 fail()

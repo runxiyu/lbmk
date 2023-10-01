@@ -41,8 +41,7 @@ build_bootroms()
 {
 	opts="${_displaymode} ${_payload} ${_keyboard}"
 	for x in ${boards}; do
-		./build boot roms_helper ${opts} ${x} || \
-		    err "handle_targets ${opts} ${x}: build error"
+		x_ ./build boot roms_helper ${opts} ${x}
 		[ -d "bin/${x}" ] && targets="${x} ${targets}"
 	done
 }

@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
+xfail=""
+
+x_() {
+	[ $# -lt 1 ] || ${@} || err "${@}"
+}
+xx_() {
+	[ $# -lt 1 ] || ${@} || fail "${@}"
+}
+
 setvars()
 {
 	_setvars=""

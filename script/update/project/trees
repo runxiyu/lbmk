@@ -15,7 +15,7 @@ eval "$(setvars "" _target tree rev project cfgsdir)"
 
 main()
 {
-	rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 1"
+	x_ rm -f "${cfgsdir}"/*/seen
 
 	printf "Downloading %s and (if available) applying patches\n" \
 	    ${project}
@@ -32,11 +32,10 @@ main()
 	    err "No targets available for project: ${project}"
 
 	for x in ${targets}; do
-		rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 2"
-		download_for_target "${x}" || \
-		    err "${project}/${target}: cannot download source tree"
+		x_ rm -f "${cfgsdir}"/*/seen
+		x_ download_for_target "${x}"
 	done
-	rm -f "${cfgsdir}"/*/seen || err_rm_seen "main 3"
+	x_ rm -f "${cfgsdir}"/*/seen
 }
 
 download_for_target()
@@ -45,10 +44,8 @@ download_for_target()
 	tree="undefined"
 	rev="undefined"
 
-	fetch_config "${_target}" || \
-	    err "download_for_target: ${project}/${_target}: bad target.cfg"
-
-	rm -f "${cfgsdir}"/*/seen || err_rm_seen "download_for_target"
+	x_ fetch_config "${_target}"
+	x_ rm -f "${cfgsdir}"/*/seen
 
 	if [ -d "${project}/${tree}" ]; then
 		printf "REMARK: download/%s %s: exists. Skipping.\n" \
@@ -60,8 +57,7 @@ download_for_target()
 
 	fetch_from_upstream || \
 	    err "download_for_target: cannot fetch: ${project}"
-	prepare_new_tree "${_target}" "${tree}" "${rev}" || \
-	    err "download_for_target: cannot create tree: ${project}/${tree}"
+	x_ prepare_new_tree "${_target}" "${tree}" "${rev}"
 }
 
 fetch_config()
@@ -82,14 +78,16 @@ fetch_config()
 			_target="${tree}"
 			continue
 		elif [ "${tree}" = "undefined" ]; then
-			printf "ERROR (fetch_config): download/%s:" 1>&2
+			printf "ERROR (fetch_config): download/%s:" \
+			    "${project}" 1>&2
 			printf " tree name undefined for '%s\n'" \
-			    "${project}" "${_target}" 1>&2
+			    "${_target}" 1>&2
 			return 1
 		elif [ "${rev}" = "undefined" ]; then
-			printf "ERROR (fetch_config): download/%s:" 1>&2
+			printf "ERROR (fetch_config): download/%s:" \
+			    "${project}" 1>&2
 			printf " commit ID undefined for '%s'\n" \
-			    "${project}" "${_target}" 1>&2
+			    "${_target}" 1>&2
 			return 1
 		else
 			break
@@ -114,8 +112,7 @@ check_config_for_target()
 		    1>&2
 		return 1
 	fi
-	touch "${cfgsdir}/${_target}/seen" || \
-	    err "${project}/${_target}: touch \"${cfgsdir}/${_target}/seen\""
+	x_ touch "${cfgsdir}/${_target}/seen"
 }
 
 fetch_from_upstream()
@@ -137,26 +134,17 @@ prepare_new_tree()
 	[ "${tree}" != "${target}" ] && \
 		printf "(for target, %s)\n" "${target}"
 
-	cp -R "${project}/${project}" "${project}/${tree}" || \
-	    err "${project}/${tree}: cannot copy source tree"
-	git_reset_rev "${project}/${tree}" "${rev}" "err" || \
-	    err "prepare_new_trees ${project}/${tree}: cannot reset <- ${rev}"
+	x_ cp -R "${project}/${project}" "${project}/${tree}"
+	x_ git_reset_rev "${project}/${tree}" "${rev}" "err"
 
 	(
-	cd "${project}/${tree}" || \
-	    err "prepare_new_tree: !cd \"${project}/${tree}\""
+	x_ cd "${project}/${tree}"
 	git submodule update --init --checkout || \
 	    err "prepare_new_tree ${project}/${tree}: can't update git modules"
 	)
 
-	git_am_patches "${PWD}/${project}/${tree}" \
-	    "${PWD}/${cfgsdir}/${tree}/patches" "err" || \
-	    err "prepare_new_trees ${project}/${tree}: cannot apply patches"
-}
-
-err_rm_seen()
-{
-	err "${1}: ${project}/${target}: cannot rm: \"${cfgsdir}/*/seen\""
+	x_ git_am_patches "${PWD}/${project}/${tree}" \
+	    "${PWD}/${cfgsdir}/${tree}/patches" "err"
 }
 
 main $@

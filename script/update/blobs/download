@@ -41,21 +41,16 @@ detect_firmware()
 build_dependencies()
 {
 	[ -d ${cbdir} ] || \
-		./update project trees coreboot ${cbdir##*/} || \
-		    err "build_dependencies: can't fetch ${cbdir}"
+		x_ ./update project trees coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "${d}" ] && continue
-		./update project repo "${d}" || \
-		    err "build_dependencies: can't fetch ${d}"
+		x_ ./update project repo "${d}"
 	done
 	[ -f uefitool/uefiextract ] || \
-		./handle make file -b uefitool || \
-		    err "build_dependencies: can't build uefitool"
+		x_ ./handle make file -b uefitool
 	[ -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ] || \
-		make -C "${cbdir}/util/kbc1126" || \
-		    err "build_dependencies: can't build kbc1126_ec_dump"
-	./build coreboot utils default || \
-	    err "build_dependencies: cannot build utils in cbutils/default/"
+		x_ make -C "${cbdir}/util/kbc1126"
+	x_ ./build coreboot utils default
 }
 
 download_blobs()
@@ -117,13 +112,12 @@ extract_intel_me()
 extract_kbc1126ec()
 {
 	(
-	cd "${appdir}/" || \
-	    err "extract_kbc1126_ec: !cd \"${appdir}/\""
+	x_ cd "${appdir}/"
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || err "extract_kbc1126_ec !extract"
-		mv Rom.bin ec.bin || err "extract_kbc1126_ec: *didn't* extract"
+		    x_ unar -D 68*.CAB Rom.bin
+		x_ mv Rom.bin ec.bin
 	fi
 	[ -f ec.bin ] || err "extract_kbc1126_ec ${board}: can't extract"
 	"${kbc1126_ec_dump}" ec.bin || \
@@ -135,8 +129,7 @@ extract_kbc1126ec()
 	done
 	[ "${ec_ex}" = "y" ] || \
 	    err "extract_kbc1126_ec ${board}: didn't extract ecfw1/2.bin"
-	cp "${appdir}/"ec.bin.fw* "${_dest%/*}/" || \
-	    err "extract_kbc1126_ec: cant mv ecfw1/2 ${_dest%/*}"
+	x_ cp "${appdir}/"ec.bin.fw* "${_dest%/*}/"
 }
 
 extract_e6400vga()
@@ -148,14 +141,13 @@ extract_e6400vga()
 	tail -c +${E6400_VGA_offset} "${_dl}" | \
 	    gunzip >"${appdir}/bios.bin" || :
 	(
-	cd "${appdir}" || err "extract_e6400vga: can't cd ${appdir}"
+	x_ cd "${appdir}"
 	[ -f "bios.bin" ] || err "extract_e6400vga: can't extract bios.bin"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
-	cp "${appdir}"/"${E6400_VGA_romname}" "${_dest}" || \
-	    err "extract_e6400vga: can't copy vga rom to ${_dest}"
+	x_ cp "${appdir}"/"${E6400_VGA_romname}" "${_dest}"
 }
 
 # TODO: this code is cancer. hardcoded is bad, and stupid.

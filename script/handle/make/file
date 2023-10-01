@@ -29,14 +29,13 @@ main()
 
 handle_dependencies()
 {
-	[ -d "${project}" ] || ./update project repo "${project%/*}" || \
-	    err "handle_dependencies: can't fetch ${project%/*}"
+	[ -d "${project}" ] || x_ ./update project repo "${project%/*}"
 	[ -d "${project}" ] || \
 		err "handle_dependencies: ${project%/*} not downloaded"
 
 	[ "${project}" = "uefitool" ] || return 0 # TODO: remove hardcoding
 	(
-	cd uefitool || err "handle_dependencies: !cd uefitool"
+	x_ cd uefitool
 	cmake UEFIExtract/ || [ -f Makefile ] || \
 	    err "handle_dependencies: !cmake UEFIExtract/"
 	)
@@ -45,11 +44,9 @@ handle_dependencies()
 run_make_command()
 {
 	if [ -z "${mode}" ]; then
-		make -C "${project}" -j$(nproc) || \
-		    err "run_make_command: !make -C ${project}"
+		x_ make -C "${project}" -j$(nproc)
 	else
-		make -C "${project}" clean || \
-		    err "run_make_command: ${project}: make-clean failed"
+		x_ make -C "${project}" clean
 		make -C "${project}" distclean || :
 	fi
 }

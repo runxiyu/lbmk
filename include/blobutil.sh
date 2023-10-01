@@ -52,14 +52,14 @@ fetch()
 	_dest="${5##*../}"
 	_dl="${blobdir}/cache/${dlsum}"
 
-	mkdir -p "${_dl%/*}" || err "fetch: !mkdir ${_dl%/*}"
+	x_ mkdir -p "${_dl%/*}"
 
 	dl_fail="y"
 	vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
 	for url in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${url}" ] && continue
-		rm -f "${_dl}" || err "fetch: !rm -f ${_dl}"
+		x_ rm -f "${_dl}"
 		curl --location --retry 3 -A "${_ua}" "${url}" -o "${_dl}" || \
 		    wget --tries 3 -U "${_ua}" "${url}" -O "${_dl}" || \
 		    continue
@@ -68,7 +68,7 @@ fetch()
 	[ "${dl_fail}" = "y" ] && \
 		err "fetch ${dlsum}: matched file unavailable"
 
-	rm -Rf "${_dl}_extracted" || err "!rm ${_dl}_extracted"
+	x_ rm -Rf "${_dl}_extracted"
 	mkdirs "${_dest}" "extract_${dl_type}" || return 0
 	eval "extract_${dl_type}"
 
@@ -89,9 +89,9 @@ mkdirs()
 {
 	[ -f "${1}" ] && \
 		printf "mkdirs ${1} ${2}: already downloaded\n" 1>&2 && return 1
-	mkdir -p "${1%/*}" || err "mkdirs ${1} ${2}: !mkdir ${1%/*}"
-	rm -Rf "${appdir}" || err "mkdirs ${1} ${2}: can't remove ${appdir}"
-	mkdir -p "${appdir}/" || err "mkdirs ${1} ${2}: !mkdir ${appdir}"
+	x_ mkdir -p "${1%/*}"
+	x_ rm -Rf "${appdir}"
+	x_ mkdir -p "${appdir}/"
 	extract_archive "${_dl}" "${appdir}" || \
 	    [ "${2}" = "extract_e6400vga" ] || err "mkdirs ${1} ${2}: !extract"
 }

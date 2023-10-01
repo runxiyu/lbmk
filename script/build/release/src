@@ -45,31 +45,23 @@ create_release_directory()
 	dirname="${projectname}-${version}_src"
 	srcdir="${reldir}/${dirname}"
 
-	[ -d "release/" ] || mkdir -p release/ || \
-	    err "create_release_directory: !mkdir -p release/"
-	[ -d "${reldir}/" ] || mkdir -p "${reldir}/" || \
-	    err "create_release_directory: !mkdir -p ${reldir}/"
-	[ ! -d "${srcdir}/" ] || rm -Rf "${srcdir}/" || \
-	    err "create_release_directory: !rm -Rf ${srcdir}/"
+	[ -d "release/" ] || x_ mkdir -p release/
+	[ -d "${reldir}/" ] || x_ mkdir -p "${reldir}/"
+	[ ! -d "${srcdir}/" ] || x_ rm -Rf "${srcdir}/"
 	[ ! -f "${srcdir}.tar.xz" ] || \
-		rm -f "${srcdir}.tar.xz/" || \
-		    err "create_release_directory: !rm -f ${srcdir}.tar.xz/"
+		x_ rm -f "${srcdir}.tar.xz/"
 
-	mkdir -p "${srcdir}/" || \
-	    err "create_release_directory: !mkdir -p ${srcdir}/"
-	printf "%s" "${version}" > "${srcdir}"/version || \
-	    err "create_release_directory: ${srcdir}/version: can't create file"
+	x_ mkdir -p "${srcdir}/"
+	x_ printf "%s" "${version}" > "${srcdir}"/version
 }
 
 download_modules()
 {
 	for modname in ${trees_fetch_list}; do
-		[ -d "${modname}" ] || ./update project trees ${modname} || \
-		    err "download_modules: couldn't download ${modname} trees"
+		[ -d "${modname}" ] || x_ ./update project trees ${modname}
 	done
 	for modname in ${simple_fetch_list} ${download_only_list}; do
-		[ -d "${modname}/" ] || ./update project repo ${modname} || \
-		    err "download_modules: couldn't download ${modname} repo"
+		[ -d "${modname}/" ] || x_ ./update project repo ${modname}
 	done
 }
 
@@ -80,34 +72,27 @@ copy_files()
 		for subdir in "${dir}"/*; do
 			[ -d "${subdir}" ] || continue
 			[ "${subdir##*/}" = "${dir}" ] && continue
-			mkdir -p "${srcdir}/${dir}" || \
-			    err "copy_files: !mkdir -p ${srcdir}/${dir}"
+			x_ mkdir -p "${srcdir}/${dir}"
 			[ ! -d "${srcdir}/${dir}/${subdir##*/}" ] || \
-			    rm -Rf "${srcdir}/${dir}/${subdir##*/}" || \
-			    err "copy_f:can't rm ${srcdir}/${dir}/${subdir##*/}"
-			cp -R "${subdir}" "${srcdir}/${dir}/${subdir##*/}" || \
-			    err "copy_f:can't cp ${srcdir}/${dir}/${subdir##*/}"
+			    x_ rm -Rf "${srcdir}/${dir}/${subdir##*/}"
+			x_ cp -R "${subdir}" "${srcdir}/${dir}/${subdir##*/}"
 		done
 	done
 	for dir in ${simple_fetch_list} ${dirlist}; do
-		cp -R "${dir}/" "${srcdir}/" || \
-		    err "copy_files: !cp -R ${dir}/ ${srcdir}/"
+		x_ cp -R "${dir}/" "${srcdir}/"
 	done
 
 	for i in ${filelist}; do
 		if [ ! -f "${i}" ]; then
-			rm -Rf "${srcdir}" || \
-			    err "copy_files: !rm -Rf ${srcdir}"
+			x_ rm -Rf "${srcdir}"
 			err "copy_files: file '${i}' does not exist"
 		fi
-		cp "${i}" "${srcdir}/" || \
-		    err "copy_files: !cp ${i} ${srcdir}/"
+		x_ cp "${i}" "${srcdir}/"
 	done
 	(
-	cd "${srcdir}/" || err "copy_files: can't enter dir: ${srcdir}/"
+	x_ cd "${srcdir}/"
 	for i in ${linklist}; do
-		ln -s lbmk "${i}" || \
-		    err "copy_files: cannot create symlink: ${i} -> lbmk"
+		x_ ln -s lbmk "${i}"
 	done
 	)
 }
@@ -115,55 +100,40 @@ copy_files()
 purge_files()
 {
 	(
-	cd "${srcdir}/" || err "purge_files 3: !cd ${srcdir}/"
+	x_ cd "${srcdir}/"
 	[ ! -d "coreboot/default/util/kbc1126" ] || \
-	    ./handle make file -c "coreboot/default/util/kbc1126" || \
-	    err "purge_files 1: default/util/kbc1126: ! make clean"
-	./handle make config -x coreboot || \
-	    err "purge_files: coreboot: cannot clean crossgcc files"
+		x_ ./handle make file -c "coreboot/default/util/kbc1126"
+	x_ ./handle make config -x coreboot
 	for p in u-boot seabios coreboot; do
-		./handle make config -c "${p}" || \
-		    err "purge_files: ${p}: cannot clean the source trees"
+		x_ ./handle make config -c "${p}"
 	done
 	for p in bios_extract flashrom grub uefitool; do
-		./handle make file -c "${p}" || \
-		    err "purge_files: !./handle make file -c ${p}"
+		x_ ./handle make file -c "${p}"
 	done
 	for p in "stm32-vserprog" "stm32-vserprog/libopencm3"; do
-		./handle make file -c "util-fw/${p}" || \
-		    err "purge_files !./handle make file util-fw/${p}"
+		x_ ./handle make file -c "util-fw/${p}"
 	done
 	for p in 32 64; do
-		./handle make file -c "memtest86plus/build${p}" || \
-		    err "purge_files: cannot clean memtest86+ build${p}"
+		x_ ./handle make file -c "memtest86plus/build${p}"
 	done
 	for p in "nvmutil" "spkmodem_recv" "e6400-flash-unlock"; do
-		make clean -C "util/${p}" || \
-		    err "purge_files 2: !make clean -C ${util}/p"
+		x_ make clean -C "util/${p}"
 	done
 	for p in ${trees_fetch_list}; do
-		rm -Rf "${p}/${p}" "${p}"/*/.git* || \
-		    err "purge_files 1: cannot clean ${p} project files"
+		x_ rm -Rf "${p}/${p}" "${p}"/*/.git*
 	done
-	rm -Rf .git* */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
-	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* || \
-	    err "purge_files rm-rf2: can't purge .git files/directories"
-	rm -Rf cbutils || err "purge_files: can't remove ${srcdir}/cbutils/"
-	rm -Rf elf || err "purge_files: can't remove ${srcdir}/elf/"
-	rm -Rf util-fw/rp2040/pico-serprog/build || \
-	    err "purge_files: can't remove pico-serprog/build"
+	x_ rm -Rf .git* */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
+	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git*
+	x_ rm -Rf cbutils elf util-fw/rp2040/pico-serprog/build
 	)
 }
 
 create_release_archive()
 {
 	(
-	cd "${reldir}/" || \
-	    err "create_release_archive 4: !cd ${reldir}/"
-	tar -c "${dirname}/" | xz -T0 -9e >"${dirname}.tar.xz" || \
-	    err "create_release_archive: can't create ${dirname}.tar.xz"
-	rm -Rf "${dirname}/" || \
-	    err "create_release_archive 5: !rm -Rf ${dirname}/"
+	x_ cd "${reldir}/"
+	x_ tar -c "${dirname}/" | xz -T0 -9e >"${dirname}.tar.xz"
+	x_ rm -Rf "${dirname}/"
 	)
 }
 

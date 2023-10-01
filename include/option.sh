@@ -38,6 +38,5 @@ scan_config()
 	done << EOF
 	$(eval "awk '${awkstr}' \"${revfile}\"")
 EOF
-	rm -f "${revfile}" || \
-	    "${_fail}" "scan_config: Cannot remove tmpfile"
+	rm -f "${revfile}" || "${_fail}" "scan_config: Cannot remove tmpfile"
 }

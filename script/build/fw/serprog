@@ -28,8 +28,7 @@ main()
 	else
 		err "${usage}"
 	fi
-	mkdir -p "bin/serprog_${platform}" || \
-	    err "can't create dir: bin/serprog_${platform}"
+	x_ mkdir -p "bin/serprog_${platform}"
 
 	if [ $# -gt 1 ] ; then
 		if [ "${2}" = "list" ] ; then
@@ -47,20 +46,18 @@ main()
 
 fetch_repo()
 {
-	./update project repo "${1}" || err "fetch ${1} failed!\n"
+	x_ ./update project repo "${1}"
 }
 
 build_rp2040_rom()
 {
 	board=${1}
 	printf "Building pico-serprog for ${board}\n"
-	cmake -DPICO_BOARD="${board}" -DPICO_SDK_PATH="${pico_sdk_dir}" \
-	      -B "${pico_src_dir}/build" "${pico_src_dir}" \
-		|| err "can't cmake ${pico_src_dir}"
-	cmake --build "${pico_src_dir}/build"
-	mv ${pico_src_dir}/build/pico_serprog.uf2 \
-	   bin/serprog_rp2040/serprog_${board}.uf2 \
-		|| err "${board} serprog build failed!"
+	x_ cmake -DPICO_BOARD="${board}" -DPICO_SDK_PATH="${pico_sdk_dir}" \
+	    -B "${pico_src_dir}/build" "${pico_src_dir}"
+	x_ cmake --build "${pico_src_dir}/build"
+	x_ mv ${pico_src_dir}/build/pico_serprog.uf2 \
+	   bin/serprog_rp2040/serprog_${board}.uf2
 	printf "output to bin/serprog_rp2040/serprog_${board}.uf2\n"
 }
 
@@ -68,11 +65,10 @@ build_stm32_rom()
 {
 	board=${1}
 	printf "Building stm32-vserprog for ${board}\n"
-	make -C ${stm32_src_dir} libopencm3-just-make BOARD=${board}
-	make -C ${stm32_src_dir} BOARD=${board}
-	mv ${stm32_src_dir}/stm32-vserprog.hex \
-	   bin/serprog_stm32/serprog_${board}.hex \
-		|| err "${board} serprog build failed!"
+	x_ make -C ${stm32_src_dir} libopencm3-just-make BOARD=${board}
+	x_ make -C ${stm32_src_dir} BOARD=${board}
+	x_ mv ${stm32_src_dir}/stm32-vserprog.hex \
+	   bin/serprog_stm32/serprog_${board}.hex
 	printf "output to bin/serprog_stm32/serprog_${board}.hex\n"
 }
 
