@@ -3,28 +3,25 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-eval "$(setvars "" first board boards _displaymode _payload _keyboard)"
+eval "$(setvars "" first board boards _displaymode _payload _keyboard targets)"
 
 main()
 {
 	[ $# -lt 1 ] && usage && err "target not specified"
 
-	first="${1}"
-	[ "${first}" = "help" ] && usage && exit 0
-	[ "${first}" = "list" ] && \
-	    listitems config/coreboot && exit 0
-
 	while [ $# -gt 0 ]; do
 		case ${1} in
+		help) usage && exit 0 ;;
+		list) listitems config/coreboot && exit 0 ;;
 		-d) _displaymode="${2}" ;;
 		-p) _payload="${2}" ;;
 		-k) _keyboard="${2}" ;;
 		all)
-			first="all"
-			continue ;;
+			boards="$(listitems config/coreboot)"
+			shift && continue ;;
 		*)
 			boards="${1} ${boards}"
-			continue ;;
+			shift && continue ;;
 		esac
 		shift 2
 	done

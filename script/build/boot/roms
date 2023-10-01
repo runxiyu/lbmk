@@ -13,7 +13,6 @@ set -u -e
 . "include/boot.sh"
 
 read projectname < projectname
-targets=""
 
 # main() is in include/boot.sh
 
@@ -24,9 +23,6 @@ handle_targets()
 	[ -z "${_keyboard}" ] || _keyboard="-k ${_keyboard}"
 
 	printf "Building %s ROM images\n" "${projectname}"
-
-	[ "${first}" != "all" ] || boards="$(listitems config/coreboot)" || \
-	    err "handle_targets: Cannot get list of boards"
 
 	check_targets
 	build_bootroms
