@@ -187,7 +187,7 @@ build_target()
 			    [ "$displaymode" != "txtmode" ] && continue
 			cbcfg="${targetdir}/config/${initmode}_${displaymode}"
 			[ "${initmode}" = "normal" ] && cbcfg="${cbcfg%_*}"
-			build_roms "${cbcfg}" "${displaymode}" "${initmode}"
+			build_roms "${cbcfg}"
 		done
 	done
 }
@@ -196,8 +196,6 @@ build_target()
 build_roms()
 {
 	cbcfg="${1}"
-	displaymode="${2}"
-	initmode="${3}"
 
 	[ ! -f "${cbcfg}" ] && \
 		printf "'%s' does not exist. Skipping build for %s %s %s\n" \
@@ -222,8 +220,7 @@ build_roms()
 	[ "${payload_seabios}" = "y" ] && \
 		build_seabios_roms
 	[ "${payload_grub}" != "y" ] || \
-		build_grub_roms "${corebootrom}" "${initmode}" \
-		    "${displaymode}" "grub" || \
+		build_grub_roms "${corebootrom}" "grub" || \
 		    err "build_roms: build_grub_roms failed"
 	[ "${payload_uboot}" = "y" ] || return 0
 	build_uboot_roms
@@ -235,13 +232,11 @@ build_seabios_roms()
 		tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 		cp "${corebootrom}" "${tmprom}" || \
 		    err "build_seabios_roms: cannot copy to tmprom"
-		build_grub_roms "${tmprom}" "${initmode}" \
-		    "${displaymode}" "seabios_withgrub" || \
+		build_grub_roms "${tmprom}" "seabios_withgrub" || \
 		    err "build_roms: cannot build grub roms, seabios w/grub"
 		rm -f "${tmprom}" || err "build_roms: can't remove tmprom"
 	else
-		t=$(mkSeabiosRom "${corebootrom}" "fallback/payload" \
-		    "${initmode}") || \
+		t=$(mkSeabiosRom "${corebootrom}" "fallback/payload") || \
 		    err "build_seabios_roms: cannot build tmprom"
 		newrom="${romdir}/seabios_${board}_${initmode}_${displaymode}"
 		[ "${initmode}" = "normal" ] && newrom="${romdir}/seabios" \
@@ -256,20 +251,18 @@ build_seabios_roms()
 # Make separate ROM images with GRUB payload, for each supported keymap
 build_grub_roms() {
 	tmprompath="${1}"
-	initmode="${2}"
-	displaymode="${3}"
-	firstpayloadname="${4}" # allow values: grub, seabios, seabios_withgrub
+	firstpayloadname="${2}" # allow values: grub, seabios, seabios_withgrub
 	grubelf_cbfs="fallback/payload"
 
 	if [ "${payload_grub_withseabios}" = "y" ] && \
 	    [ "${firstpayloadname}" = "grub" ]; then
-		mv "$(mkSeabiosRom "${tmprompath}" "seabios.elf" \
-		    "${initmode}")" "${tmprompath}" || \
+		mv "$(mkSeabiosRom "${tmprompath}" "seabios.elf")" \
+		    "${tmprompath}" || \
 		    err "build_grub_roms: cannot move tmp rom (seabios.elf)"
 	elif [ "${payload_seabios_withgrub}" = "y" ] && \
 	    [ "${firstpayloadname}" != "grub" ]; then
-		mv "$(mkSeabiosRom "${tmprompath}" "fallback/payload" \
-		    "${initmode}")" "${tmprompath}" || \
+		mv "$(mkSeabiosRom "${tmprompath}" "fallback/payload")" \
+		    "${tmprompath}" || \
 		    err "build_grub_roms: cannot move SeaBIOS ROM to tmprom"
 		grubelf_cbfs="img/grub2"
 	fi
@@ -355,8 +348,7 @@ mkSeabiosRom() {
 	target_cbrom="${1}" # rom to insert seabios in. will not be touched
 		# (a tmpfile will be made instead)
 	target_seabios_cbfs_path="${2}" # e.g. fallback/payload
-	target_initmode="${3}" # e.g. libgfxinit
-	target_seabioself="elf/seabios/default/${target_initmode}/bios.bin.elf"
+	target_seabioself="elf/seabios/default/${initmode}/bios.bin.elf"
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	cp "${target_cbrom}" "${tmprom}" || \
@@ -367,12 +359,12 @@ mkSeabiosRom() {
 	"${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup \
 	    || err "mkSeabiosRom: cbfs add-int etc/ps2-keyboard-spinup 3000"
 
-	z="2"; [ "${target_initmode}" = "vgarom" ] && z="0"
+	z="2"; [ "${initmode}" = "vgarom" ] && z="0"
 	"${cbfstool}" "${tmprom}" add-int -i $z -n etc/pci-optionrom-exec || \
 	    err "mkSeabiosRom: cbfs add-int etc/pci-optionrom-exec 0"
 	"${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum || \
 	    err "mkSeabiosRom: cbfs add-int etc/optionroms-checksum 0"
-	[ "${target_initmode}" != "libgfxinit" ] || \
+	[ "${initmode}" != "libgfxinit" ] || \
 		"${cbfstool}" "${tmprom}" add -f "${seavgabiosrom}" \
 		    -n vgaroms/seavgabios.bin -t raw || \
 		    err "mkSeabiosRom: cbfs add-raw vgaroms/seavgabios.bin"
