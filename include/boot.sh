@@ -3,12 +3,7 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-first=""
-board=""
-boards=""
-_displaymode=""
-_payload=""
-_keyboard_layout=""
+eval "$(setvars "" first board boards _displaymode _payload _keyboard_layout)"
 
 main()
 {
