@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-eval "$(setvars "" first board boards _displaymode _payload _keyboard_layout)"
+eval "$(setvars "" first board boards _displaymode _payload _keyboard)"
 
 main()
 {
@@ -16,21 +16,17 @@ main()
 
 	while [ $# -gt 0 ]; do
 		case ${1} in
-		-d)
-			_displaymode="${2}"
-			shift ;;
-		-p)
-			_payload="${2}"
-			shift ;;
-		-k)
-			_keyboard_layout="${2}"
-			shift ;;
+		-d) _displaymode="${2}" ;;
+		-p) _payload="${2}" ;;
+		-k) _keyboard="${2}" ;;
 		all)
-			first="all" ;;
+			first="all"
+			continue ;;
 		*)
-			boards="${1} ${boards}" ;;
+			boards="${1} ${boards}"
+			continue ;;
 		esac
-		shift
+		shift 2
 	done
 
 	handle_targets

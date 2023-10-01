@@ -21,8 +21,7 @@ handle_targets()
 {
 	[ -z "${_displaymode}" ] || _displaymode="-d ${_displaymode}"
 	[ -z "${_payload}" ] || _payload="-p ${_payload}"
-	[ -z "${_keyboard_layout}" ] || \
-		_keyboard_layout="-k ${_keyboard_layout}"
+	[ -z "${_keyboard}" ] || _keyboard="-k ${_keyboard}"
 
 	printf "Building %s ROM images\n" "${projectname}"
 
@@ -44,10 +43,9 @@ check_targets()
 
 build_bootroms()
 {
-	opts="${_displaymode} ${_payload} ${_keyboard_layout}"
+	opts="${_displaymode} ${_payload} ${_keyboard}"
 	for x in ${boards}; do
-		./build boot roms_helper ${_displaymode} ${_payload} \
-		    ${_keyboard_layout} ${x} || \
+		./build boot roms_helper ${opts} ${x} || \
 		    err "handle_targets ${opts} ${x}: build error"
 		[ -d "bin/${x}" ] && targets="${x} ${targets}"
 	done
