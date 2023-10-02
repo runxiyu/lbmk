@@ -15,15 +15,13 @@ eval "$(setvars "" _target tree rev project cfgsdir)"
 
 main()
 {
-	x_ rm -f "${cfgsdir}"/*/seen
-
-	printf "Downloading %s and (if available) applying patches\n" \
-	    ${project}
+	printf "Downloading %s and applying patches\n" ${project}
 
 	[ -z "${1}" ] && err "project name not specified"
 	project="${1}"
 	cfgsdir="config/${project}"
 	[ -d "${cfgsdir}" ] || err "unsupported project name"
+	x_ rm -f "${cfgsdir}/"*/seen
 	shift 1
 
 	targets=$(listitems "${cfgsdir}")
