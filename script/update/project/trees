@@ -21,7 +21,6 @@ main()
 	project="${1}"
 	cfgsdir="config/${project}"
 	[ -d "${cfgsdir}" ] || err "unsupported project name"
-	x_ rm -f "${cfgsdir}/"*/seen
 	shift 1
 
 	targets=$(listitems "${cfgsdir}")
@@ -29,7 +28,7 @@ main()
 	[ -z "${targets}" ] && err "No targets for project: ${project}"
 
 	for x in ${targets}; do
-		x_ rm -f "${cfgsdir}"/*/seen
+		x_ rm -f "${cfgsdir}/"*/seen
 		x_ download_for_target "${x}"
 	done
 	x_ rm -f "${cfgsdir}"/*/seen
