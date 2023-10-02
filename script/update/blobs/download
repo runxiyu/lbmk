@@ -150,8 +150,6 @@ extract_e6400vga()
 	x_ cp "${appdir}"/"${E6400_VGA_romname}" "${_dest}"
 }
 
-# TODO: this code is cancer. hardcoded is bad, and stupid.
-# TODO: make it *scan* (based on signature, in each file)
 extract_sch5545ec()
 {
 	# full system ROM (UEFI), to extract with UEFIExtract:
