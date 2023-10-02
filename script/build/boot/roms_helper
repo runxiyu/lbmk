@@ -32,16 +32,9 @@ eval "$(setvars "undefined" grub_scan_disk tree arch uboot_config)"
 
 # main() is in include/boot.sh
 
-handle_targets()
+check_target()
 {
 	board="${boards%% *}"
-	configure_target
-	build_dependencies
-	build_target
-}
-
-configure_target()
-{
 	targetdir="${cfgsdir}/${board}"
 
 	[ -d "${targetdir}" ] || \
@@ -102,7 +95,7 @@ configure_target()
 	eval "payload_${_payload}=y"
 }
 
-build_dependencies()
+prepare_target()
 {
 	romdir="bin/${board}"
 	cbdir="coreboot/${board}"
@@ -122,6 +115,7 @@ build_dependencies()
 
 	build_dependency_grub
 	build_dependency_uboot
+	build_target
 }
 
 build_dependency_seabios()

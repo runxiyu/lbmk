@@ -26,7 +26,8 @@ main()
 		shift 2
 	done
 
-	handle_targets
+	check_target
+	prepare_target
 }
 
 usage()

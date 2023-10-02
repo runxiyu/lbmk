@@ -16,20 +16,7 @@ read projectname < projectname
 
 # main() is in include/boot.sh
 
-handle_targets()
-{
-	[ -z "${_displaymode}" ] || _displaymode="-d ${_displaymode}"
-	[ -z "${_payload}" ] || _payload="-p ${_payload}"
-	[ -z "${_keyboard}" ] || _keyboard="-k ${_keyboard}"
-
-	printf "Building %s ROM images\n" "${projectname}"
-
-	check_targets
-	build_bootroms
-	confirm_targets
-}
-
-check_targets()
+check_target()
 {
 	for x in ${boards}; do
 		[ -d "config/coreboot/${x}/" ] || \
@@ -37,13 +24,20 @@ check_targets()
 	done
 }
 
-build_bootroms()
+prepare_target()
 {
+	printf "Building %s ROM images\n" "${projectname}"
+
+	[ -z "${_displaymode}" ] || _displaymode="-d ${_displaymode}"
+	[ -z "${_payload}" ] || _payload="-p ${_payload}"
+	[ -z "${_keyboard}" ] || _keyboard="-k ${_keyboard}"
 	opts="${_displaymode} ${_payload} ${_keyboard}"
+
 	for x in ${boards}; do
 		x_ ./build boot roms_helper ${opts} ${x}
 		[ -d "bin/${x}" ] && targets="${x} ${targets}"
 	done
+	confirm_targets
 }
 
 confirm_targets()
