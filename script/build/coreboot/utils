@@ -6,48 +6,41 @@
 set -u -e
 
 . "include/err.sh"
+. "include/option.sh"
 
 main()
 {
 	printf "Building coreboot utils\n"
-
-	if [ $# -gt 0 ]; then
-		for board in "${@}"; do
-			x_ build_for_mainboard ${board}
-		done
-	else
-		for boarddir in config/coreboot/*; do
-			[ ! -d "${boarddir}" ] && continue
-			x_ build_for_mainboard ${boarddir##*/}
-		done
-	fi
+	target="${@}"
+	[ $# -gt 0 ] || target=$(listitems config/coreboot) || err "!targets"
+	for x in ${target}; do
+		x_ build_for_mainboard ${x}
+	done
 }
 
 build_for_mainboard() {
-	board="${1}"
-	[ -d "config/coreboot/${board}" ] || \
-		err "build_for_mainboard ${board}: boarddir does not exist"
-	[ -f "config/coreboot/${board}/target.cfg" ] || \
-		err "build_for_mainboard ${board}: target.cfg does not exist"
+	[ -d "config/coreboot/${1}" ] || \
+		err "build_for_mainboard ${1}: board dir does not exist"
+	[ -f "config/coreboot/${1}/target.cfg" ] || \
+		err "build_for_mainboard ${1}: target.cfg does not exist"
 	tree="undefined"
-	. "config/coreboot/${board}/target.cfg" # source
+	. "config/coreboot/${1}/target.cfg" # source
 	[ "${tree}" = "undefined" ] && \
-		err "build_for_mainboard ${board}: improper tree definition"
+		err "build_for_mainboard ${1}: improper tree definition"
 	buildutils "${tree}"
 }
 
 buildutils() {
-	tree="${1}"
-	[ -d "coreboot/${tree}/" ] || \
-		x_ ./update project trees coreboot ${tree}
+	[ -d "coreboot/${1}/" ] || \
+		x_ ./update project trees coreboot ${1}
 	for util in cbfstool ifdtool; do
-		[ -f "cbutils/${tree}/${util}" ] && continue
-		[ -d "cbutils/${tree}" ] || x_ mkdir -p "cbutils/${tree}"
+		[ -f "cbutils/${1}/${util}" ] && continue
+		[ -d "cbutils/${1}" ] || x_ mkdir -p "cbutils/${1}"
 
-		utildir="coreboot/${tree}/util/${util}"
+		utildir="coreboot/${1}/util/${util}"
 		x_ make distclean -C "${utildir}"
 		x_ make -j$(nproc) -C "${utildir}"
-		x_ cp "${utildir}/${util}" "cbutils/${tree}"
+		x_ cp "${utildir}/${util}" "cbutils/${1}"
 		x_ make distclean -C "${utildir}"
 	done
 }
