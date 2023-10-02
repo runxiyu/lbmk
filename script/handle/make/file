@@ -44,6 +44,7 @@ handle_dependencies()
 
 run_make_command()
 {
+	[ -f "${project}/Makefile" ] || return 0
 	if [ -z "${mode}" ]; then
 		x_ make -C "${project}" -j$(nproc)
 	else
