@@ -21,12 +21,11 @@ main()
 		esac
 		shift; project="${OPTARG}"; shift
 	done
-
 	[ -z "${project}" ] && err "project name not specified"
+	[ $# -gt 0 ] && x_ ./handle make file ${_flag} ${@}
 
 	handle_dependencies
 	run_make_command
-	[ $# -gt 0 ] && x_ ./handle make file ${_flag} ${@}
 }
 
 handle_dependencies()
