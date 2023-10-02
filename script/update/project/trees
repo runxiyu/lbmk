@@ -40,7 +40,6 @@ download_for_target()
 	rev="undefined"
 
 	x_ fetch_config "${_target}"
-	x_ rm -f "${cfgsdir}"/*/seen
 
 	if [ -d "${project}/${tree}" ]; then
 		printf "REMARK: download/%s %s: exists. Skipping.\n" \
