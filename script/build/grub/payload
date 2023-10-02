@@ -21,12 +21,9 @@ main()
 
 handle_dependencies()
 {
-	[ -d "grub/" ] || \
-		x_ ./update project repo grub
-	[ -f "grub/grub-mkstandalone" ] || \
-		x_ ./build grub utils
-	[ -d "${elfdir}" ] || \
-		x_ mkdir -p "${elfdir}"
+	[ -d "grub/" ] || x_ ./update project repo grub
+	[ -f "grub/grub-mkstandalone" ] || x_ ./build grub utils
+	[ -d "${elfdir}" ] || x_ mkdir -p "${elfdir}"
 	x_ rm -f "${elfdir}/"*
 }
 
