@@ -87,8 +87,7 @@ check_config_for_target()
 
 fetch_from_upstream()
 {
-	[ -d "${project}" ] || mkdir -p "${project}" || return 1
-	[ -d "${project}" ] || return 1
+	[ -d "${project}" ] || x_ mkdir -p "${project}"
 	[ -d "${project}/${project}" ] && return 0
 
 	x_ ./update project repo "${project}"
