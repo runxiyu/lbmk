@@ -26,8 +26,7 @@ main()
 
 	targets=$(listitems "${cfgsdir}")
 	[ $# -gt 0 ] && targets=$@
-	[ -z "${targets}" ] && \
-	    err "No targets available for project: ${project}"
+	[ -z "${targets}" ] && err "No targets for project: ${project}"
 
 	for x in ${targets}; do
 		x_ rm -f "${cfgsdir}"/*/seen
