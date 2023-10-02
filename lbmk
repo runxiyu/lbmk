@@ -39,13 +39,16 @@ initialise_command()
 
 	mode="${1}"
 	[ "${mode}" != "dependencies" ] || xx_ install_packages $@
-	[ "$(id -u)" != "0" ] || \
-		fail "running this command as root is not permitted"
+	[ "$(id -u)" != "0" ] || fail "this command as root is not permitted"
 
 	[ "${mode}" = "help" ] && usage ${0} && lbmk_exit 0
-	[ "${mode}" = "list" ] && listitems "${buildpath}" && \
-	    lbmk_exit 0
-	[ $# -lt 2 ] && usage ${0} && lbmk_exit 1
+	if [ "${mode}" = "list" ]; then
+		listitems "${buildpath}"
+		lbmk_exit 0
+	elif [ $# -lt 2 ]; then
+		usage ${0}
+		lbmk_exit 1
+	fi
 
 	option="${2}"
 }
@@ -54,8 +57,7 @@ install_packages()
 {
 	if [ $# -lt 2 ]; then
 		printf "You must specify a distro, namely:\n" 1>&2
-		printf "Look at files under config/dependencies/\n" \
-		    1>&2
+		printf "Look at files under config/dependencies/\n" 1>&2
 		printf "Example: ./build dependencies debian\n" 1>&2
 		fail "install_packages: target not specified"
 	fi
@@ -105,23 +107,20 @@ usage()
 
 lbmk_exit()
 {
-	tmp_cleanup || \
-	    err "lbmk_exit: could not remove tmpdir upon exit $1: ${tmpdir}"
+	tmp_cleanup || err "lbmk_exit: can't rm tmpdir upon exit $1: ${tmpdir}"
 	exit $1
 }
 
 fail()
 {
-	tmp_cleanup || printf "fail(): WARNING: cannot remove tmpdir: %s\n" \
-	    "${tmpdir}" 1>&2
+	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "${tmpdir}" 1>&2
 	err "${1}"
 }
 
 tmp_cleanup()
 {
-	if [ "${tmpdir_was_set}" = "n" ]; then
-		rm -Rf "${tmpdir}" || return 1
-	fi
+	[ "${tmpdir_was_set}" = "n" ] || return 0
+	rm -Rf "${tmpdir}" || return 1
 }
 
 main $@
