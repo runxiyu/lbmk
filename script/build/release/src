@@ -107,21 +107,10 @@ purge_files()
 	for p in u-boot seabios coreboot; do
 		x_ ./handle make config -c "${p}"
 	done
-	for p in bios_extract flashrom grub uefitool; do
-		x_ ./handle make file -c "${p}"
-	done
-	for p in "stm32-vserprog" "stm32-vserprog/libopencm3"; do
-		x_ ./handle make file -c "util-fw/${p}"
-	done
-	for p in 32 64; do
-		x_ ./handle make file -c "memtest86plus/build${p}"
-	done
-	for p in "nvmutil" "spkmodem_recv" "e6400-flash-unlock"; do
-		x_ make clean -C "util/${p}"
-	done
-	for p in ${trees_fetch_list}; do
-		x_ rm -Rf "${p}/${p}" "${p}"/*/.git*
-	done
+	x_ ./handle make file -c bios_extract flashrom grub uefitool \
+	    util-fw/stm32-vserprog util-fw/stm32-vserprog/libopencm3 \
+	    memtest86plus/build* util/* \
+
 	x_ rm -Rf .git* */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
 	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git*
 	x_ rm -Rf cbutils elf util-fw/rp2040/pico-serprog/build

@@ -7,13 +7,14 @@ set -u -e
 
 . "include/err.sh"
 
-eval "$(setvars "" mode project)"
+eval "$(setvars "" mode project _flag)"
 
 main()
 {
 	while getopts b:c: option
 	do
-		case "${1}" in
+		_flag="${1}"
+		case "${_flag}" in
 		-b) : ;;
 		-c) mode="distclean" ;;
 		*) err "Invalid option" ;;
@@ -25,6 +26,7 @@ main()
 
 	handle_dependencies
 	run_make_command
+	[ $# -gt 0 ] && x_ ./handle make file ${_flag} ${@}
 }
 
 handle_dependencies()
@@ -47,7 +49,7 @@ run_make_command()
 		x_ make -C "${project}" -j$(nproc)
 	else
 		x_ make -C "${project}" clean
-		make -C "${project}" distclean || :
+		make -C "${project}" distclean 2>/dev/null || :
 	fi
 }
 
