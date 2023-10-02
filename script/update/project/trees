@@ -11,7 +11,7 @@ set -u -e
 . "include/git.sh"
 . "include/option.sh"
 
-eval "$(setvars "" _target tree rev project cfgsdir)"
+eval "$(setvars "" _target tree rev project cfgsdir _xm)"
 
 main()
 {
@@ -55,10 +55,10 @@ fetch_config()
 	_target=${1}
 
 	while true; do
-		rev="undefined"
-		tree="undefined"
+		eval "$(setvars "" rev tree)"
+		_xm="fetch_config ${project}/${_target}"
 
-		check_config_for_target "${_target}" || return 1
+		check_config_for_target "${_target}"
 
 		# This is to override $rev and $tree
 		. "${cfgsdir}/${_target}/target.cfg" || \
@@ -67,42 +67,22 @@ fetch_config()
 		if [ "${_target}" != "${tree}" ]; then
 			_target="${tree}"
 			continue
-		elif [ "${tree}" = "undefined" ]; then
-			printf "ERROR (fetch_config): download/%s:" \
-			    "${project}" 1>&2
-			printf " tree name undefined for '%s\n'" \
-			    "${_target}" 1>&2
-			return 1
-		elif [ "${rev}" = "undefined" ]; then
-			printf "ERROR (fetch_config): download/%s:" \
-			    "${project}" 1>&2
-			printf " commit ID undefined for '%s'\n" \
-			    "${_target}" 1>&2
-			return 1
-		else
-			break
 		fi
+		[ -z ${tree} ] && err "${_xm}: tree undefined"
+		[ -z ${rev} ] && err "${_xm}: revision undefined"
+		break
 	done
 }
 
 check_config_for_target()
 {
-	_target=${1}
+	[ -f "${cfgsdir}/${1}/target.cfg" ] || \
+		err "${_xm} check: target.cfg does not exist"
 
-	if [ ! -f "${cfgsdir}/${_target}/target.cfg" ]; then
-		printf "ERROR: download/%s: target.cfg does not" \
-		    "${project}" 1>&2
-		printf " exist for '%s'\n" "${_target}" 1>&2
-		return 1
-	elif [ -f "${cfgsdir}/${_target}/seen" ]; then
-		printf "ERROR: download/%s: logical loop:" "${project}" 1>&2
-		printf " '%s' target.cfg refers to another tree," "${_target}" \
-		    1>&2
-		printf " which ultimately refers back to '%s'." "${_target}" \
-		    1>&2
-		return 1
-	fi
-	x_ touch "${cfgsdir}/${_target}/seen"
+	[ -f "${cfgsdir}/${1}/seen" ] && \
+		err "${_xm} check: infinite loop in tree definitions"
+
+	x_ touch "${cfgsdir}/${1}/seen"
 }
 
 fetch_from_upstream()
