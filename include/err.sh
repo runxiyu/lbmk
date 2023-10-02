@@ -2,10 +2,10 @@
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
 x_() {
-	[ $# -lt 1 ] || ${@} || err "${@}"
+	[ $# -lt 1 ] || ${@} || err "non-zero exit status: ${@}"
 }
 xx_() {
-	[ $# -lt 1 ] || ${@} || fail "${@}"
+	[ $# -lt 1 ] || ${@} || fail "non-zero exit status: ${@}"
 }
 
 setvars()
