@@ -19,8 +19,6 @@ main()
 }
 
 build_for_mainboard() {
-	[ -d "config/coreboot/${1}" ] || \
-		err "build_for_mainboard ${1}: board dir does not exist"
 	[ -f "config/coreboot/${1}/target.cfg" ] || \
 		err "build_for_mainboard ${1}: target.cfg does not exist"
 	tree="undefined"
