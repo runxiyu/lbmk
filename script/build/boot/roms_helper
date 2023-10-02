@@ -263,8 +263,7 @@ build_grub_roms()
 		    -n background.png -t raw
 	fi
 
-	tmpcfg=$(mktemp -t coreboot_rom.XXXXXXXXXX) || 
-	    err "build_grub_roms: cannot create temporary scan.cfg"
+	tmpcfg=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 	x_ printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" >"${tmpcfg}"
 	[ "${grub_scan_disk}" = "both" ] || \
 	    x_ "${cbfstool}" "${tmprom}" add -f "${tmpcfg}" -n scan.cfg -t raw
@@ -302,8 +301,7 @@ mkGrubRom() {
 
 	keymapcfg="elf/grub/keymap_${_keymap}.cfg"
 
-	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX) || \
-	    err "mkGrubRom: cannot create tmprom"
+	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 	x_ cp "${_cbrom}" "${tmprom}"
 	x_ "${cbfstool}" "${tmprom}" add -f "${keymapcfg}" -n keymap.cfg -t raw
 

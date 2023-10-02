@@ -24,10 +24,9 @@ scan_config()
 	awkstr=" /\{.*${1}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
 	confdir="${2}"
 	_fail="${3}"
-	revfile="$(mktemp -t sources.XXXXXXXXXX)" || \
-	    "${_fail}" "scan_config: Cannot initialise tmpfile"
+	revfile="$(mktemp -t sources.XXXXXXXXXX)"
 	cat "${confdir}/"* > "${revfile}" || \
-	    "${_fail}" "scan_config: Cannot concatenate files"
+	    "${_fail}" "scan_config ${confdir}: Cannot concatenate files"
 	while read -r line ; do
 		set ${line} 1>/dev/null 2>/dev/null || :
 		if [ "${1%:}" = "depend" ]; then

@@ -18,7 +18,7 @@ export LOCALVERSION="-${projectname}-${our_version}"
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
     elfdir listfile project romtype target target_dir targets tree cbfstool)"
 
-tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)" || fail "!mkdir tmpclean"
+tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)"
 
 main()
 {
