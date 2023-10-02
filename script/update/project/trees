@@ -31,7 +31,6 @@ main()
 		x_ rm -f "${cfgsdir}/"*/seen
 		x_ download_for_target "${x}"
 	done
-	x_ rm -f "${cfgsdir}"/*/seen
 }
 
 download_for_target()
