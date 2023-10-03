@@ -19,17 +19,25 @@ main()
 
 	[ -z "${1}" ] && err "project name not specified"
 	project="${1}" && shift 1
-	cfgsdir="config/${project}"
-	[ -d "${cfgsdir}" ] || err "unsupported project name"
 
-	targets=$(listitems "${cfgsdir}")
-	[ $# -gt 0 ] && targets=$@
-	[ -z "${targets}" ] && err "No targets for project: ${project}"
+	configure_targets $@
 
 	for x in ${targets}; do
 		x_ rm -f "${cfgsdir}/"*/seen
 		download_for_target "${x}"
 	done
+}
+
+configure_targets()
+{
+	cfgsdir="config/${project}"
+	[ -d "${cfgsdir}" ] || err "unsupported project name"
+
+	targets=$(listitems "${cfgsdir}")
+	[ $# -gt 0 ] && targets=$@
+	[ -z "${targets}" ] || return 0
+
+	err "No targets for project: ${project}"
 }
 
 download_for_target()
