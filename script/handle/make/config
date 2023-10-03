@@ -81,7 +81,7 @@ handle_defconfig()
 	for y in "${target_dir}/config"/*; do
 		[ -f "${y}" ] || continue
 		config="${y}"
-		config_name="${config#$target_dir/config/}"
+		config_name="${config#${target_dir}/config/}"
 
 		printf "handle/make/config %s %s: handling config %s\n" \
 		    "${project}" "${target}" "${config_name}"
