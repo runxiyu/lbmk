@@ -109,7 +109,7 @@ purge_files()
 	done
 	x_ ./handle make file -c bios_extract flashrom grub uefitool \
 	    util-fw/stm32-vserprog util-fw/stm32-vserprog/libopencm3 \
-	    memtest86plus/build* util/* \
+	    memtest86plus/build* util/*
 
 	x_ rm -Rf .git* */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
 	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git*

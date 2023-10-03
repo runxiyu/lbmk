@@ -96,13 +96,10 @@ build_dependencies()
 inject_blobs()
 {
 	release_archive="n"
-	if [ "${release}" = "true" ]; then
-		printf "patching release file\n"
-		release_archive="y"
-		patch_release_roms
-	else
-		x_ patch_rom "${rom}"
-	fi
+	[ "${release}" != "true" ] && x_ patch_rom "${rom}" && return 0
+	printf "patching release file\n"
+	release_archive="y"
+	patch_release_roms
 }
 
 patch_release_roms()
@@ -240,11 +237,9 @@ inject_blob_hp_kbc1126_ec()
 
 	if [ "${_ec1_offset}" = "" ] || [ "${_ec1_offset}" = "" ]; then
 		err "inject_blob_hp_kbc1126_ec: ${board}: offset not declared"
-	fi
-	if [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
+	elif [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
 		err "inject_blob_hp_kbc1126_ec: ${board}: EC path not declared"
-	fi
-	if [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
+	elif [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
 		err "inject_blob_hp_kbc1126_ec: ${board}: ecfw not downloaded"
 	fi
 

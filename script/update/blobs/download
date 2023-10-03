@@ -147,7 +147,7 @@ extract_e6400vga()
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
-	x_ cp "${appdir}"/"${E6400_VGA_romname}" "${_dest}"
+	x_ cp "${appdir}/${E6400_VGA_romname}" "${_dest}"
 }
 
 extract_sch5545ec()

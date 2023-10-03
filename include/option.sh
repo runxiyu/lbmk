@@ -29,11 +29,8 @@ scan_config()
 	    "${_fail}" "scan_config ${confdir}: Cannot concatenate files"
 	while read -r line ; do
 		set ${line} 1>/dev/null 2>/dev/null || :
-		if [ "${1%:}" = "depend" ]; then
-			depend="${depend} ${2}"
-		else
-			eval "${1%:}=\"${2}\""
-		fi
+		[ "${1%:}" = "depend" ] && depend="${depend} ${2}" && continue
+		eval "${1%:}=\"${2}\""
 	done << EOF
 	$(eval "awk '${awkstr}' \"${revfile}\"")
 EOF

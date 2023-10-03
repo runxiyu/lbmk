@@ -31,10 +31,8 @@ main()
 
 init_check()
 {
-	[ -f version ] && \
-		read version < version
-	[ -f versiondate ] && \
-		read versiondate < versiondate
+	[ -f version ] && read version < version
+	[ -f versiondate ] && read versiondate < versiondate
 	[ ! -d "bin/" ] && \
 		err "init_check: no ROMs built yet (error)"
 	[ -d "release/" ] || \
@@ -106,9 +104,9 @@ make_archive()
 strip_archive()
 {
 	romdir=${1}
-
 	[ -d "coreboot/${tree}" ] || \
 		x_ ./update project trees coreboot ${tree}
+
 	x_ ./build coreboot utils ${tree}
 
 	if [ "${microcode_required}" = "n" ]; then
@@ -125,12 +123,10 @@ strip_archive()
 	# Hash the rom before removing blobs
 	x_ rm -f "${romdir}/blobhashes"
 	x_ touch "${romdir}/blobhashes"
-
 	(
 	x_ cd "${romdir}"
 	x_ sha512sum *.rom >> blobhashes
 	)
-
 	for romfile in "${romdir}"/*.rom; do
 		[ -f "${romfile}" ] || continue
 		strip_rom_image "${romfile}"

@@ -46,12 +46,9 @@ run_make_command()
 {
 	[ -f "${project}/Makefile" ] || [ -f "${project}/makefile" ] || \
 	    [ -f "${project}/GNUmakefile" ] || return 0
-	if [ -z "${mode}" ]; then
-		x_ make -C "${project}" -j$(nproc)
-	else
-		x_ make -C "${project}" clean
-		make -C "${project}" distclean 2>/dev/null || :
-	fi
+	[ -z "${mode}" ] && x_ make -C "${project}" -j$(nproc) && return 0
+	x_ make -C "${project}" clean
+	make -C "${project}" distclean 2>/dev/null || :
 }
 
 main $@

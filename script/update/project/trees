@@ -18,10 +18,9 @@ main()
 	printf "Downloading %s and applying patches\n" ${project}
 
 	[ -z "${1}" ] && err "project name not specified"
-	project="${1}"
+	project="${1}" && shift 1
 	cfgsdir="config/${project}"
 	[ -d "${cfgsdir}" ] || err "unsupported project name"
-	shift 1
 
 	targets=$(listitems "${cfgsdir}")
 	[ $# -gt 0 ] && targets=$@
@@ -39,21 +38,16 @@ download_for_target()
 	tree="undefined"
 	rev="undefined"
 
-	fetch_config "${_target}"
+	fetch_config
+	[ -d "${project}/${tree}" ] && printf "download/%s %s (%s): exists\n" \
+	    "${project}" "${tree}" "${_target}" 1>&2 && return 0
 
-	if [ -d "${project}/${tree}" ]; then
-		printf "REMARK: download/%s %s (%s): exists. Skipping.\n" \
-		    "${project}" "${tree}" "${_target}" 1>&2
-	else
-		fetch_from_upstream
-		prepare_new_tree
-	fi
+	fetch_from_upstream
+	prepare_new_tree
 }
 
 fetch_config()
 {
-	_target=${1}
-
 	while true; do
 		eval "$(setvars "" rev tree)"
 		_xm="fetch_config ${project}/${_target}"
@@ -64,10 +58,7 @@ fetch_config()
 		. "${cfgsdir}/${_target}/target.cfg" || \
 		    err "fetch_config: no \"${cfgsdir}/${_target}/target.cfg\""
 
-		if [ "${_target}" != "${tree}" ]; then
-			_target="${tree}"
-			continue
-		fi
+		[ "${_target}" != "${tree}" ] && _target="${tree}" && continue
 		[ -z ${tree} ] && err "${_xm}: tree undefined"
 		[ -z ${rev} ] && err "${_xm}: revision undefined"
 		break
@@ -78,7 +69,6 @@ check_config_for_target()
 {
 	[ -f "${cfgsdir}/${1}/target.cfg" ] || \
 		err "${_xm} check: target.cfg does not exist"
-
 	[ -f "${cfgsdir}/${1}/seen" ] && \
 		err "${_xm} check: infinite loop in tree definitions"
 
