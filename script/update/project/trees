@@ -43,8 +43,6 @@ configure_targets()
 download_for_target()
 {
 	_target="${1}"
-	tree="undefined"
-	rev="undefined"
 
 	fetch_config
 	[ -d "${project}/${tree}" ] && printf "download/%s %s (%s): exists\n" \
