@@ -13,9 +13,15 @@ check_git()
 	which git 1>/dev/null 2>/dev/null || \
 	    err "git not installed. please install git-scm."
 	git config --global user.name 1>/dev/null 2>/dev/null || \
-	    err "git config --global user.name \"John Doe\""
+	    git_err "git config --global user.name \"John Doe\""
 	git config --global user.email 1>/dev/null 2>/dev/null || \
-	    err "git config --global user.email \"john.doe@example.com\""
+	    git_err "git config --global user.email \"john.doe@example.com\""
+}
+
+git_err()
+{
+	printf "You need to set git name/email, like so:\n%s\n\n" "${1}"
+	err "Git name/email not configured"
 }
 
 check_project()
