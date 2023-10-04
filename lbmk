@@ -12,12 +12,10 @@ set -u -e
 . "include/export.sh"
 . "include/option.sh"
 
-read projectname < projectname
 linkpath="${0}"
 linkname="${linkpath##*/}"
 buildpath="./script/${linkname}"
-mode=""
-option=""
+eval "$(setvars "" mode option project version versiondate)"
 
 main()
 {
@@ -25,8 +23,8 @@ main()
 	initialise_command $@
 	shift 2
 
-	./checkgit || fail "Please read: https://libreboot.org/docs/build/"
-	./checkversion || fail "Cannot check ${projectname} version"
+	check_git
+	check_project
 
 	execute_command $@
 	lbmk_exit 0
@@ -101,7 +99,7 @@ usage()
 	Example: ./build grub list, which would yield:
 	$(./build grub list)
 
-	Refer to ${projectname} documentation for more info.
+	Refer to ${project} documentation for more info.
 	EOF
 }
 

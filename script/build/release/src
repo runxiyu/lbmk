@@ -16,8 +16,7 @@ download_only_list="pico-serprog stm32-vserprog"
 
 dirlist="config util script include util-fw"
 linklist="build update handle" # symlinks in main directory, to script: lbmk
-filelist="lbmk README.md COPYING version versiondate projectname checkgit"
-filelist="${filelist} checkversion"
+filelist="lbmk README.md COPYING version versiondate projectname"
 
 version="version-unknown"
 versiondate="version-date-unknown"
