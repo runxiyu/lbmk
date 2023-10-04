@@ -11,7 +11,7 @@ xx_() {
 check_git()
 {
 	which git 1>/dev/null 2>/dev/null || \
-	    err "git not installed. please install git-scm."
+	    git_err "git not installed. please install git-scm."
 	git config --global user.name 1>/dev/null 2>/dev/null || \
 	    git_err "git config --global user.name \"John Doe\""
 	git config --global user.email 1>/dev/null 2>/dev/null || \
@@ -20,13 +20,14 @@ check_git()
 
 git_err()
 {
-	printf "You need to set git name/email, like so:\n%s\n\n" "${1}"
+	printf "You need to set git name/email, like so:\n%s\n\n" "${1}" 1>&2
 	fail "Git name/email not configured" || \
 	    err "Git name/email not configured"
 }
 
 check_project()
 {
+	_fail="${1}"
 	read project < projectname
 
 	[ -f version ] && read version < version
@@ -39,8 +40,8 @@ check_project()
 	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
 	    --pretty='%ct' HEAD)" || versiondate="${versiondate_}"
 
-	[ -z ${versiondate} ] && err "Unknown version date"
-	[ -z ${version} ] && err "Unknown version"
+	[ -z ${versiondate} ] && "${_fail}" "Unknown version date"
+	[ -z ${version} ] && "${_fail}" "Unknown version"
 
 	printf "%s\n" "${version}" > version
 	printf "%s\n" "${versiondate}" > versiondate

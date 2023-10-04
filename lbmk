@@ -24,7 +24,7 @@ main()
 	shift 2
 
 	check_git
-	check_project
+	check_project "fail"
 
 	execute_command $@
 	lbmk_exit 0
