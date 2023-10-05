@@ -101,12 +101,12 @@ purge_files()
 	(
 	x_ cd "${srcdir}/"
 	[ ! -d "coreboot/default/util/kbc1126" ] || \
-		x_ ./handle make file -c "coreboot/default/util/kbc1126"
-	x_ ./handle make config -x coreboot
+		x_ ./build project trees -c "coreboot/default/util/kbc1126"
+	x_ ./build project trees -x coreboot
 	for p in u-boot seabios coreboot; do
-		x_ ./handle make config -c "${p}"
+		x_ ./build project trees -c "${p}"
 	done
-	x_ ./handle make file -c bios_extract flashrom grub uefitool \
+	x_ ./build project trees -c bios_extract flashrom grub uefitool \
 	    util-fw/stm32-vserprog util-fw/stm32-vserprog/libopencm3 \
 	    memtest86plus/build32 memtest86plus/build64 util/*
 

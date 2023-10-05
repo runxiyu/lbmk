@@ -128,7 +128,7 @@ prepare_target()
 
 	memtest_bin="memtest86plus/build${arch#*_}/memtest.bin"
 	[ "${payload_memtest}" != "y" ] || [ -f "${memtest_bin}" ] || \
-		x_ ./handle make file -b ${memtest_bin%/*}
+		x_ ./build project trees -b ${memtest_bin%/*}
 
 	x_ rm -f "${romdir}/"*
 
@@ -145,7 +145,7 @@ build_dependency_seabios()
 	    || [ ! -f elf/seabios/default/libgfxinit/bios.bin.elf ] \
 	    || [ ! -f elf/seabios/default/vgarom/bios.bin.elf ] \
 	    || [ ! -f elf/seabios/default/normal/bios.bin.elf ]; then
-		x_ ./handle make config -b seabios
+		x_ ./build project trees -b seabios
 	fi
 }
 
@@ -173,7 +173,7 @@ build_dependency_uboot()
 {
 	[ "${payload_uboot}" = "y" ] || return 0
 
-	x_ ./handle make config -b u-boot ${board}
+	x_ ./build project trees -b u-boot ${board}
 	ubdir="elf/u-boot/${board}/${uboot_config}"
 	ubootelf="${ubdir}/u-boot.elf"
 	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot.bin" ] && \
@@ -210,7 +210,7 @@ build_roms()
 		    "${cbcfg}" "${board}" "${displaymode}" "${initmode}" \
 		    1>&2 && return 0
 
-	x_ ./handle make config -b coreboot ${board}
+	x_ ./build project trees -b coreboot ${board}
 
 	_cbrom="elf/coreboot/${board}/${initmode}_${displaymode}"
 	[ "${initmode}" = "normal" ] && \
