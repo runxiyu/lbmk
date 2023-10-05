@@ -6,30 +6,16 @@
 set -u -e
 
 . "include/err.sh"
+. "include/make.sh"
 
-eval "$(setvars "" mode project _flag)"
+eval "$(setvars "" mode project _flag codedir)"
 
-main()
-{
-	while getopts b:c: option
-	do
-		_flag="${1}"
-		case "${_flag}" in
-		-b) : ;;
-		-c) mode="distclean" ;;
-		*) err "Invalid option" ;;
-		esac
-		shift; project="${OPTARG}"; shift
-	done
-	[ -z "${project}" ] && err "project name not specified"
-	[ $# -gt 0 ] && x_ ./handle make file ${_flag} ${@}
-
-	handle_dependencies
-	run_make_command
-}
+# main() is in include/make.sh
 
 handle_dependencies()
 {
+	[ $# -gt 0 ] && x_ ./handle make file ${_flag} ${@}
+
 	[ -d "${project}" ] || x_ ./update project repo "${project%/*}"
 	[ -d "${project}" ] || \
 		err "handle_dependencies: ${project%/*} not downloaded"
@@ -42,11 +28,11 @@ handle_dependencies()
 	)
 }
 
-run_make_command()
+handle_targets()
 {
 	[ -f "${project}/Makefile" ] || [ -f "${project}/makefile" ] || \
 	    [ -f "${project}/GNUmakefile" ] || return 0
-	[ -z "${mode}" ] && x_ make -C "${project}" -j$(nproc) && return 0
+	[ "${mode}" = "all" ] && x_ make -C "${project}" -j$(nproc) && return 0
 	x_ make -C "${project}" clean
 	make -C "${project}" distclean 2>/dev/null || :
 }
