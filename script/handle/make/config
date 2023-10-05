@@ -97,18 +97,18 @@ handle_src_tree()
 	target_dir="${cfgsdir}/${target}"
 	xx_ mkdir -p "${elfdir}/${target}"
 
-	eval "$(setvars "undefined" arch tree)"
+	eval "$(setvars "" arch tree)"
 	romtype="normal"
 
-	[ ! -f "${target_dir}/target.cfg" ] && \
+	[ -f "${target_dir}/target.cfg" ] || \
 		fail "handle_src_tree: ${target_dir}: missing target.cfg"
 
 	# Override the above defaults using target.cfg
 	. "${target_dir}/target.cfg" # source
 
-	[ "${tree}" = "undefined" ] && \
+	[ -z ${tree} ] && \
 		fail "handle_src_tree: ${target_dir}: tree undefined"
-	[ "${arch}" = "undefined" ] && \
+	[ -z ${arch} ] && \
 		fail "handle_src_tree: ${target_dir}: undefined cpu type"
 
 	codedir="${project}/${tree}"

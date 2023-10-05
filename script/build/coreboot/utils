@@ -21,9 +21,9 @@ main()
 build_for_mainboard() {
 	[ -f "config/coreboot/${1}/target.cfg" ] || \
 		err "build_for_mainboard ${1}: target.cfg does not exist"
-	tree="undefined"
+	tree=""
 	. "config/coreboot/${1}/target.cfg" # source
-	[ "${tree}" = "undefined" ] && \
+	[ -z ${tree} ] && \
 		err "build_for_mainboard ${1}: improper tree definition"
 	buildutils "${tree}"
 }

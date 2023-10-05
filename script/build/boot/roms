@@ -63,9 +63,6 @@ main()
 check_target()
 {
 	targetdir="${cfgsdir}/${board}"
-
-	[ -d "${targetdir}" ] || \
-		err "Target not defined: ${board}"
 	[ -f "${targetdir}/target.cfg" ] || \
 		err "Missing target.cfg for target: ${board}"
 
@@ -74,9 +71,8 @@ check_target()
 
 	[ -z ${grub_scan_disk} ] && \
 		grub_scan_disk="both"
-	[ "${grub_scan_disk}" != "both" ] && \
-	    [ "${grub_scan_disk}" != "ata" ] && \
-	    [ "${grub_scan_disk}" != "ahci" ] && \
+	[ "${grub_scan_disk}" != "both" ] && [ "${grub_scan_disk}" != "ata" ] \
+	    && [ "${grub_scan_disk}" != "ahci" ] && \
 		grub_scan_disk="both"
 
 	[ -z ${tree} ] && \
@@ -88,24 +84,20 @@ check_target()
 		payload_memtest="n"
 	[ "${payload_grub_withseabios}" = "y" ] && \
 		payload_grub="y"
-	if [ "${payload_grub_withseabios}" = "y" ]; then
-		payload_seabios="y"
-		payload_seabios_withgrub="y"
-	fi
+	[ "${payload_grub_withseabios}" = "y" ] && \
+		eval "$(setvars "y" payload_seabios payload_seabios_withgrub)"
 	[ "${payload_seabios_withgrub}" = "y" ] && \
 		payload_seabios="y"
 
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-withSeaBIOS will. For example, the board
 	# might have a graphics card whose vga rom coreboot doesn't execute
-	if [ "${payload_grub}" != "y" ] && \
-	    [ "${payload_seabios}" != "y" ] && \
-	    [ "${payload_uboot}" != "y" ]; then
+	[ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] && \
+	    [ "${payload_uboot}" != "y" ] && \
 		for configfile in "${targetdir}/config/"*; do
 			[ -e "${configfile}" ] || continue
 			err "target '${board}' defines no payload"
 		done
-	fi
 
 	[ "${payload_uboot}" != "n" ] && [ "${payload_uboot}" != "y" ] && \
 		payload_uboot="n"
@@ -261,16 +253,13 @@ build_grub_roms()
 {
 	tmprom="${1}"
 	payload1="${2}" # allow values: grub, seabios, seabios_withgrub
-	grub_cbfs="fallback/payload"
 
-	if [ "${payload_grub_withseabios}" = "y" ] && \
-	    [ "${payload1}" = "grub" ]; then
-		x_ mv "$(mkSeabiosRom "${tmprom}" "seabios.elf")" "${tmprom}"
-	elif [ "${payload_seabios_withgrub}" = "y" ] && \
-	    [ "${payload1}" != "grub" ]; then
+	grub_cbfs="fallback/payload"
+	[ "${payload1}" = "grub" ] && [ "${payload_grub_withseabios}" = "y" ] \
+		&& x_ mv "$(mkSeabiosRom "${tmprom}" "seabios.elf")" "${tmprom}"
+	[ "${payload1}" != "grub" ] && [ "${payload_seabios_withgrub}" = "y" ] \
+		&& grub_cbfs="img/grub2" && \
 		x_ mv "$(mkSeabiosRom "${tmprom}" fallback/payload)" "${tmprom}"
-		grub_cbfs="img/grub2"
-	fi
 
 	# we only need insert grub.elf once, for each coreboot config:
 	x_ "${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" \
@@ -364,9 +353,8 @@ build_uboot_roms()
 
 # make a rom in /tmp/ and then print the path of that ROM
 mkUbootRom() {
-	_cbrom="${1}" # rom to insert u-boot in. it won't be touched
-		# (a tmpfile will be made instead)
-	_uboot_cbfs_path="${2}" # e.g. fallback/payload
+	_cbrom="${1}"
+	_uboot_cbfs_path="${2}"
 
 	_ubdir="elf/u-boot/${board}/${uboot_config}"
 	_ubootelf="${_ubdir}/u-boot.elf"
