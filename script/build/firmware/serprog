@@ -12,7 +12,7 @@ pico_sdk_dir=util-fw/rp2040/pico-sdk
 
 stm32_src_dir=util-fw/stm32-vserprog
 
-usage="usage: ./build fw serprog <rp2040|stm32> [board]"
+usage="usage: ./build firmware serprog <rp2040|stm32> [board]"
 
 main()
 {

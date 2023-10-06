@@ -77,10 +77,12 @@ execute_command()
 		xx_ listitems "${buildpath}/${mode}"
 		lbmk_exit 0
 	fi
-	[ -f "${buildpath}/${mode}/${option}" ] || \
-		fail "Invalid command. Run: ${linkpath} help"
-	"${buildpath}/${mode}/${option}" $@ || \
-	    fail "execute_command: ${buildpath}/${mode}/${option} ${@}"
+	lbmkcmd="${buildpath}/${mode}/${option}"
+	[ "${lbmkcmd}" = "./script/build/boot/roms" ] && \
+	    printf "NOTE: ./build boot roms now: ./build firmware coreboot\n" \
+		    1>&2
+	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
+	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
 }
 
 usage()
