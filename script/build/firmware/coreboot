@@ -28,7 +28,7 @@ v="romdir cbdir cbfstool cbrom initmode displaymode cbcfg targetdir tree arch"
 v="${v} grub_timeout ubdir blobs_required board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v})"
-eval "$(setvars "" boards _displaymode _payload _keyboard all)"
+eval "$(setvars "" boards _displaymode _payload _keyboard all targets)"
 
 main()
 {
@@ -56,8 +56,13 @@ main()
 		eval "$(setvars "" ${v})"
 		board="${x}"
 		check_target
-		prepare_target	
+		prepare_target
+		[ -f "bin/${x}" ] || continue
+		targets="bin/${x}\n${targets}"
 	done
+
+	[ -z ${targets} ] && err "No ROM images were compiled"
+	printf "ROM images available in these directories:\n${targets%, }\n"
 }
 
 check_target()
