@@ -1,1 +1,123 @@
-lbmk
+#!/usr/bin/env sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2014,2015,2020,2021,2023 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2015 Patrick "P. J." McDermott <pj@pehjota.net>
+# SPDX-FileCopyrightText: 2015, 2016 Klemens Nanni <contact@autoboot.org>
+# SPDX-FileCopyrightText: 2022, Caleb La Grange <thonkpeasant@protonmail.com>
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+. "include/err.sh"
+. "include/export.sh"
+. "include/option.sh"
+
+linkpath="${0}"
+linkname="${linkpath##*/}"
+buildpath="./script/${linkname}"
+eval "$(setvars "" mode option project version versiondate)"
+
+main()
+{
+	xx_ id -u 1>/dev/null 2>/dev/null
+	initialise_command $@
+	shift 2
+
+	check_git
+	check_project "fail"
+
+	execute_command $@
+	lbmk_exit 0
+}
+
+initialise_command()
+{
+	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
+
+	mode="${1}"
+	[ "${mode}" != "dependencies" ] || xx_ install_packages $@
+	[ "$(id -u)" != "0" ] || fail "this command as root is not permitted"
+
+	[ "${mode}" = "help" ] && usage ${0} && lbmk_exit 0
+	if [ "${mode}" = "list" ]; then
+		listitems "${buildpath}"
+		lbmk_exit 0
+	elif [ $# -lt 2 ]; then
+		usage ${0}
+		lbmk_exit 1
+	fi
+
+	option="${2}"
+}
+
+install_packages()
+{
+	if [ $# -lt 2 ]; then
+		printf "You must specify a distro, namely:\n" 1>&2
+		printf "Look at files under config/dependencies/\n" 1>&2
+		printf "Example: ./build dependencies debian\n" 1>&2
+		fail "install_packages: target not specified"
+	fi
+
+	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
+
+	aur_notice=""
+	. "config/dependencies/${2}"
+
+	xx_ ${pkg_add} ${pkglist}
+	[ "${aur_notice}" = "" ] || \
+	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
+
+	lbmk_exit 0
+}
+
+execute_command()
+{
+	if [ "${option}" = "list" ]; then
+		xx_ listitems "${buildpath}/${mode}"
+		lbmk_exit 0
+	fi
+	[ -f "${buildpath}/${mode}/${option}" ] || \
+		fail "Invalid command. Run: ${linkpath} help"
+	"${buildpath}/${mode}/${option}" $@ || \
+	    fail "execute_command: ${buildpath}/${mode}/${option} ${@}"
+}
+
+usage()
+{
+	progname=${0}
+	cat <<- EOF
+	USAGE:	${progname} <MODE> <OPTION>
+
+	possible values for 'mode':
+	$(listitems "${buildpath}")
+
+	For each of the above modes, you may also do:
+	${progname} <MODE> list
+
+	Example: ./build coreboot list, which would yield:
+	$(./build coreboot list)
+
+	Refer to ${project} documentation for more info.
+	EOF
+}
+
+lbmk_exit()
+{
+	tmp_cleanup || err "lbmk_exit: can't rm tmpdir upon exit $1: ${tmpdir}"
+	exit $1
+}
+
+fail()
+{
+	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "${tmpdir}" 1>&2
+	err "${1}"
+}
+
+tmp_cleanup()
+{
+	[ "${tmpdir_was_set}" = "n" ] || return 0
+	rm -Rf "${tmpdir}" || return 1
+}
+
+main $@
