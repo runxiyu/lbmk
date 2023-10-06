@@ -47,7 +47,7 @@ main()
 
 build_projects()
 {
-	[ $# -gt 0 ] && x_ ./build project trees ${_f} ${@}
+	[ $# -gt 0 ] && x_ ./update project build ${_f} ${@}
 	codedir="${project}"
 
 	[ -d "${codedir}" ] || x_ ./update project repo "${codedir%/*}"

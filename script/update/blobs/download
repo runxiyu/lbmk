@@ -47,7 +47,7 @@ build_dependencies()
 		x_ ./update project repo "${d}"
 	done
 	[ -f uefitool/uefiextract ] || \
-		x_ ./build project trees -b uefitool
+		x_ ./update project build -b uefitool
 	[ -f "${cbdir}/util/kbc1126/kbc1126_ec_dump" ] || \
 		x_ make -C "${cbdir}/util/kbc1126"
 	x_ ./build coreboot utils default
