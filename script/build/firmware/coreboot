@@ -28,12 +28,10 @@ v="romdir cbdir cbfstool cbrom initmode displaymode cbcfg targetdir tree arch"
 v="${v} grub_timeout ubdir blobs_required board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v})"
-eval "$(setvars "" boards _displaymode _payload _keyboard)"
+eval "$(setvars "" boards _displaymode _payload _keyboard all)"
 
 main()
 {
-	[ $# -lt 1 ] && usage && err "target not specified"
-
 	while [ $# -gt 0 ]; do
 		case ${1} in
 		help) usage && exit 0 ;;
@@ -41,15 +39,17 @@ main()
 		-d) _displaymode="${2}" ;;
 		-p) _payload="${2}" ;;
 		-k) _keyboard="${2}" ;;
-		all)
-			boards="$(listitems config/coreboot)"
-			shift && continue ;;
 		*)
+			[ "${1}" = "all" ] && all="y"
 			boards="${1} ${boards}"
 			shift && continue ;;
 		esac
 		shift 2
 	done
+
+	[ "${all}" = "y" ] && boards=""
+	[ ! -z ${boards} ] || boards=$(listitems config/coreboot) || \
+	    err "Cannot generate list of boards for building"
 
 	for x in ${boards}; do
 		eval "$(setvars "n" ${pv})"
