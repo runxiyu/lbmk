@@ -120,12 +120,12 @@ strip_archive()
 		done
 	fi
 
-	# Hash the rom before removing blobs
-	x_ rm -f "${romdir}/blobhashes"
-	x_ touch "${romdir}/blobhashes"
+	# Hash the rom before removing vendor files
+	x_ rm -f "${romdir}/vendorhashes"
+	x_ touch "${romdir}/vendorhashes"
 	(
 	x_ cd "${romdir}"
-	x_ sha512sum *.rom >> blobhashes
+	x_ sha512sum *.rom >> vendorhashes
 	)
 	for romfile in "${romdir}"/*.rom; do
 		[ -f "${romfile}" ] || continue

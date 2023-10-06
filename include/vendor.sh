@@ -4,8 +4,8 @@
 _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 _7ztest="a"
-blobdir="blob"
-appdir="${blobdir}/app"
+vendir="vendor"
+appdir="${vendir}/app"
 cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
@@ -50,7 +50,7 @@ fetch()
 	[ "${5# }" = "${5}" ] || err "fetch: space not allowed in _dest: '${5}'"
 	[ "${5#/}" = "${5}" ] || err "fetch: absolute path not allowed: '${5}'"
 	_dest="${5##*../}"
-	_dl="${blobdir}/cache/${dlsum}"
+	_dl="${vendir}/cache/${dlsum}"
 
 	x_ mkdir -p "${_dl%/*}"
 

@@ -79,6 +79,8 @@ execute_command()
 	lbmkcmd="${buildpath}/${mode}/${option}"
 	[ "${lbmkcmd}" = "./script/build/boot/roms" ] && \
 		printf "NOTE: ./build boot roms now: ./build fw coreboot\n" 1>&2
+	[ "${lbmkcmd%/*}" = "./script/update/blobs" ] && \
+		printf "NOTE: ./update blobs is now: ./update vendor\n" 1>&2
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
 	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
 }

@@ -5,7 +5,7 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 . "include/err.sh"
-. "include/blobutil.sh"
+. "include/vendor.sh"
 . "include/option.sh"
 
 release_archive="n"
@@ -30,7 +30,7 @@ main()
 
 	check_board
 	build_dependencies
-	inject_blobs
+	inject_vendorfiles
 
 	printf "Friendly reminder (this is *not* an error message):\n"
 	printf "Please always ensure that the files were inserted correctly.\n"
@@ -89,10 +89,10 @@ build_dependencies()
 {
 	[ -d "${cbdir}" ] || x_ ./update project trees coreboot default
 	x_ ./build coreboot utils default
-	x_ ./update blobs download ${board}
+	x_ ./update vendor download ${board}
 }
 
-inject_blobs()
+inject_vendorfiles()
 {
 	release_archive="n"
 	[ "${release}" != "true" ] && x_ patch_rom "${rom}" && return 0
@@ -124,7 +124,9 @@ patch_release_roms()
 	x_ cd "${_tmpdir}/bin/"*
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
-	sha512sum --status -c blobhashes || \
+	sha512sum --status -c vendorhashes || \
+	    sha1sum --status -c vendorhashes || \
+	    sha512sum --status -c blobhashes || \
 	    sha1sum --status -c blobhashes || \
 	    err "patch_release_roms: ROMs did not match expected hashes"
 	)
@@ -151,7 +153,7 @@ patch_rom()
 	# instead re-created at the end, after re-inserting
 	# on roms with microcode, by copying and then removing,
 	# so that the hashes will match (otherwise, cbfstool
-	# may sometimes insert certain blobs at the wrong offset)
+	# may sometimes insert certain vendor files at the wrong offset)
 	# (unless nomicrocode is the only config provided)
 	[ "${rom}" != "${rom%_nomicrocode.rom}.rom" ] && \
 	[ -f "${rom%_nomicrocode.rom}.rom" ] && \
@@ -163,24 +165,24 @@ patch_rom()
 	. "${1}" 2>/dev/null
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && \
-		inject_blob_intel_mrc "${rom}"
+		inject_vendorfile_intel_mrc "${rom}"
 	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && \
-		inject_blob_intel_me "${rom}"
+		inject_vendorfile_intel_me "${rom}"
 	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && \
-		inject_blob_hp_kbc1126_ec "${rom}"
+		inject_vendorfile_hp_kbc1126_ec "${rom}"
 	[ "${CONFIG_VGA_BIOS_FILE}" != "" ] && \
 	    [ "${CONFIG_VGA_BIOS_ID}" != "" ] && \
-		inject_blob_dell_e6400_vgarom_nvidia "${rom}"
+		inject_vendorfile_dell_e6400_vgarom_nvidia "${rom}"
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
 	    [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ] && \
-		inject_blob_smsc_sch5545_ec "${rom}"
+		inject_vendorfile_smsc_sch5545_ec "${rom}"
 	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ] && \
 		modify_gbe "${rom}"
 
 	printf "ROM image successfully patched: %s\n" "${rom}"
 }
 
-inject_blob_intel_mrc()
+inject_vendorfile_intel_mrc()
 {
 	rom="${1}"
 
@@ -207,22 +209,22 @@ inject_blob_intel_mrc()
 	    -t mrc -b 0xfffa0000
 }
 
-inject_blob_intel_me()
+inject_vendorfile_intel_me()
 {
 	printf "adding intel me firmware\n"
 
 	rom="${1}"
 	[ -z ${CONFIG_ME_BIN_PATH} ] && \
-		err "inject_blob_intel_me: CONFIG_ME_BIN_PATH not set"
+		err "inject_vendorfile_intel_me: CONFIG_ME_BIN_PATH not set"
 
 	_me_location=${CONFIG_ME_BIN_PATH##*../}
 	[ ! -f "${_me_location}" ] && \
-		err "inject_blob_intel_me: per CONFIG_ME_BIN_PATH: file missing"
+		err "inject_vendorfile_intel_me: per CONFIG_ME_BIN_PATH: file missing"
 
 	x_ "${ifdtool}" -i me:"${_me_location}" "${rom}" -O "${rom}"
 }
 
-inject_blob_hp_kbc1126_ec()
+inject_vendorfile_hp_kbc1126_ec()
 {
 	rom="${1}"
 
@@ -234,11 +236,11 @@ inject_blob_hp_kbc1126_ec()
 	printf "adding hp kbc1126 ec firmware\n"
 
 	if [ "${_ec1_offset}" = "" ] || [ "${_ec1_offset}" = "" ]; then
-		err "inject_blob_hp_kbc1126_ec: ${board}: offset not declared"
+		err "inject_vendorfile_hp_kbc1126_ec: ${board}: offset not declared"
 	elif [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
-		err "inject_blob_hp_kbc1126_ec: ${board}: EC path not declared"
+		err "inject_vendorfile_hp_kbc1126_ec: ${board}: EC path not declared"
 	elif [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
-		err "inject_blob_hp_kbc1126_ec: ${board}: ecfw not downloaded"
+		err "inject_vendorfile_hp_kbc1126_ec: ${board}: ecfw not downloaded"
 	fi
 
 	x_ "${cbfstool}" "${rom}" add -f "${_ec1_location}" -n ecfw1.bin \
@@ -247,7 +249,7 @@ inject_blob_hp_kbc1126_ec()
 	    -b ${_ec2_offset} -t raw
 }
 
-inject_blob_dell_e6400_vgarom_nvidia()
+inject_vendorfile_dell_e6400_vgarom_nvidia()
 {
 	rom="${1}"
 
@@ -258,20 +260,20 @@ inject_blob_dell_e6400_vgarom_nvidia()
 	printf "adding pci option rom\n"
 
 	[ "${_vga_dir}" = "${pciromsdir}" ] || \
-		err "inject_blob_dell_e6400vga: invalid pcirom dir: ${_vga_dir}"
+		err "inject_vendorfile_dell_e6400vga: invalid pcirom dir: ${_vga_dir}"
 	[ -f "${_vga_location}" ] || \
-		err "inject_blob_dell_e6400vga: ${_vga_location} doesn't exist"
+		err "inject_vendorfile_dell_e6400vga: ${_vga_location} doesn't exist"
 
 	x_ "${cbfstool}" "${rom}" add -f "${_vga_location}" \
 	    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom
 }
 
-inject_blob_smsc_sch5545_ec()
+inject_vendorfile_smsc_sch5545_ec()
 {
 	rom="${1}"
 	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE##*../}"
 	[ -f "${_sch5545ec_location}" ] || \
-		err "inject_blob_smsc_sch5545_ec: SCH5545 fw missing"
+		err "inject_vendorfile_smsc_sch5545_ec: SCH5545 fw missing"
 
 	x_ "${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
 	    -n sch5545_ecfw.bin -t raw
@@ -301,13 +303,13 @@ modify_gbe()
 usage()
 {
 	cat <<- EOF
-	USAGE: ./update blobs inject -r [rom path] -b [boardname] -m [macaddress]
-	Example: ./update blobs inject -r x230_12mb.rom -b x230_12mb
+	USAGE: ./update vendor inject -r [rom path] -b [boardname] -m [macaddress]
+	Example: ./update vendor inject -r x230_12mb.rom -b x230_12mb
 
 	Adding a macadress to the gbe is optional.
 	If the [-m] parameter is left blank, the gbe will not be touched.
 
-	Type './update blobs inject listboards' to get a list of valid boards
+	Type './update vendor inject listboards' to get a list of valid boards
 	EOF
 }
 

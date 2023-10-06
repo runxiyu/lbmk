@@ -91,7 +91,7 @@ handle_targets()
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ ! -z ${mode} ] || \
-			x_ ./update blobs download ${target}
+			x_ ./update vendor download ${target}
 		x_ handle_defconfig
 	done
 
