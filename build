@@ -79,7 +79,7 @@ execute_command()
 	fi
 	lbmkcmd="${buildpath}/${mode}/${option}"
 	[ "${lbmkcmd}" = "./script/build/boot/roms" ] && \
-	    printf "NOTE: ./build boot roms now: ./build firmware coreboot\n" \
+	    printf "NOTE: ./build boot roms now: ./build fw coreboot\n" \
 		    1>&2
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
 	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
