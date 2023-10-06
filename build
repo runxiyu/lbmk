@@ -15,7 +15,7 @@ set -u -e
 linkpath="${0}"
 linkname="${linkpath##*/}"
 buildpath="./script/${linkname}"
-eval "$(setvars "" mode option project version versiondate)"
+eval "$(setvars "" mode option project version versiondate aur_notice)"
 
 main()
 {
@@ -61,7 +61,6 @@ install_packages()
 
 	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
 
-	aur_notice=""
 	. "config/dependencies/${2}"
 
 	xx_ ${pkg_add} ${pkglist}
@@ -79,8 +78,7 @@ execute_command()
 	fi
 	lbmkcmd="${buildpath}/${mode}/${option}"
 	[ "${lbmkcmd}" = "./script/build/boot/roms" ] && \
-	    printf "NOTE: ./build boot roms now: ./build fw coreboot\n" \
-		    1>&2
+		printf "NOTE: ./build boot roms now: ./build fw coreboot\n" 1>&2
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
 	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
 }

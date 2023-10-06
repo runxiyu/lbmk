@@ -104,7 +104,7 @@ make_archive()
 strip_archive()
 {
 	romdir=${1}
-	[ -d "coreboot/${tree}" ] || \
+	[ -d "src/coreboot/${tree}" ] || \
 		x_ ./update project trees coreboot ${tree}
 
 	x_ ./build coreboot utils ${tree}

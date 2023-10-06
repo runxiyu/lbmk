@@ -34,7 +34,6 @@ main()
 
 	printf "Friendly reminder (this is *not* an error message):\n"
 	printf "Please always ensure that the files were inserted correctly.\n"
-	printf "Read: https://libreboot.org/docs/install/ivy_has_common.html\n"
 }
 
 check_board()
@@ -187,8 +186,7 @@ inject_blob_intel_mrc()
 
 	printf "adding mrc\n"
 
-	# mrc.bin must be inserted at a specific offset. the only
-	# libreboot platform that needs it, at present, is haswell
+	# mrc.bin must be inserted at a specific offset
 
 	# in cbfstool, -b values above 0x80000000 are interpreted as
 	# top-aligned x86 memory locations. this is converted into an
@@ -197,7 +195,7 @@ inject_blob_intel_mrc()
 
 	# coreboot's own build system hardcodes the mrc.bin offset
 	# because there is only one correct location in memory, but
-	# it would be useful for lbmk if it could be easily scanned
+	# it would be useful for us if it could be easily scanned
 	# from Kconfig, with the option to change it where in practise
 	# it is not changed
 
@@ -217,7 +215,7 @@ inject_blob_intel_me()
 	[ -z ${CONFIG_ME_BIN_PATH} ] && \
 		err "inject_blob_intel_me: CONFIG_ME_BIN_PATH not set"
 
-	_me_location=${CONFIG_ME_BIN_PATH#../../}
+	_me_location=${CONFIG_ME_BIN_PATH##*../}
 	[ ! -f "${_me_location}" ] && \
 		err "inject_blob_intel_me: per CONFIG_ME_BIN_PATH: file missing"
 
@@ -228,9 +226,9 @@ inject_blob_hp_kbc1126_ec()
 {
 	rom="${1}"
 
-	_ec1_location="${CONFIG_KBC1126_FW1#../../}"
+	_ec1_location="${CONFIG_KBC1126_FW1##*../}"
 	_ec1_offset="${CONFIG_KBC1126_FW1_OFFSET}"
-	_ec2_location="${CONFIG_KBC1126_FW2#../../}"
+	_ec2_location="${CONFIG_KBC1126_FW2##*../}"
 	_ec2_offset="${CONFIG_KBC1126_FW2_OFFSET}"
 
 	printf "adding hp kbc1126 ec firmware\n"
@@ -253,7 +251,7 @@ inject_blob_dell_e6400_vgarom_nvidia()
 {
 	rom="${1}"
 
-	_vga_location="${CONFIG_VGA_BIOS_FILE#../../}"
+	_vga_location="${CONFIG_VGA_BIOS_FILE##*../}"
 	_vga_dir="${_vga_location%/*}"
 	_vga_filename="${_vga_location##*/}"
 
@@ -271,7 +269,7 @@ inject_blob_dell_e6400_vgarom_nvidia()
 inject_blob_smsc_sch5545_ec()
 {
 	rom="${1}"
-	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE#../../}"
+	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE##*../}"
 	[ -f "${_sch5545ec_location}" ] || \
 		err "inject_blob_smsc_sch5545_ec: SCH5545 fw missing"
 
@@ -286,7 +284,7 @@ modify_gbe()
 		err "modify_gbe: ${board}: CONFIG_GBE_BIN_PATH not set"
 
 	rom="${1}"
-	_gbe_location=${CONFIG_GBE_BIN_PATH#../../}
+	_gbe_location=${CONFIG_GBE_BIN_PATH##*../}
 	[ -f "${_gbe_location}" ] || \
 		err "modify_gbe: CONFIG_GBE_BIN_PATH points to missing file"
 	[ -f "${nvmutil}" ] || \

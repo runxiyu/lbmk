@@ -5,11 +5,12 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+. "include/err.sh"
+
 elfdir="elf/grub"
 grubcfgsdir="config/grub"
 layoutdir="/boot/grub/layouts"
 
-. "include/err.sh"
 . "${grubcfgsdir}/modules.list"
 
 main()
@@ -21,16 +22,16 @@ main()
 
 handle_dependencies()
 {
-	[ -d "grub/" ] || x_ ./update project repo grub
-	[ -f "grub/grub-mkstandalone" ] || build_grub_utils
-	[ -d "${elfdir}" ] || x_ mkdir -p "${elfdir}"
+	[ -d "src/grub" ] || x_ ./update project repo grub
+	[ -f "src/grub/grub-mkstandalone" ] || build_grub_utils
+	x_ mkdir -p "${elfdir}"
 	x_ rm -f "${elfdir}/"*
 }
 
 build_grub_utils()
 {
 	(
-	x_ cd grub/
+	x_ cd "src/grub"
 	[ ! -d Makefile ] || x_ make distclean
 	x_ ./bootstrap --gnulib-srcdir=gnulib/ --no-git
 	x_ ./autogen.sh
@@ -52,11 +53,11 @@ build_keymap_configs()
 
 build_grub_payload()
 {
-	grub/grub-mkstandalone \
-	    --grub-mkimage="grub/grub-mkimage" \
+	./src/grub/grub-mkstandalone \
+	    --grub-mkimage="src/grub/grub-mkimage" \
 	    -O i386-coreboot \
 	    -o "${elfdir}/grub.elf" \
-	    -d grub/grub-core/ \
+	    -d "src/grub/grub-core/" \
 	    --fonts= --themes= --locales=  \
 	    --modules="${grub_modules}" \
 	    --install-modules="${grub_install_modules}" \

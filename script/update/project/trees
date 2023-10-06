@@ -15,12 +15,12 @@ eval "$(setvars "" _target tree rev project cfgsdir _xm)"
 
 main()
 {
-	printf "Downloading %s and applying patches\n" ${project}
-
 	[ -z "${1}" ] && err "project name not specified"
-	project="${1}" && shift 1
+	project="${1#src/}" && shift 1
 
 	configure_targets $@
+
+	printf "Downloading %s and applying patches\n" ${project}
 
 	for x in ${targets}; do
 		x_ rm -f "${cfgsdir}/"*/seen
@@ -45,8 +45,9 @@ download_for_target()
 	_target="${1}"
 
 	fetch_config
-	[ -d "${project}/${tree}" ] && printf "download/%s %s (%s): exists\n" \
-	    "${project}" "${tree}" "${_target}" 1>&2 && return 0
+	[ -d "src/${project}/${tree}" ] && \
+		printf "download/%s %s (%s): exists\n" \
+		    "${project}" "${tree}" "${_target}" 1>&2 && return 0
 
 	fetch_from_upstream
 	prepare_new_tree
@@ -83,9 +84,9 @@ check_config_for_target()
 
 fetch_from_upstream()
 {
-	[ -d "${project}" ] || x_ mkdir -p "${project}"
-	[ -d "${project}/${project}" ] && return 0
+	[ -d "src/${project}/${project}" ] && return 0
 
+	x_ mkdir -p "src/${project}"
 	x_ ./update project repo "${project}"
 }
 
@@ -93,14 +94,14 @@ prepare_new_tree()
 {
 	printf "Creating %s tree %s (%s)\n" "${project}" "${tree}" "${_target}"
 
-	x_ cp -R "${project}/${project}" "${project}/${tree}"
-	x_ git_reset_rev "${project}/${tree}" "${rev}" "err"
+	x_ cp -R "src/${project}/${project}" "src/${project}/${tree}"
+	x_ git_reset_rev "src/${project}/${tree}" "${rev}" "err"
 	(
-	x_ cd "${project}/${tree}"
+	x_ cd "src/${project}/${tree}"
 	git submodule update --init --checkout || \
 	    err "prepare_new_tree ${project}/${tree}: can't update git modules"
 	)
-	git_am_patches "${PWD}/${project}/${tree}" \
+	git_am_patches "${PWD}/src/${project}/${tree}" \
 	    "${PWD}/${cfgsdir}/${tree}/patches" "err"
 }
 

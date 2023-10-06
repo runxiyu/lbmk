@@ -14,9 +14,9 @@ simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
 simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
 download_only_list="pico-serprog stm32-vserprog"
 
-dirlist="config util script include util-fw"
-linklist="build update handle" # symlinks in main directory, to script: lbmk
-filelist="lbmk README.md COPYING version versiondate projectname"
+dirlist="config util script include"
+linklist="update" # symlinks in main directory, to script: lbmk
+filelist="build README.md COPYING version versiondate projectname .gitignore"
 
 version="version-unknown"
 versiondate="version-date-unknown"
@@ -44,54 +44,39 @@ create_release_directory()
 	dirname="${projectname}-${version}_src"
 	srcdir="${reldir}/${dirname}"
 
-	[ -d "release/" ] || x_ mkdir -p release/
-	[ -d "${reldir}/" ] || x_ mkdir -p "${reldir}/"
-	[ ! -d "${srcdir}/" ] || x_ rm -Rf "${srcdir}/"
-	[ ! -f "${srcdir}.tar.xz" ] || \
-		x_ rm -f "${srcdir}.tar.xz/"
-
-	x_ mkdir -p "${srcdir}/"
-	x_ printf "%s" "${version}" > "${srcdir}"/version
+	xx_ mkdir -p "${reldir}"
+	xx_ rm -Rf "${srcdir}" "${srcdir}.tar.xz"
+	xx_ mkdir -p "${srcdir}"
 }
 
 download_modules()
 {
 	for modname in ${trees_fetch_list}; do
-		[ -d "${modname}" ] || x_ ./update project trees ${modname}
+		[ -d "src/${modname}" ] || xx_ ./update project trees ${modname}
 	done
 	for modname in ${simple_fetch_list} ${download_only_list}; do
-		[ -d "${modname}/" ] || x_ ./update project repo ${modname}
+		[ -d "src/${modname}/" ] || xx_ ./update project repo ${modname}
 	done
 }
 
 copy_files()
 {
+	xx_ cp -R "src" "${srcdir}/src"
 	for dir in ${trees_fetch_list}; do
-		[ -d "${dir}" ] || continue
-		for subdir in "${dir}"/*; do
-			[ -d "${subdir}" ] || continue
-			[ "${subdir##*/}" = "${dir}" ] && continue
-			x_ mkdir -p "${srcdir}/${dir}"
-			[ ! -d "${srcdir}/${dir}/${subdir##*/}" ] || \
-			    x_ rm -Rf "${srcdir}/${dir}/${subdir##*/}"
-			x_ cp -R "${subdir}" "${srcdir}/${dir}/${subdir##*/}"
-		done
+		xx_ rm -Rf "${srcdir}/src/${dir}/${dir}"
 	done
-	for dir in ${simple_fetch_list} ${dirlist}; do
-		x_ cp -R "${dir}/" "${srcdir}/"
+	for dir in ${dirlist}; do
+		xx_ cp -R "${dir}/" "${srcdir}/"
 	done
 
 	for i in ${filelist}; do
-		if [ ! -f "${i}" ]; then
-			x_ rm -Rf "${srcdir}"
-			err "copy_files: file '${i}' does not exist"
-		fi
-		x_ cp "${i}" "${srcdir}/"
+		[ -f "${i}" ] || fail "copy_files: '${i}' does not exist"
+		xx_ cp "${i}" "${srcdir}/"
 	done
 	(
-	x_ cd "${srcdir}/"
+	xx_ cd "${srcdir}/"
 	for i in ${linklist}; do
-		x_ ln -s lbmk "${i}"
+		xx_ ln -s build "${i}"
 	done
 	)
 }
@@ -99,30 +84,36 @@ copy_files()
 purge_files()
 {
 	(
-	x_ cd "${srcdir}/"
-	[ ! -d "coreboot/default/util/kbc1126" ] || \
-		x_ ./update project build -c "coreboot/default/util/kbc1126"
-	x_ ./update project build -x coreboot
+	xx_ cd "${srcdir}"
+	[ ! -d "src/coreboot/default/util/kbc1126" ] || \
+	    xx_ ./update project build -c "src/coreboot/default/util/kbc1126"
+	xx_ ./update project build -x coreboot
 	for p in u-boot seabios coreboot; do
-		x_ ./update project build -c "${p}"
+		xx_ ./update project build -c "${p}"
 	done
-	x_ ./update project build -c bios_extract flashrom grub uefitool \
-	    util-fw/stm32-vserprog util-fw/stm32-vserprog/libopencm3 \
-	    memtest86plus/build32 memtest86plus/build64 util/*
+	xx_ ./update project build -c bios_extract flashrom grub uefitool \
+	    stm32-vserprog stm32-vserprog/libopencm3 util/* memtest86plus
 
-	x_ rm -Rf .git* */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
-	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git*
-	x_ rm -Rf cbutils elf util-fw/rp2040/pico-serprog/build
+	xx_ rm -Rf .git */.git* */*/.git* */*/*/.git* */*/*/*/.git* \
+	    */*/*/*/*/.git* */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* \
+	    */*/*/*/*/*/*/*/.git*
+	xx_ rm -Rf cbutils elf src/pico-serprog/build
 	)
 }
 
 create_release_archive()
 {
 	(
-	x_ cd "${reldir}/"
-	x_ tar -c "${dirname}/" | xz -T0 -9e >"${dirname}.tar.xz"
-	x_ rm -Rf "${dirname}/"
+	xx_ cd "${reldir}/"
+	xx_ tar -c "${dirname}/" | xz -T0 -9e >"${dirname}.tar.xz"
+	xx_ rm -Rf "${dirname}/"
 	)
+}
+
+fail()
+{
+	[ -z ${srcdir} ] || rm -Rf "${srcdir}" 1>/dev/null 2>/dev/null || :
+	fail "${1}"
 }
 
 main $@

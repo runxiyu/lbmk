@@ -33,7 +33,7 @@ main()
 		-x) mode="crossgcc-clean" ;;
 		*) err "Invalid option" ;;
 		esac
-		shift; project="${OPTARG}"; shift
+		shift; project="${OPTARG#src/}"; shift
 	done
 	[ -z ${_f} ] && err "flag not specified (-m, -u, -b, -c or -x)"
 	[ -z ${project} ] && err "project name not specified"
@@ -48,15 +48,13 @@ main()
 build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update project build ${_f} ${@}
-	codedir="${project}"
+	codedir="src/${project}"
 
-	[ -d "${codedir}" ] || x_ ./update project repo "${codedir%/*}"
-	[ -d "${codedir}" ] || \
-		err "build_targets: ${codedir%/*} not downloaded"
+	[ -d "${codedir}" ] || x_ ./update project repo "${project}"
 
 	if [ "${project}" = "uefitool" ]; then
 	(
-		x_ cd uefitool
+		x_ cd src/uefitool
 		cmake UEFIExtract/ || [ -f Makefile ] || \
 		    err "build_targets: !cmake UEFIExtract/"
 	)
@@ -138,7 +136,7 @@ handle_src_tree()
 	[ -z ${arch} ] && \
 		err "handle_src_tree: ${target_dir}: undefined cpu type"
 
-	codedir="${project}/${tree}"
+	codedir="src/${project}/${tree}"
 	if [ ! -d "${codedir}" ]; then
 		if [ "${mode}" = "distclean" ] || \
 		    [ "${mode}" = "crossgcc-clean" ]; then
@@ -171,13 +169,14 @@ check_cross_compiler()
 	[ "${crossgcc_ada}" != "y" ] && \
 		export BUILD_LANGUAGES=c
 
-	cbdir="coreboot/${tree}"
+	cbdir="src/coreboot/${tree}"
 	[ "${project}" != "coreboot" ] && \
-		cbdir="coreboot/default" # not u-boot (e.g. linux will use it)
+		cbdir="src/coreboot/default" # not u-boot (e.g. linux)
 	[ "${project}" = "u-boot" ] && \
-		cbdir="coreboot/cros" # u-boot only used on coreboot/cros
+		cbdir="src/coreboot/cros" # u-boot only used on coreboot/cros
+
 	# only true if not building coreboot:
-	ctarget="${cbdir#coreboot/}"
+	ctarget="${cbdir#src/coreboot/}"
 	[ -d "${cbdir}" ] || \
 		x_ ./update project trees coreboot ${ctarget}
 

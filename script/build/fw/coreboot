@@ -23,7 +23,7 @@ kmapdir="config/grub/keymap"
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest"
-pv="${pv} payload_seabios_withgrub payload_uboot"
+pv="${pv} payload_seabios_withgrub payload_uboot memtest_bin"
 v="romdir cbdir cbfstool cbrom initmode displaymode cbcfg targetdir tree arch"
 v="${v} grub_timeout ubdir blobs_required board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
@@ -122,8 +122,8 @@ check_target()
 prepare_target()
 {
 	romdir="bin/${board}"
-	cbdir="coreboot/${board}"
-	[ "${board}" = "${tree}" ] || cbdir="coreboot/${tree}"
+	cbdir="src/coreboot/${board}"
+	[ "${board}" = "${tree}" ] || cbdir="src/coreboot/${tree}"
 	cbfstool="cbutils/${tree}/cbfstool"
 	cbrom="${cbdir}/build/coreboot.rom"
 
@@ -132,8 +132,8 @@ prepare_target()
 	build_dependency_seabios
 
 	memtest_bin="memtest86plus/build${arch#*_}/memtest.bin"
-	[ "${payload_memtest}" != "y" ] || [ -f "${memtest_bin}" ] || \
-		x_ ./update project build -b ${memtest_bin%/*}
+	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
+		x_ ./update project build -b memtest86plus
 
 	x_ rm -f "${romdir}/"*
 
@@ -226,7 +226,7 @@ build_roms()
 
 	[ "${payload_memtest}" != "y" ] || \
 		x_ "${cbfstool}" "${cbrom}" add-payload \
-		    -f "${memtest_bin}" -n img/memtest -c lzma
+		    -f "src/${memtest_bin}" -n img/memtest -c lzma
 	[ "${payload_seabios}" = "y" ] && \
 		build_seabios_roms
 	[ "${payload_grub}" != "y" ] || \

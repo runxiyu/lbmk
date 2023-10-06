@@ -29,13 +29,13 @@ build_for_mainboard() {
 }
 
 buildutils() {
-	[ -d "coreboot/${1}/" ] || \
+	[ -d "src/coreboot/${1}/" ] || \
 		x_ ./update project trees coreboot ${1}
 	for util in cbfstool ifdtool; do
 		[ -f "cbutils/${1}/${util}" ] && continue
 		[ -d "cbutils/${1}" ] || x_ mkdir -p "cbutils/${1}"
 
-		utildir="coreboot/${1}/util/${util}"
+		utildir="src/coreboot/${1}/util/${util}"
 		x_ make distclean -C "${utildir}"
 		x_ make -j$(nproc) -C "${utildir}"
 		x_ cp "${utildir}/${util}" "cbutils/${1}"

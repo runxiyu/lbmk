@@ -16,7 +16,7 @@ main()
 	[ $# -gt 0 ] || fail "no argument given"
 
 	[ -z "${1+x}" ] && fail 'main(): name not set'
-	name=${1}
+	name=${1#src/}
 
 	scan_config "${name}" "config/git" "fail"
 	verify_config
@@ -40,6 +40,9 @@ clone_project()
 	xx_ rm -Rf "${tmp_dir}"
 	xx_ mkdir -p "${tmp_dir%/*}"
 
+	loc="${loc#src/}"
+	loc="src/${loc}"
+
 	git clone ${url} "${tmp_dir}" || git clone ${bkup_url} "${tmp_dir}" || \
 	    fail "clone_project: could not download ${name}"
 	git_reset_rev "${tmp_dir}" "${rev}" "fail" || \
@@ -47,8 +50,7 @@ clone_project()
 	git_am_patches "${tmp_dir}" "${PWD}/config/${name}/patches" "fail" || \
 	    fail "clone_project ${loc}/: cannot apply patches"
 
-	[ ! -d "${loc}" ] || \
-		xx_ rm -Rf "${loc}"
+	xx_ rm -Rf "${loc}"
 	[ "${loc}" = "${loc%/*}" ] || xx_ mkdir -p ${loc%/*}
 	xx_ mv "${tmp_dir}" "${loc}"
 }

@@ -6,19 +6,19 @@ _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 _7ztest="a"
 blobdir="blobs"
 appdir="${blobdir}/app"
-cbdir="coreboot/default"
+cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
 cbfstool="cbutils/default/cbfstool"
 nvmutil="util/nvmutil/nvm"
 pciromsdir="pciroms"
 
-mecleaner="$(pwd)/me_cleaner/me_cleaner.py"
-me7updateparser="$(pwd)/util/me7_update_parser/me7_update_parser.py"
-e6400_unpack="$(pwd)/bios_extract/dell_inspiron_1100_unpacker.py"
-kbc1126_ec_dump="$(pwd)/${cbdir}/util/kbc1126/kbc1126_ec_dump"
-pfs_extract="$(pwd)/biosutilities/Dell_PFS_Extract.py"
-uefiextract="$(pwd)/uefitool/uefiextract"
+mecleaner="${PWD}/src/me_cleaner/me_cleaner.py"
+me7updateparser="${PWD}/util/me7_update_parser/me7_update_parser.py"
+e6400_unpack="${PWD}/src/bios_extract/dell_inspiron_1100_unpacker.py"
+kbc1126_ec_dump="${PWD}/${cbdir}/util/kbc1126/kbc1126_ec_dump"
+pfs_extract="${PWD}/src/biosutilities/Dell_PFS_Extract.py"
+uefiextract="${PWD}/src/uefitool/uefiextract"
 
 eval "$(setvars "" EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup _dest \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
@@ -78,11 +78,10 @@ fetch()
 
 vendor_checksum()
 {
-	if [ "$(sha512sum ${2} | awk '{print $1}')" != "${1}" ]; then
-		printf "Bad checksum for file: %s\n" "${2}" 1>&2
-		rm -f "${2}" || :
-		return 1
-	fi
+	[ "$(sha512sum ${2} | awk '{print $1}')" != "${1}" ] || return 0 
+	printf "Bad checksum for file: %s\n" "${2}" 1>&2
+	rm -f "${2}" || :
+	return 1
 }
 
 mkdirs()

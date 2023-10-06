@@ -7,10 +7,12 @@ set -u -e
 
 . "include/err.sh"
 
-pico_src_dir=util-fw/rp2040/pico-serprog
-pico_sdk_dir=util-fw/rp2040/pico-sdk
+eval "$(setvars "" platform pico_sdk_dir pico_src_dir stm32_src_dir \
+    boards_dir)"
 
-stm32_src_dir=util-fw/stm32-vserprog
+pico_src_dir=src/pico-serprog
+pico_sdk_dir=src/pico-sdk
+stm32_src_dir=src/stm32-vserprog
 
 usage="usage: ./build firmware serprog <rp2040|stm32> [board]"
 
