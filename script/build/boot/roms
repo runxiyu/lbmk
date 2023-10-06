@@ -166,7 +166,7 @@ build_dependency_grub()
 		    rebuild_grub="y" && break
 	done
 	[ "${rebuild_grub}" = "y" ] || return 0
-	x_ ./build grub payload
+	x_ ./build coreboot grub
 }
 
 build_dependency_uboot()

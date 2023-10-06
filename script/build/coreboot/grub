@@ -22,9 +22,21 @@ main()
 handle_dependencies()
 {
 	[ -d "grub/" ] || x_ ./update project repo grub
-	[ -f "grub/grub-mkstandalone" ] || x_ ./build grub utils
+	[ -f "grub/grub-mkstandalone" ] || build_grub_utils
 	[ -d "${elfdir}" ] || x_ mkdir -p "${elfdir}"
 	x_ rm -f "${elfdir}/"*
+}
+
+build_grub_utils()
+{
+	(
+	x_ cd grub/
+	[ ! -d Makefile ] || x_ make distclean
+	x_ ./bootstrap --gnulib-srcdir=gnulib/ --no-git
+	x_ ./autogen.sh
+	x_ ./configure --with-platform=coreboot
+	x_ make -j$(nproc) FS_PAYLOAD_MODULES=""
+	)
 }
 
 build_keymap_configs()

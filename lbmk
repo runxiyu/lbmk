@@ -96,8 +96,8 @@ usage()
 	For each of the above modes, you may also do:
 	${progname} <MODE> list
 
-	Example: ./build grub list, which would yield:
-	$(./build grub list)
+	Example: ./build coreboot list, which would yield:
+	$(./build coreboot list)
 
 	Refer to ${project} documentation for more info.
 	EOF
