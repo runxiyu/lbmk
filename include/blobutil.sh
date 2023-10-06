@@ -4,7 +4,7 @@
 _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 _7ztest="a"
-blobdir="blobs"
+blobdir="blob"
 appdir="${blobdir}/app"
 cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
