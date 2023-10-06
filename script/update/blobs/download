@@ -43,7 +43,7 @@ build_dependencies()
 	[ -d ${cbdir} ] || \
 		x_ ./update project trees coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract me_cleaner; do
-		[ -d "${d}" ] && continue
+		[ -d "src/${d}" ] && continue
 		x_ ./update project repo "${d}"
 	done
 	[ -f "${uefiextract}" ] || \
