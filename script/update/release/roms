@@ -86,6 +86,18 @@ make_archive()
 	x_ printf "%s\n" "${versiondate}" > "${romdir}/versiondate"
 	x_ printf "%s\n" "${projectname}" > "${romdir}/projectname"
 
+	for x in u-boot seabios coreboot; do
+		[ -d "src/${x}/default" ] || \
+			x_ ./update project trees -f ${x} default
+	done
+	[ -d src/grub ] || x_ ./update project trees -f grub
+
+	# copy licenses to rom image archive, for completion
+	x_ cp "src/grub/COPYING" "${romdir}/COPYING.grub"
+	x_ cp "src/coreboot/default/COPYING" "${romdir}/COPYING.coreboot"
+	x_ cp "src/seabios/default/COPYING" "${romdir}/COPYING.coreboot"
+	x_ cp -R "src/u-boot/default/Licenses" "${romdir}/COPYING.u-boot"
+
 	archivename="${projectname}-${version}_${target##*/}"
 	f="release/${version}/roms/${archivename}"
 	(
