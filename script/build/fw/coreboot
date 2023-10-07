@@ -58,7 +58,7 @@ main()
 		targets="* bin/${board}\n${targets}"
 	done
 
-	[ -z ${targets} ] && err "No ROM images were compiled"
+	[ -z "${targets}" ] && err "No ROM images were compiled"
 	printf "\nROM images available in these directories:\n"
 	printf "${targets}^^ ROM images available in these directories.\n\n"
 }
