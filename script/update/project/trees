@@ -66,8 +66,8 @@ fetch_config()
 		    err "fetch_config: no \"${cfgsdir}/${_target}/target.cfg\""
 
 		[ "${_target}" != "${tree}" ] && _target="${tree}" && continue
-		[ -z ${tree} ] && err "${_xm}: tree undefined"
-		[ -z ${rev} ] && err "${_xm}: revision undefined"
+		[ -z "${tree}" ] && err "${_xm}: tree undefined"
+		[ -z "${rev}" ] && err "${_xm}: revision undefined"
 		break
 	done
 }

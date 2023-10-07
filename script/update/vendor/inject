@@ -41,7 +41,7 @@ check_board()
 	if ! check_release "${archive}" ; then
 		[ -f "${rom}" ] || \
 			err "check_board: \"${rom}\" is not a valid path"
-		[ -z ${rom+x} ] && \
+		[ -z "${rom+x}" ] && \
 			err "check_board: no rom specified"
 		[ ! -z ${board+x} ] || \
 			board=$(detect_board "${rom}")
@@ -214,7 +214,7 @@ inject_vendorfile_intel_me()
 	printf "adding intel me firmware\n"
 
 	rom="${1}"
-	[ -z ${CONFIG_ME_BIN_PATH} ] && \
+	[ -z "${CONFIG_ME_BIN_PATH}" ] && \
 		err "inject_vendorfile_intel_me: CONFIG_ME_BIN_PATH not set"
 
 	_me_location=${CONFIG_ME_BIN_PATH##*../}
@@ -282,7 +282,7 @@ inject_vendorfile_smsc_sch5545_ec()
 modify_gbe()
 {
 	printf "changing mac address in gbe to ${new_mac}\n"
-	[ -z ${CONFIG_GBE_BIN_PATH} ] && \
+	[ -z "${CONFIG_GBE_BIN_PATH}" ] && \
 		err "modify_gbe: ${board}: CONFIG_GBE_BIN_PATH not set"
 
 	rom="${1}"

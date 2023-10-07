@@ -72,15 +72,15 @@ check_target()
 	# Override the above defaults using target.cfg
 	. "${targetdir}/target.cfg"
 
-	[ -z ${grub_scan_disk} ] && \
+	[ -z "${grub_scan_disk}" ] && \
 		grub_scan_disk="both"
 	[ "${grub_scan_disk}" != "both" ] && [ "${grub_scan_disk}" != "ata" ] \
 	    && [ "${grub_scan_disk}" != "ahci" ] && \
 		grub_scan_disk="both"
 
-	[ -z ${tree} ] && \
+	[ -z "${tree}" ] && \
 		err "Target '${board}' defines no tree. Skipping build."
-	[ -z ${arch} ] && \
+	[ -z "${arch}" ] && \
 		err "Target '${board}' defines no arch. Skipping build."
 
 	[ "${payload_memtest}" != "y" ] && \
@@ -104,13 +104,13 @@ check_target()
 
 	[ "${payload_uboot}" != "n" ] && [ "${payload_uboot}" != "y" ] && \
 		payload_uboot="n"
-	[ "${payload_uboot}" = "y" ] && [ -z ${uboot_config} ] && \
+	[ "${payload_uboot}" = "y" ] && [ -z "${uboot_config}" ] && \
 		uboot_config="default"
 	[ "${vendorfiles}" != "n" ] && [ "${vendorfiles}" != "y" ] && \
 		vendorfiles="y"
 
 	# Override all payload directives with cmdline args
-	[ -z ${_payload} ] && return 0
+	[ -z "${_payload}" ] && return 0
 	printf "setting payload to: %s\n" "${_payload}"
 	eval "$(setvars "n" payload_grub payload_memtest payload_seabios \
 	    payload_seabios_withgrub payload_uboot payload_grub_withseabios)"
@@ -192,7 +192,7 @@ build_target()
 		hmode="vesafb"
 		[ "${initmode}" = "vgarom" ] || hmode="corebootfb"
 		modes="${hmode} txtmode"
-		[ -z ${_displaymode} ] || modes="${_displaymode}"
+		[ -z "${_displaymode}" ] || modes="${_displaymode}"
 		for y in ${modes}; do
 			displaymode="${y}"
 			[ "${initmode}" = "normal" ] && \
@@ -289,7 +289,7 @@ build_grub_roms()
 	for kmapfile in "${kmapdir}"/*; do
 		keymaps="${keymaps} ${kmapfile}"
 	done
-	[ -z ${_keyboard} ] || keymaps="${kmapdir}/${_keyboard}.gkb"
+	[ -z "${_keyboard}" ] || keymaps="${kmapdir}/${_keyboard}.gkb"
 
 	for keymapfile in ${keymaps}; do
 		[ -f "${keymapfile}" ] || continue

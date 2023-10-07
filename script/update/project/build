@@ -33,8 +33,8 @@ main()
 		esac
 		shift; project="${OPTARG#src/}"; shift
 	done
-	[ -z ${_f} ] && err "flag not specified (-m, -u, -b, -c or -x)"
-	[ -z ${project} ] && err "project name not specified"
+	[ -z "${_f}" ] && err "flag not specified (-m, -u, -b, -c or -x)"
+	[ -z "${project}" ] && err "project name not specified"
 
 	if [ ! -f "config/${project}/build.list" ]; then
 		build_projects $@
@@ -80,7 +80,7 @@ build_targets()
 	    err "Cannot get options for ${cfgsdir}"
 	[ $# -gt 0 ] && targets=$@
 
-	[ -z ${mode} ] && x_ mkdir -p "${elfdir}/"
+	[ -z "${mode}" ] && x_ mkdir -p "${elfdir}/"
 
 	handle_targets
 }
@@ -97,7 +97,7 @@ handle_targets()
 	done
 
 	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
-	[ -z ${mode} ] || return 0
+	[ -z "${mode}" ] || return 0
 	printf "Done! The files are stored under %s/\n\n" "${elfdir}"
 }
 
@@ -138,9 +138,9 @@ handle_src_tree()
 	# Override the above defaults using target.cfg
 	. "${target_dir}/target.cfg" # source
 
-	[ -z ${tree} ] && \
+	[ -z "${tree}" ] && \
 		err "handle_src_tree: ${target_dir}: tree undefined"
-	[ -z ${arch} ] && \
+	[ -z "${arch}" ] && \
 		err "handle_src_tree: ${target_dir}: undefined cpu type"
 
 	codedir="src/${project}/${tree}"
@@ -260,7 +260,7 @@ run_make_command()
 {
 	[ -f "${codedir}/Makefile" ] || [ -f "${codedir}/makefile" ] || \
 	    [ -f "${codedir}/GNUmakefile" ] || return 1
-	[ "${project}" = "coreboot" ] && [ -z ${mode} ] && \
+	[ "${project}" = "coreboot" ] && [ -z "${mode}" ] && \
 		x_ printf "%s\n" "${version}" >"${codedir}/.coreboot-version"
 
 	x_ make -C "${codedir}" -j$(nproc) ${mode}
