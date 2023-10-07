@@ -13,7 +13,8 @@ set -u -e
 export LOCALVERSION="-${projectname}-${version}"
 
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
-    elfdir listfile project romtype target target_dir targets tree cbfstool _f)"
+    elfdir listfile project romtype target target_dir targets tree cbfstool _f \
+    target1)"
 
 tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)"
 
@@ -72,6 +73,9 @@ build_targets()
 	[ -f "${listfile}" ] || err "list file, ${listfile}, does not exist"
 
 	# Build for all targets if no argument is given
+	[ $# -gt 0 ] && target1="${1}"
+	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && \
+		shift 1
 	targets=$(listitems "${cfgsdir}") || \
 	    err "Cannot get options for ${cfgsdir}"
 	[ $# -gt 0 ] && targets=$@
@@ -92,6 +96,7 @@ handle_targets()
 		x_ handle_defconfig
 	done
 
+	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
 	[ -z ${mode} ] || return 0
 	printf "Done! The files are stored under %s/\n\n" "${elfdir}"
 }
@@ -99,6 +104,11 @@ handle_targets()
 handle_defconfig()
 {
 	handle_src_tree "${target}" || return 0
+
+	if [ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ]; then
+		handle_coreboot_utils "${tree}"
+		return 0
+	fi
 
 	for y in "${target_dir}/config"/*; do
 		[ -f "${y}" ] || continue
@@ -111,6 +121,19 @@ handle_defconfig()
 		[ ! -z ${mode} ] || check_config || continue
 		handle_makefile
 		[ ! -z ${mode} ] || copy_elf
+	done
+}
+
+handle_coreboot_utils()
+{
+	for util in cbfstool ifdtool; do
+		x_ ./update project build ${_f} "src/coreboot/${1}/util/${util}"
+		[ -z ${mode} ] && [ ! -f "cbutils/${1}/${util}" ] && \
+			x_ mkdir -p "cbutils/${1}" && \
+			x_ cp "src/coreboot/${1}/util/${util}/${util}" \
+			    "cbutils/${1}"
+		[ -z ${mode} ] || \
+			x_ rm -Rf "cbutils/${1}"
 	done
 }
 
@@ -148,12 +171,15 @@ handle_src_tree()
 		touch "${tmpclean}/${tree}"
 	fi
 
+	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
+
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
 	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
 		[ ! -z ${mode} ] || check_cross_compiler || \
 		    err "handle_src_tree ${project}/${target}: crossgcc"
 		cbfstool="cbutils/${tree}/cbfstool"
-		[ -f "${cbfstool}" ] || x_ ./build coreboot utils "${tree}"
+		[ -f "${cbfstool}" ] || \
+			x_ ./update project build -b coreboot utils "${tree}"
 	fi
 }
 
