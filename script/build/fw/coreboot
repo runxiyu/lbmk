@@ -45,8 +45,7 @@ main()
 		shift 2
 	done
 
-	[ "${all}" = "y" ] && boards=""
-	[ ! -z ${boards} ] || boards=$(listitems config/coreboot) || \
+	[ "${all}" != "y" ] || boards=$(listitems config/coreboot) || \
 	    err "Cannot generate list of boards for building"
 
 	for x in ${boards}; do
@@ -56,11 +55,12 @@ main()
 		check_target
 		prepare_target
 		[ -d "bin/${board}" ] || continue
-		targets="bin/${board}, ${targets}"
+		targets="* bin/${board}\n${targets}"
 	done
 
 	[ -z ${targets} ] && err "No ROM images were compiled"
-	printf "ROM images available in these directories:\n${targets%, }\n"
+	printf "\nROM images available in these directories:\n"
+	printf "${targets}^^ ROM images available in these directories.\n\n"
 }
 
 check_target()
