@@ -51,6 +51,7 @@ main()
 	for x in ${boards}; do
 		eval "$(setvars "n" ${pv})"
 		eval "$(setvars "" ${v})"
+		grub_background="background1280x800.png"
 		board="${x}"
 		check_target
 		prepare_target
