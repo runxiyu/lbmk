@@ -44,11 +44,10 @@ create_release_directory()
 
 download_modules()
 {
-	for modname in ${trees_fetch_list}; do
-		[ -d "src/${modname}" ] || xx_ ./update project trees ${modname}
-	done
-	for modname in ${simple_fetch_list} ${download_only_list}; do
-		[ -d "src/${modname}/" ] || xx_ ./update project repo ${modname}
+	for modname in ${trees_fetch_list} ${simple_fetch_list} \
+	    ${download_only_list}; do
+		[ -d "src/${modname}/" ] || \
+			xx_ ./update project trees -f ${modname}
 	done
 }
 
@@ -79,12 +78,12 @@ purge_files()
 	(
 	xx_ cd "${srcdir}"
 	[ ! -d "src/coreboot/default/util/kbc1126" ] || \
-	    xx_ ./update project build -c "src/coreboot/default/util/kbc1126"
-	xx_ ./update project build -x coreboot
+	    xx_ ./update project trees -c "src/coreboot/default/util/kbc1126"
+	xx_ ./update project trees -x coreboot
 	for p in u-boot seabios coreboot; do
-		xx_ ./update project build -c "${p}"
+		xx_ ./update project trees -c "${p}"
 	done
-	xx_ ./update project build -c bios_extract flashrom grub uefitool \
+	xx_ ./update project trees -c bios_extract flashrom grub uefitool \
 	    stm32-vserprog stm32-vserprog/libopencm3 util/* memtest86plus
 
 	xx_ rm -Rf .git */.git* */*/.git* */*/*/.git* */*/*/*/.git* \

@@ -100,9 +100,9 @@ strip_archive()
 {
 	romdir=${1}
 	[ -d "src/coreboot/${tree}" ] || \
-		x_ ./update project trees coreboot ${tree}
+		x_ ./update project trees -f coreboot ${tree}
 
-	x_ ./update project build -b coreboot utils ${tree}
+	x_ ./update project trees -b coreboot utils ${tree}
 
 	if [ "${microcode_required}" = "n" ]; then
 		for romfile in "${romdir}"/*.rom; do

@@ -41,16 +41,16 @@ detect_firmware()
 build_dependencies()
 {
 	[ -d ${cbdir} ] || \
-		x_ ./update project trees coreboot ${cbdir##*/}
+		x_ ./update project trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract me_cleaner; do
 		[ -d "src/${d}" ] && continue
-		x_ ./update project repo "${d}"
+		x_ ./update project trees -f "${d}"
 	done
 	[ -f "${uefiextract}" ] || \
-		x_ ./update project build -b uefitool
+		x_ ./update project trees -b uefitool
 	[ -f "${kbc1126_ec_dump}" ] || \
 		x_ make -C "${cbdir}/util/kbc1126"
-	x_ ./update project build -b coreboot utils default
+	x_ ./update project trees -b coreboot utils default
 }
 
 download_vendorfiles()

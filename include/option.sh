@@ -40,7 +40,7 @@ EOF
 handle_coreboot_utils()
 {
 	for util in cbfstool ifdtool; do
-		x_ ./update project build ${_f} "src/coreboot/${1}/util/${util}"
+		x_ ./update project trees ${_f} "src/coreboot/${1}/util/${util}"
 		[ -z "${mode}" ] && [ ! -f "cbutils/${1}/${util}" ] && \
 			x_ mkdir -p "cbutils/${1}" && \
 			x_ cp "src/coreboot/${1}/util/${util}/${util}" \

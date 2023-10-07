@@ -87,8 +87,8 @@ detect_board()
 
 build_dependencies()
 {
-	[ -d "${cbdir}" ] || x_ ./update project trees coreboot default
-	x_ ./update project build -b coreboot utils default
+	[ -d "${cbdir}" ] || x_ ./update project trees -f coreboot default
+	x_ ./update project trees -b coreboot utils default
 	x_ ./update vendor download ${board}
 }
 
