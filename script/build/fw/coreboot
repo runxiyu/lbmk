@@ -55,8 +55,8 @@ main()
 		board="${x}"
 		check_target
 		prepare_target
-		[ -f "bin/${x}" ] || continue
-		targets="bin/${x}\n${targets}"
+		[ -d "bin/${board}" ] || continue
+		targets="bin/${board}, ${targets}"
 	done
 
 	[ -z ${targets} ] && err "No ROM images were compiled"
