@@ -18,6 +18,7 @@ main()
 	handle_dependencies
 	build_keymap_configs
 	build_grub_payload
+	printf "GRUB files now available under directory: %s\n" "${elfdir}"
 }
 
 handle_dependencies()
