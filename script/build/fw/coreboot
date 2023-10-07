@@ -169,7 +169,7 @@ build_dependency_grub()
 		    rebuild_grub="y" && break
 	done
 	[ "${rebuild_grub}" = "y" ] || return 0
-	x_ ./build coreboot grub
+	x_ ./build fw grub
 }
 
 build_dependency_uboot()
