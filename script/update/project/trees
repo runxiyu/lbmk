@@ -23,7 +23,6 @@ main()
 	printf "Downloading %s and applying patches\n" ${project}
 
 	for x in ${targets}; do
-		x_ rm -f "${cfgsdir}/"*/seen
 		download_for_target "${x}"
 	done
 }
@@ -55,6 +54,7 @@ download_for_target()
 
 fetch_config()
 {
+	x_ rm -f "${cfgsdir}/"*/seen
 	while true; do
 		eval "$(setvars "" rev tree)"
 		_xm="fetch_config ${project}/${_target}"
