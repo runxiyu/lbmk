@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
+version=""; versiondate=""; projectname=""
+
 x_() {
 	[ $# -lt 1 ] || ${@} || err "non-zero exit status: ${@}"
 }
@@ -27,24 +29,29 @@ git_err()
 
 check_project()
 {
-	_fail="${1}"
-	read project < projectname
+	read projectname < projectname || :
 
-	[ -f version ] && read version < version
+	[ ! -f version ] || read version < version || :
 	version_="${version}"
 	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
 	    version="git-$(git rev-parse HEAD 2>&1)" || version="${version_}"
 
-	[ -f versiondate ] && read versiondate < versiondate
+	[ ! -f versiondate ] || read versiondate < versiondate || :
 	versiondate_="${versiondate}"
 	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
 	    --pretty='%ct' HEAD)" || versiondate="${versiondate_}"
 
-	[ -z ${versiondate} ] && "${_fail}" "Unknown version date"
-	[ -z ${version} ] && "${_fail}" "Unknown version"
+	[ ! -z ${versiondate} ] || fail "Unknown version date" || \
+	    err "Unknown version date"
+	[ ! -z ${version} ] || fail "Unknown version" || \
+	    err "Unknown version"
+	[ ! -z ${projectname} ] || fail "Unknown project" || \
+	    err "Unknown project"
 
-	printf "%s\n" "${version}" > version
-	printf "%s\n" "${versiondate}" > versiondate
+	xx_ printf "%s\n" "${version}" > version || \
+	    x_ printf "%s\n" "${version}" > version
+	xx_ printf "%s\n" "${versiondate}" > versiondate || \
+	    x_ printf "%s\n" "${versiondate}" > versiondate
 }
 
 setvars()
@@ -64,3 +71,6 @@ err()
 	printf "ERROR %s: %s\n" "${0}" "${1}" 1>&2
 	exit 1
 }
+
+check_git
+check_project

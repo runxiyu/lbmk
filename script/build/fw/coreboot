@@ -12,8 +12,6 @@ set -u -e
 . "include/err.sh"
 . "include/option.sh"
 
-read projectname < projectname
-
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 grub_background="background1280x800.png"
 grubelf="elf/grub/grub.elf"

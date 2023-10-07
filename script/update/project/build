@@ -10,9 +10,6 @@ set -u -e
 . "include/err.sh"
 . "include/option.sh"
 
-read projectname < projectname
-read version < version
-
 export LOCALVERSION="-${projectname}-${version}"
 
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \

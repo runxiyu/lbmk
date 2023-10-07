@@ -7,8 +7,6 @@ set -u -e
 
 . "include/err.sh"
 
-read projectname < projectname
-
 trees_fetch_list="coreboot u-boot seabios"
 simple_fetch_list="flashrom grub memtest86plus me_cleaner uefitool"
 simple_fetch_list="${simple_fetch_list} bios_extract biosutilities"
@@ -18,17 +16,12 @@ dirlist="config util script include"
 linklist="update" # symlinks in main directory, to script: lbmk
 filelist="build README.md COPYING version versiondate projectname .gitignore"
 
-version="version-unknown"
-versiondate="version-date-unknown"
 eval "$(setvars "" reldir dirname srcdir)"
 
 printf "Building source code archive, version %s\n" "${version}"
 
 main()
 {
-	[ -f version ] && read version < version
-	[ -f versiondate ] && read versiondate < versiondate
-
 	create_release_directory
 	download_modules
 	copy_files

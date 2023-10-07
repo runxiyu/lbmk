@@ -11,7 +11,7 @@ set -u -e
 . "include/err.sh"
 . "include/option.sh"
 
-eval "$(setvars "" mode option project version versiondate aur_notice tmpdir)"
+eval "$(setvars "" mode option aur_notice tmpdir)"
 
 tmpdir_was_set="y"
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
@@ -119,7 +119,7 @@ usage()
 	Example: ./build coreboot list, which would yield:
 	$(./build coreboot list)
 
-	Refer to ${project} documentation for more info.
+	Refer to ${projectname} documentation for more info.
 	EOF
 }
 

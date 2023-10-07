@@ -7,9 +7,6 @@ set -u -e
 
 . "include/err.sh"
 
-read projectname < projectname
-version="version-unknown"
-versiondate="version-date-unknown"
 tree="default"
 eval "$(setvars "" target CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
@@ -31,8 +28,6 @@ main()
 
 init_check()
 {
-	[ -f version ] && read version < version
-	[ -f versiondate ] && read versiondate < versiondate
 	[ ! -d "bin/" ] && \
 		err "init_check: no ROMs built yet (error)"
 	[ -d "release/" ] || \
