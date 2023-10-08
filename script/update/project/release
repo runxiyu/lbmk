@@ -1,0 +1,299 @@
+#!/usr/bin/env sh
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2020-2023 Leah Rowe <leah@libreboot.org>
+
+[ "x${DEBUG+set}" = 'xset' ] && set -v
+set -u -e
+
+. "include/err.sh"
+
+eval "$(setvars "" vdir basename src_dirname srcdir _nogit _xm target romdir \
+    microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
+    CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
+
+_f="coreboot u-boot seabios flashrom grub memtest86plus me_cleaner uefitool"
+_f="${_f} bios_extract biosutilities pico-serprog stm32-vserprog"
+_f="${_f} rpi-pico-serprog"
+
+ifdtool="cbutils/default/ifdtool"
+cbfstool="cbutils/default/cbfstool"
+
+main()
+{
+	vdir="release"
+	while getopts d: option
+	do
+		case "${1}" in
+		-d) vdir="${2}" ;;
+		*) err "Invalid option" ;;
+		esac
+	done
+	[ -z "${vdir}" ] && err "Empty directory names not allowed"
+
+	vdir="${vdir}/${version}"
+	basename="${projectname}-${version}"
+	src_dirname="${basename}_src"
+	srcdir="${vdir}/${src_dirname}"
+
+	[ -e "${vdir}" ] && err "already exists: \"${vdir}\""
+
+	mkvdir
+	build_release
+}
+
+mkvdir()
+{
+	mkdir -p "${vdir}" || err "mkvdir: !mkdir -p \"${vdir}\""
+
+	git_init || err "mkvdir: !git_init \"${vdir}\""
+	git clone . "${srcdir}" || err "mkdir: !gitclone \"${srcdir}\""
+	[ -z "${_nogit}" ] || x_ rm -Rf ".git"
+
+	rm -Rf "${srcdir}/.git"
+	insert_version_files "${srcdir}" || err "mkvdir ${srcdir}: versionfile"
+}
+
+# release archives contain .gitignore, but not .git.
+# this script can be run from lbmk.git, or an archive.
+git_init()
+{
+	[ -L ".git" ] && err "Reference .git is a symlink"
+	[ -e ".git" ] && return 0
+	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
+
+	git init || return 1
+	git add -A . || return 1
+	git commit -m "${projectname} ${version}" --date "${cdate}" || return 1
+	git tag -a "${version}" -m "${projectname} ${version}" || return 1
+}
+
+build_release()
+{
+	_xm="build_release ${vdir}"
+	(
+	cd "${srcdir}" || err "${_xm}: !cd \"${srcdir}\""
+
+	fetch_trees
+	mkrom_images
+	clean_release
+	)
+	(
+	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
+	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
+	)
+	rm -Rf "${srcdir}" || err "${_xm}: !rm -Rf \"${srcdir}\""
+}
+
+fetch_trees()
+{
+	for x in ${_f}; do
+		./update project trees -f "${x}" || err "${_xm}: fetch ${x}"
+	done
+
+	x_ rm -Rf src/coreboot/coreboot src/u-boot/u-boot src/seabios/seabios
+
+	# by doing this first, we build-test under the same conditions as
+	# the user, when they extract and build from the src tarball. this
+	# saves time on build-testing, because we build once, not twice. thus:
+
+	rm -Rf */.git* */*/.git* */*/*/.git* */*/*/*/.git* */*/*/*/*/.git* \
+	    */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* */*/*/*/*/*/*/*/.git* || \
+	    err "${_xm}: rm-dotgit"
+}
+
+mkrom_images()
+{
+	./build fw coreboot all || err "${_xm}: roms-all"
+	./build fw serprog rp2040 || err "${_xm}: rp2040"
+	./build fw serprog stm32 || err "${_xm}: stm32"
+
+	for rombuild in bin/*; do
+		[ -d "${rombuild}" ] || continue
+		handle_rom_archive "${rombuild}"
+	done
+
+	mv "release/${version}/roms/" ../roms || err "${_xm}: copy roms/"
+}
+
+handle_rom_archive()
+{
+	builddir="${1}"
+	romdir="tmp/romdir"
+	x_ rm -Rf "${romdir}"
+	target="${builddir##*/}"
+
+	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
+		# No config, just make a tarball
+		tarball="release/${version}/roms/${basename}_${target}.tar.xz"
+		insert_copying_files "${builddir}"
+		mktarball "${builddir}" "${tarball}"
+		return 0
+	fi
+
+	romdir="${romdir}/bin/${target}"
+	x_ mkdir -p "${romdir}"
+	x_ cp "${builddir}/"* "${romdir}"
+
+	handle_vendorfiles
+
+	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
+	    "${version}" "${projectname}" "${version}" "${target##*/}"
+	insert_version_files "${romdir}" || \
+	    err "mkrom_tarball ${romdir}: versionfile"
+
+	insert_copying_files "${romdir}"
+	mkrom_tarball
+}
+
+handle_vendorfiles()
+{
+	microcode_required="y"
+	. "config/coreboot/${target}/target.cfg"
+	if [ "${microcode_required}" != "y" ] && \
+	    [ "${microcode_required}" != "n" ]; then microcode_required="y"; fi
+
+	for x in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
+	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
+		eval "${x}=\"y\""
+		grep "${x}=y" "config/coreboot/${target}/config/"* || \
+		    eval "${x}=\"n\""
+	done
+
+	# remove ME/MRC/EC firmware from ROM images
+	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] || \
+	    [ "${target}" = "e6400_4mb" ] || \
+	    [ "${microcode_required}" = "n" ]; then
+		strip_archive
+	fi
+}
+
+strip_archive()
+{
+	if [ "${microcode_required}" = "n" ]; then
+		for romfile in "${romdir}"/*.rom; do
+			[ -f "${romfile}" ] || continue
+			strip_ucode "${romfile}"
+		done
+		for romfile in "${romdir}"/*.tmprom; do
+			[ -f "${romfile}" ] || continue
+			x_ mv "${romfile}" "${romfile%.tmprom}.rom"
+		done
+	fi
+
+	# Hash the rom before removing vendor files
+	x_ rm -f "${romdir}/vendorhashes"
+	x_ touch "${romdir}/vendorhashes"
+	(
+	x_ cd "${romdir}"
+	x_ sha512sum *.rom >> vendorhashes
+	)
+	for romfile in "${romdir}"/*.rom; do
+		[ -f "${romfile}" ] || continue
+		strip_rom_image "${romfile}"
+	done
+}
+
+strip_ucode()
+{
+	romfile=${1}
+	_newrom_b="${romfile%.rom}_nomicrocode.tmprom"
+	x_ cp "${romfile}" "${_newrom_b}"
+	microcode_present="y"
+	"${cbfstool}" "${_newrom_b}" remove -n \
+	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
+	[ "${microcode_present}" = "n" ] || return 0
+	printf "REMARK: '%s' already lacks microcode\n" "${romfile}" 1>&2
+	printf "Renaming default ROM file instead.\n" 1>&2
+	x_ mv "${romfile}" "${_newrom_b}"
+}
+
+strip_rom_image()
+{
+	[ -f "${1}" ] || return 0
+	[ "${CONFIG_HAVE_ME_BIN}" != "y" ] || \
+		x_ "${ifdtool}" --nuke me "${1}" -O "${1}"
+	[ "${CONFIG_HAVE_MRC}" != "y" ] || \
+		x_ "${cbfstool}" "${1}" remove -n mrc.bin
+	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
+		x_ "${cbfstool}" "${1}" remove -n sch5545_ecfw.bin
+	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
+		x_ "${cbfstool}" "${1}" remove -n ecfw1.bin
+		x_ "${cbfstool}" "${1}" remove -n ecfw2.bin
+	fi
+	# TODO: replace this board-specific hack
+	[ "${target}" = "e6400_4mb" ] || return 0
+	x_ "${cbfstool}" "${1}" remove -n "pci10de,06eb.rom"
+}
+
+insert_copying_files()
+{
+	x_ rm -Rf "${1}/licenses"
+	x_ mkdir -p "${1}/licenses"
+	l="${1}/licenses"
+	# copy licenses to rom image archive, for completion
+	x_ cp "src/grub/COPYING" "${l}/COPYING.grub"
+	x_ cp "src/coreboot/default/COPYING" "${l}/COPYING.coreboot"
+	x_ cp -R "src/coreboot/default/LICENSES" "${l}/LICENSES.coreboot"
+	x_ cp "src/seabios/default/COPYING" "${l}/COPYING.coreboot"
+	x_ cp "src/seabios/default/COPYING.LESSER" "${l}/COPYING.LESSER.seabios"
+	x_ cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot"
+}
+
+mkrom_tarball()
+{
+	archivename="${basename}_${target##*/}"
+	f="release/${version}/roms/${archivename}"
+	x_ mkdir -p "${f%/*}"
+	(
+	x_ cd "${romdir%/bin/${target}}"
+	mktarball "bin/${target}" "${archivename}.tar.xz"
+	)
+	x_ mv "${romdir%/bin/${target}}/${archivename}.tar.xz"* "${f%/*}"
+
+	printf "Created ROM archive: ${f%/*}/${archivename}.tar.xz"
+}
+
+clean_release()
+{
+	for x in "src/coreboot/default/util/kbc1126" util/*; do
+		[ ! -f "${x}/Makefile" ] && continue
+		x_ make clean -C "${x}"
+	done
+
+	for x in ${_f}; do
+		./update project trees -c "${x}" || err "${_xm}: pclean ${x}"
+	done
+	./update project trees -x coreboot || err "${_xm}: clean-crossgcc"
+	./update project trees -c "stm32-vserprog/libopencm3"
+
+	# make absolutely sure crossgcc was purged. for some reason,
+	# crossgcc-clean isn't always reliable on every coreboot tree
+	for xgcc in "build-" "binutils-" "gcc-" "gmp-" "mpc-" "mpfr-" \
+	    "llvm-" "clang-tools-" "cfe-" "compiler-rt-" "acpica-" \
+	    "getopt" "xgcc"; do
+		x_ rm -Rf src/coreboot/*/util/crossgcc/${xgcc}*
+	done
+
+	rm -Rf vendor mrc ec pciroms || err "${_xm}: vendor files"
+	rm -Rf elf tmp cbutils src/pico-serprog/build release bin || \
+	    err "${_xm}: elf, tmp, cbutils, pico-serprog/build"
+}
+
+insert_version_files()
+{
+	printf "%s\n" "${version}" > "${1}/version" || return 1
+	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
+	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
+}
+
+mktarball()
+{
+	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
+	x_ tar -c "${1}" | xz -T0 -9e > "${2}"
+	(
+	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
+	x_ sha512sum "${2##*/}" > "${2##*/}.sha512"
+	)
+}
+
+main $@

@@ -11,7 +11,7 @@ set -u -e
 . "include/option.sh"
 . "include/git.sh"
 
-export LOCALVERSION="-${projectname}-${version}"
+export LOCALVERSION="-${projectname}-${version%%-*}"
 
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
     elfdir listfile project romtype target target_dir targets tree cbfstool _f \
@@ -271,9 +271,9 @@ run_make_command()
 	[ -f "${codedir}/Makefile" ] || [ -f "${codedir}/makefile" ] || \
 	    [ -f "${codedir}/GNUmakefile" ] || return 1
 	[ "${project}" = "coreboot" ] && [ -z "${mode}" ] && \
-		x_ printf "%s\n" "${version}" >"${codedir}/.coreboot-version"
+		x_ printf "%s\n" "${version%%-*}" >"${codedir}/.coreboot-version"
 
-	x_ make -C "${codedir}" -j$(nproc) ${mode}
+	x_ make ${mode} -j$(nproc) -C "${codedir}"
 	[ "${mode}" != "clean" ] && return 0
 	make -C "${codedir}" distclean 2>/dev/null || :
 }
