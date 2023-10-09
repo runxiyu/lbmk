@@ -130,7 +130,7 @@ prepare_target()
 
 	build_dependency_seabios
 
-	memtest_bin="memtest86plus/build${arch#*_}/memtest.bin"
+	memtest_bin="memtest86plus/build64/memtest.bin"
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
 		x_ ./update project trees -b memtest86plus
 

@@ -1,39 +1,40 @@
-From 1727cb88a183a9e787e359e42c0a499917ba495b Mon Sep 17 00:00:00 2001
+From 81d850494c3cde1da33cc2df44837c839c1f2c60 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 6 Oct 2023 23:17:06 +0100
 Subject: [PATCH 1/1] add central Makefile in main directory
 
-it just runs the Makefiles in build32 and build64
+it only does build64. i'm disabling use of 32-bit memtest in lbmk,
+until i can figure out a more consistent cross-compile method,
+rather than relying on hostcc.
 
-all, clean and distclean(runs clean) are supported
+a user on irc reported build issues on pop os
 
-this makes memtest86plus integrate easier in lbmk
+it's not pop's fault. lbmk needs to start handling cross
+compilers properly. (alternatively, i could rig memtest86+
+to use crossgcc. i'll explore that later)
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
- Makefile | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ Makefile | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
  create mode 100644 Makefile
 
 diff --git a/Makefile b/Makefile
 new file mode 100644
-index 0000000..50f2d58
+index 0000000..59fcbef
 --- /dev/null
 +++ b/Makefile
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,11 @@
 +# SPDX-License-Identifier: MIT
 +# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 +
 +all:
-+	make -C build32
 +	make -C build64
 +
 +clean:
-+	make -C build32 clean
 +	make -C build64 clean
 +
 +distclean:
-+	make -C build32 clean
 +	make -C build64 clean
 -- 
 2.39.2
