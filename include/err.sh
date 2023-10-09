@@ -72,5 +72,4 @@ err()
 	exit 1
 }
 
-check_git
 check_project
