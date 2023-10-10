@@ -116,8 +116,8 @@ usage()
 	For each of the above modes, you may also do:
 	${progname} <MODE> list
 
-	Example: ./build coreboot list, which would yield:
-	$(./build coreboot list)
+	Example: ./build fw list, which would yield:
+	$(./build fw list)
 
 	Refer to ${projectname} documentation for more info.
 	EOF
