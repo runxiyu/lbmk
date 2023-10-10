@@ -3,9 +3,13 @@
 
 CC=cc
 CFLAGS=-Wall -Wextra -Werror -O2 -pedantic
+ifeq ($(shell uname), OpenBSD)
+	CFLAGS += -l$(shell uname -p)
+endif
+SRCS=e6400_flash_unlock.c accessors.c
 
-all: e6400_flash_unlock.c
-	$(CC) $(CFLAGS) e6400_flash_unlock.c -o e6400_flash_unlock
+all: $(SRCS) accessors.h
+	$(CC) $(CFLAGS) $(SRCS) -o e6400_flash_unlock
 
 clean:
 	rm -f e6400_flash_unlock
