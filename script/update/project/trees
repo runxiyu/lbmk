@@ -90,7 +90,7 @@ build_targets()
 	[ $# -gt 0 ] && targets=$@
 
 	[ -z "${mode}" ] && x_ mkdir -p "${elfdir}/"
-	if [ "${project}" != "coreboot" ]; then
+	if [ "${project}" = "coreboot" ]; then
 		printf "DO NOT flash coreboot images under elf/. Use ROMs"
 		printf "under bin/. The elf/ ones DO NOT contain payloads"
 		printf "will brick your machine.\n" > \
