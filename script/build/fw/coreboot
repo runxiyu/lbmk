@@ -62,6 +62,12 @@ main()
 	[ -z "${targets}" ] && err "No ROM images were compiled"
 	printf "\nROM images available in these directories:\n"
 	printf "${targets}^^ ROM images available in these directories.\n\n"
+
+	printf "WARNING!!!!!!! PLEASE READ:\n\n"
+
+	printf "DO NOT flash ROM images contained under elf/, because they lack"
+	printf "payloads and will BRICK your machine. Please flash ROM images"
+	printf "contained under bin/ instead. YOU HAVE BEEN WARNED.\n\n"
 }
 
 check_target()
@@ -216,7 +222,7 @@ build_roms()
 
 	x_ ./update project trees -b coreboot ${board}
 
-	_cbrom="elf/coreboot/${board}/${initmode}_${displaymode}"
+	_cbrom="elf/coreboot_nopayload_DO_NOT_FLASH/${board}/${initmode}_${displaymode}"
 	[ "${initmode}" = "normal" ] && \
 		_cbrom="${_cbrom%_${displaymode}}"
 	_cbrom="${_cbrom}/coreboot.rom"

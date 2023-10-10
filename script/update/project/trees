@@ -72,6 +72,8 @@ build_projects()
 build_targets()
 {
 	elfdir="elf/${project}"
+	[ "${elfdir}" = "elf/coreboot" ] && \
+		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 
 	cfgsdir="config/${project}"
 	[ -d "${cfgsdir}" ] || err "directory, ${cfgsdir}, does not exist"
@@ -88,6 +90,13 @@ build_targets()
 	[ $# -gt 0 ] && targets=$@
 
 	[ -z "${mode}" ] && x_ mkdir -p "${elfdir}/"
+	if [ "${project}" != "coreboot" ]; then
+		printf "DO NOT flash coreboot images under elf/. Use ROMs"
+		printf "under bin/. The elf/ ones DO NOT contain payloads"
+		printf "will brick your machine.\n" > \
+		    "${elfdir}/WARNING.txt" || :
+	fi
+
 
 	handle_targets
 }
