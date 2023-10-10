@@ -396,9 +396,9 @@ moverom() {
 usage()
 {
 	cat <<- EOF
-	USAGE:	./build firmware coreboot target
-	To build *all* boards, do this: ./build firmware coreboot all
-	To list *all* boards, do this: ./build firmware coreboot list
+	USAGE:	./build fw coreboot targetname
+	To build *all* boards, do this: ./build fw coreboot all
+	To list *all* boards, do this: ./build fw coreboot list
 	
 	Optional Flags:
 	-d: displaymode
@@ -406,9 +406,10 @@ usage()
 	-k: keyboard layout
 
 	Example commands:
-		./build firmware coreboot x60
-		./build firmware coreboot x200_8mb x60
-		./build firmware coreboot x60 -p grub -d corebootfb -k usqwerty
+
+		./build fw coreboot x60
+		./build fw coreboot x200_8mb x60
+		./build fw coreboot x60 -p grub -d corebootfb -k usqwerty
 
 	possible values for 'target':
 	$(listitems "config/coreboot")
