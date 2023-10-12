@@ -269,5 +269,6 @@ writeGbeFile(void)
 		handle_endianness(p^x);
 		err_if(pwrite(fd, (uint8_t *) gbe[p^x], nf, p << 12) == -1);
 	}
+	errno = 0;
 	err_if(close(fd) == -1);
 }
