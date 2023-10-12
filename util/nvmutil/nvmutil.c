@@ -261,7 +261,6 @@ xorswap_buf(int partnum)
 void
 writeGbeFile(void)
 {
-	errno = 0;
 	err_if((cmd == writeGbeFile) && !(validChecksum(0) || validChecksum(1)));
 	for (int p = 0, x = (cmd == writeGbeFile) ? 1 : 0; p < 2; p++) {
 		if ((!nvmPartModified[p]) && (cmd != writeGbeFile))
