@@ -13,7 +13,7 @@ cbfstool="cbutils/default/cbfstool"
 nvmutil="util/nvmutil/nvm"
 pciromsdir="pciroms"
 
-mecleaner="${PWD}/src/me_cleaner/me_cleaner.py"
+mecleaner="${PWD}/src/coreboot/default/util/me_cleaner/me_cleaner.py"
 me7updateparser="${PWD}/util/me7_update_parser/me7_update_parser.py"
 e6400_unpack="${PWD}/src/bios_extract/dell_inspiron_1100_unpacker.py"
 kbc1126_ec_dump="${PWD}/${cbdir}/util/kbc1126/kbc1126_ec_dump"

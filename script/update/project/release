@@ -11,7 +11,7 @@ eval "$(setvars "" vdir basename src_dirname srcdir _nogit _xm target romdir \
     microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
 
-_f="coreboot u-boot seabios flashrom grub memtest86plus me_cleaner uefitool"
+_f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
 _f="${_f} bios_extract biosutilities pico-serprog stm32-vserprog"
 _f="${_f} rpi-pico-serprog"
 
