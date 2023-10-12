@@ -1,7 +1,7 @@
-From eb0fa411af62bf33cac69f3ba082e2d513bd9ab2 Mon Sep 17 00:00:00 2001
+From 7d5452bc3358cf82eea48fde312494bcb4ca8101 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 12 May 2023 19:55:15 -0600
-Subject: [PATCH 19/19] Remove warning for coreboot images built without a
+Subject: [PATCH 19/22] Remove warning for coreboot images built without a
  payload
 
 I added this in upstream to prevent people from accidentally flashing

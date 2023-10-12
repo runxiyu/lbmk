@@ -1,7 +1,7 @@
-From bc4ef158c4c6836351a395e8f0ff24f7c6d1f2c6 Mon Sep 17 00:00:00 2001
+From 75858ba200a2a5835bca0af9b5f508a52ed978de Mon Sep 17 00:00:00 2001
 From: persmule <persmule@gmail.com>
 Date: Sun, 31 Oct 2021 23:33:26 +0000
-Subject: [PATCH 09/19] lenovo/t400: Enable all SATA ports
+Subject: [PATCH 09/22] lenovo/t400: Enable all SATA ports
 
 There are 2 SATA ports on the chassis of t400(s), but at least one dock for
 t400 contains a port for (P/S)ATA device, and t400s has a eSATA port on its

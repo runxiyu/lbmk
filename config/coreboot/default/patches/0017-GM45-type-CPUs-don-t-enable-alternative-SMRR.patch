@@ -1,7 +1,7 @@
-From f5859da443fc1ff2450051d1d88bee56346fe63b Mon Sep 17 00:00:00 2001
+From fdde15b69bd5c8bf54339adf3581a32fa992a503 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 17 Apr 2023 15:49:57 +0100
-Subject: [PATCH 17/19] GM45-type CPUs: don't enable alternative SMRR
+Subject: [PATCH 17/22] GM45-type CPUs: don't enable alternative SMRR
 
 This reverts the changes in coreboot revision:
 df7aecd92643d207feaf7fd840f8835097346644

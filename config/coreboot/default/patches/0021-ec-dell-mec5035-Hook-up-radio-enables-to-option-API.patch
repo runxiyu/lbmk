@@ -1,7 +1,7 @@
-From 1b607998e3e7054ce1107ba6af48902f6b6ffb02 Mon Sep 17 00:00:00 2001
+From 4537c365dae010645404fdb5d2d4e5f478dede67 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sun, 27 Aug 2023 19:15:37 -0600
-Subject: [PATCH 2/3] ec/dell/mec5035: Hook up radio enables to option API
+Subject: [PATCH 21/22] ec/dell/mec5035: Hook up radio enables to option API
 
 Change-Id: I52de5ea3d24b400a93adee7a6207a4439eac61db
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -33,5 +33,5 @@ index e0335a4635..20a33cc0ad 100644
  
  static struct device_operations ops = {
 -- 
-2.42.0
+2.39.2
 

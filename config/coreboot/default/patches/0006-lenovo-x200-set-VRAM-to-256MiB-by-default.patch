@@ -1,7 +1,7 @@
-From 29e6f78973928ad9ae86b26d5cf308a2680c88bf Mon Sep 17 00:00:00 2001
+From 93f607fed477b3e63b7929808937436ac2898b34 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:11:59 +0100
-Subject: [PATCH 06/19] lenovo/x200: set VRAM to 256MiB by default
+Subject: [PATCH 06/22] lenovo/x200: set VRAM to 256MiB by default
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

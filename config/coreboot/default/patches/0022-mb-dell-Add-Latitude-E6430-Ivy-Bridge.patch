@@ -1,7 +1,7 @@
-From e4e508c3375d38c434678a2e0652b55e7ea79fc5 Mon Sep 17 00:00:00 2001
+From db1cb588b64f17c7ed08201bf1e09ab5393e4b04 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sat, 19 Aug 2023 16:19:10 -0600
-Subject: [PATCH 3/3] mb/dell: Add Latitude E6430 (Ivy Bridge)
+Subject: [PATCH 22/22] mb/dell: Add Latitude E6430 (Ivy Bridge)
 
 Mainboard is QAL80/LA-7781P (UMA). The dGPU model was not tested.
 This is based on the autoport output with some manual tweaks. The flash
@@ -816,5 +816,5 @@ index 0000000000..31e49802fc
 +	.enable_dev = mainboard_enable,
 +};
 -- 
-2.42.0
+2.39.2
 

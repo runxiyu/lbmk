@@ -1,7 +1,7 @@
-From 54197e66c6ecf33743489be9ab0352cfc4b1ffe2 Mon Sep 17 00:00:00 2001
+From f1c59cd67446303a5cdf9107461247a63f894de3 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:21:39 +0100
-Subject: [PATCH 08/19] acer/g43t-am3: set VRAM to 256MiB by default
+Subject: [PATCH 08/22] acer/g43t-am3: set VRAM to 256MiB by default
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
