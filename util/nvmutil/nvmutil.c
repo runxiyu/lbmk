@@ -15,7 +15,7 @@
 
 void cmd_setchecksum(void), cmd_brick(void), cmd_copy(void), writeGbeFile(void),
     cmd_dump(void), cmd_setmac(void), readGbeFile(void), showmac(int partnum),
-    hexdump(int partnum), xorswap_buf(int partnum), openFiles(const char *path);
+    hexdump(int partnum), handle_endianness(int partnum), openFiles(const char *path);
 int macAddress(const char *strMac, uint16_t *mac), validChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -28,7 +28,7 @@ uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
 size_t nf = 128, gbe[2];
 uint8_t nvmPartModified[2] = {0, 0}, skipread[2] = {0, 0};
-int endian = 1, flags = O_RDWR, rfd, fd, part, gbeFileModified = 0;
+int e = 1, flags = O_RDWR, rfd, fd, part, gbeFileModified = 0;
 
 const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
 
@@ -53,7 +53,6 @@ void (*cmd)(void) = NULL;
 #define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
     if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
-#define handle_endianness(r) if (((uint8_t *) &endian)[0] ^ 1) xorswap_buf(r)
 
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
 #define setWord(pos16, p, val16) if ((gbeFileModified = 1) && \
@@ -251,14 +250,6 @@ validChecksum(int partnum)
 }
 
 void
-xorswap_buf(int partnum)
-{
-	uint8_t *n = (uint8_t *) gbe[partnum];
-	for (size_t w = 0, x = 1; w < nf; w += 2, x += 2)
-		n[w] ^= n[x], n[x] ^= n[w], n[w] ^= n[x];
-}
-
-void
 writeGbeFile(void)
 {
 	err_if((cmd == writeGbeFile) && !(validChecksum(0) || validChecksum(1)));
@@ -270,4 +261,12 @@ writeGbeFile(void)
 	}
 	errno = 0;
 	err_if(close(fd) == -1);
+}
+
+void
+handle_endianness(int partnum)
+{
+	uint8_t *n = (uint8_t *) gbe[partnum];
+	for (size_t w = nf * ((uint8_t *) &e)[0], x = 1; w < nf; w += 2, x += 2)
+		n[w] ^= n[x], n[x] ^= n[w], n[w] ^= n[x];
 }
