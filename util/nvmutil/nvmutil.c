@@ -13,21 +13,11 @@
 #include <string.h>
 #include <unistd.h>
 
-void openFiles(const char *path);
-void readGbeFile(void);
-void cmd_setmac(void);
-int invalidMacAddress(const char *strMac, uint16_t *mac);
-uint8_t hextonum(char chs);
-uint8_t rhex(void);
-void cmd_dump(void);
-void showmac(int partnum);
-void hexdump(int partnum);
-void cmd_setchecksum(void);
-void cmd_brick(void);
-void cmd_copy(void);
-int validChecksum(int partnum);
-void xorswap_buf(int partnum);
-void writeGbeFile(void);
+void cmd_setchecksum(void), cmd_brick(void), cmd_copy(void), writeGbeFile(void),
+    cmd_dump(void), cmd_setmac(void), readGbeFile(void), showmac(int partnum),
+    hexdump(int partnum), xorswap_buf(int partnum), openFiles(const char *path);
+int macAddress(const char *strMac, uint16_t *mac), validChecksum(int partnum);
+uint8_t hextonum(char chs), rhex(void);
 
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
@@ -136,7 +126,7 @@ readGbeFile(void)
 void
 cmd_setmac(void)
 {
-	if (invalidMacAddress(strMac, mac))
+	if (macAddress(strMac, mac))
 		err(errno = ECANCELED, "Bad MAC address");
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!validChecksum(part = partnum))
@@ -148,7 +138,7 @@ cmd_setmac(void)
 }
 
 int
-invalidMacAddress(const char *strMac, uint16_t *mac)
+macAddress(const char *strMac, uint16_t *mac)
 {
 	uint64_t total = 0;
 	if (strnlen(strMac, 20) == 17) {
