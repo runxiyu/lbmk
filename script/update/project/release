@@ -259,8 +259,15 @@ insert_version_files()
 
 mktarball()
 {
+	# preserve timestamps for reproducible tarballs
+	tar_implementation="$(tar --version)"
+	tar_implementation="${tar_implementation% *}"
+	mtime=""
+	[ "${tar_implementation}" = "tar (GNU tar)" ] && \
+		mtime="--mtime=${versiondate}"
+
 	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
-	x_ tar -c "${1}" | xz -T0 -9e > "${2}"
+	x_ tar -c "${1}" ${mtime} | xz -T0 -9e > "${2}"
 	(
 	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
 	x_ sha512sum "${2##*/}" > "${2##*/}.sha512"
