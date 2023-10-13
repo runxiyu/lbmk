@@ -72,14 +72,15 @@ build_release()
 	_xm="build_release ${vdir}"
 	(
 	cd "${srcdir}" || err "${_xm}: !cd \"${srcdir}\""
-
 	fetch_trees
-	mkrom_images
-	clean_release
 	)
 	(
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
+	)
+	(
+	cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
+	mkrom_images
 	)
 	rm -Rf "${srcdir}" || err "${_xm}: !rm -Rf \"${srcdir}\""
 }
@@ -89,16 +90,9 @@ fetch_trees()
 	for x in ${_f}; do
 		./update project trees -f "${x}" || err "${_xm}: fetch ${x}"
 	done
-
-	x_ rm -Rf src/coreboot/coreboot src/u-boot/u-boot src/seabios/seabios
-
-	# by doing this first, we build-test under the same conditions as
-	# the user, when they extract and build from the src tarball. this
-	# saves time on build-testing, because we build once, not twice. thus:
-
 	rm -Rf */.git* */*/.git* */*/*/.git* */*/*/*/.git* */*/*/*/*/.git* \
-	    */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* */*/*/*/*/*/*/*/.git* || \
-	    err "${_xm}: rm-dotgit"
+	    */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* */*/*/*/*/*/*/*/.git* \
+	    .git || err "${_xm}: rm-dotgit"
 }
 
 mkrom_images()
@@ -251,32 +245,6 @@ mkrom_tarball()
 	x_ mv "${romdir%/bin/${target}}/${archivename}.tar.xz"* "${f%/*}"
 
 	printf "Created ROM archive: ${f%/*}/${archivename}.tar.xz"
-}
-
-clean_release()
-{
-	for x in "src/coreboot/default/util/kbc1126" util/*; do
-		[ ! -f "${x}/Makefile" ] && continue
-		x_ make clean -C "${x}"
-	done
-
-	for x in ${_f}; do
-		./update project trees -c "${x}" || err "${_xm}: pclean ${x}"
-	done
-	./update project trees -x coreboot || err "${_xm}: clean-crossgcc"
-	./update project trees -c "stm32-vserprog/libopencm3"
-
-	# make absolutely sure crossgcc was purged. for some reason,
-	# crossgcc-clean isn't always reliable on every coreboot tree
-	for xgcc in "build-" "binutils-" "gcc-" "gmp-" "mpc-" "mpfr-" \
-	    "llvm-" "clang-tools-" "cfe-" "compiler-rt-" "acpica-" \
-	    "getopt" "xgcc"; do
-		x_ rm -Rf src/coreboot/*/util/crossgcc/${xgcc}*
-	done
-
-	rm -Rf vendor mrc ec pciroms || err "${_xm}: vendor files"
-	rm -Rf elf tmp cbutils src/pico-serprog/build release bin || \
-	    err "${_xm}: elf, tmp, cbutils, pico-serprog/build"
 }
 
 insert_version_files()
