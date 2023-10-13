@@ -66,8 +66,8 @@ main()
 	printf "WARNING!!!!!!! PLEASE READ:\n\n"
 
 	printf "DO NOT flash ROM images contained under elf/, because they lack"
-	printf "payloads and will BRICK your machine. Please flash ROM images"
-	printf "contained under bin/ instead. YOU HAVE BEEN WARNED.\n\n"
+	printf " payloads and will BRICK your machine. Please flash ROM images"
+	printf " contained under bin/ instead. YOU HAVE BEEN WARNED.\n\n"
 }
 
 check_target()
