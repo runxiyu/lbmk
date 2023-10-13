@@ -132,7 +132,8 @@ prepare_target()
 	cbfstool="cbutils/${tree}/cbfstool"
 	cbrom="${cbdir}/build/coreboot.rom"
 
-	x_ ./update project trees -b coreboot utils ${tree}
+	[ -f "${cbfstool}" ] || \
+		x_ ./update project trees -b coreboot utils ${tree}
 
 	build_dependency_seabios
 

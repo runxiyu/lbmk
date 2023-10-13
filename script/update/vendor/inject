@@ -88,7 +88,9 @@ detect_board()
 build_dependencies()
 {
 	[ -d "${cbdir}" ] || x_ ./update project trees -f coreboot default
-	x_ ./update project trees -b coreboot utils default
+	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
+		x_ ./update project trees -b coreboot utils default
+	fi
 	x_ ./update vendor download ${board}
 }
 

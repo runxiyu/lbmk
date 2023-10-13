@@ -50,7 +50,9 @@ build_dependencies()
 		x_ ./update project trees -b uefitool
 	[ -f "${kbc1126_ec_dump}" ] || \
 		x_ make -C "${cbdir}/util/kbc1126"
-	x_ ./update project trees -b coreboot utils default
+	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
+		x_ ./update project trees -b coreboot utils default
+	fi
 }
 
 download_vendorfiles()
