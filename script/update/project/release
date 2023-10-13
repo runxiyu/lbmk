@@ -21,15 +21,14 @@ cbfstool="cbutils/default/cbfstool"
 main()
 {
 	vdir="release"
-	while getopts d:m: option
-	do
-		case "${1}" in
-		-d) vdir="${2}" ;;
-		-m) mode="${2}" ;;
+	while getopts d:m: option; do
+		[ -z "${OPTARG}" ] && err "Empty argument not allowed"
+		case "${option}" in
+		d) vdir="${OPTARG}" ;;
+		m) mode="${OPTARG}" ;;
 		*) err "Invalid option" ;;
 		esac
 	done
-	[ -z "${vdir}" ] && err "Empty directory names not allowed"
 
 	vdir="${vdir}/${version}"
 	basename="${projectname}-${version}"
