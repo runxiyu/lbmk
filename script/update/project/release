@@ -8,7 +8,7 @@ set -u -e
 . "include/err.sh"
 
 eval "$(setvars "" vdir basename src_dirname srcdir _nogit _xm target romdir \
-    microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
+    microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN mode \
     CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
 
 _f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
@@ -21,10 +21,11 @@ cbfstool="cbutils/default/cbfstool"
 main()
 {
 	vdir="release"
-	while getopts d: option
+	while getopts d:m: option
 	do
 		case "${1}" in
 		-d) vdir="${2}" ;;
+		-m) mode="${2}" ;;
 		*) err "Invalid option" ;;
 		esac
 	done
@@ -78,10 +79,12 @@ build_release()
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
 	)
-	(
-	cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
-	mkrom_images
-	)
+	if [ "${mode}" != "src" ]; then
+		(
+		cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
+		mkrom_images
+		)
+	fi
 	rm -Rf "${srcdir}" || err "${_xm}: !rm -Rf \"${srcdir}\""
 }
 
