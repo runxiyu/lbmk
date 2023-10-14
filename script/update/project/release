@@ -264,11 +264,21 @@ insert_version_files()
 mktarball()
 {
 	# preserve timestamps for reproducible tarballs
+	touch_implementation="$(touch --version)"
 	tar_implementation="$(tar --version)"
-	tar_implementation="${tar_implementation% *}"
-	mtime=""
-	[ "${tar_implementation}" = "tar (GNU tar)" ] && \
-		mtime="--mtime=${versiondate}"
+	eval "$(setvars "" mtime touch)"
+	[ "${tar_implementation% *}" = "tar (GNU tar)" ] && \
+		mtime="--mtime='@${versiondate}'"
+	[ "${touch_implementation% *}" = "touch (GNU coreutils)" ] || \
+		touch_implementation=""
+
+	(
+	x_ cd "${1}"
+	[ -z "${touch_implementation}" ] || \
+		find . -exec touch -h -a -m \
+		    -d "$(date -Rd @${versiondate})" {} + || \
+		    err "mktarball ${1}: can't set universal timestamps"
+	)
 
 	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
 	x_ tar -c "${1}" ${mtime} | xz -T0 -9e > "${2}"
