@@ -18,8 +18,7 @@ main()
 
 	archive="${1}"
 
-	while getopts n:r:b:m: option
-	do
+	while getopts n:r:b:m: option; do
 		case "${option}" in
 		n) nukemode="${OPTARG}" ;;
 		r) rom=${OPTARG} ;;
@@ -92,6 +91,7 @@ build_dependencies()
 	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
 		x_ ./update project trees -b coreboot utils default
 	fi
+	[ -f "${nvmutil}" ] || x_ make -C util/nvmutil
 	[ "${nukemode}" = "nuke" ] && return 0
 	x_ ./update vendor download ${board}
 }
@@ -170,154 +170,68 @@ patch_rom()
 	. "${1}" 2>/dev/null
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && \
-		inject_vendorfile_intel_mrc "${rom}"
+		inject "mrc.bin" "${CONFIG_MRC_FILE}" "mrc" "0xfffa0000"
 	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && \
-		inject_vendorfile_intel_me "${rom}"
+		inject "IFD" "${CONFIG_ME_BIN_PATH}" "me"
 	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && \
-		inject_vendorfile_hp_kbc1126_ec "${rom}"
-	[ "${CONFIG_VGA_BIOS_FILE}" != "" ] && \
-	    [ "${CONFIG_VGA_BIOS_ID}" != "" ] && \
-		inject_vendorfile_dell_e6400_vgarom_nvidia "${rom}"
+		inject "ecfw1.bin" "$CONFIG_KBC1126_FW1" "raw" \
+		    "${CONFIG_KBC1126_FW1_OFFSET}" && \
+		inject "ecfw2.bin" "$CONFIG_KBC1126_FW2" "raw" \
+		    "${CONFIG_KBC1126_FW2_OFFSET}"
+	[ ! -z "${CONFIG_VGA_BIOS_FILE}" ] && \
+	    [ ! -z "${CONFIG_VGA_BIOS_ID}" ] && \
+		inject "pci${CONFIG_VGA_BIOS_ID}.rom" \
+		    "${CONFIG_VGA_BIOS_FILE}" "optionrom"
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
-	    [ "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" != "" ] && \
-		inject_vendorfile_smsc_sch5545_ec "${rom}"
+	    [ ! -z "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" ] && \
+		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
 	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ] && \
-		modify_gbe "${rom}"
+		inject "IFD" "${CONFIG_GBE_BIN_PATH}" "GbE"
 
 	printf "ROM image successfully patched: %s\n" "${rom}"
 }
 
-inject_vendorfile_intel_mrc()
+inject()
 {
-	rom="${1}"
+	[ $# -lt 3 ] && \
+		err "inject $@, $rom: usage: inject name path type (offset)"
 
-	# mrc.bin must be inserted at a specific offset
+	eval "$(setvars "" cbfsname _dest _t _offset)"
+	cbfsname="${1}"
+	_dest="${2##*../}"
+	_t="${3}"
+	[ $# -gt 3 ] && _offset="-b ${4}" && [ -z "${4}" ] && \
+	    err "inject $@, $rom: offset passed, but empty (not defined)"
 
-	# in cbfstool, -b values above 0x80000000 are interpreted as
-	# top-aligned x86 memory locations. this is converted into an
-	# absolute offset within the flash, and inserted accordingly
-	# at that offset into the ROM image file
+	[ -z "${_dest}" ] && err "inject $@, ${rom}: empty destination path"
+	[ ! -f "${_dest}" ] && [ "${nukemode}" != "nuke" ] && \
+		err "inject_${dl_type}: file missing, ${_dest}"
 
-	# coreboot's own build system hardcodes the mrc.bin offset
-	# because there is only one correct location in memory, but
-	# it would be useful for us if it could be easily scanned
-	# from Kconfig, with the option to change it where in practise
-	# it is not changed
+	[ "$nukemode" = "nuke" ] || \
+		printf "Inserting %s/%s into file: %s\n" \
+		    "${cbfsname}" "${_t}" "$rom"
 
-	# the hardcoded offset below is based upon reading of the coreboot
-	# source code, and it is *always* correct for haswell platform.
-	# TODO: this logic should be tweaked to handle more platforms
-
-	if [ "${nukemode}" != "nuke" ]; then
-		x_ "${cbfstool}" "${rom}" add -f mrc/haswell/mrc.bin \
-		    -n mrc.bin -t mrc -b 0xfffa0000
+	if [ "${_t}" = "GbE" ]; then
+		x_ mkdir -p tmp
+		x_ cp "${_dest}" "tmp/gbe.bin"
+		_dest="tmp/gbe.bin"
+		x_ "${nvmutil}" "${_dest}" setmac "${new_mac}"
+	fi
+	if [ "${cbfsname}" = "IFD" ]; then
+		if [ "${nukemode}" != "nuke" ]; then
+			x_ "${ifdtool}" -i ${_t}:${_dest} "${rom}" -O "$rom"
+		else
+			x_ "${ifdtool}" --nuke ${_t} "${rom}" -O "${rom}"
+		fi
 	else
-		x_ "${cbfstool}" "${rom}" remove -n mrc.bin
+		if [ "${nukemode}" != "nuke" ]; then
+			x_ "${cbfstool}" "${rom}" add -f "${_dest}" \
+			    -n "${cbfsname}" -t ${_t} ${_offset}
+		else
+			x_ "${cbfstool}" "${rom}" remove -n "${cbfsname}"
+		fi
+
 	fi
-}
-
-inject_vendorfile_intel_me()
-{
-	rom="${1}"
-	[ -z "${CONFIG_ME_BIN_PATH}" ] && \
-		err "inject_vendorfile_intel_me: CONFIG_ME_BIN_PATH not set"
-
-	_me_location=${CONFIG_ME_BIN_PATH##*../}
-	[ ! -f "${_me_location}" ] && [ "${nukemode}" != "nuke" ] && \
-		err "inject_vendorfile_intel_me: per CONFIG_ME_BIN_PATH: file missing"
-	if [ "${nukemode}" != "nuke" ]; then
-		x_ "${ifdtool}" -i me:"${_me_location}" "${rom}" -O "${rom}"
-	else
-		x_ "${ifdtool}" --nuke me "${rom}" -O "${rom}"
-	fi
-}
-
-inject_vendorfile_hp_kbc1126_ec()
-{
-	rom="${1}"
-
-	_ec1_location="${CONFIG_KBC1126_FW1##*../}"
-	_ec1_offset="${CONFIG_KBC1126_FW1_OFFSET}"
-	_ec2_location="${CONFIG_KBC1126_FW2##*../}"
-	_ec2_offset="${CONFIG_KBC1126_FW2_OFFSET}"
-
-	if [ "${_ec1_offset}" = "" ] || [ "${_ec1_offset}" = "" ]; then
-		err "inject_vendorfile_hp_kbc1126_ec: ${board}: offset not declared"
-	elif [ "${_ec1_location}" = "" ] || [ "${_ec2_location}" = "" ]; then
-		err "inject_vendorfile_hp_kbc1126_ec: ${board}: EC path not declared"
-	elif [ ! -f "${_ec1_location}" ] || [ ! -f "${_ec2_location}" ]; then
-		[ "${nukemode}" != "nuke" ] && \
-		err "inject_vendorfile_hp_kbc1126_ec: ${board}: ecfw not downloaded"
-	fi
-
-	if [ "${nukemode}" != "nuke" ]; then
-		printf "adding hp kbc1126 ec firmware\n"
-		x_ "${cbfstool}" "${rom}" add -f "${_ec1_location}" \
-		    -n ecfw1.bin -b ${_ec1_offset} -t raw
-		x_ "${cbfstool}" "${rom}" add -f "${_ec2_location}" \
-		    -n ecfw2.bin -b ${_ec2_offset} -t raw
-	else	
-		x_ "${cbfstool}" "${rom}" remove -n ecfw1.bin
-		x_ "${cbfstool}" "${rom}" remove -n ecfw2.bin
-	fi
-}
-
-inject_vendorfile_dell_e6400_vgarom_nvidia()
-{
-	rom="${1}"
-
-	_vga_location="${CONFIG_VGA_BIOS_FILE##*../}"
-	_vga_dir="${_vga_location%/*}"
-	_vga_filename="${_vga_location##*/}"
-
-	[ "${_vga_dir}" = "${pciromsdir}" ] || \
-		err "inject_vendorfile_dell_e6400vga: invalid pcirom dir: ${_vga_dir}"
-	[ ! -f "${_vga_location}" ] && [ "${nukemode}" != "nuke" ] && \
-		err "inject_vendorfile_dell_e6400vga: ${_vga_location} doesn't exist"
-
-	if [ "${nukemode}" != "nuke" ]; then
-		x_ "${cbfstool}" "${rom}" add -f "${_vga_location}" \
-		    -n "pci${CONFIG_VGA_BIOS_ID}.rom" -t optionrom
-	else
-		x_ "${cbfstool}" "${rom}" remove \
-		    -n "pci${CONFIG_VGA_BIOS_ID}.rom"
-	fi
-}
-
-inject_vendorfile_smsc_sch5545_ec()
-{
-	rom="${1}"
-	_sch5545ec_location="${CONFIG_SMSC_SCH5545_EC_FW_FILE##*../}"
-	[ ! -f "${_sch5545ec_location}" ] && [ "${nukemode}" != "nuke" ] && \
-		err "inject_vendorfile_smsc_sch5545_ec: SCH5545 fw missing"
-
-	if [ "${nukemode}" != "nuke" ]; then
-		x_ "${cbfstool}" "${rom}" add -f "${_sch5545ec_location}" \
-		    -n sch5545_ecfw.bin -t raw
-	else
-		x_ "${cbfstool}" "${rom}" remove -n sch5545_ecfw.bin
-	fi
-}
-
-modify_gbe()
-{
-	printf "changing mac address in gbe to ${new_mac}\n"
-	[ -z "${CONFIG_GBE_BIN_PATH}" ] && \
-		err "modify_gbe: ${board}: CONFIG_GBE_BIN_PATH not set"
-
-	rom="${1}"
-	_gbe_location=${CONFIG_GBE_BIN_PATH##*../}
-	[ -f "${_gbe_location}" ] || \
-		err "modify_gbe: CONFIG_GBE_BIN_PATH points to missing file"
-	[ -f "${nvmutil}" ] || \
-		x_ make -C util/nvmutil
-
-	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
-	x_ cp "${_gbe_location}" "${_gbe_tmp}"
-	x_ "${nvmutil}" "${_gbe_tmp}" setmac "${new_mac}"
-	x_ "${ifdtool}" -i GbE:"${_gbe_tmp}" "${rom}" -O "${rom}"
-
-	x_ rm -f "${_gbe_tmp}"
 }
 
 usage()
