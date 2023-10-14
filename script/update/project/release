@@ -7,9 +7,8 @@ set -u -e
 
 . "include/err.sh"
 
-eval "$(setvars "" vdir basename src_dirname srcdir _nogit _xm target romdir \
-    microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN mode mtime \
-    CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
+eval "$(setvars "" vdir relname src_dirname srcdir _nogit _xm target romdir \
+    microcode_required mode)"
 
 _f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
 _f="${_f} bios_extract biosutilities pico-serprog stm32-vserprog"
@@ -31,8 +30,8 @@ main()
 	done
 
 	vdir="${vdir}/${version}"
-	basename="${projectname}-${version}"
-	src_dirname="${basename}_src"
+	relname="${projectname}-${version}"
+	src_dirname="${relname}_src"
 	srcdir="${vdir}/${src_dirname}"
 
 	[ -e "${vdir}" ] && err "already exists: \"${vdir}\""
@@ -125,7 +124,7 @@ handle_rom_archive()
 
 	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
 		# No config, just make a tarball
-		tarball="release/${version}/roms/${basename}_${target}.tar.xz"
+		tarball="release/${version}/roms/${relname}_${target}.tar.xz"
 		insert_copying_files "${builddir}"
 		mktarball "${builddir}" "${tarball}"
 		return 0
@@ -208,7 +207,7 @@ insert_copying_files()
 
 mkrom_tarball()
 {
-	archivename="${basename}_${target##*/}"
+	archivename="${relname}_${target##*/}"
 	f="release/${version}/roms/${archivename}"
 	x_ mkdir -p "${f%/*}"
 	(
