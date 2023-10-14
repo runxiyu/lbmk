@@ -24,7 +24,7 @@ eval "$(setvars "" EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup _dest \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
     MRC_url MRC_url_bkup MRC_hash MRC_board archive rom board modifygbe _dl \
-    new_mac release releasearchive _b boarddir)"
+    new_mac release releasearchive _b boarddir nukemode)"
 
 eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \

@@ -135,7 +135,7 @@ handle_rom_archive()
 	x_ mkdir -p "${romdir}"
 	x_ cp "${builddir}/"* "${romdir}"
 
-	handle_vendorfiles
+	nukerom
 
 	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
 	    "${version}" "${projectname}" "${version}" "${target##*/}"
@@ -146,30 +146,12 @@ handle_rom_archive()
 	mkrom_tarball
 }
 
-handle_vendorfiles()
+nukerom()
 {
 	microcode_required="y"
 	. "config/coreboot/${target}/target.cfg"
 	if [ "${microcode_required}" != "y" ] && \
 	    [ "${microcode_required}" != "n" ]; then microcode_required="y"; fi
-
-	for x in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
-	    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
-		eval "${x}=\"y\""
-		grep "${x}=y" "config/coreboot/${target}/config/"* || \
-		    eval "${x}=\"n\""
-	done
-
-	# remove ME/MRC/EC firmware from ROM images
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] || \
-	    [ "${target}" = "e6400_4mb" ] || \
-	    [ "${microcode_required}" = "n" ]; then
-		strip_archive
-	fi
-}
-
-strip_archive()
-{
 	if [ "${microcode_required}" = "n" ]; then
 		for romfile in "${romdir}"/*.rom; do
 			[ -f "${romfile}" ] || continue
@@ -181,16 +163,18 @@ strip_archive()
 		done
 	fi
 
-	# Hash the rom before removing vendor files
+	# Hash the images before removing vendor files
+	# which ./update vendor inject uses for verification
 	x_ rm -f "${romdir}/vendorhashes"
 	x_ touch "${romdir}/vendorhashes"
 	(
 	x_ cd "${romdir}"
 	x_ sha512sum *.rom >> vendorhashes
 	)
+
 	for romfile in "${romdir}"/*.rom; do
 		[ -f "${romfile}" ] || continue
-		strip_rom_image "${romfile}"
+		x_ ./update vendor inject -r "${romfile}" -b ${target} -n nuke
 	done
 }
 
@@ -206,24 +190,6 @@ strip_ucode()
 	printf "REMARK: '%s' already lacks microcode\n" "${romfile}" 1>&2
 	printf "Renaming default ROM file instead.\n" 1>&2
 	x_ mv "${romfile}" "${_newrom_b}"
-}
-
-strip_rom_image()
-{
-	[ -f "${1}" ] || return 0
-	[ "${CONFIG_HAVE_ME_BIN}" != "y" ] || \
-		x_ "${ifdtool}" --nuke me "${1}" -O "${1}"
-	[ "${CONFIG_HAVE_MRC}" != "y" ] || \
-		x_ "${cbfstool}" "${1}" remove -n mrc.bin
-	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" != "y" ] || \
-		x_ "${cbfstool}" "${1}" remove -n sch5545_ecfw.bin
-	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		x_ "${cbfstool}" "${1}" remove -n ecfw1.bin
-		x_ "${cbfstool}" "${1}" remove -n ecfw2.bin
-	fi
-	# TODO: replace this board-specific hack
-	[ "${target}" = "e6400_4mb" ] || return 0
-	x_ "${cbfstool}" "${1}" remove -n "pci10de,06eb.rom"
 }
 
 insert_copying_files()
