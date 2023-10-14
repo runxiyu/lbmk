@@ -196,9 +196,7 @@ check_cross_compiler()
 
 	cbdir="src/coreboot/${tree}"
 	[ "${project}" != "coreboot" ] && \
-		cbdir="src/coreboot/default" # not u-boot (e.g. linux)
-	[ "${project}" = "u-boot" ] && \
-		cbdir="src/coreboot/cros" # u-boot only used on coreboot/cros
+		cbdir="src/coreboot/default"
 
 	# only true if not building coreboot:
 	ctarget="${cbdir#src/coreboot/}"
