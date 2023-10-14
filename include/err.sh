@@ -4,10 +4,17 @@
 version=""; versiondate=""; projectname=""
 
 x_() {
-	[ $# -lt 1 ] || ${@} || err "non-zero exit status: ${@}"
+	[ $# -lt 1 ] || ${@} || err_exit err ${@}
 }
 xx_() {
-	[ $# -lt 1 ] || ${@} || fail "non-zero exit status: ${@}"
+	[ $# -lt 1 ] || ${@} || err_exit fail ${@}
+}
+
+err_exit()
+{
+	_fail="${1}" && shift 1
+	echo "Non-zero exit: $@"
+	$_fail "Unhandled error"
 }
 
 check_git()
