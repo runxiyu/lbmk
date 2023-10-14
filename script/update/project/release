@@ -8,7 +8,7 @@ set -u -e
 . "include/err.sh"
 
 eval "$(setvars "" vdir basename src_dirname srcdir _nogit _xm target romdir \
-    microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN mode \
+    microcode_required CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN mode mtime \
     CONFIG_KBC1126_FIRMWARE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW)"
 
 _f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
@@ -230,27 +230,17 @@ insert_version_files()
 mktarball()
 {
 	# preserve timestamps for reproducible tarballs
-	touch_implementation="$(touch --version)"
-	tar_implementation="$(tar --version)"
-	eval "$(setvars "" mtime touch)"
-	[ "${tar_implementation% *}" = "tar (GNU tar)" ] && \
-		mtime="--mtime='@${versiondate}'"
-	[ "${touch_implementation% *}" = "touch (GNU coreutils)" ] || \
-		touch_implementation=""
-
-	(
-	x_ cd "${1}"
-	[ -z "${touch_implementation}" ] || \
-		find . -exec touch -h -a -m \
-		    -d "$(date -Rd @${versiondate})" {} + || \
-		    err "mktarball ${1}: can't set universal timestamps"
-	)
-	[ -z "${touch_implementation}" ] || \
-		touch -h -a -m -d "$(date -Rd @${versiondate})" "${1}" || \
-		    err "mktarball ${1}: can't set timestamp on ${1}"
+	tar_implementation=$(tar --version | head -n1) || :
 
 	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
-	x_ tar -c "${1}" ${mtime} | xz -T0 -9e > "${2}"
+	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
+		tar --sort=name --owner=root:0 --group=root:0 \
+		    --mtime="UTC 2023-10-14" -c "${1}" | xz -T0 -9e > "${2}" || \
+		    err "mktarball 1, ${1}"
+	else
+		# TODO: reproducible tarballs on non-GNU systems
+		tar -c "${1}" | xz -T0 -9e > "${2}" || err "mktarball 2, ${1}"
+	fi
 	(
 	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
 	x_ sha512sum "${2##*/}" > "${2##*/}.sha512"
