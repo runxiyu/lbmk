@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2014-2016,2020,2021,2023 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2021,2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
-# SPDX-FileCopyrightText: 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+# SPDX-FileCopyrightText: 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 [ "x${DEBUG+set}" = 'xset' ] && set -v
@@ -187,8 +187,8 @@ build_dependency_uboot()
 	x_ ./update project trees -b u-boot ${board}
 	ubdir="elf/u-boot/${board}/${uboot_config}"
 	ubootelf="${ubdir}/u-boot.elf"
-	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot.bin" ] && \
-		ubootelf="${ubdir}/u-boot.bin"
+	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot" ] && \
+		ubootelf="${ubdir}/u-boot"
 	[ -f "${ubootelf}" ] && return 0
 	err "Could not find u-boot build for board, ${board}"
 }
@@ -369,7 +369,7 @@ mkUbootRom() {
 
 	_ubdir="elf/u-boot/${board}/${uboot_config}"
 	_ubootelf="${_ubdir}/u-boot.elf"
-	[ -f "${_ubootelf}" ] || _ubootelf="${_ubdir}/u-boot.bin"
+	[ -f "${_ubootelf}" ] || _ubootelf="${_ubdir}/u-boot"
 	[ -f "${_ubootelf}" ] || err "mkUbootRom: ${board}: cant find u-boot"
 
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)

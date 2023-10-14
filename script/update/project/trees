@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2022 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+# SPDX-FileCopyrightText: 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
@@ -21,7 +21,7 @@ tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)"
 
 main()
 {
-	while getopts f:b:m:u:c:x: option
+	while getopts f:b:m:u:c:x:s:l:n: option
 	do
 		_f="${1}"
 		case "${1}" in
@@ -31,11 +31,14 @@ main()
 		-c) mode="distclean" ;;
 		-x) mode="crossgcc-clean" ;;
 		-f) mode="fetch" ;;
+		-s) mode="savedefconfig" ;;
+		-l) mode="olddefconfig" ;;
+		-n) mode="nconfig" ;;
 		*) err "Invalid option" ;;
 		esac
 		shift; project="${OPTARG#src/}"; shift
 	done
-	[ -z "${_f}" ] && err "flag not specified (-m, -u, -b, -c or -x)"
+	[ -z "${_f}" ] && err "flag not specified (-m, -u, -b, -c, -x, -f, -s, -l or -n)"
 	[ -z "${project}" ] && err "project name not specified"
 
 	if [ ! -f "config/${project}/build.list" ]; then
@@ -193,9 +196,7 @@ check_cross_compiler()
 
 	cbdir="src/coreboot/${tree}"
 	[ "${project}" != "coreboot" ] && \
-		cbdir="src/coreboot/default" # not u-boot (e.g. linux)
-	[ "${project}" = "u-boot" ] && \
-		cbdir="src/coreboot/cros" # u-boot only used on coreboot/cros
+		cbdir="src/coreboot/default"
 
 	# only true if not building coreboot:
 	ctarget="${cbdir#src/coreboot/}"
@@ -263,8 +264,11 @@ handle_makefile()
 	if [ -e "${codedir}/.git" ] && [ "${project}" = "u-boot" ] && \
 	    [ "${mode}" = "distclean" ]; then
 		x_ git -C "${codedir}" clean -fdx
-	elif [ "${mode}" = "oldconfig" ] || [ "${mode}" = "menuconfig" ]; then
+	elif [ "${mode}" = "oldconfig" ] || [ "${mode}" = "olddefconfig" ] || \
+	    [ "${mode}" = "menuconfig" ] || [ "${mode}" = "nconfig" ]; then
 		x_ cp "${codedir}/.config" "${config}"
+	elif [ "${mode}" = "savedefconfig" ]; then
+		x_ cp "${codedir}/defconfig" "${config}"
 	fi
 }
 
