@@ -91,7 +91,7 @@ build_dependencies()
 	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
 		x_ ./update project trees -b coreboot utils default
 	fi
-	[ -f "${nvmutil}" ] || x_ make -C util/nvmutil
+	[ -z "${new_mac}" ] || [ -f "${nvmutil}" ] || x_ make -C util/nvmutil
 	[ "${nukemode}" = "nuke" ] && return 0
 	x_ ./update vendor download ${board}
 }
