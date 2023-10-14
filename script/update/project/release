@@ -279,6 +279,9 @@ mktarball()
 		    -d "$(date -Rd @${versiondate})" {} + || \
 		    err "mktarball ${1}: can't set universal timestamps"
 	)
+	[ -z "${touch_implementation}" ] || \
+		touch -h -a -m -d "$(date -Rd @${versiondate})" "${1}" || \
+		    err "mktarball ${1}: can't set timestamp on ${1}"
 
 	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
 	x_ tar -c "${1}" ${mtime} | xz -T0 -9e > "${2}"
