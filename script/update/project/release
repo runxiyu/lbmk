@@ -6,6 +6,7 @@
 set -u -e
 
 . "include/err.sh"
+. "include/option.sh"
 
 eval "$(setvars "" vdir relname src_dirname srcdir _nogit _xm target romdir \
     microcode_required mode)"
