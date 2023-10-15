@@ -5,11 +5,24 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 . "include/err.sh"
-. "include/vendor.sh"
-. "include/mrc.sh"
 . "include/option.sh"
+. "include/mrc.sh"
 
 export PATH="${PATH}:/sbin"
+
+_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+_7ztest="a"
+
+e6400_unpack="${PWD}/src/bios_extract/dell_inspiron_1100_unpacker.py"
+kbc1126_ec_dump="${PWD}/${cbdir}/util/kbc1126/kbc1126_ec_dump"
+me7updateparser="${PWD}/util/me7_update_parser/me7_update_parser.py"
+mecleaner="${PWD}/${cbdir}/util/me_cleaner/me_cleaner.py"
+pfs_extract="${PWD}/src/biosutilities/Dell_PFS_Extract.py"
+uefiextract="${PWD}/src/uefitool/uefiextract"
+
+eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup \
+    E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
+    E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash)"
 
 main()
 {

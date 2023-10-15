@@ -22,7 +22,7 @@ kmapdir="config/grub/keymap"
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest"
 pv="${pv} payload_seabios_withgrub payload_uboot memtest_bin"
-v="romdir cbdir cbfstool cbrom initmode displaymode cbcfg targetdir tree arch"
+v="romdir cbrom initmode displaymode cbcfg targetdir tree arch"
 v="${v} grub_timeout ubdir vendorfiles board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v})"

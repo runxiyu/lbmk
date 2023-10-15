@@ -14,9 +14,6 @@ _f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
 _f="${_f} bios_extract biosutilities pico-serprog stm32-vserprog"
 _f="${_f} rpi-pico-serprog"
 
-ifdtool="cbutils/default/ifdtool"
-cbfstool="cbutils/default/cbfstool"
-
 main()
 {
 	vdir="release"

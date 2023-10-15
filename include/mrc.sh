@@ -4,6 +4,8 @@
 # Modifications in this version are Copyright 2021 and 2023 Leah Rowe.
 # Original copyright detailed in repo: https://review.coreboot.org/coreboot/
 
+eval "$(setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board)"
+
 extract_mrc()
 {
 	[ -z "${MRC_board}" ] && err "extract_mrc $MRC_hash: MRC_board not set"

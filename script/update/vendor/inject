@@ -5,10 +5,11 @@
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 . "include/err.sh"
-. "include/vendor.sh"
 . "include/option.sh"
 
-release_archive="n"
+nvmutil="util/nvmutil/nvm"
+
+eval "$(setvars "" archive rom modifygbe nukemode release new_mac)"
 
 main()
 {
@@ -46,8 +47,7 @@ check_board()
 		[ ! -z ${board+x} ] || \
 			board=$(detect_board "${rom}")
 	else
-		release=true
-		releasearchive="${archive}"
+		release="y"
 		board=$(detect_board "${archive}")
 	fi
 
@@ -98,10 +98,8 @@ build_dependencies()
 
 inject_vendorfiles()
 {
-	release_archive="n"
-	[ "${release}" != "true" ] && x_ patch_rom "${rom}" && return 0
-	printf "patching release file\n"
-	release_archive="y"
+	[ "${release}" != "y" ] && x_ patch_rom "${rom}" && return 0
+	printf "patching release images\n"
 	patch_release_roms
 }
 
@@ -110,7 +108,7 @@ patch_release_roms()
 	_tmpdir="tmp/romdir"
 	x_ rm -Rf "${_tmpdir}"
 	x_ mkdir -p "${_tmpdir}"
-	x_ tar -xf "${releasearchive}" -C "${_tmpdir}"
+	x_ tar -xf "${archive}" -C "${_tmpdir}"
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
 		printf "patching rom: %s\n" "$x"
@@ -162,7 +160,7 @@ patch_rom()
 	# (unless nomicrocode is the only config provided)
 	[ "${rom}" != "${rom%_nomicrocode.rom}.rom" ] && \
 	[ -f "${rom%_nomicrocode.rom}.rom" ] && \
-	[ "${release_archive}" = "y" ] && return 0
+	[ "${release}" = "y" ] && return 0
 
 	x_ check_defconfig "${boarddir}"
 
@@ -185,7 +183,7 @@ patch_rom()
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
 	    [ ! -z "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" ] && \
 		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
-	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "true" ] && \
+	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "y" ] && \
 		inject "IFD" "${CONFIG_GBE_BIN_PATH}" "GbE"
 
 	printf "ROM image successfully patched: %s\n" "${rom}"

@@ -7,8 +7,7 @@ set -u -e
 
 . "include/err.sh"
 
-eval "$(setvars "" platform pico_sdk_dir pico_src_dir stm32_src_dir \
-    boards_dir)"
+eval "$(setvars "" platform pico_sdk_dir pico_src_dir stm32_src_dir boards_dir)"
 
 pico_src_dir=src/pico-serprog
 pico_sdk_dir=src/pico-sdk

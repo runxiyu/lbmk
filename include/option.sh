@@ -3,6 +3,20 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
+vendir="vendor"
+appdir="${vendir}/app"
+cbdir="src/coreboot/default"
+cbcfgsdir="config/coreboot"
+ifdtool="cbutils/default/ifdtool"
+cbfstool="cbutils/default/cbfstool"
+
+eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
+    CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
+    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
+    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH \
+    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE \
+    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE _dest board boarddir)"
+
 listitems()
 {
 	rval=1
@@ -35,6 +49,14 @@ scan_config()
 	$(eval "awk '${awkstr}' \"${revfile}\"")
 EOF
 	rm -f "${revfile}" || "${_fail}" "scan_config: Cannot remove tmpfile"
+}
+
+check_defconfig()
+{
+	for x in "${1}"/config/*; do
+		[ -f "${x}" ] && return 0
+	done
+	return 1
 }
 
 handle_coreboot_utils()
