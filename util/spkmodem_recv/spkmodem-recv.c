@@ -2,6 +2,11 @@
 /* SPDX-FileCopyrightText: 2013 Free Software Foundation, Inc. */
 /* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
 
+/* Forked from coreboot's version, at util/spkmodem_recv/ in coreboot.git,
+ * revision 5c2b5fcf2f9c9259938fd03cfa3ea06b36a007f0 as of 3 January 2022.
+ * This version is heavily modified, re-written based on OpenBSD Kernel Source
+ * File Style Guide (KNF); this change is Copyright 2023 Leah Rowe. */
+
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
