@@ -1,19 +1,14 @@
 pkg_add="apt-get -y install"
 pkglist=" \
-wget git uuid-dev nasm build-essential sharutils curl parted e2fsprogs unzip \
-pkg-config gcc-arm-linux-gnueabi \
-build-essential python3 \
-build-essential perl python3-setuptools libncurses5-dev doxygen iasl gdb flex \
-bison build-essential git libssl-dev gnat python-is-python3 \
-ttf-unifont libopts25 libselinux1-dev autogen m4 autoconf help2man \
-libopts25-dev libfont-freetype-perl automake autotools-dev build-essential bison \
-flex libfuse-dev liblzma-dev gawk libdevmapper-dev libtool libfreetype6-dev \
-gettext unifont bc bison build-essential device-tree-compiler efitools flex \
-libfdt-dev liblz4-tool libgnutls28-dev libncurses-dev libpython3-dev libsdl2-dev \
-libssl-dev lz4 lzma lzma-alone openssl pkg-config python3 python3-distutils \
-python3-pkg-resources python3-pycryptodome python3-pyelftools swig uuid-dev \
-build-essential libpci-dev pciutils zlib1g-dev libftdi-dev build-essential \
-libusb-1.0-0-dev libusb-1.0 libusb-1.0-0-dev libusb-dev cmake \
-innoextract p7zip p7zip-full unar \
-binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi cmake \
+autoconf autogen automake autopoint autotools-dev bc binutils-arm-none-eabi \
+bison build-essential cmake curl device-tree-compiler doxygen e2fsprogs efitools \
+flex gawk gcc-arm-linux-gnueabi gcc-arm-none-eabi gdb gettext git gnat help2man \
+innoextract libdevmapper-dev libfdt-dev libfont-freetype-perl libfreetype6-dev \
+libftdi-dev libfuse-dev libgnutls28-dev liblz4-tool liblzma-dev libncurses5-dev \
+libncurses-dev libnewlib-arm-none-eabi libopts25 libopts25-dev libpci-dev \
+libpython3-dev libsdl2-dev libselinux1-dev libssl-dev libtool libusb-1.0-0 \
+libusb-1.0-0-dev lz4 lzma lzma-alone m4 nasm openssl p7zip p7zip-full parted \
+pciutils perl pkg-config python3 python3-distutils python3-pkg-resources \
+python3-pycryptodome python3-pyelftools python3-setuptools python-is-python3 \
+sharutils swig ttf-unifont unar unifont unzip uuid-dev wget zlib1g-dev \
 "
