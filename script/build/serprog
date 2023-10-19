@@ -22,12 +22,12 @@ main()
 		platform="rp2040"
 		boards_dir=${pico_sdk_dir}/src/boards/include/boards
 		[ -d "${pico_src_dir}/" ] || \
-			x_ ./update project trees -f "rpi-pico-serprog"
+			x_ ./update trees -f "rpi-pico-serprog"
 	elif [ "${1}" = "stm32" ]; then
 		platform="stm32"
 		boards_dir=${stm32_src_dir}/boards
 		[ -d "${stm32_src_dir}/" ] || \
-			x_ ./update project trees -f "stm32-vserprog"
+			x_ ./update trees -f "stm32-vserprog"
 	else
 		err "${usage}"
 	fi

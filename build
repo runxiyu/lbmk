@@ -11,7 +11,7 @@ set -u -e
 . "include/err.sh"
 . "include/option.sh"
 
-eval "$(setvars "" mode option aur_notice tmpdir)"
+eval "$(setvars "" option aur_notice tmpdir)"
 
 tmpdir_was_set="y"
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
@@ -39,8 +39,10 @@ buildpath="./script/${linkname}"
 main()
 {
 	xx_ id -u 1>/dev/null 2>/dev/null
-	initialise_command $@
-	shift 2
+	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
+	[ "${1}" = "dependencies" ] && xx_ install_packages $@ && lbmk_exit 0
+
+	initialise_command $@ && shift 1
 
 	check_git
 	check_project "fail"
@@ -51,22 +53,13 @@ main()
 
 initialise_command()
 {
-	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
-
-	mode="${1}"
-	[ "${mode}" != "dependencies" ] || xx_ install_packages $@
 	[ "$(id -u)" != "0" ] || fail "this command as root is not permitted"
 
-	[ "${mode}" = "help" ] && usage ${0} && lbmk_exit 0
-	if [ "${mode}" = "list" ]; then
-		items "${buildpath}"
-		lbmk_exit 0
-	elif [ $# -lt 2 ]; then
-		usage ${0}
-		lbmk_exit 1
-	fi
-
-	option="${2}"
+	case "${1}" in
+	help) usage ${0} && lbmk_exit 0 ;;
+	list) items "${buildpath}" && lbmk_exit 0 ;;
+	esac
+	option="${1}"
 }
 
 install_packages()
@@ -83,16 +76,13 @@ install_packages()
 	. "config/dependencies/${2}"
 
 	xx_ ${pkg_add} ${pkglist}
-	[ "${aur_notice}" = "" ] || \
-	    printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
-
-	lbmk_exit 0
+	[ -z "${aur_notice}" ] && return 0
+	printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
 }
 
 execute_command()
 {
-	[ "$option" = "list" ] && xx_ items "$buildpath/$mode" && lbmk_exit 0
-	lbmkcmd="${buildpath}/${mode}/${option}"
+	lbmkcmd="${buildpath}/${option}"
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
 	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
 }
@@ -101,16 +91,10 @@ usage()
 {
 	progname=${0}
 	cat <<- EOF
-	USAGE:	${progname} <MODE> <OPTION>
+	USAGE:	${progname} <OPTION>
 
-	possible values for 'mode':
+	possible values for 'OPTION':
 	$(items "${buildpath}")
-
-	For each of the above modes, you may also do:
-	${progname} <MODE> list
-
-	Example: ./build fw list, which would yield:
-	$(./build fw list)
 
 	Refer to ${projectname} documentation for more info.
 	EOF

@@ -87,13 +87,13 @@ detect_board()
 
 build_dependencies()
 {
-	[ -d "${cbdir}" ] || x_ ./update project trees -f coreboot default
+	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot default
 	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
-		x_ ./update project trees -b coreboot utils default
+		x_ ./update trees -b coreboot utils default
 	fi
 	[ -z "${new_mac}" ] || [ -f "${nvmutil}" ] || x_ make -C util/nvmutil
 	[ "${nukemode}" = "nuke" ] && return 0
-	x_ ./update vendor download ${board}
+	x_ ./vendor download ${board}
 }
 
 inject_vendorfiles()
@@ -235,13 +235,13 @@ inject()
 usage()
 {
 	cat <<- EOF
-	USAGE: ./update vendor inject -r [rom path] -b [boardname] -m [macaddress]
-	Example: ./update vendor inject -r x230_12mb.rom -b x230_12mb
+	USAGE: ./vendor inject -r [rom path] -b [boardname] -m [macaddress]
+	Example: ./vendor inject -r x230_12mb.rom -b x230_12mb
 
 	Adding a macadress to the gbe is optional.
 	If the [-m] parameter is left blank, the gbe will not be touched.
 
-	Type './update vendor inject listboards' to get a list of valid boards
+	Type './vendor inject listboards' to get a list of valid boards
 	EOF
 }
 

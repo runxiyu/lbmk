@@ -75,7 +75,7 @@ fetch_project_repo()
 
 	clone_project
 	[ "${depend}" = "" ] || for d in ${depend} ; do
-		x_ ./update project trees -f ${d}
+		x_ ./update trees -f ${d}
 	done
 	x_ rm -Rf "${tmp_git_dir}"
 }

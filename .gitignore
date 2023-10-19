@@ -22,7 +22,7 @@
 /push
 /version
 /versiondate
-/vendor/
+/vendorfiles/
 *me.bin
 *sch5545ec.bin
 /mrc/

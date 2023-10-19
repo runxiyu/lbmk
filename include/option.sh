@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-vendir="vendor"
+vendir="vendorfiles"
 appdir="${vendir}/app"
 cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
@@ -62,7 +62,7 @@ check_defconfig()
 handle_coreboot_utils()
 {
 	for util in cbfstool ifdtool; do
-		x_ ./update project trees ${_f} "src/coreboot/${1}/util/${util}"
+		x_ ./update trees ${_f} "src/coreboot/${1}/util/${util}"
 		[ -z "${mode}" ] && [ ! -f "cbutils/${1}/${util}" ] && \
 			x_ mkdir -p "cbutils/${1}" && \
 			x_ cp "src/coreboot/${1}/util/${util}/${util}" \

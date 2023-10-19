@@ -49,7 +49,7 @@ main()
 
 build_projects()
 {
-	[ $# -gt 0 ] && x_ ./update project trees ${_f} ${@}
+	[ $# -gt 0 ] && x_ ./update trees ${_f} ${@}
 
 	if [ "${mode}" = "fetch" ]; then
 		fetch_project_repo
@@ -57,7 +57,7 @@ build_projects()
 	fi
 
 	codedir="src/${project}"
-	[ -d "${codedir}" ] || x_ ./update project trees -f "${project}"
+	[ -d "${codedir}" ] || x_ ./update trees -f "${project}"
 
 	if [ "${project}" = "uefitool" ]; then
 	(
@@ -103,7 +103,7 @@ handle_targets()
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ ! -z ${mode} ] || \
-			x_ ./update vendor download ${target}
+			x_ ./vendor download ${target}
 		x_ handle_defconfig
 	done
 
@@ -165,7 +165,7 @@ handle_src_tree()
 			    "${codedir}" 1>&2
 			return 1
 		fi
-		x_ ./update project trees -f "${project}" "${target}"
+		x_ ./update trees -f "${project}" "${target}"
 	elif [ "${mode}" = "distclean" ] || \
 	    [ "${mode}" = "crossgcc-clean" ]; then
 		[ -f "${tmpclean}/${tree}" ] && return 1
@@ -180,7 +180,7 @@ handle_src_tree()
 	    err "handle_src_tree ${project}/${target}: crossgcc"
 	cbfstool="cbutils/${tree}/cbfstool"
 	[ -f "${cbfstool}" ] && return 0
-	x_ ./update project trees -b coreboot utils "${tree}"
+	x_ ./update trees -b coreboot utils "${tree}"
 }
 
 # set up cross-compiler (coreboot crossgcc) for u-boot and coreboot
@@ -199,7 +199,7 @@ check_cross_compiler()
 	# only true if not building coreboot:
 	ctarget="${cbdir#src/coreboot/}"
 	[ -d "${cbdir}" ] || \
-		x_ ./update project trees -f coreboot ${ctarget}
+		x_ ./update trees -f coreboot ${ctarget}
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \

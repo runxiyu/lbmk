@@ -128,13 +128,13 @@ prepare_target()
 	cbrom="${cbdir}/build/coreboot.rom"
 
 	[ -f "${cbfstool}" ] || \
-		x_ ./update project trees -b coreboot utils ${tree}
+		x_ ./update trees -b coreboot utils ${tree}
 
 	build_dependency_seabios
 
 	memtest_bin="memtest86plus/build64/memtest.bin"
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
-		x_ ./update project trees -b memtest86plus
+		x_ ./update trees -b memtest86plus
 
 	x_ rm -f "${romdir}/"*
 
@@ -151,7 +151,7 @@ build_dependency_seabios()
 	    [ -f elf/seabios/default/vgarom/bios.bin.elf ] && \
 	    [ -f elf/seabios/default/normal/bios.bin.elf ] && return 0
 
-	x_ ./update project trees -b seabios
+	x_ ./update trees -b seabios
 }
 
 build_dependency_grub()
@@ -171,14 +171,14 @@ build_dependency_grub()
 		    rebuild_grub="y" && break
 	done
 	[ "${rebuild_grub}" = "y" ] || return 0
-	x_ ./build fw grub
+	x_ ./build grub
 }
 
 build_dependency_uboot()
 {
 	[ "${payload_uboot}" = "y" ] || return 0
 
-	x_ ./update project trees -b u-boot ${board}
+	x_ ./update trees -b u-boot ${board}
 	ubdir="elf/u-boot/${board}/${uboot_config}"
 	ubootelf="${ubdir}/u-boot.elf"
 	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot" ] && \
@@ -215,7 +215,7 @@ build_roms()
 		    "${cbcfg}" "${board}" "${displaymode}" "${initmode}" \
 		    1>&2 && return 0
 
-	x_ ./update project trees -b coreboot ${board}
+	x_ ./update trees -b coreboot ${board}
 
 	_cbrom="elf/coreboot_nopayload_DO_NOT_FLASH/${board}/${initmode}_${displaymode}"
 	[ "${initmode}" = "normal" ] && \
@@ -391,9 +391,9 @@ moverom() {
 usage()
 {
 	cat <<- EOF
-	USAGE:	./build fw coreboot targetname
-	To build *all* boards, do this: ./build fw coreboot all
-	To list *all* boards, do this: ./build fw coreboot list
+	USAGE:	./build roms targetname
+	To build *all* boards, do this: ./build roms all
+	To list *all* boards, do this: ./build roms list
 	
 	Optional Flags:
 	-d: displaymode
@@ -402,9 +402,9 @@ usage()
 
 	Example commands:
 
-		./build fw coreboot x60
-		./build fw coreboot x200_8mb x60
-		./build fw coreboot x60 -p grub -d corebootfb -k usqwerty
+		./build roms x60
+		./build roms x200_8mb x60
+		./build roms x60 -p grub -d corebootfb -k usqwerty
 
 	possible values for 'target':
 	$(items "config/coreboot")
