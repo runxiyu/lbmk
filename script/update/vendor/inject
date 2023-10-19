@@ -15,7 +15,7 @@ main()
 {
 	[ $# -lt 1 ] && err "No options specified."
 	[ "${1}" = "listboards" ] && \
-		listitems config/coreboot && exit 0
+		items config/coreboot && exit 0
 
 	archive="${1}"
 

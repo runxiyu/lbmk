@@ -87,7 +87,7 @@ build_targets()
 	[ $# -gt 0 ] && target1="${1}"
 	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && \
 		shift 1
-	targets=$(listitems "${cfgsdir}") || \
+	targets=$(items "${cfgsdir}") || \
 	    err "Cannot get options for ${cfgsdir}"
 	[ $# -gt 0 ] && targets=$@
 
@@ -173,15 +173,14 @@ handle_src_tree()
 	fi
 
 	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
+	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && return 0
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
-	if [ "${project}" = "coreboot" ] || [ "${project}" = "u-boot" ]; then
-		[ ! -z ${mode} ] || check_cross_compiler || \
-		    err "handle_src_tree ${project}/${target}: crossgcc"
-		cbfstool="cbutils/${tree}/cbfstool"
-		[ -f "${cbfstool}" ] || \
-			x_ ./update project trees -b coreboot utils "${tree}"
-	fi
+	[ ! -z ${mode} ] || check_cross_compiler || \
+	    err "handle_src_tree ${project}/${target}: crossgcc"
+	cbfstool="cbutils/${tree}/cbfstool"
+	[ -f "${cbfstool}" ] && return 0
+	x_ ./update project trees -b coreboot utils "${tree}"
 }
 
 # set up cross-compiler (coreboot crossgcc) for u-boot and coreboot
@@ -279,6 +278,7 @@ run_make_command()
 		x_ printf "%s\n" "${version%%-*}" >"${codedir}/.coreboot-version"
 
 	x_ make ${mode} -j$(nproc) -C "${codedir}"
+
 	[ "${mode}" != "clean" ] && return 0
 	make -C "${codedir}" distclean 2>/dev/null || :
 }

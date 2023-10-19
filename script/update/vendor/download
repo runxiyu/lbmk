@@ -63,9 +63,8 @@ build_dependencies()
 		x_ ./update project trees -b uefitool
 	[ -f "${kbc1126_ec_dump}" ] || \
 		x_ make -C "${cbdir}/util/kbc1126"
-	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
-		x_ ./update project trees -b coreboot utils default
-	fi
+	[ -f "${cbfstool}" ] && [ -f "${ifdtool}" ] && return 0
+	x_ ./update project trees -b coreboot utils default
 }
 
 download_vendorfiles()
@@ -85,8 +84,7 @@ download_vendorfiles()
 		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}" \
 		    "${CONFIG_VGA_BIOS_FILE}"
 	[ -z "${CONFIG_HAVE_MRC}" ] && return 0
-	fetch "mrc" "${MRC_url}" "${MRC_url_bkup}" "${MRC_hash}" \
-	    "${CONFIG_MRC_FILE}"
+	fetch "mrc" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" "$CONFIG_MRC_FILE"
 }
 
 fetch()

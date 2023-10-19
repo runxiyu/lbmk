@@ -25,15 +25,14 @@ pv="${pv} payload_seabios_withgrub payload_uboot memtest_bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree arch"
 v="${v} grub_timeout ubdir vendorfiles board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
-eval "$(setvars "" ${v})"
-eval "$(setvars "" boards _displaymode _payload _keyboard all targets)"
+eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets)"
 
 main()
 {
 	while [ $# -gt 0 ]; do
 		case ${1} in
 		help) usage && exit 0 ;;
-		list) listitems config/coreboot && exit 0 ;;
+		list) items config/coreboot && exit 0 ;;
 		-d) _displaymode="${2}" ;;
 		-p) _payload="${2}" ;;
 		-k) _keyboard="${2}" ;;
@@ -45,7 +44,7 @@ main()
 		shift 2
 	done
 
-	[ "${all}" != "y" ] || boards=$(listitems config/coreboot) || \
+	[ "${all}" != "y" ] || boards=$(items config/coreboot) || \
 	    err "Cannot generate list of boards for building"
 
 	for x in ${boards}; do
@@ -63,11 +62,7 @@ main()
 	printf "\nROM images available in these directories:\n"
 	printf "${targets}^^ ROM images available in these directories.\n\n"
 
-	printf "WARNING!!!!!!! PLEASE READ:\n\n"
-
-	printf "DO NOT flash ROM images contained under elf/, because they lack"
-	printf " payloads and will BRICK your machine. Please flash ROM images"
-	printf " contained under bin/ instead. YOU HAVE BEEN WARNED.\n\n"
+	printf "DO NOT flash ROM images from elf/ - please use bin/ instead.\n"
 }
 
 check_target()
@@ -151,13 +146,12 @@ prepare_target()
 build_dependency_seabios()
 {
 	[ "${payload_seabios}" = "y" ] || return 0
+	[ -f "${seavgabiosrom}" ] && \
+	    [ -f elf/seabios/default/libgfxinit/bios.bin.elf ] && \
+	    [ -f elf/seabios/default/vgarom/bios.bin.elf ] && \
+	    [ -f elf/seabios/default/normal/bios.bin.elf ] && return 0
 
-	if [ ! -f "${seavgabiosrom}" ] \
-	    || [ ! -f elf/seabios/default/libgfxinit/bios.bin.elf ] \
-	    || [ ! -f elf/seabios/default/vgarom/bios.bin.elf ] \
-	    || [ ! -f elf/seabios/default/normal/bios.bin.elf ]; then
-		x_ ./update project trees -b seabios
-	fi
+	x_ ./update project trees -b seabios
 }
 
 build_dependency_grub()
@@ -413,7 +407,7 @@ usage()
 		./build fw coreboot x60 -p grub -d corebootfb -k usqwerty
 
 	possible values for 'target':
-	$(listitems "config/coreboot")
+	$(items "config/coreboot")
 
 	Refer to the ${projectname} documentation for more information.
 	EOF

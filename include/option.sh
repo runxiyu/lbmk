@@ -17,11 +17,11 @@ eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE _dest board boarddir)"
 
-listitems()
+items()
 {
 	rval=1
 	[ ! -d "${1}" ] && \
-		printf "listitems: directory '%s' doesn't exist" "${1}" && \
+		printf "items: directory '%s' doesn't exist" "${1}" && \
 		    return 1
 	for x in "${1}/"*; do
 		# -e used because this is for files *or* directories

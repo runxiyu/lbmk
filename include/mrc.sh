@@ -4,7 +4,7 @@
 # Modifications in this version are Copyright 2021 and 2023 Leah Rowe.
 # Original copyright detailed in repo: https://review.coreboot.org/coreboot/
 
-eval "$(setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board)"
+eval "$(setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board ROOTFS SHELLBALL)"
 
 extract_mrc()
 {
@@ -12,14 +12,14 @@ extract_mrc()
 	[ -z "${CONFIG_MRC_FILE}" ] && \
 		err "extract_mrc $MRC_hash: CONFIG_MRC_FILE not set"
 
-	_file="${MRC_url##*/}"
-	_file="${_file%.zip}"
+	ROOTFS="root-a.ext2"
+	SHELLBALL="chromeos-firmwareupdate-${MRC_board}"
 
 	(
 	x_ cd "${appdir}"
-	extract_partition ROOT-A "${_file}" root-a.ext2
-	extract_shellball root-a.ext2 chromeos-firmwareupdate-${MRC_board}
-	extract_coreboot chromeos-firmwareupdate-${MRC_board}
+	extract_partition
+	extract_shellball
+	extract_coreboot
 	)
 
 	x_ "${cbfstool}" "${appdir}/"coreboot-*.bin extract -n mrc.bin \
@@ -28,9 +28,9 @@ extract_mrc()
 
 extract_partition()
 {
-	NAME=${1}
-	FILE=${2}
-	ROOTFS=${3}
+	NAME="ROOT-A"
+	FILE="${MRC_url##*/}"
+	FILE="${FILE%.zip}"
 	_bs=1024
 
 	printf "Extracting ROOT-A partition\n"
@@ -46,9 +46,6 @@ extract_partition()
 
 extract_shellball()
 {
-	ROOTFS=${1}
-	SHELLBALL=${2}
-
 	printf "Extracting chromeos-firmwareupdate\n"
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
 	    | debugfs "${ROOTFS}" || err "extract_shellball: debugfs"
@@ -56,13 +53,12 @@ extract_shellball()
 
 extract_coreboot()
 {
-	_shellball=${1}
 	_unpacked=$( mktemp -d )
 
 	printf "Extracting coreboot image\n"
-	[ -f "${_shellball}" ] || \
+	[ -f "${SHELLBALL}" ] || \
 	    err "extract_coreboot: shellball missing in google cros image"
-	x_ sh "${_shellball}" --unpack "${_unpacked}"
+	x_ sh "${SHELLBALL}" --unpack "${_unpacked}"
 
 	# TODO: audit the f* out of that shellball, for each mrc version.
 	# it has to be updated for each mrc update. we should ideally

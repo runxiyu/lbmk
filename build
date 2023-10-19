@@ -59,7 +59,7 @@ initialise_command()
 
 	[ "${mode}" = "help" ] && usage ${0} && lbmk_exit 0
 	if [ "${mode}" = "list" ]; then
-		listitems "${buildpath}"
+		items "${buildpath}"
 		lbmk_exit 0
 	elif [ $# -lt 2 ]; then
 		usage ${0}
@@ -91,15 +91,8 @@ install_packages()
 
 execute_command()
 {
-	if [ "${option}" = "list" ]; then
-		xx_ listitems "${buildpath}/${mode}"
-		lbmk_exit 0
-	fi
+	[ "$option" = "list" ] && xx_ items "$buildpath/$mode" && lbmk_exit 0
 	lbmkcmd="${buildpath}/${mode}/${option}"
-	[ "${lbmkcmd}" = "./script/build/boot/roms" ] && \
-		printf "NOTE: ./build boot roms now: ./build fw coreboot\n" 1>&2
-	[ "${lbmkcmd%/*}" = "./script/update/blobs" ] && \
-		printf "NOTE: ./update blobs is now: ./update vendor\n" 1>&2
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
 	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
 }
@@ -111,7 +104,7 @@ usage()
 	USAGE:	${progname} <MODE> <OPTION>
 
 	possible values for 'mode':
-	$(listitems "${buildpath}")
+	$(items "${buildpath}")
 
 	For each of the above modes, you may also do:
 	${progname} <MODE> list

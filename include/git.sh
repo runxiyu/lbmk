@@ -4,8 +4,7 @@
 
 # This file is only used by update/project/trees
 
-eval "$(setvars "" _target rev _xm)"
-eval "$(setvars "" loc url bkup_url depend)"
+eval "$(setvars "" _target rev _xm loc url bkup_url depend)"
 tmp_git_dir="${PWD}/tmp/gitclone"
 
 fetch_project_trees()
