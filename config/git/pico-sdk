@@ -1,5 +1,6 @@
 {pico-sdk}{
 	rev: 6a7db34ff63345a7badec79ebea3aaef1712f374
 	loc: pico-sdk
-	url: https://github.com/raspberrypi/pico-sdk
+	url: https://codeberg.org/libreboot/pico-sdk
+	bkup_url: https://github.com/raspberrypi/pico-sdk
 }
