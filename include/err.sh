@@ -27,20 +27,6 @@ check_git()
 	    git_err "git config --global user.email \"john.doe@example.com\""
 }
 
-# release archives contain .gitignore, but not .git.
-# lbmk can be run from lbmk.git, or an archive.
-git_init()
-{
-	[ -L ".git" ] && ${2} "Reference .git is a symlink"
-	[ -e ".git" ] && return 0
-	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
-
-	${1} git init
-	${1} git add -A .
-	${1} git commit -m "${projectname} ${version}" --date "${cdate}"
-	${1} git tag -a "${version}" -m "${projectname} ${version}"
-}
-
 git_err()
 {
 	printf "You need to set git name/email, like so:\n%s\n\n" "${1}" 1>&2

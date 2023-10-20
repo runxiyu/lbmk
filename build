@@ -46,7 +46,7 @@ main()
 
 	check_git
 	check_project "fail"
-	git_init xx_ fail
+	git_init
 
 	execute_command $@
 	lbmk_exit 0
@@ -79,6 +79,22 @@ install_packages()
 	xx_ ${pkg_add} ${pkglist}
 	[ -z "${aur_notice}" ] && return 0
 	printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
+}
+
+# release archives contain .gitignore, but not .git.
+# lbmk can be run from lbmk.git, or an archive.
+git_init()
+{
+	[ -L ".git" ] && fail "Reference .git is a symlink"
+	[ -e ".git" ] && return 0
+	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
+
+	git init || fail "${PWD}: cannot initialise Git repository"
+	git add -A . || fail "${PWD}: cannot add files to Git repository"
+	git commit -m "${projectname} ${version}" --date "${cdate}" || \
+	    fail "${PWD}: can't commit ${projectname}/${version}, date ${cdate}"
+	git tag -a "${version}" -m "${projectname} ${version}" || \
+	    fail "${PWD}: cannot git-tag ${projectname}/${version}"
 }
 
 execute_command()
