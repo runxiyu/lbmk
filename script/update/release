@@ -11,9 +11,6 @@ set -u -e
 eval "$(setvars "" vdir relname src_dirname srcdir _nogit _xm target romdir \
     microcode_required mode)"
 
-_f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
-_f="${_f} bios_extract biosutilities pico-serprog stm32-vserprog"
-
 main()
 {
 	vdir="release"
@@ -85,8 +82,9 @@ build_release()
 
 fetch_trees()
 {
-	for x in ${_f}; do
-		./update trees -f "${x}" || err "${_xm}: fetch ${x}"
+	for x in config/git/*; do
+		[ ! -f "${x}" ] || ./update trees -f "${x#config/git/}" || \
+		    err "${_xm}: fetch ${x#config/git/}"
 	done
 	for x in config/*/build.list; do
 		[ -f "${x}" ] || continue
