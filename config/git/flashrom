@@ -1,0 +1,5 @@
+{flashrom}{
+	rev: 11680db4e1251eb842bee11e53b6d1f0ae67767b
+	loc: flashrom 
+	url: https://review.coreboot.org/flashrom.git
+}
