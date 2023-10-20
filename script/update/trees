@@ -145,9 +145,8 @@ handle_src_tree()
 	. "${target_dir}/target.cfg" || \
 	    err "handle_src_tree ${target_dir}: cannot load target.cfg"
 
-	for ix in arch tree; do
-		eval "[ -z \"\${$ix}\" ] && err \"handle_src: $ix undefined\""
-	done
+	[ -z "${arch}" ] && err "handle_src_tree $project/$tree: arch unset"
+	[ -z "${tree}" ] && err "handle_src_tree $project/$tree: tree unset"
 
 	codedir="src/${project}/${tree}"
 
