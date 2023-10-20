@@ -16,8 +16,6 @@ export LOCALVERSION="-${projectname}-${version%%-*}"
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
     elfdir listfile project romtype target target_dir targets tree _f target1)"
 
-tmpclean="$(mktemp -d -t makeclean.XXXXXXXXXX)"
-
 main()
 {
 	while getopts f:b:m:u:c:x:s:l:n: option
@@ -37,7 +35,7 @@ main()
 		esac
 		shift; project="${OPTARG#src/}"; shift
 	done
-	[ -z "${_f}" ] && err "flag not specified (-m, -u, -b, -c, -x, -f, -s, -l or -n)"
+	[ -z "${_f}" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "${project}" ] && err "project name not specified"
 
 	if [ ! -f "config/${project}/build.list" ]; then
@@ -51,10 +49,7 @@ build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update trees ${_f} ${@}
 
-	if [ "${mode}" = "fetch" ]; then
-		fetch_project_repo
-		return 0
-	fi
+	[ "${mode}" = "fetch" ] && fetch_project_repo && return 0
 
 	codedir="src/${project}"
 	[ -d "${codedir}" ] || x_ ./update trees -f "${project}"
@@ -140,10 +135,7 @@ handle_src_tree()
 	romtype="normal"
 	target_dir="${cfgsdir}/${target}"
 
-	if [ "${mode}" = "fetch" ]; then
-		fetch_project_trees
-		return 1
-	fi
+	[ "${mode}" = "fetch" ] && fetch_project_trees && return 1
 
 	x_ mkdir -p "${elfdir}/${target}"
 	eval "$(setvars "" arch tree)"
@@ -151,10 +143,9 @@ handle_src_tree()
 	. "${target_dir}/target.cfg" || \
 	    err "handle_src_tree ${target_dir}: cannot load target.cfg"
 
-	[ -z "${tree}" ] && \
-		err "handle_src_tree: ${target_dir}: tree undefined"
-	[ -z "${arch}" ] && \
-		err "handle_src_tree: ${target_dir}: undefined cpu type"
+	for ix in arch tree; do
+		eval "[ -z \"\${$ix}\" ] && err \"handle_src: $ix undefined\""
+	done
 
 	codedir="src/${project}/${tree}"
 
@@ -166,21 +157,14 @@ handle_src_tree()
 			return 1
 		fi
 		x_ ./update trees -f "${project}" "${target}"
-	elif [ "${mode}" = "distclean" ] || \
-	    [ "${mode}" = "crossgcc-clean" ]; then
-		[ -f "${tmpclean}/${tree}" ] && return 1
-		touch "${tmpclean}/${tree}"
 	fi
 
 	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
 	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && return 0
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
-	[ ! -z ${mode} ] || check_cross_compiler || \
-	    err "handle_src_tree ${project}/${target}: crossgcc"
-	cbfstool="cbutils/${tree}/cbfstool"
-	[ -f "${cbfstool}" ] && return 0
-	x_ ./update trees -b coreboot utils "${tree}"
+	[ -z ${mode} ] || return 0
+	check_cross_compiler
 }
 
 # set up cross-compiler (coreboot crossgcc) for u-boot and coreboot
@@ -189,42 +173,35 @@ check_cross_compiler()
 {
 	[ "${crossgcc_ada}" = "y" ] || [ "${crossgcc_ada}" = "n" ] || \
 		crossgcc_ada="y"
-	[ "${crossgcc_ada}" != "y" ] && \
-		export BUILD_LANGUAGES=c
+	[ "${crossgcc_ada}" = "y" ] || export BUILD_LANGUAGES=c
 
 	cbdir="src/coreboot/${tree}"
-	[ "${project}" != "coreboot" ] && \
-		cbdir="src/coreboot/default"
+	[ "${project}" != "coreboot" ] && cbdir="src/coreboot/default"
 
 	# only true if not building coreboot:
 	ctarget="${cbdir#src/coreboot/}"
-	[ -d "${cbdir}" ] || \
-		x_ ./update trees -f coreboot ${ctarget}
+	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot ${ctarget}
 
 	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \
-			make -C "${cbdir}" crossgcc-i386 CPUS=$(nproc) || \
-			    return 1
+			x_ make -C "${cbdir}" crossgcc-i386 CPUS=$(nproc)
 		case "$(uname -m)" in
 			x86*|i*86|amd64) : ;;
 			*) export CROSS_COMPILE=i386-elf- ;;
 		esac
 	elif [ "${arch}" = "ARMv7" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ] || \
-			make -C "${cbdir}" crossgcc-arm CPUS=$(nproc) || \
-			    return 1
+			x_ make -C "${cbdir}" crossgcc-arm CPUS=$(nproc)
 		case "$(uname -m)" in
 			arm|arm32|armv6*|armv7*) : ;;
 			*) export CROSS_COMPILE=arm-eabi- ;;
 		esac
 	elif [ "${arch}" = "AArch64" ]; then
 		[ -d "${cbdir}/util/crossgcc/xgcc/aarch64-elf/" ] || \
-			make -C "${cbdir}" crossgcc-aarch64 CPUS=$(nproc) || \
-			    return 1
+			x_ make -C "${cbdir}" crossgcc-aarch64 CPUS=$(nproc)
 		# aarch64 also needs armv7 toolchain for arm-trusted-firmware
 		[ -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ] || \
-			make -C "${cbdir}" crossgcc-arm CPUS=$(nproc) || \
-			    return 1
+			x_ make -C "${cbdir}" crossgcc-arm CPUS=$(nproc)
 		case "$(uname -m)" in
 			arm64|aarch64) : ;;
 			*) export CROSS_COMPILE=aarch64-elf- ;;

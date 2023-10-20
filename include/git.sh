@@ -15,8 +15,7 @@ fetch_project_trees()
 	[ -z "${rev}" ] && err "fetch_project_trees $target: undefined rev"
 	[ -d "src/${project}/${tree}" ] && \
 		printf "download/%s %s (%s): exists\n" \
-		    "${project}" "${tree}" "${_target}" 1>&2 && \
-		return 1
+		    "${project}" "${tree}" "${_target}" 1>&2 && return 0
 	prepare_new_tree
 }
 
@@ -30,7 +29,7 @@ fetch_from_upstream()
 
 fetch_config()
 {
-	x_ rm -f "${cfgsdir}/"*/seen
+	rm -f "${cfgsdir}/"*/seen || err "fetch_config ${cfgsdir}: !rm seen"
 	while true; do
 		eval "$(setvars "" rev tree)"
 		_xm="fetch_config ${project}/${_target}"
@@ -50,7 +49,7 @@ load_target_config()
 	. "${cfgsdir}/${1}/target.cfg" || \
 	    err "load_target_config ${cfgsdir}/${1}: cannot load config"
 
-	x_ touch "${cfgsdir}/${1}/seen"
+	touch "${cfgsdir}/${1}/seen" || err "load_config $cfgsdir/$1: !mk seen"
 }
 
 prepare_new_tree()
@@ -74,7 +73,7 @@ fetch_project_repo()
 	verify_config
 
 	clone_project
-	[ "${depend}" = "" ] || for d in ${depend} ; do
+	[ -z "${depend}" ] || for d in ${depend} ; do
 		x_ ./update trees -f ${d}
 	done
 	x_ rm -Rf "${tmp_git_dir}"

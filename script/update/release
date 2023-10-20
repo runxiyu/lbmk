@@ -46,7 +46,7 @@ mkvdir()
 	git clone . "${srcdir}" || err "mkdir: !gitclone \"${srcdir}\""
 	[ -z "${_nogit}" ] || x_ rm -Rf ".git"
 
-	rm -Rf "${srcdir}/.git"
+	rm -Rf "${srcdir}/.git" || err "mkvdir: !rm -Rf ${srcdir}/.git"
 	insert_version_files "${srcdir}" || err "mkvdir ${srcdir}: versionfile"
 }
 
@@ -201,6 +201,8 @@ insert_copying_files()
 	x_ cp "src/seabios/default/COPYING" "${l}/COPYING.coreboot"
 	x_ cp "src/seabios/default/COPYING.LESSER" "${l}/COPYING.LESSER.seabios"
 	x_ cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot"
+	x_ printf "Multiple licenses. Check corresponding %s source archive\n" \
+	    "${projectname}" > "${1}/COPYING"
 }
 
 mkrom_tarball()
