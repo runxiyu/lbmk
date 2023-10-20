@@ -52,13 +52,56 @@ build_release()
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
 	)
-	if [ "${mode}" != "src" ]; then
-		(
-		cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
-		mkrom_images
-		)
-	fi
-	rm -Rf "${srcdir}" || err "${_xm}: !rm -Rf \"${srcdir}\""
+	[ "${mode}" = "src" ] && return 0 # for src mode, xgcc tarballs are
+					  # not included in the src archive
+
+	# now build roms, then copy crossgcc to src and re-compress
+	# while compressing rom images too.
+
+	(
+	cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
+	mkrom_images
+	)
+	for _cbd in "${srcdir}/src/coreboot/"*; do
+		[ -d "${_cbd}/util/crossgcc/tarballs" ] || continue
+		_xgccdir="${vdir}/crossgcc/${_cbd##*/}"
+		mkdir -p "${_xgccdir}" || \
+		    err "build_release: !mkdir -p ${_xgccdir}"
+		cp -R "${_cbd}/util/crossgcc/tarballs/"* "${_xgccdir}" || \
+		    err "build_gcc: !copy xgcc ${_cbd}"
+	done
+	rm -Rf "${srcdir}" || err "build_release: !rm -Rf ${srcdir}"
+	(
+	cd "${srcdir%/*}" || err "${_xm} 2: mktarball \"${srcdir}\""
+	tar -xf "${srcdir##*/}.tar.xz" || err "!extract ${srcdir##*/}.tar.xz"
+	rm -f "${srcdir##*/}.tar.xz" || err "!rm -f ${srcdir##*/}.tar.xz"
+	)
+	for _xgcc in "${vdir}/crossgcc/"*; do
+		[ -d "${_xgcc}" ] || continue
+		mv "${_xgcc}" \
+		    "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs" \
+		    || err "!move xgcc tarballs to ${srcdir}/xgcc/${_xgcc##*/}"
+	done
+	(
+	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
+	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
+	)
+
+	# now test the vendor insert script, using the release archive:
+	(
+	cd "${srcdir}" || err "!cd ${srcdir}"
+	for vrom in ../roms/*.tar.xz; do
+		[ -f "${vrom}" ] || continue
+		case "${vrom}" in
+		*serprog*) continue ;;
+		esac
+		./vendor inject "${vrom}" || \
+		    err "TESTFAIL: inject: ${vrom##*/}"
+		continue
+	done
+	)
+
+	rm -Rf "${srcdir}" || err "!rm -Rf ${srcdir}"
 }
 
 fetch_trees()
