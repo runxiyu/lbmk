@@ -45,7 +45,10 @@ build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update trees ${_f} ${@}
 
-	[ "${mode}" = "fetch" ] && fetch_project_repo && return 0
+	if [ "${mode}" = "fetch" ]; then
+		fetch_project_repo
+		return 0
+	fi
 
 	codedir="src/${project}"
 	[ -d "${codedir}" ] || x_ ./update trees -f "${project}"
@@ -131,7 +134,10 @@ handle_src_tree()
 	romtype="normal"
 	target_dir="${cfgsdir}/${target}"
 
-	[ "${mode}" = "fetch" ] && fetch_project_trees && return 1
+	if [ "${mode}" = "fetch" ]; then
+		fetch_project_trees
+		return 1
+	fi
 
 	x_ mkdir -p "${elfdir}/${target}"
 	eval "$(setvars "" arch tree)"
@@ -159,7 +165,7 @@ handle_src_tree()
 	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && return 0
 
 	# u-boot and coreboot are both compiled with coreboot's crossgcc
-	[ -z ${mode} ] || return 0
+	[ -z "${mode}" ] || return 0
 	check_cross_compiler
 }
 

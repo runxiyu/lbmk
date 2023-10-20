@@ -13,9 +13,11 @@ fetch_project_trees()
 	[ -d "src/${project}/${project}" ] || fetch_from_upstream
 	fetch_config
 	[ -z "${rev}" ] && err "fetch_project_trees $target: undefined rev"
-	[ -d "src/${project}/${tree}" ] && \
+	if [ -d "src/${project}/${tree}" ]; then
 		printf "download/%s %s (%s): exists\n" \
-		    "${project}" "${tree}" "${_target}" 1>&2 && return 0
+		    "${project}" "${tree}" "${_target}" 1>&2
+		return 0
+	fi
 	prepare_new_tree
 }
 
@@ -60,9 +62,10 @@ prepare_new_tree()
 	git_reset_rev "src/${project}/${tree}" "${rev}"
 	(
 	x_ cd "src/${project}/${tree}"
-	[ ! -f ".gitmodules" ] || \
-	    git submodule update --init --checkout || \
-	    err "prepare_new_tree ${project}/${tree}: can't update git modules"
+	if [ -f ".gitmodules" ]; then
+		git submodule update --init --checkout || \
+		    err "prepare_new_tree ${project}/${tree}: !submodules"
+	fi
 	)
 	git_am_patches "$PWD/src/$project/$tree" "$PWD/$cfgsdir/$tree/patches"
 }
