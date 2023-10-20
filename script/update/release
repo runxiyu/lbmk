@@ -93,7 +93,7 @@ fetch_trees()
 	done
 	rm -Rf */.git* */*/.git* */*/*/.git* */*/*/*/.git* */*/*/*/*/.git* \
 	    */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* */*/*/*/*/*/*/*/.git* \
-	    .git tmp || err "${_xm}: rm-dotgit"
+	    */*/*/*/*/*/*/*/*/.git* .git tmp || err "${_xm}: rm-dotgit"
 }
 
 mkrom_images()
