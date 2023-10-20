@@ -60,7 +60,8 @@ prepare_new_tree()
 	git_reset_rev "src/${project}/${tree}" "${rev}"
 	(
 	x_ cd "src/${project}/${tree}"
-	git submodule update --init --checkout || \
+	[ ! -f ".gitmodules" ] || \
+	    git submodule update --init --checkout || \
 	    err "prepare_new_tree ${project}/${tree}: can't update git modules"
 	)
 	git_am_patches "$PWD/src/$project/$tree" "$PWD/$cfgsdir/$tree/patches"
