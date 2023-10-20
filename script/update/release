@@ -84,6 +84,7 @@ build_release()
 		    "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs" \
 		    || err "!move xgcc tarballs to ${srcdir}/xgcc/${_xgcc##*/}"
 	done
+	rm -Rf "${vdir}/crossgcc" || err "!rm -Rf \"${vdir}/crossgcc\""
 	(
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
