@@ -8,7 +8,7 @@ set -u -e
 . "include/err.sh"
 . "include/option.sh"
 
-eval "$(setvars "" vdir relname src_dirname srcdir _nogit _xm target romdir \
+eval "$(setvars "" vdir relname src_dirname srcdir _xm target romdir \
     microcode_required mode)"
 
 main()
@@ -37,27 +37,8 @@ main()
 mkvdir()
 {
 	mkdir -p "${vdir}" || err "mkvdir: !mkdir -p \"${vdir}\""
-
-	git_init || err "mkvdir: !git_init \"${vdir}\""
 	git clone . "${srcdir}" || err "mkdir: !gitclone \"${srcdir}\""
-	[ -z "${_nogit}" ] || x_ rm -Rf ".git"
-
-	rm -Rf "${srcdir}/.git" || err "mkvdir: !rm -Rf ${srcdir}/.git"
 	insert_version_files "${srcdir}" || err "mkvdir ${srcdir}: versionfile"
-}
-
-# release archives contain .gitignore, but not .git.
-# this script can be run from lbmk.git, or an archive.
-git_init()
-{
-	[ -L ".git" ] && err "Reference .git is a symlink"
-	[ -e ".git" ] && return 0
-	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
-
-	git init || return 1
-	git add -A . || return 1
-	git commit -m "${projectname} ${version}" --date "${cdate}" || return 1
-	git tag -a "${version}" -m "${projectname} ${version}" || return 1
 }
 
 build_release()
@@ -94,7 +75,7 @@ fetch_trees()
 
 	find . -name ".git" -exec rm -Rf {} + || err "${_xm}: rm .git"
 	find . -name ".gitmodules" -exec rm -Rf {} + || err "${_xm}: rm .gitmod"
-	x_ rm -Rf tmp
+	x_ rm -Rf tmp .git
 }
 
 mkrom_images()

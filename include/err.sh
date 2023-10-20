@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
-version=""; versiondate=""; projectname=""
+version=""; versiondate=""; projectname=""; _nogit=""
 
 x_() {
 	[ $# -lt 1 ] || ${@} || err_exit err ${@}
@@ -25,6 +25,20 @@ check_git()
 	    git_err "git config --global user.name \"John Doe\""
 	git config --global user.email 1>/dev/null 2>/dev/null || \
 	    git_err "git config --global user.email \"john.doe@example.com\""
+}
+
+# release archives contain .gitignore, but not .git.
+# lbmk can be run from lbmk.git, or an archive.
+git_init()
+{
+	[ -L ".git" ] && ${2} "Reference .git is a symlink"
+	[ -e ".git" ] && return 0
+	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
+
+	${1} git init
+	${1} git add -A .
+	${1} git commit -m "${projectname} ${version}" --date "${cdate}"
+	${1} git tag -a "${version}" -m "${projectname} ${version}"
 }
 
 git_err()
