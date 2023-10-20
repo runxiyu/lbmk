@@ -91,9 +91,10 @@ fetch_trees()
 		xp="${x#*/}"; xp="${xp%/*}"
 		[ -L "${xp}" ] || x_ rm -Rf "src/${xp}/${xp}"
 	done
-	rm -Rf */.git* */*/.git* */*/*/.git* */*/*/*/.git* */*/*/*/*/.git* \
-	    */*/*/*/*/*/.git* */*/*/*/*/*/*/.git* */*/*/*/*/*/*/*/.git* \
-	    */*/*/*/*/*/*/*/*/.git* .git tmp || err "${_xm}: rm-dotgit"
+
+	find . -name ".git" -exec rm -Rf {} + || err "${_xm}: rm .git"
+	find . -name ".gitmodules" -exec rm -Rf {} + || err "${_xm}: rm .gitmod"
+	x_ rm -Rf tmp
 }
 
 mkrom_images()
