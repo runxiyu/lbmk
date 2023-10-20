@@ -18,17 +18,3 @@
 	loc: pico-sdk/lib/tinyusb
 	url: https://github.com/hathach/tinyusb.git
 }
-
-{stm32-vserprog}{
-	rev: 8fcf0a4d41800631b571fa7bbd1d8b251f0a2111
-	loc: stm32-vserprog
-	url: https://codeberg.org/libreboot/stm32-vserprog
-	bkup_url: https://notabug.org/libreboot/stm32-vserprog
-	depend: libopencm3
-}
-
-{libopencm3}{
-	rev: 458250dc6147dc807eec9e4d5a6caf38a699ecb1
-	loc: stm32-vserprog/libopencm3
-	url: https://github.com/libopencm3/libopencm3
-}
