@@ -13,7 +13,6 @@ eval "$(setvars "" vdir relname src_dirname srcdir _nogit _xm target romdir \
 
 _f="coreboot u-boot seabios flashrom grub memtest86plus uefitool"
 _f="${_f} bios_extract biosutilities pico-serprog stm32-vserprog"
-_f="${_f} rpi-pico-serprog"
 
 main()
 {
