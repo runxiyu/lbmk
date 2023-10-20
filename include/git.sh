@@ -99,7 +99,7 @@ clone_project()
 	loc="${loc#src/}"
 	loc="src/${loc}"
 	if [ -d "${loc}" ]; then
-		printf "%s already exists, so skipping download\n" 1>&2
+		printf "%s already exists, so skipping download\n" "$loc" 1>&2
 		return 0
 	fi
 
