@@ -18,8 +18,7 @@ eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
 
 main()
 {
-	while getopts f:b:m:u:c:x:s:l:n: option
-	do
+	while getopts f:b:m:u:c:x:s:l:n: option; do
 		_f="${1}"
 		case "${1}" in
 		-b) : ;;
@@ -38,11 +37,8 @@ main()
 	[ -z "${_f}" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "${project}" ] && err "project name not specified"
 
-	if [ ! -f "config/${project}/build.list" ]; then
-		build_projects $@
-	else
-		build_targets $@
-	fi
+	[ -f "config/${project}/build.list" ] && build_targets $@ && return 0
+	build_projects $@
 }
 
 build_projects()
@@ -209,7 +205,7 @@ check_cross_compiler()
 	fi
 
 	# we *must* ensure that u-boot's build system uses crossgcc first
-	export PATH="$(pwd)/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
+	export PATH="${PWD}/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
 }
 
 check_config()

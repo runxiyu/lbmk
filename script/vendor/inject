@@ -78,7 +78,7 @@ detect_board()
 		_stripped_prefix=${filename#*_}
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
-		err "detect_board: could not detect board type"
+		err "detect_board $filename: could not detect board type"
 	esac	
 	[ -d "${boarddir}/" ] || \
 		err "detect_board: dir, ${boarddir}, doesn't exist"
@@ -98,7 +98,10 @@ build_dependencies()
 
 inject_vendorfiles()
 {
-	[ "${release}" != "y" ] && x_ patch_rom "${rom}" && return 0
+	if [ "${release}" != "y" ]; then
+		patch_rom "${rom}"
+		return 0
+	fi
 	printf "patching release images\n"
 	patch_release_roms
 }
@@ -108,11 +111,12 @@ patch_release_roms()
 	_tmpdir="tmp/romdir"
 	x_ rm -Rf "${_tmpdir}"
 	x_ mkdir -p "${_tmpdir}"
-	x_ tar -xf "${archive}" -C "${_tmpdir}"
+	tar -xf "${archive}" -C "${_tmpdir}" || \
+	    err "patch_release_roms: !tar -xf \"${archive}\" -C \"${_tmpdir}\""
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
 		printf "patching rom: %s\n" "$x"
-		x_ patch_rom "${x}"
+		patch_rom "${x}"
 	done
 	for x in "${_tmpdir}"/bin/*/*_nomicrocode.rom ; do
 		[ -f "${x}" ] || continue
@@ -123,7 +127,7 @@ patch_release_roms()
 	done
 
 	(
-	x_ cd "${_tmpdir}/bin/"*
+	x_ cd "${_tmpdir}/bin/"* # TODO: very dodgy, re-write accordingly
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	[ "${nukemode}" = "nuke" ] || \
@@ -211,22 +215,28 @@ inject()
 
 	if [ "${_t}" = "GbE" ]; then
 		x_ mkdir -p tmp
-		x_ cp "${_dest}" "tmp/gbe.bin"
+		cp "${_dest}" "tmp/gbe.bin" || \
+		    err "inject: !cp \"${_dest}\" \"tmp/gbe.bin\""
 		_dest="tmp/gbe.bin"
-		x_ "${nvmutil}" "${_dest}" setmac "${new_mac}"
+		"${nvmutil}" "${_dest}" setmac "${new_mac}" || \
+		    err "inject ${_dest}: can't change mac address"
 	fi
 	if [ "${cbfsname}" = "IFD" ]; then
 		if [ "${nukemode}" != "nuke" ]; then
-			x_ "${ifdtool}" -i ${_t}:${_dest} "${rom}" -O "$rom"
+			"${ifdtool}" -i ${_t}:${_dest} "${rom}" -O "$rom" || \
+			    err "inject: can't insert $_t ($dest) into $rom"
 		else
-			x_ "${ifdtool}" --nuke ${_t} "${rom}" -O "${rom}"
+			"${ifdtool}" --nuke ${_t} "${rom}" -O "${rom}" || \
+			    err "inject ${rom}: can't nuke ${_t} in IFD"
 		fi
 	else
 		if [ "${nukemode}" != "nuke" ]; then
-			x_ "${cbfstool}" "${rom}" add -f "${_dest}" \
-			    -n "${cbfsname}" -t ${_t} ${_offset}
+			"${cbfstool}" "${rom}" add -f "${_dest}" \
+			    -n "${cbfsname}" -t ${_t} ${_offset} || \
+			    err "inject $rom: can't insert $_t file $_dest"
 		else
-			x_ "${cbfstool}" "${rom}" remove -n "${cbfsname}"
+			"${cbfstool}" "${rom}" remove -n "${cbfsname}" || \
+			    err "inject $rom: can't remove ${cbfsname}"
 		fi
 
 	fi

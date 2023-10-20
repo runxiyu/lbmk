@@ -67,8 +67,7 @@ handle_coreboot_utils()
 			x_ mkdir -p "cbutils/${1}" && \
 			x_ cp "src/coreboot/${1}/util/${util}/${util}" \
 			    "cbutils/${1}"
-		[ -z "${mode}" ] || \
-			x_ rm -Rf "cbutils/${1}"
+		[ -z "${mode}" ] || x_ rm -Rf "cbutils/${1}"
 	done
 }
 

@@ -24,7 +24,7 @@ fetch_from_upstream()
 	[ -d "src/${project}/${project}" ] && return 0
 
 	x_ mkdir -p "src/${project}"
-	x_ fetch_project_repo "${project}"
+	fetch_project_repo "${project}"
 }
 
 fetch_config()
@@ -57,14 +57,13 @@ prepare_new_tree()
 	printf "Creating %s tree %s (%s)\n" "${project}" "${tree}" "${_target}"
 
 	x_ cp -R "src/${project}/${project}" "src/${project}/${tree}"
-	x_ git_reset_rev "src/${project}/${tree}" "${rev}"
+	git_reset_rev "src/${project}/${tree}" "${rev}"
 	(
 	x_ cd "src/${project}/${tree}"
 	git submodule update --init --checkout || \
 	    err "prepare_new_tree ${project}/${tree}: can't update git modules"
 	)
-	git_am_patches "${PWD}/src/${project}/${tree}" \
-	    "${PWD}/${cfgsdir}/${tree}/patches"
+	git_am_patches "$PWD/src/$project/$tree" "$PWD/$cfgsdir/$tree/patches"
 }
 
 fetch_project_repo()
@@ -76,7 +75,7 @@ fetch_project_repo()
 	[ -z "${depend}" ] || for d in ${depend} ; do
 		x_ ./update trees -f ${d}
 	done
-	x_ rm -Rf "${tmp_git_dir}"
+	rm -Rf "${tmp_git_dir}" || err "fetch_repo: !rm -Rf ${tmp_git_dir}"
 }
 
 verify_config()
@@ -89,8 +88,9 @@ verify_config()
 
 clone_project()
 {
-	x_ rm -Rf "${tmp_git_dir}"
-	x_ mkdir -p "${tmp_git_dir%/*}"
+	rm -Rf "${tmp_git_dir}" || err "clone_project: !rm -Rf ${tmp_git_dir}"
+	mkdir -p "${tmp_git_dir%/*}" || \
+	    err "clone_project: !mkdir -p ${tmp_git_dir%/*}"
 
 	loc="${loc#src/}"
 	loc="src/${loc}"
@@ -98,24 +98,20 @@ clone_project()
 	git clone ${url} "${tmp_git_dir}" || \
 	    git clone ${bkup_url} "${tmp_git_dir}" || \
 	    err "clone_project: could not download ${project}"
-	git_reset_rev "${tmp_git_dir}" "${rev}" || \
-	    err "clone_project ${loc}/: cannot reset <- ${rev}"
-	git_am_patches "${tmp_git_dir}" "${PWD}/config/${project}/patches" || \
-	    err "clone_project ${loc}/: cannot apply patches"
+	git_reset_rev "${tmp_git_dir}" "${rev}"
+	git_am_patches "${tmp_git_dir}" "${PWD}/config/${project}/patches"
 
 	x_ rm -Rf "${loc}"
 	[ "${loc}" = "${loc%/*}" ] || x_ mkdir -p ${loc%/*}
-	x_ mv "${tmp_git_dir}" "${loc}"
+	mv "${tmp_git_dir}" "${loc}" || \
+	    err "clone_project: !mv ${tmp_git_dir} ${loc}"
 }
 
 git_reset_rev()
 {
-	sdir="${1}"
-	_rev="${2}"
 	(
-	x_ cd "${sdir}"
-	git reset --hard ${_rev} || \
-	    err  "cannot git reset ${sdir} <- ${rev}"
+	cd "${1}" || err "git_reset_rev: !cd ${1}"
+	git reset --hard ${2} || err "!git reset ${1} <- ${2}"
 	)
 }
 
@@ -124,7 +120,7 @@ git_am_patches()
 	sdir="${1}" # assumed to be absolute path
 	patchdir="${2}" # ditto
 	(
-	x_ cd "${sdir}"
+	cd "${sdir}" || err "git_am_patches: !cd ${sdir}"
 	for patch in "${patchdir}/"*; do
 		[ -L "${patch}" ] && continue
 		[ -f "${patch}" ] || continue
@@ -136,8 +132,6 @@ git_am_patches()
 	)
 	for patches in "${patchdir}/"*; do
 		[ -L "${patches}" ] && continue
-		[ ! -d "${patches}" ] || \
-			git_am_patches "${sdir}" "${patches}" err  || \
-			    err  "apply_patches: !${sdir}/ ${patches}/"
+		[ -d "${patches}" ] && git_am_patches "${sdir}" "${patches}"
 	done
 }

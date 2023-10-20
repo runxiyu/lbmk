@@ -134,7 +134,7 @@ mkdirs()
 {
 	[ -f "${1}" ] && \
 		printf "mkdirs ${1} ${2}: already downloaded\n" 1>&2 && return 1
-	x_ mkdir -p "${1%/*}"
+	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
 	x_ rm -Rf "${appdir}"
 	x_ mkdir -p "${appdir}/"
 	extract_archive "${_dl}" "${appdir}" || \
@@ -190,7 +190,7 @@ extract_kbc1126ec()
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    x_ unar -D 68*.CAB Rom.bin
+		    unar -D 68*.CAB Rom.bin || err "can't extract Rom.bin"
 		x_ mv Rom.bin ec.bin
 	fi
 	[ -f ec.bin ] || err "extract_kbc1126_ec ${board}: can't extract"
@@ -203,7 +203,8 @@ extract_kbc1126ec()
 	done
 	[ "${ec_ex}" = "y" ] || \
 	    err "extract_kbc1126_ec ${board}: didn't extract ecfw1/2.bin"
-	x_ cp "${appdir}/"ec.bin.fw* "${_dest%/*}/"
+	cp "${appdir}/"ec.bin.fw* "${_dest%/*}/" || \
+	    err "extract_kbc1126_ec ${board}: can't copy ec binaries"
 }
 
 extract_e6400vga()
@@ -221,7 +222,8 @@ extract_e6400vga()
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
 	)
-	x_ cp "${appdir}/${E6400_VGA_romname}" "${_dest}"
+	cp "${appdir}/${E6400_VGA_romname}" "${_dest}" || \
+	    err "extract_e6400vga ${board}: can't copy vga rom to ${_dest}"
 }
 
 extract_sch5545ec()
