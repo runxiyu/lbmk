@@ -3,14 +3,8 @@
 	loc: pico-serprog
 	url: https://codeberg.org/libreboot/pico-serprog
 	bkup_url: https://notabug.org/libreboot/pico-serprog
-	depend: rpi-pico-sdk
+	depend: pico-sdk
 	depend: rpi-pico-tinyusb
-}
-
-{rpi-pico-sdk}{
-	rev: 6a7db34ff63345a7badec79ebea3aaef1712f374
-	loc: pico-sdk
-	url: https://github.com/raspberrypi/pico-sdk
 }
 
 {rpi-pico-tinyusb}{
