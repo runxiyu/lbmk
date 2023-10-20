@@ -32,6 +32,8 @@ main()
 
 	mkvdir
 	build_release
+
+	printf "DONE! Check release files under %s\n" "${vdir}"
 }
 
 mkvdir()
