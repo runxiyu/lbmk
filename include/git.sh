@@ -113,6 +113,11 @@ git_reset_rev()
 	(
 	cd "${1}" || err "git_reset_rev: !cd ${1}"
 	git reset --hard ${2} || err "!git reset ${1} <- ${2}"
+	if [ "${project}" != "coreboot" ] && [ "${project}" != "u-boot" ] && \
+	    [ -f ".gitmodules" ]; then
+		git submodule update --init --checkout || \
+		    err "git_reset_rev ${1}: can't download submodules"
+	fi
 	)
 }
 
