@@ -80,8 +80,10 @@ build_release()
 	)
 	for _xgcc in "${vdir}/crossgcc/"*; do
 		[ -d "${_xgcc}" ] || continue
-		mv "${_xgcc}" \
-		    "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs" \
+		mkdir -p "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs" || \
+		    err "!mkdir src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs"
+		mv "${_xgcc}/"* \
+		    "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs/" \
 		    || err "!move xgcc tarballs to ${srcdir}/xgcc/${_xgcc##*/}"
 	done
 	rm -Rf "${vdir}/crossgcc" || err "!rm -Rf \"${vdir}/crossgcc\""
@@ -259,7 +261,7 @@ mktarball()
 	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
 	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
 		tar --sort=name --owner=root:0 --group=root:0 \
-		    --mtime="UTC 2023-10-14" -c "${1}" | xz -T0 -9e > "${2}" || \
+		    --mtime="UTC 2023-10-21" -c "${1}" | xz -T0 -9e > "${2}" || \
 		    err "mktarball 1, ${1}"
 	else
 		# TODO: reproducible tarballs on non-GNU systems
