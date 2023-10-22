@@ -118,7 +118,8 @@ fetch_trees()
 	for x in config/*/build.list; do
 		[ -f "${x}" ] || continue
 		xp="${x#*/}"; xp="${xp%/*}"
-		[ -L "${xp}" ] || x_ rm -Rf "src/${xp}/${xp}"
+		[ -L "${xp}" ] || rm -Rf "src/${xp}/${xp}" || \
+		    err "!rm -Rf \"src/${xp}/${xp}\""
 	done
 
 	find . -name ".git" -exec rm -Rf {} + || err "${_xm}: rm .git"
@@ -144,20 +145,21 @@ handle_rom_archive()
 {
 	builddir="${1}"
 	romdir="tmp/romdir"
-	x_ rm -Rf "${romdir}"
+	rm -Rf "${romdir}" || err "!rm romdir, handle_rom_archive"
 	target="${builddir##*/}"
 
 	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
 		# No config, just make a tarball
 		tarball="release/${version}/roms/${relname}_${target}.tar.xz"
-		insert_copying_files "${builddir}"
+		insert_copying_files "${builddir}" || \
+		    err "!insert copy, handle, ${builddir}"
 		mktarball "${builddir}" "${tarball}"
 		return 0
 	fi
 
 	romdir="${romdir}/bin/${target}"
-	x_ mkdir -p "${romdir}"
-	x_ cp "${builddir}/"* "${romdir}"
+	mkdir -p "${romdir}" || err "!mkdir -p romdir, handle_rom_archive"
+	cp "${builddir}/"* "${romdir}" || err "!cp romdir, handle_rom_archive"
 
 	nukerom
 
@@ -166,7 +168,7 @@ handle_rom_archive()
 	insert_version_files "${romdir}" || \
 	    err "mkrom_tarball ${romdir}: versionfile"
 
-	insert_copying_files "${romdir}"
+	insert_copying_files "${romdir}" || err "!insert copy, handle 2, ${romdir}"
 	mkrom_tarball
 }
 
@@ -183,22 +185,24 @@ nukerom()
 		done
 		for romfile in "${romdir}"/*.tmprom; do
 			[ -f "${romfile}" ] || continue
-			x_ mv "${romfile}" "${romfile%.tmprom}.rom"
+			mv "${romfile}" "${romfile%.tmprom}.rom" || \
+			    err "!mv romfile, nukerom"
 		done
 	fi
 
 	# Hash the images before removing vendor files
 	# which "./vendor inject" uses for verification
-	x_ rm -f "${romdir}/vendorhashes"
-	x_ touch "${romdir}/vendorhashes"
+	rm -f "${romdir}/vendorhashes" || err "!rm ${romdir}/vendorhashes"
+	touch "${romdir}/vendorhashes" || err "!touch ${romdir}/vendorhashes"
 	(
-	x_ cd "${romdir}"
-	x_ sha512sum *.rom >> vendorhashes
+	cd "${romdir}" || err "!cd romdir ${romdir}, nukerom"
+	sha512sum *.rom >> vendorhashes || err "!create vendorhashes, nukerom"
 	)
 
 	for romfile in "${romdir}"/*.rom; do
 		[ -f "${romfile}" ] || continue
-		x_ ./vendor inject -r "${romfile}" -b ${target} -n nuke
+		./vendor inject -r "${romfile}" -b ${target} -n nuke || \
+		    err "!vendor inject (nuke) ${romfile}, nukerom"
 	done
 }
 
@@ -206,42 +210,43 @@ strip_ucode()
 {
 	romfile=${1}
 	_newrom_b="${romfile%.rom}_nomicrocode.tmprom"
-	x_ cp "${romfile}" "${_newrom_b}"
+	cp "${romfile}" "${_newrom_b}" || err "!cp romfile ${romfile}, strip_u"
 	microcode_present="y"
 	"${cbfstool}" "${_newrom_b}" remove -n \
 	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
 	[ "${microcode_present}" = "n" ] || return 0
 	printf "REMARK: '%s' already lacks microcode\n" "${romfile}" 1>&2
 	printf "Renaming default ROM file instead.\n" 1>&2
-	x_ mv "${romfile}" "${_newrom_b}"
+	mv "${romfile}" "${_newrom_b}" || err "!mv romfile ${romfile}, strip_u"
 }
 
 insert_copying_files()
 {
-	x_ rm -Rf "${1}/licenses"
-	x_ mkdir -p "${1}/licenses"
+	rm -Rf "${1}/licenses" || return 1
+	mkdir -p "${1}/licenses" || return 1
 	l="${1}/licenses"
 	# copy licenses to rom image archive, for completion
-	x_ cp "src/grub/COPYING" "${l}/COPYING.grub"
-	x_ cp "src/coreboot/default/COPYING" "${l}/COPYING.coreboot"
-	x_ cp -R "src/coreboot/default/LICENSES" "${l}/LICENSES.coreboot"
-	x_ cp "src/seabios/default/COPYING" "${l}/COPYING.coreboot"
-	x_ cp "src/seabios/default/COPYING.LESSER" "${l}/COPYING.LESSER.seabios"
-	x_ cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot"
-	x_ printf "Multiple licenses. Check corresponding %s source archive\n" \
-	    "${projectname}" > "${1}/COPYING"
+	cp "src/grub/COPYING" "${l}/COPYING.grub" || return 1
+	cp "src/coreboot/default/COPYING" "${l}/COPYING.coreboot" || return 1
+	cp -R "src/coreboot/default/LICENSES" "${l}/LICENSES.coreboot" || return 1
+	cp "src/seabios/default/COPYING" "${l}/COPYING.coreboot" || return 1
+	cp "src/seabios/default/COPYING.LESSER" "${l}/COPYING.LESSER.seabios" || return 1
+	cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot" || return 1
+	printf "Multiple licenses. Check corresponding %s source archive\n" \
+	    "${projectname}" > "${1}/COPYING" || return 1
 }
 
 mkrom_tarball()
 {
 	archivename="${relname}_${target##*/}"
 	f="release/${version}/roms/${archivename}"
-	x_ mkdir -p "${f%/*}"
+	mkdir -p "${f%/*}" || err "mkrom_tarball: !mkdir -p ${f%/*}"
 	(
-	x_ cd "${romdir%/bin/${target}}"
+	cd "${romdir%/bin/${target}}" || err "!cd ${romdir%/bin/${target}}"
 	mktarball "bin/${target}" "${archivename}.tar.xz"
 	)
-	x_ mv "${romdir%/bin/${target}}/${archivename}.tar.xz"* "${f%/*}"
+	mv "${romdir%/bin/${target}}/${archivename}.tar.xz"* "${f%/*}" || \
+	    err "!mktarball, rom, ${f%/*}/${romdir%/bin/${target}}/${archivename}.tar.xz"
 
 	printf "Created ROM archive: ${f%/*}/${archivename}.tar.xz"
 }
@@ -258,7 +263,7 @@ mktarball()
 	# preserve timestamps for reproducible tarballs
 	tar_implementation=$(tar --version | head -n1) || :
 
-	[ "${2%/*}" = "${2}" ] || x_ mkdir -p "${2%/*}"
+	[ "${2%/*}" = "${2}" ] || mkdir -p "${2%/*}" || err "mk, !mkdir -p \"${2%/*}\""
 	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
 		tar --sort=name --owner=root:0 --group=root:0 \
 		    --mtime="UTC 2023-10-21" -c "${1}" | xz -T0 -9e > "${2}" || \
@@ -269,7 +274,8 @@ mktarball()
 	fi
 	(
 	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
-	x_ sha512sum "${2##*/}" > "${2##*/}.sha512"
+	sha512sum "${2##*/}" > "${2##*/}.sha512" || \
+	    err "!sha512sum \"${2##*/}\" > \"${2##*/}.sha512\""
 	)
 }
 

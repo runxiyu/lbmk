@@ -22,8 +22,8 @@ extract_mrc()
 	extract_coreboot
 	)
 
-	x_ "${cbfstool}" "${appdir}/"coreboot-*.bin extract -n mrc.bin \
-	    -f "${_dest}" -r RO_SECTION
+	"${cbfstool}" "${appdir}/"coreboot-*.bin extract -n mrc.bin \
+	    -f "${_dest}" -r RO_SECTION || err "extract_mrc: cbfstool ${_dest}"
 }
 
 extract_partition()
@@ -40,8 +40,9 @@ extract_partition()
 	START=$(( $( echo ${ROOTP} | cut -f2 -d\ | tr -d "B" ) ))
 	SIZE=$(( $( echo ${ROOTP} | cut -f4 -d\ | tr -d "B" ) ))
 
-	x_ dd if="${FILE}" of="${ROOTFS}" bs=${_bs} \
-	    skip=$(( ${START} / ${_bs} )) count=$(( ${SIZE} / ${_bs} ))
+	dd if="${FILE}" of="${ROOTFS}" bs=${_bs} \
+	    skip=$(( ${START} / ${_bs} )) count=$(( ${SIZE} / ${_bs} )) || \
+	    err "extract_partition, dd ${FILE}, ${ROOTFS}"
 }
 
 extract_shellball()
@@ -58,7 +59,7 @@ extract_coreboot()
 	printf "Extracting coreboot image\n"
 	[ -f "${SHELLBALL}" ] || \
 	    err "extract_coreboot: shellball missing in google cros image"
-	x_ sh "${SHELLBALL}" --unpack "${_unpacked}"
+	sh "${SHELLBALL}" --unpack "${_unpacked}" || err "shellball, ${SHELLBALL}"
 
 	# TODO: audit the f* out of that shellball, for each mrc version.
 	# it has to be updated for each mrc update. we should ideally
@@ -70,5 +71,6 @@ extract_coreboot()
 	_version=$( cat "${_unpacked}/VERSION" | grep BIOS\ version: | \
 	    cut -f2 -d: | tr -d \  )
 
-	x_ cp "${_unpacked}/bios.bin" "coreboot-${_version}.bin"
+	cp "${_unpacked}/bios.bin" "coreboot-${_version}.bin" || \
+	    err "!cp unpacked, ${_unpacked}/bios.bin, coreboot-${_version}.rom"
 }

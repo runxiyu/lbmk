@@ -89,12 +89,12 @@ modify_coreboot_rom()
 		done
 	elif [ "${romtype}" = "i945 laptop" ]; then
 		# for bucts-based installation method from factory bios
-		x_ dd if="${rompath}" of="${tmprom}" bs=1 \
+		dd if="${rompath}" of="${tmprom}" bs=1 \
 		    skip=$(($(stat -c %s "${rompath}") - 0x10000)) \
-		    count=64k
-		x_ dd if="${tmprom}" of="${rompath}" bs=1 \
+		    count=64k || err "modrom 1, dd, ${rompath}"
+		dd if="${tmprom}" of="${rompath}" bs=1 \
 		    seek=$(($(stat -c %s "${rompath}") - 0x20000)) \
-		    count=64k conv=notrunc
+		    count=64k conv=notrunc || err "modrom 2, dd, ${rompath}"
 	fi
 	x_ rm -f "${tmprom}"
 }

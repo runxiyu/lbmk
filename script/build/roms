@@ -136,7 +136,7 @@ prepare_target()
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
 		x_ ./update trees -b memtest86plus
 
-	x_ rm -f "${romdir}/"*
+	rm -f "${romdir}/"* || err "!prepare, rm files, ${romdir}"
 
 	build_dependency_grub
 	build_dependency_uboot
@@ -274,15 +274,17 @@ build_grub_roms()
 	if [ "${displaymode}" = "vesafb" ] || \
 	    [ "${displaymode}" = "corebootfb" ]; then
 		backgroundfile="config/grub/background/${grub_background}"
-		x_ "${cbfstool}" "${tmprom}" add -f ${backgroundfile} \
-		    -n background.png -t raw
+		"${cbfstool}" "${tmprom}" add -f ${backgroundfile} \
+		    -n background.png -t raw || err "insert background, ${backgroundfile}"
 	fi
 
 	tmpcfg=$(mktemp -t coreboot_rom.XXXXXXXXXX)
-	x_ printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" >"${tmpcfg}"
+	printf "set grub_scan_disk=\"%s\"\n" "${grub_scan_disk}" >"${tmpcfg}" \
+	    || err "set grub_scandisk, ${grub_scan_disk}, ${tmpcfg}"
 	[ "${grub_scan_disk}" = "both" ] || \
 	    x_ "${cbfstool}" "${tmprom}" add -f "${tmpcfg}" -n scan.cfg -t raw
-	x_ printf "set timeout=%s\n" "${grub_timeout}" > "${tmpcfg}"
+	printf "set timeout=%s\n" "${grub_timeout}" > "${tmpcfg}" || \
+	    err "set timeout, ${grub_timeout}, ${tmpcfg}"
 	[ -z "${grub_timeout}" ] || x_ "${cbfstool}" "${tmprom}" add \
 	    -f "${tmpcfg}" -n timeout.cfg -t raw
 	x_ rm -f "${tmpcfg}"

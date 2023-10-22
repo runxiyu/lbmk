@@ -26,7 +26,7 @@ handle_dependencies()
 	[ -d "src/grub" ] || x_ ./update trees -f grub
 	[ -f "src/grub/grub-mkstandalone" ] || build_grub_utils
 	x_ mkdir -p "${elfdir}"
-	x_ rm -f "${elfdir}/"*
+	rm -f "${elfdir}/"* || err "!rm elf, handle_, ${elfdir}/"
 }
 
 build_grub_utils()
@@ -37,7 +37,7 @@ build_grub_utils()
 	x_ ./bootstrap --gnulib-srcdir=gnulib/ --no-git
 	x_ ./autogen.sh
 	x_ ./configure --with-platform=coreboot
-	x_ make -j$(nproc) FS_PAYLOAD_MODULES=""
+	make -j$(nproc) FS_PAYLOAD_MODULES="" || err "!mk grub utils"
 	)
 }
 
@@ -47,8 +47,8 @@ build_keymap_configs()
 		[ -f "${keylayoutfile}" ] || continue
 		keymap="${keylayoutfile##${grubcfgsdir}/keymap/}"
 		keymap="${keymap%.gkb}"
-		x_ printf "keymap %s\n" "${keymap}" > \
-		    "${elfdir}/keymap_${keymap}.cfg"
+		printf "keymap %s\n" "${keymap}" > \
+		    "${elfdir}/keymap_${keymap}.cfg" || err "!insert keymap"
 	done
 }
 

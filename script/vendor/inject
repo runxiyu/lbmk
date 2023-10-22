@@ -122,7 +122,8 @@ patch_release_roms()
 		[ -f "${x}" ] || continue
 		[ -f "${x%_nomicrocode.rom}.rom" ] || continue
 
-		x_ cp "${x%_nomicrocode.rom}.rom" "${x}"
+		cp "${x%_nomicrocode.rom}.rom" "${x}" || \
+		    err "patch_r: !cp \"${x%_nomicrocode.rom}.rom\" \"${x}\""
 		x_ "${cbfstool}" "${x}" remove -n cpu_microcode_blob.bin
 	done
 
