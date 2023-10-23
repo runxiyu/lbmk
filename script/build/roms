@@ -232,6 +232,7 @@ build_roms()
 	[ "${payload_grub}" != "y" ] || \
 		x_ build_grub_roms "${cbrom}" "grub"
 	[ "${payload_uboot}" = "y" ] || return 0
+	x_ cp "${_cbrom}" "${cbrom}"
 	build_uboot_roms
 }
 
