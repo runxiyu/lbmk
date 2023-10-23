@@ -1,0 +1,348 @@
+From 2957e8bf43edf8de6e579ce1ed7f95e5bb4a1437 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Mon, 14 Aug 2023 20:39:41 +0300
+Subject: [PATCH 1/4] arm: qemu: Enable Bochs video support
+
+Commit 716161663ec49 ("riscv: qemu: Enable Bochs video support") enables
+a video console for QEMU RISC-V virtual machines using an emulated Bochs
+VGA card. Similarly, enable it for ARM virtual machines as well.
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Reviewed-by: Bin Meng <bmeng@tinylab.org>
+Link: https://lore.kernel.org/u-boot/20230814173944.288356-2-alpernebiyasak@gmail.com/
+---
+ arch/arm/Kconfig                      | 4 ++++
+ board/emulation/qemu-arm/qemu-arm.env | 3 +++
+ doc/board/emulation/qemu-arm.rst      | 4 ++++
+ 3 files changed, 11 insertions(+)
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 328e2ddc33af..d96e230e9ee8 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1036,6 +1036,10 @@ config ARCH_QEMU
+ 	imply DM_RTC
+ 	imply RTC_PL031
+ 	imply OF_HAS_PRIOR_STAGE
++	imply VIDEO
++	imply VIDEO_BOCHS
++	imply SYS_WHITE_ON_BLACK
++	imply SYS_CONSOLE_IS_IN_ENV
+ 
+ config ARCH_RMOBILE
+ 	bool "Renesas ARM SoCs"
+diff --git a/board/emulation/qemu-arm/qemu-arm.env b/board/emulation/qemu-arm/qemu-arm.env
+index e658d5ee7d63..86a99a2e8713 100644
+--- a/board/emulation/qemu-arm/qemu-arm.env
++++ b/board/emulation/qemu-arm/qemu-arm.env
+@@ -2,6 +2,9 @@
+ 
+ /* environment for qemu-arm and qemu-arm64 */
+ 
++stdin=serial
++stdout=serial,vidconsole
++stderr=serial,vidconsole
+ fdt_high=0xffffffff
+ initrd_high=0xffffffff
+ fdt_addr=0x40000000
+diff --git a/doc/board/emulation/qemu-arm.rst b/doc/board/emulation/qemu-arm.rst
+index 7291fa4a3150..c423fce76edd 100644
+--- a/doc/board/emulation/qemu-arm.rst
++++ b/doc/board/emulation/qemu-arm.rst
+@@ -67,6 +67,10 @@ Additional persistent U-Boot environment support can be added as follows:
+ Additional peripherals that have been tested to work in both U-Boot and Linux
+ can be enabled with the following command line parameters:
+ 
++- To add a video console, remove "-nographic" and add e.g.::
++
++    -serial stdio -device VGA
++
+ - To add a Serial ATA disk via an Intel ICH9 AHCI controller, pass e.g.::
+ 
+     -drive if=none,file=disk.img,format=raw,id=mydisk \
+-- 
+2.42.0
+
+
+From 5330bc1c2ad84ba9ecc473f8c24d6e15b366adf9 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Mon, 14 Aug 2023 20:39:42 +0300
+Subject: [PATCH 2/4] arm: qemu: Enable PRE_CONSOLE_BUFFER
+
+Commit 608b80b5b855 ("riscv: qemu: Enable PRE_CONSOLE_BUFFER") enables
+buffering console messages for QEMU RISC-V virtual machines so those
+printed before the video console is available will still show up on the
+display. Similarly, enable it for ARM virtual machines as well.
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Reviewed-by: Simon Glass <sjg@chromium.org>
+Reviewed-by: Bin Meng <bmeng@tinylab.org>
+Link: https://lore.kernel.org/u-boot/20230814173944.288356-3-alpernebiyasak@gmail.com/
+---
+ arch/arm/Kconfig                 | 1 +
+ board/emulation/qemu-arm/Kconfig | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index d96e230e9ee8..1cc2be55140a 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1040,6 +1040,7 @@ config ARCH_QEMU
+ 	imply VIDEO_BOCHS
+ 	imply SYS_WHITE_ON_BLACK
+ 	imply SYS_CONSOLE_IS_IN_ENV
++	imply PRE_CONSOLE_BUFFER
+ 
+ config ARCH_RMOBILE
+ 	bool "Renesas ARM SoCs"
+diff --git a/board/emulation/qemu-arm/Kconfig b/board/emulation/qemu-arm/Kconfig
+index ed9949651c4b..09c95413a541 100644
+--- a/board/emulation/qemu-arm/Kconfig
++++ b/board/emulation/qemu-arm/Kconfig
+@@ -12,6 +12,10 @@ config BOARD_SPECIFIC_OPTIONS # dummy
+ 	imply VIRTIO_NET
+ 	imply VIRTIO_BLK
+ 
++config PRE_CON_BUF_ADDR
++	hex
++	default 0x40100000
++
+ endif
+ 
+ if TARGET_QEMU_ARM_64BIT && !TFABOOT
+-- 
+2.42.0
+
+
+From 7f666214855d062dc939ff54a0fa52fbde9f0391 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Mon, 14 Aug 2023 20:39:43 +0300
+Subject: [PATCH 3/4] arm: qemu: Enable usb keyboard as an input device
+
+Commit 02be57caf730 ("riscv: qemu: Enable usb keyboard as an input
+device") adds PCI xHCI support to QEMU RISC-V virtual machines and
+enables using a USB keyboard as one of the input devices. Similarly,
+enable those for ARM virtual machines as well.
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Reviewed-by: Simon Glass <sjg@chromium.org>
+Reviewed-by: Bin Meng <bmeng@tinylab.org>
+Link: https://lore.kernel.org/u-boot/20230814173944.288356-4-alpernebiyasak@gmail.com/
+---
+ arch/arm/Kconfig                      | 5 +++++
+ board/emulation/qemu-arm/qemu-arm.c   | 5 +++++
+ board/emulation/qemu-arm/qemu-arm.env | 2 +-
+ configs/qemu_arm64_defconfig          | 2 --
+ configs/qemu_arm_defconfig            | 2 --
+ doc/board/emulation/qemu-arm.rst      | 4 ++++
+ 6 files changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 1cc2be55140a..4c739bd9bc82 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1041,6 +1041,11 @@ config ARCH_QEMU
+ 	imply SYS_WHITE_ON_BLACK
+ 	imply SYS_CONSOLE_IS_IN_ENV
+ 	imply PRE_CONSOLE_BUFFER
++	imply USB
++	imply USB_XHCI_HCD
++	imply USB_XHCI_PCI
++	imply USB_KEYBOARD
++	imply CMD_USB
+ 
+ config ARCH_RMOBILE
+ 	bool "Renesas ARM SoCs"
+diff --git a/board/emulation/qemu-arm/qemu-arm.c b/board/emulation/qemu-arm/qemu-arm.c
+index dfea0d92a3c8..942f1fff5717 100644
+--- a/board/emulation/qemu-arm/qemu-arm.c
++++ b/board/emulation/qemu-arm/qemu-arm.c
+@@ -11,6 +11,7 @@
+ #include <fdtdec.h>
+ #include <init.h>
+ #include <log.h>
++#include <usb.h>
+ #include <virtio_types.h>
+ #include <virtio.h>
+ 
+@@ -114,6 +115,10 @@ int board_late_init(void)
+ 	 */
+ 	virtio_init();
+ 
++	/* start usb so that usb keyboard can be used as input device */
++	if (CONFIG_IS_ENABLED(USB_KEYBOARD))
++		usb_init();
++
+ 	return 0;
+ }
+ 
+diff --git a/board/emulation/qemu-arm/qemu-arm.env b/board/emulation/qemu-arm/qemu-arm.env
+index 86a99a2e8713..fb4adef281ed 100644
+--- a/board/emulation/qemu-arm/qemu-arm.env
++++ b/board/emulation/qemu-arm/qemu-arm.env
+@@ -2,7 +2,7 @@
+ 
+ /* environment for qemu-arm and qemu-arm64 */
+ 
+-stdin=serial
++stdin=serial,usbkbd
+ stdout=serial,vidconsole
+ stderr=serial,vidconsole
+ fdt_high=0xffffffff
+diff --git a/configs/qemu_arm64_defconfig b/configs/qemu_arm64_defconfig
+index 94bd96678443..f6b8ae530a4a 100644
+--- a/configs/qemu_arm64_defconfig
++++ b/configs/qemu_arm64_defconfig
+@@ -35,7 +35,6 @@ CONFIG_CMD_NVEDIT_EFI=y
+ CONFIG_CMD_DFU=y
+ CONFIG_CMD_MTD=y
+ CONFIG_CMD_PCI=y
+-CONFIG_CMD_USB=y
+ CONFIG_CMD_TPM=y
+ CONFIG_CMD_MTDPARTS=y
+ CONFIG_ENV_IS_IN_FLASH=y
+@@ -68,7 +67,6 @@ CONFIG_SYSRESET=y
+ CONFIG_SYSRESET_CMD_POWEROFF=y
+ CONFIG_SYSRESET_PSCI=y
+ CONFIG_TPM2_MMIO=y
+-CONFIG_USB=y
+ CONFIG_USB_EHCI_HCD=y
+ CONFIG_USB_EHCI_PCI=y
+ CONFIG_TPM=y
+diff --git a/configs/qemu_arm_defconfig b/configs/qemu_arm_defconfig
+index 7cb1e9f037ff..1347b86f34b1 100644
+--- a/configs/qemu_arm_defconfig
++++ b/configs/qemu_arm_defconfig
+@@ -36,7 +36,6 @@ CONFIG_CMD_NVEDIT_EFI=y
+ CONFIG_CMD_DFU=y
+ CONFIG_CMD_MTD=y
+ CONFIG_CMD_PCI=y
+-CONFIG_CMD_USB=y
+ CONFIG_CMD_TPM=y
+ CONFIG_CMD_MTDPARTS=y
+ CONFIG_ENV_IS_IN_FLASH=y
+@@ -69,7 +68,6 @@ CONFIG_SYSRESET=y
+ CONFIG_SYSRESET_CMD_POWEROFF=y
+ CONFIG_SYSRESET_PSCI=y
+ CONFIG_TPM2_MMIO=y
+-CONFIG_USB=y
+ CONFIG_USB_EHCI_HCD=y
+ CONFIG_USB_EHCI_PCI=y
+ CONFIG_TPM=y
+diff --git a/doc/board/emulation/qemu-arm.rst b/doc/board/emulation/qemu-arm.rst
+index c423fce76edd..5481ef6da328 100644
+--- a/doc/board/emulation/qemu-arm.rst
++++ b/doc/board/emulation/qemu-arm.rst
+@@ -84,6 +84,10 @@ can be enabled with the following command line parameters:
+ 
+     -device usb-ehci,id=ehci
+ 
++- To add a USB keyboard attached to an emulated xHCI controller, pass e.g.::
++
++    -device qemu-xhci,id=xhci -device usb-kbd,bus=xhci.0
++
+ - To add an NVMe disk, pass e.g.::
+ 
+     -drive if=none,file=disk.img,id=mydisk -device nvme,drive=mydisk,serial=foo
+-- 
+2.42.0
+
+
+From fcc1b6cb56beaaf90bf80928627a606f33a42c3c Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Mon, 14 Aug 2023 20:39:44 +0300
+Subject: [PATCH 4/4] doc: qemu: arm: Add a section on booting Linux distros
+
+Add an example qemu-system-aarch64 command that can make U-Boot on QEMU
+boot into the Debian Installer, along with resulting console messages
+from U-Boot, based on the existing documentation section for the x86
+version.
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Link: https://lore.kernel.org/u-boot/20230814173944.288356-5-alpernebiyasak@gmail.com/
+---
+ doc/board/emulation/qemu-arm.rst | 68 ++++++++++++++++++++++++++++++++
+ 1 file changed, 68 insertions(+)
+
+diff --git a/doc/board/emulation/qemu-arm.rst b/doc/board/emulation/qemu-arm.rst
+index 5481ef6da328..1c91c7f3ac67 100644
+--- a/doc/board/emulation/qemu-arm.rst
++++ b/doc/board/emulation/qemu-arm.rst
+@@ -98,6 +98,74 @@ can be enabled with the following command line parameters:
+ 
+ These have been tested in QEMU 2.9.0 but should work in at least 2.5.0 as well.
+ 
++Booting distros
++---------------
++
++It is possible to install and boot a standard Linux distribution using
++qemu_arm64 by setting up a root disk::
++
++    qemu-img create root.img 20G
++
++then using the installer to install. For example, with Debian 12::
++
++    qemu-system-aarch64 \
++      -machine virt -cpu cortex-a53 -m 4G -smp 4 \
++      -bios u-boot.bin \
++      -serial stdio -device VGA \
++      -nic user,model=virtio-net-pci \
++      -device virtio-rng-pci \
++      -device qemu-xhci,id=xhci \
++      -device usb-kbd -device usb-tablet \
++      -drive if=virtio,file=debian-12.0.0-arm64-netinst.iso,format=raw,readonly=on,media=cdrom \
++      -drive if=virtio,file=root.img,format=raw,media=disk
++
++The output will be something like this::
++
++    U-Boot 2023.10-rc2-00075-gbe8fbe718e35 (Aug 11 2023 - 08:38:49 +0000)
++
++    DRAM:  4 GiB
++    Core:  51 devices, 14 uclasses, devicetree: board
++    Flash: 64 MiB
++    Loading Environment from Flash... *** Warning - bad CRC, using default environment
++
++    In:    serial,usbkbd
++    Out:   serial,vidconsole
++    Err:   serial,vidconsole
++    Bus xhci_pci: Register 8001040 NbrPorts 8
++    Starting the controller
++    USB XHCI 1.00
++    scanning bus xhci_pci for devices... 3 USB Device(s) found
++    Net:   eth0: virtio-net#32
++    Hit any key to stop autoboot:  0
++    Scanning for bootflows in all bootdevs
++    Seq  Method       State   Uclass    Part  Name                      Filename
++    ---  -----------  ------  --------  ----  ------------------------  ----------------
++    Scanning global bootmeth 'efi_mgr':
++    Scanning bootdev 'fw-cfg@9020000.bootdev':
++    fatal: no kernel available
++    scanning bus for devices...
++    Scanning bootdev 'virtio-blk#34.bootdev':
++      0  efi          ready   virtio       2  virtio-blk#34.bootdev.par efi/boot/bootaa64.efi
++    ** Booting bootflow 'virtio-blk#34.bootdev.part_2' with efi
++    Using prior-stage device tree
++    Failed to load EFI variables
++    Error: writing contents
++    ** Unable to write file ubootefi.var **
++    Failed to persist EFI variables
++    Missing TPMv2 device for EFI_TCG_PROTOCOL
++    Booting /efi\boot\bootaa64.efi
++    Error: writing contents
++    ** Unable to write file ubootefi.var **
++    Failed to persist EFI variables
++    Welcome to GRUB!
++
++Standard boot looks through various available devices and finds the virtio
++disks, then boots from the first one. After a second or so the grub menu appears
++and you can work through the installer flow normally.
++
++After the installation, you can boot into the installed system by running QEMU
++again without the drive argument corresponding to the installer CD image.
++
+ Enabling TPMv2 support
+ ----------------------
+ 
+-- 
+2.42.0
+
