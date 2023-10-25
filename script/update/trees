@@ -263,7 +263,6 @@ run_make_command()
 
 copy_elf()
 {
-	[ "${project}" != "coreboot" ] || x_ modify_coreboot_rom
 	while read f; do
 		[ ! -f "${codedir}/$f" ] || \
 			x_ cp "${codedir}/${f}" "${dest_dir}/"

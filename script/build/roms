@@ -388,7 +388,35 @@ moverom() {
 
 	[ -d "${newrom%/*}" ] || x_ mkdir -p "${newrom%/*}/"
 	[ "${vendorfiles}" = "n" ] && newrom="${newrom%.rom}_noblobs.rom"
+
+	x_ modify_coreboot_rom
 	x_ cp "${rompath}" "${newrom}"
+}
+
+modify_coreboot_rom()
+{
+	tmpmvrom="$(mktemp -t rom.XXXXXXXXXX)"
+	x_ rm -f "${tmpmvrom}"
+
+	if [ "${romtype}" = "d8d16sas" ]; then
+		# pike2008 roms hang seabios. an empty rom will override
+		# the built-in one, thus disabling all execution of it
+		x_ touch "${tmpmvrom}"
+		for deviceID in "0072" "3050"; do
+			x_ "${cbfstool}" "${rompath}" add -f "${tmpmvrom}" \
+			    -n "pci1000,${deviceID}.rom" -t raw
+		done
+	elif [ "${romtype}" = "i945 laptop" ]; then
+		# for bucts-based installation method from factory bios
+               dd if="${rompath}" of="${tmpmvrom}" bs=1 \
+                   skip=$(($(stat -c %s "${rompath}") - 0x10000)) \
+                   count=64k || err "modrom 1, copy bootblock"
+               dd if="${tmpmvrom}" of="${rompath}" bs=1 \
+                   seek=$(($(stat -c %s "${rompath}") - 0x20000)) count=64k \
+                   conv=notrunc || err "modrom 2, insert new bootblock"
+               x_ rm -f "${tmpmvrom}"
+	fi
+	x_ rm -f "${tmpmvrom}"
 }
 
 usage()
