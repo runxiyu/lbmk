@@ -30,7 +30,7 @@ index ebc9fcb49a..a857110b4b 100755
  GCC_BASE_URL="https://ftpmirror.gnu.org/gcc/gcc-${GCC_VERSION}"
  BINUTILS_BASE_URL="https://ftpmirror.gnu.org/binutils"
 -IASL_BASE_URL="https://github.com/acpica/acpica/archive/refs/tags"
-+IASL_BASE_URL="https://mirror.math.princeton.edu/pub/libreboot/misc/acpica"
++IASL_BASE_URL="https://www.mirrorservice.org/sites/libreboot.org/release/misc/acpica"
  # CLANG toolchain archive locations
  LLVM_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
  CLANG_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"

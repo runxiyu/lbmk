@@ -29,7 +29,7 @@ index b75b90a877..e3efa722f1 100755
  BINUTILS_ARCHIVE="https://ftpmirror.gnu.org/binutils/binutils-${BINUTILS_VERSION}.tar.xz"
  GDB_ARCHIVE="https://ftpmirror.gnu.org/gdb/gdb-${GDB_VERSION}.tar.xz"
 -IASL_ARCHIVE="https://acpica.org/sites/acpica/files/acpica-unix2-${IASL_VERSION}.tar.gz"
-+IASL_ARCHIVE="https://mirror.math.princeton.edu/pub/libreboot/misc/acpica/acpica-unix2-${IASL_VERSION}.tar.gz"
++IASL_ARCHIVE="https://www.mirrorservice.org/sites/libreboot.org/release/misc/acpica/acpica-unix2-${IASL_VERSION}.tar.gz"
  PYTHON_ARCHIVE="https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz"
  EXPAT_ARCHIVE="https://downloads.sourceforge.net/sourceforge/expat/expat-${EXPAT_VERSION}.tar.bz2"
  # CLANG toolchain archive locations
