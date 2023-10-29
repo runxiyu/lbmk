@@ -22,7 +22,8 @@ uefiextract="${PWD}/src/uefitool/uefiextract"
 
 eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
-    E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash)"
+    E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
+    is_rom)"
 
 main()
 {
@@ -97,11 +98,18 @@ fetch()
 	[ "${5#/}" = "${5}" ] || err "fetch: absolute path not allowed: '${5}'"
 	_dest="${5##*../}"
 	_dl="${vendir}/cache/${dlsum}"
+	dl_fail=""
 
 	x_ mkdir -p "${_dl%/*}"
 
-	dl_fail="y"
-	vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
+	is_rom="n"
+	if [ "${dl}" = "rom" ] || [ "${dl_bkup}" = "rom" ]; then
+		dl_fail="n"
+		is_rom="y"
+	else
+		dl_fail="y"
+		vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
+	fi
 	for url in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${url}" ] && continue
@@ -137,8 +145,14 @@ mkdirs()
 	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
 	x_ rm -Rf "${appdir}"
 	x_ mkdir -p "${appdir}/"
-	extract_archive "${_dl}" "${appdir}" || \
-	    [ "${2}" = "extract_e6400vga" ] || err "mkdirs ${1} ${2}: !extract"
+	if [ "${is_rom}" = "y" ]; then
+		cp "${_dl}" "${appdir}" || \
+		    err "mkdirs copyrom ${_dl}: can't copy to appdir"
+	else
+		extract_archive "${_dl}" "${appdir}" || \
+		    [ "${2}" = "extract_e6400vga" ] || \
+		    err "mkdirs ${1} ${2}: !extract"
+	fi
 }
 
 extract_intel_me()
@@ -152,6 +166,7 @@ extract_intel_me()
 	sdir="$(mktemp -d)"
 	mkdir -p "${sdir}" || err "extract_intel_me: !mkdir -p \"${sdir}\""
 	(
+	[ "${cdir#/a}" != "${cdir}" ] && cdir="${cdir#/}"
 	cd "${cdir}" || err "extract_intel_me: !cd \"${cdir}\""
 	for i in *; do
 		[ -f "${_me}" ] && break
@@ -170,6 +185,7 @@ extract_intel_me()
 			continue
 		fi
 		cdir="${1}"
+		[ "${cdir#/a}" != "${cdir}" ] && cdir="${cdir#/}"
 		cd "${cdir}"
 	done
 	)

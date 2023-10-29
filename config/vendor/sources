@@ -120,3 +120,9 @@
 	DL_url https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
 	DL_url_bkup https://web.archive.org/web/20210706183911/https://download.lenovo.com/pccbbs/mobiles/g1rg24ww.exe
 }
+
+{x201}{
+	DL_hash x201_factory.rom
+	DL_url rom
+	DL_url_bkup rom
+}
