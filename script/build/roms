@@ -384,10 +384,10 @@ moverom() {
 	rompath="${1}"
 	newrom="${2}"
 
+	[ "${vendorfiles}" = "n" ] && newrom="${newrom%.rom}_noblobs.rom"
 	printf "Creating target image: %s\n" "${newrom}"
 
 	[ -d "${newrom%/*}" ] || x_ mkdir -p "${newrom%/*}/"
-	[ "${vendorfiles}" = "n" ] && newrom="${newrom%.rom}_noblobs.rom"
 
 	x_ modify_coreboot_rom
 	x_ cp "${rompath}" "${newrom}"
