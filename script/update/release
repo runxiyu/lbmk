@@ -129,6 +129,12 @@ fetch_trees()
 
 mkrom_images()
 {
+	# fake me.bin to make x201 roms build
+	mkdir -p "vendorfiles/cache/" || \
+	    err "mkvdir: !mkdir -p \"vendorfiles/cache/\""
+	dd if=/dev/zero of="vendorfiles/cache/x201_factory.rom" \
+	    bs=68k count=1 || err "mkvdir: can't make fake x201_factory.rom"
+
 	./build roms all || err "${_xm}: roms-all"
 	./build serprog rp2040 || err "${_xm}: rp2040"
 	./build serprog stm32 || err "${_xm}: stm32"
