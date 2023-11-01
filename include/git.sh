@@ -137,7 +137,9 @@ git_am_patches()
 	for patch in "${patchdir}/"*; do
 		[ -L "${patch}" ] && continue
 		[ -f "${patch}" ] || continue
-		if ! git am "${patch}"; then
+		patchfail="n"
+		git am "${patch}" || patchfail="y"
+		if [ "${patchfail}" = "y" ]; then
 			git am --abort || err  "${sdir}: !git am --abort"
 			err  "!git am ${patch} -> ${sdir}"
 		fi

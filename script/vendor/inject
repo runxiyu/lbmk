@@ -39,7 +39,9 @@ main()
 
 check_board()
 {
-	if ! check_release "${archive}" ; then
+	failcheck="n"
+	check_release "${archive}" || failcheck="y"
+	if [ "${failcheck}" = "y" ]; then
 		[ -f "${rom}" ] || \
 			err "check_board: \"${rom}\" is not a valid path"
 		[ -z "${rom+x}" ] && \

@@ -95,6 +95,7 @@ build_release()
 	# now test the vendor insert script, using the release archive:
 	(
 	cd "${srcdir}" || err "!cd ${srcdir}"
+	mkfakeroms
 	for vrom in ../roms/*.tar.xz; do
 		[ -f "${vrom}" ] || continue
 		case "${vrom}" in
@@ -129,11 +130,7 @@ fetch_trees()
 
 mkrom_images()
 {
-	# fake me.bin to make x201 roms build
-	mkdir -p "vendorfiles/cache/" || \
-	    err "mkvdir: !mkdir -p \"vendorfiles/cache/\""
-	dd if=/dev/zero of="vendorfiles/cache/x201_factory.rom" \
-	    bs=68k count=1 || err "mkvdir: can't make fake x201_factory.rom"
+	mkfakeroms
 
 	./build roms all || err "${_xm}: roms-all"
 	./build serprog rp2040 || err "${_xm}: rp2040"
@@ -145,6 +142,15 @@ mkrom_images()
 	done
 
 	mv "release/${version}/roms/" ../roms || err "${_xm}: copy roms/"
+}
+
+mkfakeroms()
+{
+	# fake me.bin to make x201 roms build
+	mkdir -p "vendorfiles/x201/" || \
+	    err "mkvdir: !mkdir -p \"vendorfiles/x201/\""
+	dd if=/dev/zero of="vendorfiles/x201/me.bin" \
+	    bs=68k count=1 || err "mkvdir: can't make fake x201 me.bin"
 }
 
 handle_rom_archive()
@@ -272,7 +278,7 @@ mktarball()
 	[ "${2%/*}" = "${2}" ] || mkdir -p "${2%/*}" || err "mk, !mkdir -p \"${2%/*}\""
 	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
 		tar --sort=name --owner=root:0 --group=root:0 \
-		    --mtime="UTC 2023-10-21" -c "${1}" | xz -T0 -9e > "${2}" || \
+		    --mtime="UTC 2023-11-01" -c "${1}" | xz -T0 -9e > "${2}" || \
 		    err "mktarball 1, ${1}"
 	else
 		# TODO: reproducible tarballs on non-GNU systems
