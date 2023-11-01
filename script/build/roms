@@ -21,7 +21,7 @@ kmapdir="config/grub/keymap"
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest"
-pv="${pv} payload_seabios_withgrub payload_uboot memtest_bin"
+pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree arch"
 v="${v} grub_timeout ubdir vendorfiles board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
@@ -93,6 +93,10 @@ check_target()
 		eval "$(setvars "y" payload_seabios payload_seabios_withgrub)"
 	[ "${payload_seabios_withgrub}" = "y" ] && \
 		payload_seabios="y"
+	if [ "${payload_seabios_grubonly}" = "y" ]; then
+		payload_seabios="y"
+		payload_seabios_withgrub="y"
+	fi
 
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-withSeaBIOS will. For example, the board
@@ -115,7 +119,8 @@ check_target()
 	[ -z "${_payload}" ] && return 0
 	printf "setting payload to: %s\n" "${_payload}"
 	eval "$(setvars "n" payload_grub payload_memtest payload_seabios \
-	    payload_seabios_withgrub payload_uboot payload_grub_withseabios)"
+	    payload_seabios_withgrub payload_uboot payload_grub_withseabios \
+	    payload_seabios_grubonly)"
 	eval "payload_${_payload}=y"
 }
 
@@ -157,7 +162,8 @@ build_dependency_seabios()
 build_dependency_grub()
 {
 	[ "${payload_grub}" != "y" ] && \
-	    [ "${payload_seabios_withgrub}" != "y" ] && return 0
+	    [ "${payload_seabios_withgrub}" != "y" ] && \
+	    [ "${payload_seabios_grubonly}" != "y" ] && return 0
 
 	rebuild_grub="n"
 	[ -f "${grubelf}" ] || rebuild_grub="y"
@@ -308,6 +314,8 @@ build_grub_roms()
 			newrom="${romdir}/${payload1}_${board}_" && \
 			newrom="${newrom}${initmode}_${keymap}.rom"
 		x_ moverom "${tmpgrubrom}" "${newrom}"
+		[ "${payload_seabios_grubonly}" = "y" ] && \
+			mkSeabiosGrubonlyRom "${tmpgrubrom}" "${newrom}"
 		x_ rm -f "${tmpgrubrom}"
 	done
 }
@@ -347,6 +355,25 @@ mkSeabiosRom() {
 		    -n vgaroms/seavgabios.bin -t raw
 
 	printf "%s\n" "${tmprom}"
+}
+
+# SeaGRUB configuration
+mkSeabiosGrubonlyRom()
+{
+	_grubrom="${1}"
+	_newrom="${2}"
+
+	tmpbootorder=$(mktemp -t coreboot_rom.XXXXXXXXXX)
+
+	# only load grub, by inserting a custom bootorder file
+	printf "/rom@img/grub2\n" > "${tmpbootorder}" || err "printf bootorder"
+	x_ "${cbfstool}" "${_grubrom}" \
+	    add -f "${tmpbootorder}" -n bootorder -t raw
+	x_ rm -f "${tmpbootorder}"
+
+	x_ "${cbfstool}" "${_grubrom}" add-int -i 0 -n etc/show-boot-menu
+
+	x_ moverom "${_grubrom}" "${_newrom%.rom}_grubonly.rom"
 }
 
 build_uboot_roms()
