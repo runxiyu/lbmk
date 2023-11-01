@@ -8,6 +8,9 @@
 [ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
+export LC_COLLATE=C
+export LC_ALL=C
+
 . "include/err.sh"
 . "include/option.sh"
 
