@@ -1,0 +1,14 @@
+{docs}{
+	rev: 6941ffefe04375296732565a4628b549eea54a64
+	loc: docs
+	url: https://codeberg.org/vimuser/untitled
+	bkup_url: https://notabug.org/untitled/untitled
+	depend: mdfiles
+}
+
+{mdfiles}{
+	rev: 6ebb88528e342cae48ee75a6f1bfa1b71002e1c3
+	loc: docs/www/html
+	url: https://codeberg.org/libreboot/lbwww
+	bkup_url: https://git.disroot.org/libreboot/lbwww
+}
