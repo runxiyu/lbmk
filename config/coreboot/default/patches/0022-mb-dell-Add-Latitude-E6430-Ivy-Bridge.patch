@@ -1,7 +1,7 @@
-From db1cb588b64f17c7ed08201bf1e09ab5393e4b04 Mon Sep 17 00:00:00 2001
+From b37175381a32d9d308b5c1d67e11cdc57a24c820 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sat, 19 Aug 2023 16:19:10 -0600
-Subject: [PATCH 22/22] mb/dell: Add Latitude E6430 (Ivy Bridge)
+Subject: [PATCH] mb/dell: Add Latitude E6430 (Ivy Bridge)
 
 Mainboard is QAL80/LA-7781P (UMA). The dGPU model was not tested.
 This is based on the autoport output with some manual tweaks. The flash
@@ -44,7 +44,7 @@ Unknown/untested:
 Change-Id: I93c6622fc5da1d0d61a5b2c197ac7227d9525908
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
 ---
- src/mainboard/dell/e6430/Kconfig           |  36 ++++
+ src/mainboard/dell/e6430/Kconfig           |  37 ++++
  src/mainboard/dell/e6430/Kconfig.name      |   2 +
  src/mainboard/dell/e6430/Makefile.inc      |   6 +
  src/mainboard/dell/e6430/acpi/ec.asl       |   9 +
@@ -62,7 +62,7 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  src/mainboard/dell/e6430/gpio.c            | 192 +++++++++++++++++++++
  src/mainboard/dell/e6430/hda_verb.c        |  33 ++++
  src/mainboard/dell/e6430/mainboard.c       |  21 +++
- 18 files changed, 589 insertions(+)
+ 18 files changed, 590 insertions(+)
  create mode 100644 src/mainboard/dell/e6430/Kconfig
  create mode 100644 src/mainboard/dell/e6430/Kconfig.name
  create mode 100644 src/mainboard/dell/e6430/Makefile.inc
@@ -84,10 +84,10 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
 
 diff --git a/src/mainboard/dell/e6430/Kconfig b/src/mainboard/dell/e6430/Kconfig
 new file mode 100644
-index 0000000000..3178d12aff
+index 0000000000..ea691aeb4e
 --- /dev/null
 +++ b/src/mainboard/dell/e6430/Kconfig
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,37 @@
 +if BOARD_DELL_LATITUDE_E6430
 +
 +config BOARD_SPECIFIC_OPTIONS
@@ -100,6 +100,7 @@ index 0000000000..3178d12aff
 +	select HAVE_ACPI_TABLES
 +	select HAVE_CMOS_DEFAULT
 +	select HAVE_OPTION_TABLE
++	select INTEL_GMA_HAVE_VBT
 +	select INTEL_INT15
 +	select MAINBOARD_HAS_LIBGFXINIT
 +	select MAINBOARD_USES_IFD_GBE_REGION
@@ -816,5 +817,5 @@ index 0000000000..31e49802fc
 +	.enable_dev = mainboard_enable,
 +};
 -- 
-2.39.2
+2.42.0
 
