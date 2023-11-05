@@ -1,0 +1,23 @@
+From 1116145917035a92cc92a34e6a914a9506d17680 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 1 Nov 2023 16:33:11 +0000
+Subject: [PATCH 1/1] dell/e6400: crank up vram to 256MB (max)
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/dell/e6400/cmos.default | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mainboard/dell/e6400/cmos.default b/src/mainboard/dell/e6400/cmos.default
+index eeb6f47364..25dfa38cb5 100644
+--- a/src/mainboard/dell/e6400/cmos.default
++++ b/src/mainboard/dell/e6400/cmos.default
+@@ -2,4 +2,4 @@ boot_option=Fallback
+ debug_level=Debug
+ power_on_after_fail=Disable
+ sata_mode=AHCI
+-gfx_uma_size=32M
++gfx_uma_size=256M
+-- 
+2.39.2
+
