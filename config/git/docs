@@ -16,7 +16,7 @@
 
 {imgfiles}{
 	rev: 918c0ba07cf45f07836fa8c312fc51b48db32e0a
-	loc: docs/www/html/img/site
+	loc: docs/www/html/site/img
 	url: https://codeberg.org/libreboot/lbwww-img
 	bkup_url: https://git.disroot.org/libreboot/lbwww-img
 }
