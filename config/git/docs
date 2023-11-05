@@ -4,6 +4,7 @@
 	url: https://codeberg.org/vimuser/untitled
 	bkup_url: https://notabug.org/untitled/untitled
 	depend: mdfiles
+	depend: untitledwww
 }
 
 {mdfiles}{
@@ -19,4 +20,11 @@
 	loc: docs/www/html/site/img
 	url: https://codeberg.org/libreboot/lbwww-img
 	bkup_url: https://git.disroot.org/libreboot/lbwww-img
+}
+
+{untitledwww}{
+	rev: 78cdadea40143a7e55b8eae48f4239d31ebb5c16
+	loc: docs/www/untitled
+	url: https://codeberg.org/vimuser/untitled-website
+	bkup_url: https://notabug.org/untitled/untitled-website
 }
