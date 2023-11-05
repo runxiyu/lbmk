@@ -1,0 +1,37 @@
+From 4537c365dae010645404fdb5d2d4e5f478dede67 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sun, 27 Aug 2023 19:15:37 -0600
+Subject: [PATCH 21/22] ec/dell/mec5035: Hook up radio enables to option API
+
+Change-Id: I52de5ea3d24b400a93adee7a6207a4439eac61db
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/ec/dell/mec5035/mec5035.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
+index e0335a4635..20a33cc0ad 100644
+--- a/src/ec/dell/mec5035/mec5035.c
++++ b/src/ec/dell/mec5035/mec5035.c
+@@ -4,6 +4,7 @@
+ #include <console/console.h>
+ #include <device/device.h>
+ #include <device/pnp.h>
++#include <option.h>
+ #include <pc80/keyboard.h>
+ #include <stdint.h>
+ #include "mec5035.h"
+@@ -108,6 +109,10 @@ static void mec5035_init(struct device *dev)
+ 	mec5035_mouse_touchpad(TP_PS2_MOUSE);
+ 
+ 	pc_keyboard_init(NO_AUX_DEVICE);
++
++	mec5035_radio_enable(RADIO_WLAN, get_uint_option("wlan", 1));
++	mec5035_radio_enable(RADIO_WWAN, get_uint_option("wwan", 1));
++	mec5035_radio_enable(RADIO_WPAN, get_uint_option("bluetooth", 1));
+ }
+ 
+ static struct device_operations ops = {
+-- 
+2.39.2
+

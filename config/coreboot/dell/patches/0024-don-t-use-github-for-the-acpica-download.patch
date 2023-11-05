@@ -1,0 +1,39 @@
+From cddb709fd01e3e93a7879488d0d4024360e1e3d9 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 22 Oct 2023 15:02:25 +0100
+Subject: [PATCH 1/1] don't use github for the acpica download
+
+i have the tarball from a previous download, and i placed
+it on libreboot rsync, which then got mirrored to princeton.
+
+today, github's ssl cert was b0rking the hell out and i really
+really wanted to finish a build, and didn't want to wait for
+github to fix their httpd.
+
+so i'm now hosting this specific acpica tarball on rsync.
+
+this patch makes that URL be used, instead of the github one.
+
+that's the 2nd time i've had to patch coreboot's acpica download!
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/crossgcc/buildgcc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
+index ebc9fcb49a..a857110b4b 100755
+--- a/util/crossgcc/buildgcc
++++ b/util/crossgcc/buildgcc
+@@ -72,7 +72,7 @@ MPFR_BASE_URL="https://ftpmirror.gnu.org/mpfr"
+ MPC_BASE_URL="https://ftpmirror.gnu.org/mpc"
+ GCC_BASE_URL="https://ftpmirror.gnu.org/gcc/gcc-${GCC_VERSION}"
+ BINUTILS_BASE_URL="https://ftpmirror.gnu.org/binutils"
+-IASL_BASE_URL="https://github.com/acpica/acpica/archive/refs/tags"
++IASL_BASE_URL="https://www.mirrorservice.org/sites/libreboot.org/release/misc/acpica"
+ # CLANG toolchain archive locations
+ LLVM_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
+ CLANG_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
+-- 
+2.39.2
+
