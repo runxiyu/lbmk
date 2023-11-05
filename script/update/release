@@ -49,6 +49,7 @@ build_release()
 	(
 	cd "${srcdir}" || err "${_xm}: !cd \"${srcdir}\""
 	fetch_trees
+	x_ mv src/docs docs
 	)
 	(
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
