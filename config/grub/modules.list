@@ -39,6 +39,7 @@ ehci \
 eval \
 elf \
 ext2 \
+f2fs \
 gcry_arcfour \
 gcry_blowfish \
 gcry_camellia \
@@ -71,6 +72,7 @@ help \
 iorw \
 iso9660 \
 jpeg \
+json \
 keylayouts \
 keystatus \
 linux \
@@ -112,9 +114,11 @@ png \
 procfs \
 raid5rec \
 raid6rec \
+read \
 reboot \
 regexp \
 romfs \
+scsi \
 search \
 search_fs_file \
 search_fs_uuid \
@@ -124,6 +128,7 @@ syslinuxcfg \
 setpci \
 spkmodem \
 squash4 \
+sleep \
 tar \
 test \
 true \
