@@ -6,7 +6,7 @@ CC=cc
 CFLAGS=-Os -Wall -Wextra -Werror -pedantic
 PREFIX?=/usr/bin
 
-nvm:
+nvm: nvmutil.c
 	$(CC) $(CFLAGS) nvmutil.c -o nvm
 
 install: nvm
