@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org> */
+/* SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
 #include <sys/stat.h>
 
@@ -61,8 +62,16 @@ void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
-	if (argc < 3)
+	if (argc < 3) {
+		fprintf(stderr, "USAGE:\n");
+		fprintf(stderr, " %s FILE dump\n", argv[0]);
+		fprintf(stderr, " %s FILE setmac [MAC]\n", argv[0]);
+		fprintf(stderr, " %s FILE swap\n", argv[0]);
+		fprintf(stderr, " %s FILE copy 0|1\n", argv[0]);
+		fprintf(stderr, " %s FILE brick 0|1\n", argv[0]);
+		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
 		err(errno = ECANCELED, "Too few arguments");
+	}
 	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
 	filename = argv[1];
 #ifdef __OpenBSD__
