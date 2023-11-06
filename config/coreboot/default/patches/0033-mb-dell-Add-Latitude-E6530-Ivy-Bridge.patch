@@ -1,0 +1,792 @@
+From 823da59b0bdaeb20d5f22da65e736acaa70b301e Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sat, 19 Aug 2023 16:19:10 -0600
+Subject: [PATCH] mb/dell: Add Latitude E6530 (Ivy Bridge)
+
+Mainboard is QALA0/LA-7761P (UMA). The dGPU model was not tested.  This
+is based on the autoport output with some manual tweaks. The flash is
+8MiB + 4MiB. It can be internally flashed by sending a command to the
+EC, which causes the EC to pull the FDO pin low and the firmware to skip
+setting up any chipset based write protections. [1] The EC is the SMSC
+MEC5055, which seems to be compatible with the existing MEC5035 code.
+
+[1] https://gitlab.com/nic3-14159/dell-flash-unlock
+
+Change-Id: I93c6622fc5da1d0d61a5b2c197ac7227d9525908
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/mainboard/dell/e6530/Kconfig           |  37 ++++
+ src/mainboard/dell/e6530/Kconfig.name      |   2 +
+ src/mainboard/dell/e6530/Makefile.inc      |   6 +
+ src/mainboard/dell/e6530/acpi/ec.asl       |   9 +
+ src/mainboard/dell/e6530/acpi/platform.asl |  12 ++
+ src/mainboard/dell/e6530/acpi/superio.asl  |   3 +
+ src/mainboard/dell/e6530/acpi_tables.c     |  16 ++
+ src/mainboard/dell/e6530/board_info.txt    |   6 +
+ src/mainboard/dell/e6530/cmos.default      |   9 +
+ src/mainboard/dell/e6530/cmos.layout       |  88 ++++++++++
+ src/mainboard/dell/e6530/data.vbt          | Bin 0 -> 4280 bytes
+ src/mainboard/dell/e6530/devicetree.cb     |  68 ++++++++
+ src/mainboard/dell/e6530/dsdt.asl          |  30 ++++
+ src/mainboard/dell/e6530/early_init.c      |  38 ++++
+ src/mainboard/dell/e6530/gma-mainboard.ads |  20 +++
+ src/mainboard/dell/e6530/gpio.c            | 192 +++++++++++++++++++++
+ src/mainboard/dell/e6530/hda_verb.c        |  33 ++++
+ src/mainboard/dell/e6530/mainboard.c       |  21 +++
+ 18 files changed, 590 insertions(+)
+ create mode 100644 src/mainboard/dell/e6530/Kconfig
+ create mode 100644 src/mainboard/dell/e6530/Kconfig.name
+ create mode 100644 src/mainboard/dell/e6530/Makefile.inc
+ create mode 100644 src/mainboard/dell/e6530/acpi/ec.asl
+ create mode 100644 src/mainboard/dell/e6530/acpi/platform.asl
+ create mode 100644 src/mainboard/dell/e6530/acpi/superio.asl
+ create mode 100644 src/mainboard/dell/e6530/acpi_tables.c
+ create mode 100644 src/mainboard/dell/e6530/board_info.txt
+ create mode 100644 src/mainboard/dell/e6530/cmos.default
+ create mode 100644 src/mainboard/dell/e6530/cmos.layout
+ create mode 100644 src/mainboard/dell/e6530/data.vbt
+ create mode 100644 src/mainboard/dell/e6530/devicetree.cb
+ create mode 100644 src/mainboard/dell/e6530/dsdt.asl
+ create mode 100644 src/mainboard/dell/e6530/early_init.c
+ create mode 100644 src/mainboard/dell/e6530/gma-mainboard.ads
+ create mode 100644 src/mainboard/dell/e6530/gpio.c
+ create mode 100644 src/mainboard/dell/e6530/hda_verb.c
+ create mode 100644 src/mainboard/dell/e6530/mainboard.c
+
+diff --git a/src/mainboard/dell/e6530/Kconfig b/src/mainboard/dell/e6530/Kconfig
+new file mode 100644
+index 0000000000..582adddbd4
+--- /dev/null
++++ b/src/mainboard/dell/e6530/Kconfig
+@@ -0,0 +1,37 @@
++if BOARD_DELL_LATITUDE_E6530
++
++config BOARD_SPECIFIC_OPTIONS
++	def_bool y
++	select BOARD_ROMSIZE_KB_12288
++	select EC_ACPI
++	select EC_DELL_MEC5035
++	select GFX_GMA_PANEL_1_ON_LVDS
++	select HAVE_ACPI_RESUME
++	select HAVE_ACPI_TABLES
++	select HAVE_CMOS_DEFAULT
++	select HAVE_OPTION_TABLE
++	select INTEL_GMA_HAVE_VBT
++	select INTEL_INT15
++	select MAINBOARD_HAS_LIBGFXINIT
++	select MAINBOARD_USES_IFD_GBE_REGION
++	select NORTHBRIDGE_INTEL_SANDYBRIDGE
++	select SERIRQ_CONTINUOUS_MODE
++	select SOUTHBRIDGE_INTEL_C216
++	select SYSTEM_TYPE_LAPTOP
++	select USE_NATIVE_RAMINIT
++
++config MAINBOARD_DIR
++	default "dell/e6530"
++
++config MAINBOARD_PART_NUMBER
++	default "Latitude E6530"
++
++config VGA_BIOS_ID
++	default "8086,0166"
++
++config DRAM_RESET_GATE_GPIO
++	default 60
++
++config USBDEBUG_HCD_INDEX
++	default 2
++endif
+diff --git a/src/mainboard/dell/e6530/Kconfig.name b/src/mainboard/dell/e6530/Kconfig.name
+new file mode 100644
+index 0000000000..01ed76d107
+--- /dev/null
++++ b/src/mainboard/dell/e6530/Kconfig.name
+@@ -0,0 +1,2 @@
++config BOARD_DELL_LATITUDE_E6530
++	bool "Latitude E6530"
+diff --git a/src/mainboard/dell/e6530/Makefile.inc b/src/mainboard/dell/e6530/Makefile.inc
+new file mode 100644
+index 0000000000..ba64e93eb8
+--- /dev/null
++++ b/src/mainboard/dell/e6530/Makefile.inc
+@@ -0,0 +1,6 @@
++# SPDX-License-Identifier: GPL-2.0-only
++bootblock-y += early_init.c
++bootblock-y += gpio.c
++romstage-y += early_init.c
++romstage-y += gpio.c
++ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
+diff --git a/src/mainboard/dell/e6530/acpi/ec.asl b/src/mainboard/dell/e6530/acpi/ec.asl
+new file mode 100644
+index 0000000000..0d429410a9
+--- /dev/null
++++ b/src/mainboard/dell/e6530/acpi/ec.asl
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Device(EC)
++{
++	Name (_HID, EISAID("PNP0C09"))
++	Name (_UID, 0)
++	Name (_GPE, 16)
++/* FIXME: EC support */
++}
+diff --git a/src/mainboard/dell/e6530/acpi/platform.asl b/src/mainboard/dell/e6530/acpi/platform.asl
+new file mode 100644
+index 0000000000..2d24bbd9b9
+--- /dev/null
++++ b/src/mainboard/dell/e6530/acpi/platform.asl
+@@ -0,0 +1,12 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Method(_WAK, 1)
++{
++	/* FIXME: EC support  */
++	Return(Package() {0, 0})
++}
++
++Method(_PTS,1)
++{
++	/* FIXME: EC support  */
++}
+diff --git a/src/mainboard/dell/e6530/acpi/superio.asl b/src/mainboard/dell/e6530/acpi/superio.asl
+new file mode 100644
+index 0000000000..55b1db5b11
+--- /dev/null
++++ b/src/mainboard/dell/e6530/acpi/superio.asl
+@@ -0,0 +1,3 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <drivers/pc80/pc/ps2_controller.asl>
+diff --git a/src/mainboard/dell/e6530/acpi_tables.c b/src/mainboard/dell/e6530/acpi_tables.c
+new file mode 100644
+index 0000000000..e2759659bf
+--- /dev/null
++++ b/src/mainboard/dell/e6530/acpi_tables.c
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <acpi/acpi_gnvs.h>
++#include <soc/nvs.h>
++
++/* FIXME: check this function.  */
++void mainboard_fill_gnvs(struct global_nvs *gnvs)
++{
++	/* The lid is open by default. */
++	gnvs->lids = 1;
++
++	/* Temperature at which OS will shutdown */
++	gnvs->tcrt = 100;
++	/* Temperature at which OS will throttle CPU */
++	gnvs->tpsv = 90;
++}
+diff --git a/src/mainboard/dell/e6530/board_info.txt b/src/mainboard/dell/e6530/board_info.txt
+new file mode 100644
+index 0000000000..4601a4aaba
+--- /dev/null
++++ b/src/mainboard/dell/e6530/board_info.txt
+@@ -0,0 +1,6 @@
++Category: laptop
++ROM package: SOIC-8
++ROM protocol: SPI
++ROM socketed: n
++Flashrom support: y
++Release year: 2012
+diff --git a/src/mainboard/dell/e6530/cmos.default b/src/mainboard/dell/e6530/cmos.default
+new file mode 100644
+index 0000000000..279415dfd1
+--- /dev/null
++++ b/src/mainboard/dell/e6530/cmos.default
+@@ -0,0 +1,9 @@
++boot_option=Fallback
++debug_level=Debug
++power_on_after_fail=Disable
++nmi=Enable
++bluetooth=Enable
++wwan=Enable
++wlan=Enable
++sata_mode=AHCI
++me_state=Disabled
+diff --git a/src/mainboard/dell/e6530/cmos.layout b/src/mainboard/dell/e6530/cmos.layout
+new file mode 100644
+index 0000000000..e85ea4c661
+--- /dev/null
++++ b/src/mainboard/dell/e6530/cmos.layout
+@@ -0,0 +1,88 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++# -----------------------------------------------------------------
++entries
++
++# -----------------------------------------------------------------
++0	120	r	0	reserved_memory
++
++# -----------------------------------------------------------------
++# RTC_BOOT_BYTE (coreboot hardcoded)
++384	1	e	4	boot_option
++388	4	h	0	reboot_counter
++
++# -----------------------------------------------------------------
++# coreboot config options: console
++395	4	e	6	debug_level
++
++#400	8	r	0	reserved for century byte
++
++# coreboot config options: southbridge
++408	1	e	1	nmi
++409	2	e	7	power_on_after_fail
++411     1       e       9       sata_mode
++
++# coreboot config options: EC
++412	1	e	1	bluetooth
++413	1	e	1	wwan
++415	1	e	1	wlan
++
++# coreboot config options: ME
++424	1	e	14	me_state
++425	2	h	0	me_state_prev
++
++# coreboot config options: northbridge
++432	3	e	11	gfx_uma_size
++435	2	e	12	hybrid_graphics_mode
++440	8	h	0	volume
++
++# VBOOT
++448	128	r	0	vbnv
++
++# SandyBridge MRC Scrambler Seed values
++896	32	r	0	mrc_scrambler_seed
++928	32	r	0	mrc_scrambler_seed_s3
++960	16	r	0	mrc_scrambler_seed_chk
++
++# coreboot config options: check sums
++984	16	h	0	check_sum
++
++# -----------------------------------------------------------------
++
++enumerations
++
++#ID	value	text
++1	0	Disable
++1	1	Enable
++2	0	Enable
++2	1	Disable
++4	0	Fallback
++4	1	Normal
++6	0	Emergency
++6	1	Alert
++6	2	Critical
++6	3	Error
++6	4	Warning
++6	5	Notice
++6	6	Info
++6	7	Debug
++6	8	Spew
++7	0	Disable
++7	1	Enable
++7	2	Keep
++9	0	AHCI
++9	1	Compatible
++11	0	32M
++11	1	64M
++11	2	96M
++11	3	128M
++11	4	160M
++11	5	192M
++11	6	224M
++14	0	Normal
++14	1	Disabled
++
++# -----------------------------------------------------------------
++checksums
++
++checksum 392 447 984
+diff --git a/src/mainboard/dell/e6530/data.vbt b/src/mainboard/dell/e6530/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..af64a913d521fe240ce30e114e90fe75d3841bbc
+GIT binary patch
+literal 4280
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/mainboard/dell/e6530/devicetree.cb b/src/mainboard/dell/e6530/devicetree.cb
+new file mode 100644
+index 0000000000..96eed178c5
+--- /dev/null
++++ b/src/mainboard/dell/e6530/devicetree.cb
+@@ -0,0 +1,68 @@
++chip northbridge/intel/sandybridge # FIXME: GPU registers may not always apply.
++	register "gfx" = "GMA_STATIC_DISPLAYS(1)"
++	register "gpu_cpu_backlight" = "0x00000251"
++	register "gpu_dp_b_hotplug" = "4"
++	register "gpu_dp_c_hotplug" = "4"
++	register "gpu_dp_d_hotplug" = "4"
++	register "gpu_panel_port_select" = "0"
++	register "gpu_panel_power_backlight_off_delay" = "2300"
++	register "gpu_panel_power_backlight_on_delay" = "2300"
++	register "gpu_panel_power_cycle_delay" = "6"
++	register "gpu_panel_power_down_delay" = "400"
++	register "gpu_panel_power_up_delay" = "400"
++	register "gpu_pch_backlight" = "0x13121312"
++
++	device domain 0x0 on
++		subsystemid 0x1028 0x0535 inherit
++
++		device ref host_bridge on end # Host bridge
++		device ref peg10 off end # PEG
++		device ref igd on end # iGPU
++
++		chip southbridge/intel/bd82x6x # Intel Series 6 Cougar Point PCH
++			register "docking_supported" = "1"
++			register "gen1_dec" = "0x007c0681"
++			register "gen2_dec" = "0x005c0921"
++			register "gen3_dec" = "0x003c07e1"
++			register "gen4_dec" = "0x007c0901"
++			register "gpi0_routing" = "2"
++			register "pcie_hotplug_map" = "{ 0, 0, 1, 1, 0, 0, 0, 0 }"
++			register "pcie_port_coalesce" = "1"
++			register "sata_interface_speed_support" = "0x3"
++			register "sata_port_map" = "0x33"
++			register "spi_lvscc" = "0x2005"
++			register "spi_uvscc" = "0x2005"
++			register "superspeed_capable_ports" = "0x0000000f"
++			register "xhci_overcurrent_mapping" = "0x00000c03"
++			register "xhci_switchable_ports" = "0x0000000f"
++
++			device ref xhci		on end # USB 3.0 Controller
++			device ref mei1		off end # Management Engine Interface 1
++			device ref mei2		off end # Management Engine Interface 2
++			device ref me_ide_r	off end # Management Engine IDE-R
++			device ref me_kt	on end # Management Engine KT
++			device ref gbe		on end # Intel Gigabit Ethernet
++			device ref ehci2	on end # USB2 EHCI #2
++			device ref hda		on end # High Definition Audio
++			device ref pcie_rp1	on end # PCIe Port #1
++			device ref pcie_rp2	on end # PCIe Port #2
++			device ref pcie_rp3	on end # PCIe Port #3
++			device ref pcie_rp4	on end # PCIe Port #4
++			device ref pcie_rp5	off end # PCIe Port #5
++			device ref pcie_rp6	on end # PCIe Port #6
++			device ref pcie_rp7	off end # PCIe Port #7
++			device ref pcie_rp8	off end # PCIe Port #8
++			device ref ehci1	on end # USB2 EHCI #1
++			device ref pci_bridge	off end # PCI bridge
++			device ref lpc		on # LPC bridge
++				chip ec/dell/mec5035
++					device pnp ff.0 on end
++				end
++			end
++			device ref sata1	on end # SATA Controller 1
++			device ref smbus	on end # SMBus
++			device ref sata2	off end # SATA Controller 2
++			device ref thermal	off end # Thermal
++		end
++	end
++end
+diff --git a/src/mainboard/dell/e6530/dsdt.asl b/src/mainboard/dell/e6530/dsdt.asl
+new file mode 100644
+index 0000000000..7d13c55b08
+--- /dev/null
++++ b/src/mainboard/dell/e6530/dsdt.asl
+@@ -0,0 +1,30 @@
++#define BRIGHTNESS_UP \_SB.PCI0.GFX0.INCB
++#define BRIGHTNESS_DOWN \_SB.PCI0.GFX0.DECB
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++
++#include <acpi/acpi.h>
++
++DefinitionBlock(
++	"dsdt.aml",
++	"DSDT",
++	ACPI_DSDT_REV_2,
++	OEM_ID,
++	ACPI_TABLE_CREATOR,
++	0x20141018	/* OEM revision */
++)
++{
++	#include <acpi/dsdt_top.asl>
++	#include "acpi/platform.asl"
++	#include <cpu/intel/common/acpi/cpu.asl>
++	#include <southbridge/intel/common/acpi/platform.asl>
++	#include <southbridge/intel/bd82x6x/acpi/globalnvs.asl>
++	#include <southbridge/intel/common/acpi/sleepstates.asl>
++
++	Device (\_SB.PCI0)
++	{
++		#include <northbridge/intel/sandybridge/acpi/sandybridge.asl>
++		#include <drivers/intel/gma/acpi/default_brightness_levels.asl>
++		#include <southbridge/intel/bd82x6x/acpi/pch.asl>
++	}
++}
+diff --git a/src/mainboard/dell/e6530/early_init.c b/src/mainboard/dell/e6530/early_init.c
+new file mode 100644
+index 0000000000..d57f48e7f1
+--- /dev/null
++++ b/src/mainboard/dell/e6530/early_init.c
+@@ -0,0 +1,38 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++
++#include <bootblock_common.h>
++#include <device/pci_ops.h>
++#include <ec/dell/mec5035/mec5035.h>
++#include <northbridge/intel/sandybridge/raminit_native.h>
++#include <southbridge/intel/bd82x6x/pch.h>
++
++const struct southbridge_usb_port mainboard_usb_ports[] = {
++	{ 1, 1, 0 },
++	{ 1, 1, 0 },
++	{ 1, 1, 1 },
++	{ 1, 1, 1 },
++	{ 1, 1, 2 },
++	{ 1, 1, 2 },
++	{ 1, 0, 3 },
++	{ 1, 1, 3 },
++	{ 1, 1, 4 },
++	{ 1, 1, 4 },
++	{ 1, 1, 5 },
++	{ 1, 1, 5 },
++	{ 1, 2, 6 },
++	{ 1, 2, 6 },
++};
++
++void bootblock_mainboard_early_init(void)
++{
++	pci_write_config16(PCI_DEV(0, 0x1f, 0), 0x82, 0x1c0f);
++	pci_write_config16(PCI_DEV(0, 0x1f, 0), 0x80, 0x0000);
++	mec5035_early_init();
++}
++
++void mainboard_get_spd(spd_raw_data *spd, bool id_only)
++{
++	read_spd(&spd[0], 0x50, id_only);
++	read_spd(&spd[2], 0x52, id_only);
++}
+diff --git a/src/mainboard/dell/e6530/gma-mainboard.ads b/src/mainboard/dell/e6530/gma-mainboard.ads
+new file mode 100644
+index 0000000000..1310830c8e
+--- /dev/null
++++ b/src/mainboard/dell/e6530/gma-mainboard.ads
+@@ -0,0 +1,20 @@
++-- SPDX-License-Identifier: GPL-2.0-or-later
++
++with HW.GFX.GMA;
++with HW.GFX.GMA.Display_Probing;
++
++use HW.GFX.GMA;
++use HW.GFX.GMA.Display_Probing;
++
++private package GMA.Mainboard is
++
++   ports : constant Port_List :=
++     (
++      HDMI1, -- mainboard HDMI
++      DP2, -- dock DP
++      DP3, -- dock DP
++      Analog, --mainboard VGA
++      LVDS,
++      others => Disabled);
++
++end GMA.Mainboard;
+diff --git a/src/mainboard/dell/e6530/gpio.c b/src/mainboard/dell/e6530/gpio.c
+new file mode 100644
+index 0000000000..777570765a
+--- /dev/null
++++ b/src/mainboard/dell/e6530/gpio.c
+@@ -0,0 +1,192 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <southbridge/intel/common/gpio.h>
++
++static const struct pch_gpio_set1 pch_gpio_set1_mode = {
++	.gpio0 = GPIO_MODE_GPIO,
++	.gpio1 = GPIO_MODE_GPIO,
++	.gpio2 = GPIO_MODE_GPIO,
++	.gpio3 = GPIO_MODE_GPIO,
++	.gpio4 = GPIO_MODE_GPIO,
++	.gpio5 = GPIO_MODE_NATIVE,
++	.gpio6 = GPIO_MODE_GPIO,
++	.gpio7 = GPIO_MODE_GPIO,
++	.gpio8 = GPIO_MODE_GPIO,
++	.gpio9 = GPIO_MODE_NATIVE,
++	.gpio10 = GPIO_MODE_NATIVE,
++	.gpio11 = GPIO_MODE_NATIVE,
++	.gpio12 = GPIO_MODE_NATIVE,
++	.gpio13 = GPIO_MODE_GPIO,
++	.gpio14 = GPIO_MODE_GPIO,
++	.gpio15 = GPIO_MODE_GPIO,
++	.gpio16 = GPIO_MODE_GPIO,
++	.gpio17 = GPIO_MODE_GPIO,
++	.gpio18 = GPIO_MODE_NATIVE,
++	.gpio19 = GPIO_MODE_GPIO,
++	.gpio20 = GPIO_MODE_NATIVE,
++	.gpio21 = GPIO_MODE_GPIO,
++	.gpio22 = GPIO_MODE_GPIO,
++	.gpio23 = GPIO_MODE_NATIVE,
++	.gpio24 = GPIO_MODE_GPIO,
++	.gpio25 = GPIO_MODE_NATIVE,
++	.gpio26 = GPIO_MODE_NATIVE,
++	.gpio27 = GPIO_MODE_GPIO,
++	.gpio28 = GPIO_MODE_GPIO,
++	.gpio29 = GPIO_MODE_GPIO,
++	.gpio30 = GPIO_MODE_NATIVE,
++	.gpio31 = GPIO_MODE_NATIVE,
++};
++
++static const struct pch_gpio_set1 pch_gpio_set1_direction = {
++	.gpio0 = GPIO_DIR_INPUT,
++	.gpio1 = GPIO_DIR_INPUT,
++	.gpio2 = GPIO_DIR_INPUT,
++	.gpio3 = GPIO_DIR_INPUT,
++	.gpio4 = GPIO_DIR_INPUT,
++	.gpio6 = GPIO_DIR_INPUT,
++	.gpio7 = GPIO_DIR_INPUT,
++	.gpio8 = GPIO_DIR_INPUT,
++	.gpio13 = GPIO_DIR_INPUT,
++	.gpio14 = GPIO_DIR_INPUT,
++	.gpio15 = GPIO_DIR_INPUT,
++	.gpio16 = GPIO_DIR_INPUT,
++	.gpio17 = GPIO_DIR_INPUT,
++	.gpio19 = GPIO_DIR_INPUT,
++	.gpio21 = GPIO_DIR_INPUT,
++	.gpio22 = GPIO_DIR_INPUT,
++	.gpio24 = GPIO_DIR_INPUT,
++	.gpio27 = GPIO_DIR_INPUT,
++	.gpio28 = GPIO_DIR_OUTPUT,
++	.gpio29 = GPIO_DIR_INPUT,
++};
++
++static const struct pch_gpio_set1 pch_gpio_set1_level = {
++	.gpio28 = GPIO_LEVEL_LOW,
++};
++
++static const struct pch_gpio_set1 pch_gpio_set1_reset = {
++	.gpio30 = GPIO_RESET_RSMRST,
++};
++
++static const struct pch_gpio_set1 pch_gpio_set1_invert = {
++	.gpio0 = GPIO_INVERT,
++	.gpio8 = GPIO_INVERT,
++	.gpio13 = GPIO_INVERT,
++	.gpio14 = GPIO_INVERT,
++};
++
++static const struct pch_gpio_set1 pch_gpio_set1_blink = {
++};
++
++static const struct pch_gpio_set2 pch_gpio_set2_mode = {
++	.gpio32 = GPIO_MODE_NATIVE,
++	.gpio33 = GPIO_MODE_GPIO,
++	.gpio34 = GPIO_MODE_GPIO,
++	.gpio35 = GPIO_MODE_GPIO,
++	.gpio36 = GPIO_MODE_GPIO,
++	.gpio37 = GPIO_MODE_GPIO,
++	.gpio38 = GPIO_MODE_GPIO,
++	.gpio39 = GPIO_MODE_GPIO,
++	.gpio40 = GPIO_MODE_NATIVE,
++	.gpio41 = GPIO_MODE_NATIVE,
++	.gpio42 = GPIO_MODE_NATIVE,
++	.gpio43 = GPIO_MODE_NATIVE,
++	.gpio44 = GPIO_MODE_NATIVE,
++	.gpio45 = GPIO_MODE_GPIO,
++	.gpio46 = GPIO_MODE_NATIVE,
++	.gpio47 = GPIO_MODE_NATIVE,
++	.gpio48 = GPIO_MODE_GPIO,
++	.gpio49 = GPIO_MODE_GPIO,
++	.gpio50 = GPIO_MODE_NATIVE,
++	.gpio51 = GPIO_MODE_GPIO,
++	.gpio52 = GPIO_MODE_GPIO,
++	.gpio53 = GPIO_MODE_NATIVE,
++	.gpio54 = GPIO_MODE_GPIO,
++	.gpio55 = GPIO_MODE_NATIVE,
++	.gpio56 = GPIO_MODE_NATIVE,
++	.gpio57 = GPIO_MODE_GPIO,
++	.gpio58 = GPIO_MODE_NATIVE,
++	.gpio59 = GPIO_MODE_NATIVE,
++	.gpio60 = GPIO_MODE_GPIO,
++	.gpio61 = GPIO_MODE_NATIVE,
++	.gpio62 = GPIO_MODE_NATIVE,
++	.gpio63 = GPIO_MODE_NATIVE,
++};
++
++static const struct pch_gpio_set2 pch_gpio_set2_direction = {
++	.gpio33 = GPIO_DIR_INPUT,
++	.gpio34 = GPIO_DIR_OUTPUT,
++	.gpio35 = GPIO_DIR_INPUT,
++	.gpio36 = GPIO_DIR_INPUT,
++	.gpio37 = GPIO_DIR_INPUT,
++	.gpio38 = GPIO_DIR_INPUT,
++	.gpio39 = GPIO_DIR_INPUT,
++	.gpio45 = GPIO_DIR_OUTPUT,
++	.gpio48 = GPIO_DIR_INPUT,
++	.gpio49 = GPIO_DIR_INPUT,
++	.gpio51 = GPIO_DIR_INPUT,
++	.gpio52 = GPIO_DIR_INPUT,
++	.gpio54 = GPIO_DIR_INPUT,
++	.gpio57 = GPIO_DIR_INPUT,
++	.gpio60 = GPIO_DIR_OUTPUT,
++};
++
++static const struct pch_gpio_set2 pch_gpio_set2_level = {
++	.gpio34 = GPIO_LEVEL_HIGH,
++	.gpio45 = GPIO_LEVEL_LOW,
++	.gpio60 = GPIO_LEVEL_HIGH,
++};
++
++static const struct pch_gpio_set2 pch_gpio_set2_reset = {
++};
++
++static const struct pch_gpio_set3 pch_gpio_set3_mode = {
++	.gpio64 = GPIO_MODE_NATIVE,
++	.gpio65 = GPIO_MODE_NATIVE,
++	.gpio66 = GPIO_MODE_NATIVE,
++	.gpio67 = GPIO_MODE_NATIVE,
++	.gpio68 = GPIO_MODE_GPIO,
++	.gpio69 = GPIO_MODE_GPIO,
++	.gpio70 = GPIO_MODE_GPIO,
++	.gpio71 = GPIO_MODE_GPIO,
++	.gpio72 = GPIO_MODE_NATIVE,
++	.gpio73 = GPIO_MODE_NATIVE,
++	.gpio74 = GPIO_MODE_NATIVE,
++	.gpio75 = GPIO_MODE_NATIVE,
++};
++
++static const struct pch_gpio_set3 pch_gpio_set3_direction = {
++	.gpio68 = GPIO_DIR_INPUT,
++	.gpio69 = GPIO_DIR_INPUT,
++	.gpio70 = GPIO_DIR_INPUT,
++	.gpio71 = GPIO_DIR_INPUT,
++};
++
++static const struct pch_gpio_set3 pch_gpio_set3_level = {
++};
++
++static const struct pch_gpio_set3 pch_gpio_set3_reset = {
++};
++
++const struct pch_gpio_map mainboard_gpio_map = {
++	.set1 = {
++		.mode		= &pch_gpio_set1_mode,
++		.direction	= &pch_gpio_set1_direction,
++		.level		= &pch_gpio_set1_level,
++		.blink		= &pch_gpio_set1_blink,
++		.invert		= &pch_gpio_set1_invert,
++		.reset		= &pch_gpio_set1_reset,
++	},
++	.set2 = {
++		.mode		= &pch_gpio_set2_mode,
++		.direction	= &pch_gpio_set2_direction,
++		.level		= &pch_gpio_set2_level,
++		.reset		= &pch_gpio_set2_reset,
++	},
++	.set3 = {
++		.mode		= &pch_gpio_set3_mode,
++		.direction	= &pch_gpio_set3_direction,
++		.level		= &pch_gpio_set3_level,
++		.reset		= &pch_gpio_set3_reset,
++	},
++};
+diff --git a/src/mainboard/dell/e6530/hda_verb.c b/src/mainboard/dell/e6530/hda_verb.c
+new file mode 100644
+index 0000000000..9de7e34311
+--- /dev/null
++++ b/src/mainboard/dell/e6530/hda_verb.c
+@@ -0,0 +1,33 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++	0x111d76df,	/* Codec Vendor / Device ID: IDT */
++	0x10280535,	/* Subsystem ID */
++	11,		/* Number of 4 dword sets */
++	AZALIA_SUBVENDOR(0, 0x10280535),
++	AZALIA_PIN_CFG(0, 0x0a, 0x03a11020),
++	AZALIA_PIN_CFG(0, 0x0b, 0x0321101f),
++	AZALIA_PIN_CFG(0, 0x0c, 0x400000f0),
++	AZALIA_PIN_CFG(0, 0x0d, 0x90170110),
++	AZALIA_PIN_CFG(0, 0x0e, 0x23011050),
++	AZALIA_PIN_CFG(0, 0x0f, 0x23a1102e),
++	AZALIA_PIN_CFG(0, 0x10, 0x400000f3),
++	AZALIA_PIN_CFG(0, 0x11, 0xd5a30130),
++	AZALIA_PIN_CFG(0, 0x1f, 0x400000f0),
++	AZALIA_PIN_CFG(0, 0x20, 0x400000f0),
++
++	0x80862806,	/* Codec Vendor / Device ID: Intel */
++	0x80860101,	/* Subsystem ID */
++	4,		/* Number of 4 dword sets */
++	AZALIA_SUBVENDOR(3, 0x80860101),
++	AZALIA_PIN_CFG(3, 0x05, 0x18560010),
++	AZALIA_PIN_CFG(3, 0x06, 0x18560020),
++	AZALIA_PIN_CFG(3, 0x07, 0x18560030),
++
++};
++
++const u32 pc_beep_verbs[0] = {};
++
++AZALIA_ARRAY_SIZES;
+diff --git a/src/mainboard/dell/e6530/mainboard.c b/src/mainboard/dell/e6530/mainboard.c
+new file mode 100644
+index 0000000000..31e49802fc
+--- /dev/null
++++ b/src/mainboard/dell/e6530/mainboard.c
+@@ -0,0 +1,21 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/device.h>
++#include <drivers/intel/gma/int15.h>
++#include <southbridge/intel/bd82x6x/pch.h>
++#include <ec/acpi/ec.h>
++#include <console/console.h>
++#include <pc80/keyboard.h>
++
++static void mainboard_enable(struct device *dev)
++{
++
++	/* FIXME: fix these values. */
++	install_intel_vga_int15_handler(GMA_INT15_ACTIVE_LFP_INT_LVDS,
++					GMA_INT15_PANEL_FIT_DEFAULT,
++					GMA_INT15_BOOT_DISPLAY_DEFAULT, 0);
++}
++
++struct chip_operations mainboard_ops = {
++	.enable_dev = mainboard_enable,
++};
+-- 
+2.42.1
+
