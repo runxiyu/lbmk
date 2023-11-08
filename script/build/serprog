@@ -34,7 +34,10 @@ main()
 	x_ mkdir -p "bin/serprog_${platform}"
 
 	if [ $# -gt 1 ] ; then
-		[ "${2}" = "list" ] && print_boards ${boards_dir} && return 0
+		if [ "${2}" = "list" ]; then
+			print_boards ${boards_dir}
+			return 0
+		fi
 		build_${platform}_rom "${2}"
 	else
 		printf "Building all serprog targets\n"

@@ -37,8 +37,11 @@ main()
 	[ -z "${_f}" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "${project}" ] && err "project name not specified"
 
-	[ -f "config/${project}/build.list" ] && build_targets $@ && return 0
-	build_projects $@
+	if [ -f "config/${project}/build.list" ]; then
+		build_targets $@
+	else
+		build_projects $@
+	fi
 }
 
 build_projects()

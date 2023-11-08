@@ -140,8 +140,10 @@ vendor_checksum()
 
 mkdirs()
 {
-	[ -f "${1}" ] && \
-		printf "mkdirs ${1} ${2}: already downloaded\n" 1>&2 && return 1
+	if [ -f "${1}" ]; then
+		printf "mkdirs ${1} ${2}: already downloaded\n" 1>&2
+		return 1
+	fi
 	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
 	x_ rm -Rf "${appdir}"
 	x_ mkdir -p "${appdir}/"

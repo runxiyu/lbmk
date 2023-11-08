@@ -14,8 +14,10 @@ eval "$(setvars "" archive rom modifygbe nukemode release new_mac)"
 main()
 {
 	[ $# -lt 1 ] && err "No options specified."
-	[ "${1}" = "listboards" ] && \
-		items config/coreboot && exit 0
+	if [ "${1}" = "listboards" ]; then
+		items config/coreboot || :
+		exit 0
+	fi
 
 	archive="${1}"
 
