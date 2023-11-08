@@ -43,7 +43,10 @@ main()
 {
 	xx_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
-	[ "${1}" = "dependencies" ] && xx_ install_packages $@ && lbmk_exit 0
+	if [ "${1}" = "dependencies" ]; then
+		xx_ install_packages $@
+		lbmk_exit 0
+	fi
 
 	initialise_command $@ && shift 1
 
@@ -58,6 +61,8 @@ main()
 initialise_command()
 {
 	[ "$(id -u)" != "0" ] || fail "this command as root is not permitted"
+
+	check_project
 
 	case "${1}" in
 	help) usage ${0} && lbmk_exit 0 ;;
