@@ -65,8 +65,15 @@ initialise_command()
 	check_project
 
 	case "${1}" in
-	help) usage ${0} && lbmk_exit 0 ;;
-	list) items "${buildpath}" && lbmk_exit 0 ;;
+	help)
+		usage ${0}
+		lbmk_exit 0 ;;
+	list)
+		items "${buildpath}"
+		lbmk_exit 0 ;;
+	version)
+		mkversion
+		lbmk_exit 0 ;;
 	esac
 	option="${1}"
 }
@@ -116,13 +123,24 @@ usage()
 {
 	progname=${0}
 	cat <<- EOF
+	$(mkversion)
+
 	USAGE:	${progname} <OPTION>
 
 	possible values for 'OPTION':
 	$(items "${buildpath}")
 
+	To know whot ${projectname} version you're on, type:
+	${progname} version
+
 	Refer to ${projectname} documentation for more info.
 	EOF
+}
+
+mkversion()
+{
+	printf "revision: %s %s\n" "${projectname}" "${version}"
+	printf "revision date: %s\n" "$(date -Rud @${versiondate})"
 }
 
 lbmk_exit()
