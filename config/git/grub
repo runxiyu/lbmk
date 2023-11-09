@@ -1,5 +1,5 @@
 {grub}{
-	rev: e58b870ff926415e23fc386af41ff81b2f588763
+	rev: 64e3cee72ab8f5876abfebb263b5e6cf7c4a9a4e
 	loc: grub
 	url: git://git.savannah.gnu.org/grub.git
 	bkup_url: https://codeberg.org/libreboot/grub
