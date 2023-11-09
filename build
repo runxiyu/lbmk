@@ -106,7 +106,8 @@ git_init()
 
 	git init || fail "${PWD}: cannot initialise Git repository"
 	git add -A . || fail "${PWD}: cannot add files to Git repository"
-	git commit -m "${projectname} ${version}" --date "${cdate}" || \
+	git commit -m "${projectname} ${version}" --date "${cdate}" \
+	    --author="lbmk <lbmk@libreboot.org>" || \
 	    fail "${PWD}: can't commit ${projectname}/${version}, date ${cdate}"
 	git tag -a "${version}" -m "${projectname} ${version}" || \
 	    fail "${PWD}: cannot git-tag ${projectname}/${version}"
