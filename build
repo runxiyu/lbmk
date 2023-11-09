@@ -131,7 +131,7 @@ usage()
 	possible values for 'OPTION':
 	$(items "${buildpath}")
 
-	To know whot ${projectname} version you're on, type:
+	To know what ${projectname} version you're on, type:
 	${progname} version
 
 	Refer to ${projectname} documentation for more info.
