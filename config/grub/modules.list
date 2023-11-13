@@ -38,8 +38,10 @@ diskfilter \
 echo \
 ehci \
 eval \
+exfat \
 elf \
 ext2 \
+fat \
 f2fs \
 gcry_arcfour \
 gcry_blowfish \
@@ -101,6 +103,7 @@ multiboot \
 multiboot2 \
 nativedisk \
 normal \
+ntfs \
 ohci \
 part_bsd \
 part_dfly \
