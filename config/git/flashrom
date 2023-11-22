@@ -1,5 +1,5 @@
 {flashrom}{
-	rev: fba29da188b4a3aa8a3cf6f5a3d13c37a5d9e1d7
+	rev: 05c629be2964bcee368c03d805747da15281856d
 	loc: flashrom 
 	url: https://review.coreboot.org/flashrom.git
 	bkup_url: https://github.com/flashrom/flashrom
