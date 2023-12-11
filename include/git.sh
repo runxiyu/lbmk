@@ -4,7 +4,7 @@
 
 # This file is only used by update/project/trees
 
-eval "$(setvars "" _target rev _xm loc url bkup_url depend)"
+eval "$(setvars "" _target rev _xm loc url bkup_url depend patchfail)"
 tmp_git_dir="${PWD}/tmp/gitclone"
 
 fetch_project_trees()
@@ -58,16 +58,27 @@ prepare_new_tree()
 {
 	printf "Creating %s tree %s (%s)\n" "${project}" "${tree}" "${_target}"
 
-	x_ cp -R "src/${project}/${project}" "src/${project}/${tree}"
-	git_reset_rev "src/${project}/${tree}" "${rev}"
+	rm -Rf "${tmp_git_dir%/*}" || \
+	    err "prepare_new_tree ${project}/${tree}: can't rm tmpclone"
+	mkdir "${tmp_git_dir%/*}" || \
+	    err "prepare_new_tree ${project}/${tree}: can't mkdir tmp"
+	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
+	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
+	git_reset_rev "${tmp_git_dir}" "${rev}"
 	(
-	x_ cd "src/${project}/${tree}"
+	cd "${tmp_git_dir}" || \
+	    err "prepare_new_tree ${project}/${tree}: can't cd tmpclone"
 	if [ -f ".gitmodules" ]; then
 		git submodule update --init --checkout || \
 		    err "prepare_new_tree ${project}/${tree}: !submodules"
 	fi
 	)
-	git_am_patches "$PWD/src/$project/$tree" "$PWD/$cfgsdir/$tree/patches"
+	git_am_patches "${tmp_git_dir}" "$PWD/$cfgsdir/$tree/patches" || \
+	    err "prepare_new_tree ${project}/${tree}: patch fail"
+	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
+
+	mv "${tmp_git_dir}" "src/${project}/${tree}" || \
+	    err "prepare_new_tree ${project}/${tree}: can't copy tmpclone"
 }
 
 fetch_project_repo()
@@ -107,7 +118,9 @@ clone_project()
 	    git clone ${bkup_url} "${tmp_git_dir}" || \
 	    err "clone_project: could not download ${project}"
 	git_reset_rev "${tmp_git_dir}" "${rev}"
-	git_am_patches "${tmp_git_dir}" "${PWD}/config/${project}/patches"
+	git_am_patches "${tmp_git_dir}" "${PWD}/config/${project}/patches" \
+	    || err "clone_project ${project} ${loc}: patch fail"
+	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	x_ rm -Rf "${loc}"
 	[ "${loc}" = "${loc%/*}" ] || x_ mkdir -p ${loc%/*}
@@ -137,17 +150,18 @@ git_am_patches()
 	for patch in "${patchdir}/"*; do
 		[ -L "${patch}" ] && continue
 		[ -f "${patch}" ] || continue
-		patchfail="n"
 		git am "${patch}" || patchfail="y"
 		if [ "${patchfail}" = "y" ]; then
 			git am --abort || err  "${sdir}: !git am --abort"
 			err  "!git am ${patch} -> ${sdir}"
 		fi
 	done
-	)
+	) || err "PATCH FAILURE"
 	for patches in "${patchdir}/"*; do
 		[ -L "${patches}" ] && continue
 		[ ! -d "${patches}" ] && continue
 		git_am_patches "${sdir}" "${patches}"
 	done
+	[ "${patchfail}" = "y" ] && return 1
+	return 0
 }
