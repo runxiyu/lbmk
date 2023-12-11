@@ -61,7 +61,7 @@ build_projects()
 		x_ cd src/uefitool
 		cmake UEFIExtract/ || [ -f Makefile ] || \
 		    err "build_projects: !cmake UEFIExtract/"
-	)
+	) || err "can't build cmake on uefiextract"
 	fi
 
 	[ "${mode}" = "distclean" ] && mode="clean"

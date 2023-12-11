@@ -72,7 +72,7 @@ prepare_new_tree()
 		git submodule update --init --checkout || \
 		    err "prepare_new_tree ${project}/${tree}: !submodules"
 	fi
-	)
+	) || err "git submodule update failure"
 	git_am_patches "${tmp_git_dir}" "$PWD/$cfgsdir/$tree/patches" || \
 	    err "prepare_new_tree ${project}/${tree}: patch fail"
 	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
@@ -138,7 +138,7 @@ git_reset_rev()
 		git submodule update --init --checkout || \
 		    err "git_reset_rev ${1}: can't download submodules"
 	fi
-	)
+	) || err "git reset fail"
 }
 
 git_am_patches()

@@ -20,7 +20,7 @@ extract_mrc()
 	extract_partition
 	extract_shellball
 	extract_coreboot
-	)
+	) || err "mrc download/extract failure"
 
 	"${cbfstool}" "${appdir}/"coreboot-*.bin extract -n mrc.bin \
 	    -f "${_dest}" -r RO_SECTION || err "extract_mrc: cbfstool ${_dest}"

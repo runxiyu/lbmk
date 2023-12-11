@@ -141,7 +141,7 @@ patch_release_roms()
 	    sha512sum --status -c blobhashes || \
 	    sha1sum --status -c blobhashes || \
 	    err "patch_release_roms: ROMs did not match expected hashes"
-	)
+	) || err "can't verify vendor hashes"
 
 	if [ "${modifygbe}" = "true" ]; then
 		for x in "${_tmpdir}"/bin/*/*.rom ; do

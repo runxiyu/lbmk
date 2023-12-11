@@ -214,7 +214,7 @@ extract_kbc1126ec()
 	[ -f ec.bin ] || err "extract_kbc1126_ec ${board}: can't extract"
 	"${kbc1126_ec_dump}" ec.bin || \
 	    err "extract_kbc1126_ec ${board}: can't extract ecfw1/2.bin"
-	)
+	) || err "can't extract kbc1126 ec firmware"
 	ec_ex="y"
 	for i in 1 2; do
 		[ -f "${appdir}/ec.bin.fw${i}" ] || ec_ex="n"
@@ -239,7 +239,7 @@ extract_e6400vga()
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
 	[ -f "${E6400_VGA_romname}" ] || \
 		err "extract_e6400vga: can't extract vga rom from bios.bin"
-	)
+	) || err "can't extract e6400 vga rom"
 	cp "${appdir}/${E6400_VGA_romname}" "${_dest}" || \
 	    err "extract_e6400vga ${board}: can't copy vga rom to ${_dest}"
 }

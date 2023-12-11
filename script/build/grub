@@ -38,7 +38,7 @@ build_grub_utils()
 	x_ ./autogen.sh
 	x_ ./configure --with-platform=coreboot
 	make -j$(nproc) FS_PAYLOAD_MODULES="" || err "!mk grub utils"
-	)
+	) || err "grub build error"
 }
 
 build_keymap_configs()
