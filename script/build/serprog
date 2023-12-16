@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
-[ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
 . "include/err.sh"

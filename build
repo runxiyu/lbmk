@@ -5,7 +5,6 @@
 # SPDX-FileCopyrightText: 2015, 2016 Klemens Nanni <contact@autoboot.org>
 # SPDX-FileCopyrightText: 2022, Caleb La Grange <thonkpeasant@protonmail.com>
 
-[ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
 export LC_COLLATE=C

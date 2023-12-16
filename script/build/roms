@@ -6,7 +6,6 @@
 # SPDX-FileCopyrightText: 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
-[ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
 . "include/err.sh"

@@ -4,7 +4,6 @@
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
-[ "x${DEBUG+set}" = 'xset' ] && set -v
 set -u -e
 
 . "include/err.sh"
