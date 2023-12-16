@@ -54,7 +54,7 @@ detect_firmware()
 
 build_dependencies()
 {
-	[ -d ${cbdir} ] || \
+	[ -d "${cbdir}" ] || \
 		x_ ./update trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
 		[ -d "src/${d}" ] && continue
@@ -132,7 +132,7 @@ fetch()
 
 vendor_checksum()
 {
-	[ "$(sha512sum ${2} | awk '{print $1}')" != "${1}" ] || return 0 
+	[ "$(sha512sum "${2}" | awk '{print $1}')" != "${1}" ] || return 0 
 	printf "Bad checksum for file: %s\n" "${2}" 1>&2
 	rm -f "${2}" || :
 	return 1
@@ -141,7 +141,7 @@ vendor_checksum()
 mkdirs()
 {
 	if [ -f "${1}" ]; then
-		printf "mkdirs ${1} ${2}: already downloaded\n" 1>&2
+		printf "mkdirs %s %s: already downloaded\n" "${1}" "${2}" 1>&2
 		return 1
 	fi
 	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
@@ -188,7 +188,7 @@ extract_intel_me()
 		fi
 		cdir="${1}"
 		[ "${cdir#/a}" != "${cdir}" ] && cdir="${cdir#/}"
-		cd "${cdir}"
+		cd "${cdir}" || :
 	done
 	)
 	rm -Rf "${sdir}" || err "extract_intel_me: !rm -Rf ${sdir}"
@@ -227,9 +227,9 @@ extract_kbc1126ec()
 
 extract_e6400vga()
 {
-	[ "${E6400_VGA_offset}" = "" ] && \
+	[ -z "${E6400_VGA_offset}" ] && \
 		err "extract_e6400vga: E6400 VGA offset not defined"
-	[ "${E6400_VGA_romname}" = "" ] && \
+	[ -z "${E6400_VGA_romname}" ] && \
 		err "extract_e6400vga: E6400 VGA ROM name not defined"
 	tail -c +${E6400_VGA_offset} "${_dl}" | \
 	    gunzip >"${appdir}/bios.bin" || :

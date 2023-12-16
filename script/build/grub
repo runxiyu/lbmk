@@ -45,7 +45,7 @@ build_keymap_configs()
 {
 	for keylayoutfile in "${grubcfgsdir}/keymap/"*.gkb; do
 		[ -f "${keylayoutfile}" ] || continue
-		keymap="${keylayoutfile##${grubcfgsdir}/keymap/}"
+		keymap="${keylayoutfile##"${grubcfgsdir}/keymap/"}"
 		keymap="${keymap%.gkb}"
 		printf "keymap %s\n" "${keymap}" > \
 		    "${elfdir}/keymap_${keymap}.cfg" || err "!insert keymap"

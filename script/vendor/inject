@@ -28,6 +28,7 @@ main()
 		b) board=${OPTARG} ;;
 		m) modifygbe=true
 		   new_mac=${OPTARG} ;;
+		*) : ;;
 		esac
 	done
 
@@ -48,7 +49,7 @@ check_board()
 			err "check_board: \"${rom}\" is not a valid path"
 		[ -z "${rom+x}" ] && \
 			err "check_board: no rom specified"
-		[ ! -z ${board+x} ] || \
+		[ -n "${board+x}" ] || \
 			board=$(detect_board "${rom}")
 	else
 		release="y"
@@ -72,7 +73,7 @@ check_release()
 detect_board()
 {
 	path="${1}"
-	filename=$(basename ${path})
+	filename=$(basename "${path}")
 	case ${filename} in
 	grub_*)
 		board=$(echo "${filename}" | cut -d '_' -f2-3) ;;
@@ -185,12 +186,12 @@ patch_rom()
 		    "${CONFIG_KBC1126_FW1_OFFSET}" && \
 		inject "ecfw2.bin" "$CONFIG_KBC1126_FW2" "raw" \
 		    "${CONFIG_KBC1126_FW2_OFFSET}"
-	[ ! -z "${CONFIG_VGA_BIOS_FILE}" ] && \
-	    [ ! -z "${CONFIG_VGA_BIOS_ID}" ] && \
+	[ -n "${CONFIG_VGA_BIOS_FILE}" ] && \
+	    [ -n "${CONFIG_VGA_BIOS_ID}" ] && \
 		inject "pci${CONFIG_VGA_BIOS_ID}.rom" \
 		    "${CONFIG_VGA_BIOS_FILE}" "optionrom"
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
-	    [ ! -z "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" ] && \
+	    [ -n "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" ] && \
 		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
 	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "y" ] && \
 		inject "IFD" "${CONFIG_GBE_BIN_PATH}" "GbE"

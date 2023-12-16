@@ -64,7 +64,7 @@ main()
 
 	[ -z "${targets}" ] && err "No ROM images were compiled"
 	printf "\nROM images available in these directories:\n"
-	printf "${targets}^^ ROM images available in these directories.\n\n"
+	printf "%s^^ ROM images available in these directories.\n\n" "${targets}"
 
 	printf "DO NOT flash ROM images from elf/ - please use bin/ instead.\n"
 }
@@ -230,7 +230,7 @@ build_roms()
 
 	_cbrom="elf/coreboot_nopayload_DO_NOT_FLASH/${board}/${initmode}_${displaymode}"
 	[ "${initmode}" = "normal" ] && \
-		_cbrom="${_cbrom%_${displaymode}}"
+		_cbrom="${_cbrom%"_${displaymode}"}"
 	_cbrom="${_cbrom}/coreboot.rom"
 	cbrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	x_ cp "${_cbrom}" "${cbrom}"
@@ -349,7 +349,7 @@ mkSeabiosRom() {
 
 	x_ cp "${_cbrom}" "${tmprom}"
 	x_ "${cbfstool}" "${tmprom}" add-payload -f "${_seabioself}" \
-	    -n ${_seabios_cbfs_path} -c lzma
+	    -n "${_seabios_cbfs_path}" -c lzma
 	x_ "${cbfstool}" "${tmprom}" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	z="2"; [ "${initmode}" = "vgarom" ] && z="0"
@@ -405,7 +405,7 @@ mkUbootRom() {
 
 	x_ cp "${_cbrom}" "${tmprom}"
 	x_ "${cbfstool}" "${tmprom}" add-payload -f "${_ubootelf}" \
-	    -n ${_uboot_cbfs_path} -c lzma
+	    -n "${_uboot_cbfs_path}" -c lzma
 
 	printf "%s\n" "${tmprom}"
 }

@@ -123,7 +123,7 @@ clone_project()
 	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	x_ rm -Rf "${loc}"
-	[ "${loc}" = "${loc%/*}" ] || x_ mkdir -p ${loc%/*}
+	[ "${loc}" = "${loc%/*}" ] || x_ mkdir -p "${loc%/*}"
 	mv "${tmp_git_dir}" "${loc}" || \
 	    err "clone_project: !mv ${tmp_git_dir} ${loc}"
 }

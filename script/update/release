@@ -209,12 +209,12 @@ nukerom()
 	touch "${romdir}/vendorhashes" || err "!touch ${romdir}/vendorhashes"
 	(
 	cd "${romdir}" || err "!cd romdir ${romdir}, nukerom"
-	sha512sum *.rom >> vendorhashes || err "!create vendorhashes, nukerom"
+	sha512sum ./*.rom >> vendorhashes || err "!create vendorhashes, nukerom"
 	) || err "can't create vendor hashes"
 
 	for romfile in "${romdir}"/*.rom; do
 		[ -f "${romfile}" ] || continue
-		./vendor inject -r "${romfile}" -b ${target} -n nuke || \
+		./vendor inject -r "${romfile}" -b "${target}" -n nuke || \
 		    err "!vendor inject (nuke) ${romfile}, nukerom"
 	done
 }
@@ -255,13 +255,13 @@ mkrom_tarball()
 	f="release/${version}/roms/${archivename}"
 	mkdir -p "${f%/*}" || err "mkrom_tarball: !mkdir -p ${f%/*}"
 	(
-	cd "${romdir%/bin/${target}}" || err "!cd ${romdir%/bin/${target}}"
+	cd "${romdir%"/bin/${target}"}" || err "!cd ${romdir%"/bin/${target}"}"
 	mktarball "bin/${target}" "${archivename}.tar.xz"
 	) || err "can't create rom tarball"
-	mv "${romdir%/bin/${target}}/${archivename}.tar.xz"* "${f%/*}" || \
-	    err "!mktarball, rom, ${f%/*}/${romdir%/bin/${target}}/${archivename}.tar.xz"
+	mv "${romdir%"/bin/${target}"}/${archivename}.tar.xz"* "${f%/*}" || \
+	    err "!mktarball, rom, ${f%/*}/${romdir%"/bin/${target}"}/${archivename}.tar.xz"
 
-	printf "Created ROM archive: ${f%/*}/${archivename}.tar.xz"
+	printf "Created ROM archive: %s" "${f%/*}/${archivename}.tar.xz"
 }
 
 insert_version_files()

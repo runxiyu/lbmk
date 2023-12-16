@@ -99,7 +99,7 @@ handle_targets()
 		target="${x}"
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
-		[ "${project}" != "coreboot" ] || [ ! -z ${mode} ] || \
+		[ "${project}" != "coreboot" ] || [ -n "${mode}" ] || \
 			x_ ./vendor download ${target}
 		x_ handle_defconfig
 	done
@@ -121,14 +121,14 @@ handle_defconfig()
 	for y in "${target_dir}/config"/*; do
 		[ -f "${y}" ] || continue
 		config="${y}"
-		config_name="${config#${target_dir}/config/}"
+		config_name="${config#"${target_dir}/config/"}"
 
 		printf "handle/make/config %s %s: handling config %s\n" \
 		    "${project}" "${target}" "${config_name}"
 
-		[ ! -z ${mode} ] || check_config || continue
+		[ -n "${mode}" ] || check_config || continue
 		handle_makefile
-		[ ! -z ${mode} ] || copy_elf
+		[ -n "${mode}" ] || copy_elf
 	done
 }
 
@@ -235,7 +235,7 @@ handle_makefile()
 {
 	x_ make clean -C "${codedir}"
 	x_ cp "${config}" "${codedir}/.config"
-	[ ! -z ${mode} ] || make -C "${codedir}" silentoldconfig || \
+	[ -n "${mode}" ] || make -C "${codedir}" silentoldconfig || \
 	    make -C "${codedir}" oldconfig || :
 
 	run_make_command || err "handle_makefile ${codedir}: no makefile!"
@@ -256,7 +256,7 @@ run_make_command()
 	[ -f "${codedir}/Makefile" ] || [ -f "${codedir}/makefile" ] || \
 	    [ -f "${codedir}/GNUmakefile" ] || return 1
 	[ "${project}" = "coreboot" ] && [ -z "${mode}" ] && \
-		x_ printf "%s\n" "${version%%-*}" >"${codedir}/.coreboot-version"
+		x_ printf "%s\n" "${version%%-*}" >"$codedir/.coreboot-version"
 
 	x_ make ${mode} -j$(nproc) -C "${codedir}"
 
@@ -266,10 +266,10 @@ run_make_command()
 
 copy_elf()
 {
-	while read f; do
+	while read -r f; do
 		[ ! -f "${codedir}/$f" ] || \
 			x_ cp "${codedir}/${f}" "${dest_dir}/"
-	done < ${listfile}
+	done < "${listfile}"
 
 	x_ make clean -C "${codedir}"
 }

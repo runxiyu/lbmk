@@ -36,23 +36,23 @@ git_err()
 
 check_project()
 {
-	read projectname < projectname || :
+	read -r projectname < projectname || :
 
-	[ ! -f version ] || read version < version || :
+	[ ! -f version ] || read -r version < version || :
 	version_="${version}"
 	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
 	    version="git-$(git rev-parse HEAD 2>&1)" || version="${version_}"
 
-	[ ! -f versiondate ] || read versiondate < versiondate || :
+	[ ! -f versiondate ] || read -r versiondate < versiondate || :
 	versiondate_="${versiondate}"
 	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
 	    --pretty='%ct' HEAD)" || versiondate="${versiondate_}"
 
-	[ ! -z ${versiondate} ] || fail "Unknown version date" || \
+	[ -n "${versiondate}" ] || fail "Unknown version date" || \
 	    err "Unknown version date"
-	[ ! -z ${version} ] || fail "Unknown version" || \
+	[ -n "${version}" ] || fail "Unknown version" || \
 	    err "Unknown version"
-	[ ! -z ${projectname} ] || fail "Unknown project" || \
+	[ -n "${projectname}" ] || fail "Unknown project" || \
 	    err "Unknown project"
 
 	xx_ printf "%s\n" "${version}" > version || \

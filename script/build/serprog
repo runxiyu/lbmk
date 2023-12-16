@@ -50,24 +50,24 @@ main()
 build_rp2040_rom()
 {
 	board=${1}
-	printf "Building pico-serprog for ${board}\n"
+	printf "Building pico-serprog for %s\n" "${board}"
 	x_ cmake -DPICO_BOARD="${board}" -DPICO_SDK_PATH="${pico_sdk_dir}" \
 	    -B "${pico_src_dir}/build" "${pico_src_dir}"
 	x_ cmake --build "${pico_src_dir}/build"
 	x_ mv ${pico_src_dir}/build/pico_serprog.uf2 \
 	   bin/serprog_rp2040/serprog_${board}.uf2
-	printf "output to bin/serprog_rp2040/serprog_${board}.uf2\n"
+	printf "output to bin/serprog_rp2040/serprog_%s.uf2\n" "${board}"
 }
 
 build_stm32_rom()
 {
 	board=${1}
-	printf "Building stm32-vserprog for ${board}\n"
+	printf "Building stm32-vserprog for %s\n" "${board}"
 	x_ make -C ${stm32_src_dir} libopencm3-just-make BOARD=${board}
 	x_ make -C ${stm32_src_dir} BOARD=${board}
 	x_ mv ${stm32_src_dir}/stm32-vserprog.hex \
 	   bin/serprog_stm32/serprog_${board}.hex
-	printf "output to bin/serprog_stm32/serprog_${board}.hex\n"
+	printf "output to bin/serprog_stm32/serprog_%s.hex\n" "${board}"
 }
 
 print_boards()
@@ -78,7 +78,7 @@ print_boards()
 
 list_boards()
 {
-	basename -a -s .h ${1}/*.h
+	basename -a -s .h "${1}/"*.h
 }
 
 main $@
