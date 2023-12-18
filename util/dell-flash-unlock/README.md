@@ -8,19 +8,30 @@ E6400, which mainly seem to be the Latitude and Precision lines starting from
 around 2008 (E6400 era).
 
 ## TL;DR
+On Linux, ensure you are booting with the `iomem=relaxed` kernel parameter.
+On OpenBSD, ensure you are booting with securelevel set to -1.
 Run `make` to compile the utility, and then run `sudo ./dell_flash_unlock` and
 follow the directions it outputs.
 
 ## Confirmed supported devices
-- Latitude E6400
-- Latitude E6410
-- Latitude E4310
-- Latitude E6430
+- Latitude E6400, E6500
+- Latitude E6410, E4310
+- Latitude E6420
+- Latitude E6430, E6530
 - Precision M6800
 
 It is likely that any other Latitude/Precision laptops from the same era as
 devices specifically mentioned in the above list will work as Dell seems to use
 the same ECs in one generation.
+
+## Tested
+These systems have been tested, but were reported as not working with
+dell-flash-unlock. This could be due to user error, a bug in this utility, or
+the feature not being implemented in Dell's firmware. If you have such a system,
+please test the utility and report whether or not it actually works for you.
+
+- Latitude E6220
+- Latitude E6330
 
 ## Detailed device specific behavior
 - On GM45 era laptops, the expected behavior is that you will run the utility
@@ -100,3 +111,7 @@ There are other possible protection mechanisms that the firmware can utilize,
 such as Protected Range Register settings, which apply access permissions to
 address ranges of the flash, similar to the IFD. However, the E6400 vendor
 firmware does not utilize these, so they will not be discussed.
+
+## References
+- Open Security Training: Advanced x86: BIOS and SMM Internals - SMI Suppression
+  - https://opensecuritytraining.info/IntroBIOS_files/Day1_XX_Advanced%20x86%20-%20BIOS%20and%20SMM%20Internals%20-%20SMI%20Suppression.pdf
