@@ -64,17 +64,14 @@ initialise_command()
 	check_project
 
 	case "${1}" in
-	help)
-		usage ${0}
-		lbmk_exit 0 ;;
-	list)
-		items "${buildpath}"
-		lbmk_exit 0 ;;
-	version)
-		mkversion
-		lbmk_exit 0 ;;
+	help) usage ${0} ;;
+	list) items "${buildpath}" ;;
+	version) mkversion ;;
+	*)
+		option="${1}"
+		return 0 ;;
 	esac
-	option="${1}"
+	lbmk_exit 0
 }
 
 install_packages()
