@@ -36,8 +36,8 @@ fetch_config()
 		eval "$(setvars "" rev tree)"
 		_xm="fetch_config ${project}/${_target}"
 		load_target_config "${_target}"
-		[ "${_target}" != "${tree}" ] && _target="${tree}" && continue
-		break
+		[ "${_target}" = "${tree}" ] && break
+		_target="${tree}"
 	done
 }
 
