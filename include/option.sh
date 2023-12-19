@@ -20,9 +20,10 @@ eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
 items()
 {
 	rval=1
-	[ ! -d "${1}" ] && \
-		printf "items: directory '%s' doesn't exist" "${1}" && \
-		    return 1
+	if [ ! -d "${1}" ]; then
+		printf "items: directory '%s' doesn't exist" "${1}"
+		return 1
+	fi
 	for x in "${1}/"*; do
 		# -e used because this is for files *or* directories
 		[ -e "${x}" ] || continue
