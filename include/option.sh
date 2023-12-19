@@ -21,7 +21,7 @@ items()
 {
 	rval=1
 	if [ ! -d "${1}" ]; then
-		printf "items: directory '%s' doesn't exist" "${1}"
+		printf "items: directory '%s' doesn't exist" "${1}" 1>&2
 		return 1
 	fi
 	for x in "${1}/"*; do
