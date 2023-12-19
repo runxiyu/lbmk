@@ -151,10 +151,9 @@ git_am_patches()
 		[ -L "${patch}" ] && continue
 		[ -f "${patch}" ] || continue
 		git am "${patch}" || patchfail="y"
-		if [ "${patchfail}" = "y" ]; then
-			git am --abort || err  "${sdir}: !git am --abort"
-			err  "!git am ${patch} -> ${sdir}"
-		fi
+		[ "${patchfail}" != "y" ] && continue
+		git am --abort || err  "${sdir}: !git am --abort"
+		err  "!git am ${patch} -> ${sdir}"
 	done
 	) || err "PATCH FAILURE"
 	for patches in "${patchdir}/"*; do
