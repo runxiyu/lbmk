@@ -103,7 +103,6 @@ build_release()
 		esac
 		./vendor inject "${vrom}" || \
 		    err "TESTFAIL: inject: ${vrom##*/}"
-		continue
 	done
 	) || err "vendorfile inject test failure"
 
