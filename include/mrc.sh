@@ -19,7 +19,7 @@ extract_mrc()
 	x_ cd "${appdir}"
 	extract_partition
 	extract_shellball
-	extract_coreboot
+	extract_archive "${SHELLBALL}" .
 	) || err "mrc download/extract failure"
 
 	"${cbfstool}" "${appdir}/"bios.bin extract -n mrc.bin \
@@ -50,14 +50,4 @@ extract_shellball()
 	printf "Extracting chromeos-firmwareupdate\n"
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
 	    | debugfs "${ROOTFS}" || err "extract_shellball: debugfs"
-}
-
-extract_coreboot()
-{
-	_unpacked=$( mktemp -d )
-
-	printf "Extracting coreboot image\n"
-	[ -f "${SHELLBALL}" ] || \
-	    err "extract_coreboot: shellball missing in google cros image"
-	x_ unzip "${SHELLBALL}"
 }
