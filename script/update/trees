@@ -175,7 +175,7 @@ handle_src_tree()
 check_cross_compiler()
 {
 	[ "$project" = "u-boot" ] || [ "$project" = "coreboot" ] || return 0
-	[ -z "${arch}" ] && return 0
+	[ -z "${arch}" ] && err "${project}/${tree}: arch isn't set"
 
 	_arch="${arch}"
 	[ "${arch}" = "aarch64-elf" ] && _arch="aarch64-elf arm-eabi"
