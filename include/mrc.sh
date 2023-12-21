@@ -22,7 +22,7 @@ extract_mrc()
 	extract_coreboot
 	) || err "mrc download/extract failure"
 
-	"${cbfstool}" "${appdir}/"coreboot-*.bin extract -n mrc.bin \
+	"${cbfstool}" "${appdir}/"bios.bin extract -n mrc.bin \
 	    -f "${_dest}" -r RO_SECTION || err "extract_mrc: cbfstool ${_dest}"
 }
 
@@ -59,18 +59,5 @@ extract_coreboot()
 	printf "Extracting coreboot image\n"
 	[ -f "${SHELLBALL}" ] || \
 	    err "extract_coreboot: shellball missing in google cros image"
-	sh "${SHELLBALL}" --unpack "${_unpacked}" || err "shellball, ${SHELLBALL}"
-
-	# TODO: audit the f* out of that shellball, for each mrc version.
-	# it has to be updated for each mrc update. we should ideally
-	# implement the functionality ourselves.
-
-	[ -f "${_unpacked}/VERSION" ] || \
-	    err "extract_coreboot: VERSION file missing on google coreboot rom"
-
-	_version=$( cat "${_unpacked}/VERSION" | grep BIOS\ version: | \
-	    cut -f2 -d: | tr -d \  )
-
-	cp "${_unpacked}/bios.bin" "coreboot-${_version}.bin" || \
-	    err "!cp unpacked, ${_unpacked}/bios.bin, coreboot-${_version}.rom"
+	x_ unzip "${SHELLBALL}"
 }
