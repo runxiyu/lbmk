@@ -174,45 +174,28 @@ handle_src_tree()
 # (seabios and grub currently use hostcc, not crossgcc)
 check_cross_compiler()
 {
+	[ "$project" = "u-boot" ] || [ "$project" = "coreboot" ] || return 0
+	[ -z "${arch}" ] && return 0
+
+	_arch="${arch}"
+	[ "${arch}" = "aarch64-elf" ] && _arch="aarch64-elf arm-eabi"
+
 	[ "${crossgcc_ada}" = "y" ] || [ "${crossgcc_ada}" = "n" ] || \
 		crossgcc_ada="y"
 	[ "${crossgcc_ada}" = "y" ] || export BUILD_LANGUAGES=c
 
 	cbdir="src/coreboot/${tree}"
 	[ "${project}" != "coreboot" ] && cbdir="src/coreboot/default"
+	x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
 
-	# only true if not building coreboot:
-	ctarget="${cbdir#src/coreboot/}"
-	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot ${ctarget}
-
-	if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
-		[ -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ] || \
-			x_ make -C "${cbdir}" crossgcc-i386 CPUS=$(nproc)
-		case "$(uname -m)" in
-			x86*|i*86|amd64) : ;;
-			*) export CROSS_COMPILE=i386-elf- ;;
-		esac
-	elif [ "${arch}" = "ARMv7" ]; then
-		[ -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ] || \
-			x_ make -C "${cbdir}" crossgcc-arm CPUS=$(nproc)
-		case "$(uname -m)" in
-			arm|arm32|armv6*|armv7*) : ;;
-			*) export CROSS_COMPILE=arm-eabi- ;;
-		esac
-	elif [ "${arch}" = "AArch64" ]; then
-		[ -d "${cbdir}/util/crossgcc/xgcc/aarch64-elf/" ] || \
-			x_ make -C "${cbdir}" crossgcc-aarch64 CPUS=$(nproc)
-		# aarch64 also needs armv7 toolchain for arm-trusted-firmware
-		[ -d "${cbdir}/util/crossgcc/xgcc/arm-eabi/" ] || \
-			x_ make -C "${cbdir}" crossgcc-arm CPUS=$(nproc)
-		case "$(uname -m)" in
-			arm64|aarch64) : ;;
-			*) export CROSS_COMPILE=aarch64-elf- ;;
-		esac
-	fi
+	for xarch in ${_arch}; do
+		[ -d "${cbdir}/util/crossgcc/xgcc/${xarch}/" ] && continue
+		x_ make -C "${cbdir}" crossgcc-${xarch%-*} CPUS=$(nproc)
+	done
 
 	# we *must* ensure that u-boot's build system uses crossgcc first
 	export PATH="${PWD}/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
+	export CROSS_COMPILE="${_arch% *}-"
 }
 
 check_config()
