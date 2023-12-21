@@ -13,7 +13,7 @@ set -u -e
 export LOCALVERSION="-${projectname}-${version%%-*}"
 
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
-    elfdir listfile project romtype target target_dir targets tree _f target1)"
+    elfdir listfile project target target_dir targets tree _f target1)"
 
 main()
 {
@@ -133,7 +133,6 @@ handle_defconfig()
 
 handle_src_tree()
 {
-	romtype="normal"
 	target_dir="${cfgsdir}/${target}"
 
 	if [ "${mode}" = "fetch" ]; then
