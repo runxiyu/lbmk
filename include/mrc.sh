@@ -17,8 +17,6 @@ extract_mrc()
 	(
 	x_ cd "${appdir}"
 	extract_partition "${MRC_url##*/}"
-	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
-	    | debugfs "root-a.ext2" || err "extract_mrc: can't extract shellball"
 	extract_archive "${SHELLBALL}" .
 	) || err "mrc download/extract failure"
 
@@ -38,4 +36,7 @@ extract_partition()
 	dd if="${1%.zip}" of="root-a.ext2" bs=1024 \
 	    skip=$(( ${START} / 1024 )) count=$(( ${SIZE} / 1024 )) || \
 	    err "extract_partition, dd ${1%.zip}, root-a.ext2"
+
+	printf "cd /usr/sbin\ndump chromeos-firmwareupdate ${SHELLBALL}\nquit" \
+	    | debugfs "root-a.ext2" || err "extract_mrc: can't extract shellball"
 }
