@@ -120,32 +120,26 @@ clone_project()
 
 git_reset_rev()
 {
-	(
-	cd "${1}" || err "git_reset_rev: !cd ${1}"
-	git reset --hard ${2} || err "!git reset ${1} <- ${2}"
+	git -C "${1}" reset --hard ${2} || err "!git reset ${1} <- ${2}"
 	if [ "${project}" != "coreboot" ] && [ "${project}" != "u-boot" ] && \
-	    [ -f ".gitmodules" ]; then
-		git submodule update --init --checkout || \
+	    [ -f "${1}/.gitmodules" ]; then
+		git -C "${1}" submodule update --init --checkout || \
 		    err "git_reset_rev ${1}: can't download submodules"
 	fi
-	) || err "git reset fail"
 }
 
 git_am_patches()
 {
 	sdir="${1}" # assumed to be absolute path
 	patchdir="${2}" # ditto
-	(
-	cd "${sdir}" || err "git_am_patches: !cd ${sdir}"
 	for patch in "${patchdir}/"*; do
 		[ -L "${patch}" ] && continue
 		[ -f "${patch}" ] || continue
-		git am "${patch}" || patchfail="y"
+		git -C "${sdir}" am "${patch}" || patchfail="y"
 		[ "${patchfail}" != "y" ] && continue
-		git am --abort || err  "${sdir}: !git am --abort"
+		git -C "${sdir}" am --abort || err  "${sdir}: !git am --abort"
 		err  "!git am ${patch} -> ${sdir}"
 	done
-	) || err "PATCH FAILURE"
 	for patches in "${patchdir}/"*; do
 		[ -L "${patches}" ] && continue
 		[ ! -d "${patches}" ] && continue

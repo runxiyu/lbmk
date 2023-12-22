@@ -32,7 +32,7 @@ main()
 	boarddir="${cbcfgsdir}/${board}"
 	_b="${board%%_*mb}" # shorthand (avoid duplicating config per rom size)
 
-	check_defconfig "${boarddir}" || exit 0
+	check_defconfig "${boarddir}" && exit 0
 	detect_firmware && exit 0
 	scan_config "${_b}" "config/vendor" "err"
 
@@ -54,16 +54,13 @@ detect_firmware()
 
 build_dependencies()
 {
-	[ -d "${cbdir}" ] || \
-		x_ ./update trees -f coreboot ${cbdir##*/}
+	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
 		[ -d "src/${d}" ] && continue
 		x_ ./update trees -f "${d}"
 	done
-	[ -f "${uefiextract}" ] || \
-		x_ ./update trees -b uefitool
-	[ -f "${kbc1126_ec_dump}" ] || \
-		x_ make -C "${cbdir}/util/kbc1126"
+	[ -f "${uefiextract}" ] || x_ ./update trees -b uefitool
+	[ -f "${kbc1126_ec_dump}" ] || x_ make -C "${cbdir}/util/kbc1126"
 	[ -f "${cbfstool}" ] && [ -f "${ifdtool}" ] && return 0
 	x_ ./update trees -b coreboot utils default
 }
@@ -71,19 +68,17 @@ build_dependencies()
 download_vendorfiles()
 {
 	[ -z "${CONFIG_HAVE_ME_BIN}" ] || \
-		fetch "intel_me" "${DL_url}" "${DL_url_bkup}" "${DL_hash}" \
+		fetch intel_me "$DL_url" "$DL_url_bkup" "$DL_hash" \
 		    "${CONFIG_ME_BIN_PATH}"
 	[ -z "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" ] || \
-		fetch "sch5545ec" "${SCH5545EC_DL_url}" \
-		    "${SCH5545EC_DL_url_bkup}" "${SCH5545EC_DL_hash}" \
-		    "${CONFIG_SMSC_SCH5545_EC_FW_FILE}"
+		fetch sch5545ec "$SCH5545EC_DL_url" "$SCH5545EC_DL_url_bkup" \
+		    "$SCH5545EC_DL_hash" "$CONFIG_SMSC_SCH5545_EC_FW_FILE"
 	[ -z "${CONFIG_KBC1126_FIRMWARE}" ] || \
-		fetch "kbc1126ec" "${EC_url}" "${EC_url_bkup}" "${EC_hash}" \
+		fetch kbc1126ec "$EC_url" "$EC_url_bkup" "$EC_hash" \
 		    "${CONFIG_KBC1126_FW1}"
 	[ -z "${CONFIG_VGA_BIOS_FILE}" ] || \
-		fetch "e6400vga" "${E6400_VGA_DL_url}" \
-		    "${E6400_VGA_DL_url_bkup}" "${E6400_VGA_DL_hash}" \
-		    "${CONFIG_VGA_BIOS_FILE}"
+		fetch "e6400vga" "$E6400_VGA_DL_url" "$E6400_VGA_DL_url_bkup" \
+		    "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 	[ -z "${CONFIG_HAVE_MRC}" ] && return 0
 	fetch "mrc" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" "$CONFIG_MRC_FILE"
 }
@@ -95,30 +90,27 @@ fetch()
 	dl_bkup="${3}"
 	dlsum="${4}"
 	[ "${5}" = "/dev/null" ] && return 0
-	[ "${5# }" = "${5}" ] || err "fetch: space not allowed in _dest: '${5}'"
-	[ "${5#/}" = "${5}" ] || err "fetch: absolute path not allowed: '${5}'"
+	[ "${5# }" = "$5" ] || err "fetch: space not allowed in _dest: '$5'"
+	[ "${5#/}" = "$5" ] || err "fetch: absolute path not allowed: '$5'"
 	_dest="${5##*../}"
 	_dl="${vendir}/cache/${dlsum}"
-	dl_fail=""
+	eval "$(setvars "n" dl_fail is_rom)"
 
 	x_ mkdir -p "${_dl%/*}"
 
-	is_rom="n"
 	if [ "${dl}" = "rom" ] || [ "${dl_bkup}" = "rom" ]; then
-		dl_fail="n"
 		is_rom="y"
 	else
 		dl_fail="y"
-		vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
+		vendor_checksum "${dlsum}" "${_dl}" || dl_fail="n"
 	fi
 	for url in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${url}" ] && continue
 		x_ rm -f "${_dl}"
-		curl --location --retry 3 -A "${_ua}" "${url}" -o "${_dl}" || \
-		    wget --tries 3 -U "${_ua}" "${url}" -O "${_dl}" || \
-		    continue
-		vendor_checksum "${dlsum}" "${_dl}" && dl_fail="n"
+		curl --location --retry 3 -A "$_ua" "$url" -o "$_dl" || \
+		    wget --tries 3 -U "$_ua" "$url" -O "$_dl" || continue
+		vendor_checksum "${dlsum}" "${_dl}" || dl_fail="n"
 	done
 	[ "${dl_fail}" = "y" ] && \
 		err "fetch ${dlsum}: matched file unavailable"
@@ -133,16 +125,15 @@ fetch()
 
 vendor_checksum()
 {
-	[ "$(sha512sum "${2}" | awk '{print $1}')" != "${1}" ] || return 0 
-	printf "Bad checksum for file: %s\n" "${2}" 1>&2
-	rm -f "${2}" || :
-	return 1
+	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
+	printf "Bad checksum for file: %s\n" "$2" 1>&2
+	rm -f "$2" || :
 }
 
 mkdirs()
 {
 	if [ -f "${1}" ]; then
-		printf "mkdirs %s %s: already downloaded\n" "${1}" "${2}" 1>&2
+		printf "mkdirs %s %s: already downloaded\n" "$1" "$2" 1>&2
 		return 1
 	fi
 	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
@@ -161,8 +152,7 @@ extract_intel_me()
 {
 	_me="${PWD}/${_dest}" # must always be an absolute path
 	cdir="${PWD}/${appdir}" # must always be an absolute path
-	[ $# -gt 0 ] && _me="${1}"
-	[ $# -gt 0 ] && cdir="${2}"
+	[ $# -gt 0 ] && _me="${1}" && cdir="${2}"
 	[ -f "${_me}" ] && return 0
 
 	sdir="$(mktemp -d)"
@@ -196,9 +186,8 @@ extract_intel_me()
 
 extract_archive()
 {
-	innoextract "${1}" -d "${2}" || python "${pfs_extract}" "${1}" -e || \
-	    7z x "${1}" -o"${2}" || unar "${1}" -o "${2}" || \
-	    unzip "${1}" -d "${2}" || return 1
+	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x "$1" \
+	    -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
 }
 
 extract_kbc1126ec()
@@ -227,12 +216,10 @@ extract_kbc1126ec()
 
 extract_e6400vga()
 {
-	[ -z "${E6400_VGA_offset}" ] && \
-		err "extract_e6400vga: E6400 VGA offset not defined"
-	[ -z "${E6400_VGA_romname}" ] && \
-		err "extract_e6400vga: E6400 VGA ROM name not defined"
-	tail -c +${E6400_VGA_offset} "${_dl}" | \
-	    gunzip >"${appdir}/bios.bin" || :
+	for v in E6400_VGA_offset E6400_VGA_romname; do
+		eval "[ -z \"\$$v\" ] && err \"extract_e6400vga: $v undefined\""
+	done
+	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
 	(
 	x_ cd "${appdir}"
 	[ -f "bios.bin" ] || err "extract_e6400vga: can't extract bios.bin"
@@ -247,8 +234,7 @@ extract_e6400vga()
 extract_sch5545ec()
 {
 	# full system ROM (UEFI), to extract with UEFIExtract:
-	_bios="${_dl}_extracted/Firmware"
-	_bios="${_bios}/1 ${dlsum} -- 1 System BIOS vA.28.bin"
+	_bios="${_dl}_extracted/Firmware/1 ${dlsum} -- 1 System BIOS vA.28.bin"
 	# this is the SCH5545 firmware, inside of the extracted UEFI ROM:
 	_sch5545ec_fw="${_bios}.dump/4 7A9354D9-0468-444A-81CE-0BF617D890DF"
 	_sch5545ec_fw="${_sch5545ec_fw}/54 D386BEB8-4B54-4E69-94F5-06091F67E0D3"

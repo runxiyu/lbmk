@@ -36,11 +36,9 @@ main()
 	[ -z "${_f}" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "${project}" ] && err "project name not specified"
 
-	if [ -f "config/${project}/build.list" ]; then
-		build_targets $@
-	else
-		build_projects $@
-	fi
+	_cmd="build_projects"
+	[ -f "config/${project}/build.list" ] && _cmd="build_targets"
+	$_cmd $@
 }
 
 build_projects()
@@ -103,7 +101,7 @@ handle_targets()
 		x_ handle_defconfig
 	done
 
-	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
+	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
 	[ -z "${mode}" ] || return 0
 	printf "Done! The files are stored under %s/\n\n" "${elfdir}"
 }
@@ -161,10 +159,7 @@ handle_src_tree()
 		x_ ./update trees -f "${project}" "${target}"
 	fi
 
-	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && return 0
-	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && return 0
-
-	# u-boot and coreboot are both compiled with coreboot's crossgcc
+	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
 	[ -z "${mode}" ] || return 0
 	check_cross_compiler
 }
@@ -199,7 +194,7 @@ check_cross_compiler()
 
 check_config()
 {
-	[ ! -f "${config}" ] && \
+	[ -f "${config}" ] || \
 		err "check_config: ${project}/${target}: configs missing"
 
 	dest_dir="${elfdir}/${target}/${config_name}"
@@ -224,8 +219,8 @@ handle_makefile()
 	if [ -e "${codedir}/.git" ] && [ "${project}" = "u-boot" ] && \
 	    [ "${mode}" = "distclean" ]; then
 		x_ git -C "${codedir}" clean -fdx
-	elif [ "${mode}" = "oldconfig" ] || [ "${mode}" = "olddefconfig" ] || \
-	    [ "${mode}" = "menuconfig" ] || [ "${mode}" = "nconfig" ]; then
+	elif [ "$mode" = "oldconfig" ] || [ "$mode" = "olddefconfig" ] || \
+	    [ "$mode" = "menuconfig" ] || [ "$mode" = "nconfig" ]; then
 		x_ cp "${codedir}/.config" "${config}"
 	elif [ "${mode}" = "savedefconfig" ]; then
 		x_ cp "${codedir}/defconfig" "${config}"

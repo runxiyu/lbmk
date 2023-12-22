@@ -135,11 +135,9 @@ patch_release_roms()
 	x_ cd "${_tmpdir}/bin/"* # TODO: very dodgy, re-write accordingly
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
-	[ "${nukemode}" = "nuke" ] || \
-	    sha512sum --status -c vendorhashes || \
-	    sha1sum --status -c vendorhashes || \
-	    sha512sum --status -c blobhashes || \
-	    sha1sum --status -c blobhashes || \
+	[ "${nukemode}" = "nuke" ] || sha512sum --status -c vendorhashes || \
+	    sha1sum --status -c vendorhashes || sha512sum --status -c \
+	    blobhashes || sha1sum --status -c blobhashes || \
 	    err "patch_release_roms: ROMs did not match expected hashes"
 	) || err "can't verify vendor hashes"
 
@@ -168,10 +166,10 @@ patch_rom()
 	# may sometimes insert certain vendor files at the wrong offset)
 	# (unless nomicrocode is the only config provided)
 	[ "${rom}" != "${rom%_nomicrocode.rom}.rom" ] && \
-	[ -f "${rom%_nomicrocode.rom}.rom" ] && \
-	[ "${release}" = "y" ] && return 0
+	    [ -f "${rom%_nomicrocode.rom}.rom" ] && \
+	    [ "${release}" = "y" ] && return 0
 
-	x_ check_defconfig "${boarddir}"
+	check_defconfig "$boarddir" && err "patch_rom $boarddir: no configs"
 
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
@@ -185,8 +183,7 @@ patch_rom()
 		    "${CONFIG_KBC1126_FW1_OFFSET}" && \
 		inject "ecfw2.bin" "$CONFIG_KBC1126_FW2" "raw" \
 		    "${CONFIG_KBC1126_FW2_OFFSET}"
-	[ -n "${CONFIG_VGA_BIOS_FILE}" ] && \
-	    [ -n "${CONFIG_VGA_BIOS_ID}" ] && \
+	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
 		inject "pci${CONFIG_VGA_BIOS_ID}.rom" \
 		    "${CONFIG_VGA_BIOS_FILE}" "optionrom"
 	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \

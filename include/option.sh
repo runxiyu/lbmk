@@ -58,9 +58,8 @@ EOF
 check_defconfig()
 {
 	for x in "${1}"/config/*; do
-		[ -f "${x}" ] && return 0
+		[ -f "${x}" ] && return 1
 	done
-	return 1
 }
 
 handle_coreboot_utils()
