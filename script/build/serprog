@@ -1,12 +1,13 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 
 set -u -e
 
 . "include/err.sh"
 
-eval "$(setvars "" platform pico_sdk_dir pico_src_dir stm32_src_dir boards_dir)"
+eval "$(setvars "" pico_sdk_dir pico_src_dir stm32_src_dir boards_dir)"
 
 pico_src_dir=src/pico-serprog
 pico_sdk_dir=src/pico-sdk
@@ -17,31 +18,24 @@ usage="usage: ./build firmware serprog <rp2040|stm32> [board]"
 main()
 {
 	[ -z "${1+x}" ] && err "${usage}"
+	[ "${1}" != "rp2040" ] && [ "${1}" != "stm32" ] && err "${usage}"
 	if [ "${1}" = "rp2040" ]; then
-		platform="rp2040"
 		boards_dir=${pico_sdk_dir}/src/boards/include/boards
-		[ -d "${pico_src_dir}/" ] || \
-			x_ ./update trees -f "pico-serprog"
+		[ -d "$pico_src_dir" ] || x_ ./update trees -f "pico-serprog"
 	elif [ "${1}" = "stm32" ]; then
-		platform="stm32"
 		boards_dir=${stm32_src_dir}/boards
-		[ -d "${stm32_src_dir}/" ] || \
-			x_ ./update trees -f "stm32-vserprog"
-	else
-		err "${usage}"
+		[ -d "$stm32_src_dir" ] || x_ ./update trees -f "stm32-vserprog"
 	fi
-	x_ mkdir -p "bin/serprog_${platform}"
+	x_ mkdir -p "bin/serprog_${1}"
 
-	if [ $# -gt 1 ] ; then
-		if [ "${2}" = "list" ]; then
-			print_boards ${boards_dir}
-			return 0
-		fi
-		build_${platform}_rom "${2}"
+	if [ $# -gt 1 ] && [ "${2}" = "list" ]; then
+		print_boards ${boards_dir}
+	elif [ $# -gt 1 ]; then
+		build_${1}_rom "${2}"
 	else
 		printf "Building all serprog targets\n"
-		list_boards "${boards_dir}" | while read board; do
-			build_${platform}_rom "${board}"
+		list_boards "${boards_dir}" | while read -r board; do
+			build_${1}_rom "${board}"
 		done
 	fi
 }
