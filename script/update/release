@@ -179,7 +179,7 @@ handle_rom_archive()
 	insert_version_files "${romdir}" || \
 	    err "mkrom_tarball ${romdir}: versionfile"
 
-	insert_copying_files "${romdir}" || err "!insert copy, handle 2, ${romdir}"
+	insert_copying_files "$romdir" || err "!insert copy, handle 2, $romdir"
 	mkrom_tarball
 }
 
@@ -233,8 +233,7 @@ strip_ucode()
 
 insert_copying_files()
 {
-	rm -Rf "${1}/licenses" || return 1
-	mkdir -p "${1}/licenses" || return 1
+	remkdir "${1}/licenses"
 	l="${1}/licenses"
 	# copy licenses to rom image archive, for completion
 	cp "src/grub/COPYING" "${l}/COPYING.grub" || return 1

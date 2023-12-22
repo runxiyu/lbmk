@@ -164,9 +164,8 @@ build_dependency_seabios()
 
 build_dependency_grub()
 {
-	[ "${payload_grub}" != "y" ] && \
-	    [ "${payload_seabios_withgrub}" != "y" ] && \
-	    [ "${payload_seabios_grubonly}" != "y" ] && return 0
+	[ "$payload_grub" != "y" ] && [ "$payload_seabios_withgrub" != "y" ] \
+	    && [ "${payload_seabios_grubonly}" != "y" ] && return 0
 
 	rebuild_grub="n"
 	[ -f "${grubelf}" ] || rebuild_grub="y"
@@ -418,7 +417,7 @@ moverom() {
 	[ "${vendorfiles}" = "n" ] && newrom="${newrom%.rom}_noblobs.rom"
 	printf "Creating target image: %s\n" "${newrom}"
 
-	[ -d "${newrom%/*}" ] || x_ mkdir -p "${newrom%/*}/"
+	x_ mkdir -p "${newrom%/*}"
 	x_ cp "${rompath}" "${newrom}"
 }
 

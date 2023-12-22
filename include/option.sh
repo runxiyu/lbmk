@@ -74,3 +74,9 @@ handle_coreboot_utils()
 		[ -z "${mode}" ] || x_ rm -Rf "cbutils/${1}"
 	done
 }
+
+remkdir()
+{
+	rm -Rf "${1}" || err "remkdir: !rm -Rf \"${1}\""
+	mkdir -p "${1}" || err "remkdir: !mkdir -p \"${1}\""
+}

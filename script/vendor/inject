@@ -114,8 +114,7 @@ inject_vendorfiles()
 patch_release_roms()
 {
 	_tmpdir="tmp/romdir"
-	x_ rm -Rf "${_tmpdir}"
-	x_ mkdir -p "${_tmpdir}"
+	remkdir "${_tmpdir}"
 	tar -xf "${archive}" -C "${_tmpdir}" || \
 	    err "patch_release_roms: !tar -xf \"${archive}\" -C \"${_tmpdir}\""
 

@@ -146,8 +146,7 @@ mkdirs()
 		return 1
 	fi
 	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
-	x_ rm -Rf "${appdir}"
-	x_ mkdir -p "${appdir}/"
+	remkdir "${appdir}"
 	if [ "${is_rom}" = "y" ]; then
 		cp "${_dl}" "${appdir}" || \
 		    err "mkdirs copyrom ${_dl}: can't copy to appdir"

@@ -58,10 +58,7 @@ prepare_new_tree()
 {
 	printf "Creating %s tree %s (%s)\n" "${project}" "${tree}" "${_target}"
 
-	rm -Rf "${tmp_git_dir%/*}" || \
-	    err "prepare_new_tree ${project}/${tree}: can't rm tmpclone"
-	mkdir "${tmp_git_dir%/*}" || \
-	    err "prepare_new_tree ${project}/${tree}: can't mkdir tmp"
+	remkdir "${tmp_git_dir%/*}"
 	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
 	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
 	git_reset_rev "${tmp_git_dir}" "${rev}"
@@ -98,9 +95,7 @@ verify_config()
 
 clone_project()
 {
-	rm -Rf "${tmp_git_dir}" || err "clone_project: !rm -Rf ${tmp_git_dir}"
-	mkdir -p "${tmp_git_dir%/*}" || \
-	    err "clone_project: !mkdir -p ${tmp_git_dir%/*}"
+	remkdir "${tmp_git_dir%/}"
 
 	loc="${loc#src/}"
 	loc="src/${loc}"
