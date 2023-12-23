@@ -262,11 +262,18 @@ build_grub_roms()
 	payload1="${2}" # allow values: grub, seabios, seabios_withgrub
 
 	grub_cbfs="fallback/payload"
-	[ "$payload1" = "grub" ] && [ "$payload_grub_withseabios" = "y" ] \
-		&& x_ mv "$(mkSeabiosRom "$tmprom" "seabios.elf")" "$tmprom"
-	[ "$payload1" != "grub" ] && [ "$payload_seabios_withgrub" = "y" ] \
-		&& grub_cbfs="img/grub2" && \
-		x_ mv "$(mkSeabiosRom "$tmprom" fallback/payload)" "$tmprom"
+	if [ "$payload1" = "grub" ] && [ "$payload_grub_withseabios" = "y" ]
+	then
+		_tmpmvrom=$(mkSeabiosRom "$tmprom" "seabios.elf") || \
+		    err "build_grub_roms 1 $board: can't build tmprom"
+		x_ mv "$_tmpmvrom" "$tmprom"
+	elif [ "$payload1" != "grub" ] && [ "$payload_seabios_withgrub" = "y" ]
+	then
+		grub_cbfs="img/grub2"
+		_tmpmvrom=$(mkSeabiosRom "$tmprom" fallback/payload) || \
+		    err "build_grub_roms 2 $board: can't build tmprom"
+		x_ mv "$_tmpmvrom" "$tmprom"
+	fi
 
 	# we only need insert grub.elf once, for each coreboot config:
 	x_ "${cbfstool}" "${tmprom}" add-payload -f "${grubelf}" \
@@ -302,7 +309,8 @@ build_grub_roms()
 		[ -f "${keymapfile}" ] || continue
 		keymap="${keymapfile##*/}"
 		keymap="${keymap%.gkb}"
-		tmpgrubrom="$(mkGrubRom "${keymap}" "${tmprom}")"
+		tmpgrubrom=$(mkGrubRom "${keymap}" "${tmprom}") || \
+		    err "build_grub_roms ${board}: could not create tmprom"
 
 		newrom="${romdir}/${payload1}_${board}_${initmode}_"
 		newrom="${newrom}${displaymode}_${keymap}.rom"
@@ -374,7 +382,8 @@ mkSeabiosGrubonlyRom()
 
 build_uboot_roms()
 {
-	tmprom="$(mkUbootRom "${cbrom}" "fallback/payload")"
+	tmprom=$(mkUbootRom "${cbrom}" "fallback/payload") || \
+	    err "build_uboot_roms $board: could not create tmprom"
 	newrom="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
 	x_ moverom "${tmprom}" "${newrom}"
 	x_ rm -f "${tmprom}"
