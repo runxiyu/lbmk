@@ -124,7 +124,8 @@ patch_release_roms()
 	done
 
 	(
-	x_ cd "${_tmpdir}/bin/"* # TODO: very dodgy, re-write accordingly
+	cd "${_tmpdir}/bin/"* || \
+	    err "patch_release_roms: !cd ${_tmpdir}/bin/*"
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	[ "${nukemode}" = "nuke" ] || sha512sum --status -c vendorhashes || \
