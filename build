@@ -101,7 +101,6 @@ git_init()
 excmd()
 {
 	lbmkcmd="${buildpath}/${option}"
-	echo "TEST: $lbmkcmd"
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
 	shift 1; "$lbmkcmd" $@ || fail "excmd: ${lbmkcmd} ${@}"
 }
