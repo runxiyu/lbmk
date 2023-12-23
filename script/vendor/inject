@@ -122,14 +122,6 @@ patch_release_roms()
 		printf "patching rom: %s\n" "$x"
 		patch_rom "${x}"
 	done
-	for x in "${_tmpdir}"/bin/*/*_nomicrocode.rom ; do
-		[ -f "${x}" ] || continue
-		[ -f "${x%_nomicrocode.rom}.rom" ] || continue
-
-		cp "${x%_nomicrocode.rom}.rom" "${x}" || \
-		    err "patch_r: !cp \"${x%_nomicrocode.rom}.rom\" \"${x}\""
-		x_ "${cbfstool}" "${x}" remove -n cpu_microcode_blob.bin
-	done
 
 	(
 	x_ cd "${_tmpdir}/bin/"* # TODO: very dodgy, re-write accordingly
@@ -158,16 +150,6 @@ patch_release_roms()
 patch_rom()
 {
 	rom="${1}"
-
-	# we don't process no-microcode roms; these are
-	# instead re-created at the end, after re-inserting
-	# on roms with microcode, by copying and then removing,
-	# so that the hashes will match (otherwise, cbfstool
-	# may sometimes insert certain vendor files at the wrong offset)
-	# (unless nomicrocode is the only config provided)
-	[ "${rom}" != "${rom%_nomicrocode.rom}.rom" ] && \
-	    [ -f "${rom%_nomicrocode.rom}.rom" ] && \
-	    [ "${release}" = "y" ] && return 0
 
 	check_defconfig "$boarddir" && err "patch_rom $boarddir: no configs"
 

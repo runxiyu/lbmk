@@ -22,7 +22,7 @@ kmapdir="config/grub/keymap"
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest t"
 pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree arch"
-v="${v} grub_timeout ubdir vendorfiles board grub_scan_disk uboot_config"
+v="${v} grub_timeout ubdir board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets)"
 
@@ -107,8 +107,6 @@ check_target()
 		payload_uboot="n"
 	[ "${payload_uboot}" = "y" ] && [ -z "${uboot_config}" ] && \
 		uboot_config="default"
-	[ "${vendorfiles}" != "n" ] && [ "${vendorfiles}" != "y" ] && \
-		vendorfiles="y"
 
 	# Override all payload directives with cmdline args
 	[ -z "${_payload}" ] && return 0
@@ -401,17 +399,12 @@ mkUbootRom() {
 	printf "%s\n" "${tmprom}"
 }
 
-# it is assumed that no other work will be done on the ROM
-# after calling this function. therefore this function is "final"
-moverom() {
-	rompath="${1}"
-	newrom="${2}"
+moverom()
+{
+	printf "Creating target image: %s\n" "$2"
 
-	[ "${vendorfiles}" = "n" ] && newrom="${newrom%.rom}_noblobs.rom"
-	printf "Creating target image: %s\n" "${newrom}"
-
-	x_ mkdir -p "${newrom%/*}"
-	x_ cp "${rompath}" "${newrom}"
+	x_ mkdir -p "${2%/*}"
+	x_ cp "$1" "$2"
 }
 
 usage()

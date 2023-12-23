@@ -7,8 +7,7 @@ set -u -e
 . "include/err.sh"
 . "include/option.sh"
 
-eval "$(setvars "" vdir relname src_dirname srcdir _xm target romdir \
-    microcode_required mode)"
+eval "$(setvars "" vdir relname src_dirname srcdir _xm target romdir mode)"
 
 main()
 {
@@ -133,21 +132,7 @@ handle_rom_archive()
 
 nukerom()
 {
-	microcode_required="y"
 	. "config/coreboot/${target}/target.cfg"
-	if [ "${microcode_required}" != "y" ] && \
-	    [ "${microcode_required}" != "n" ]; then microcode_required="y"; fi
-	if [ "${microcode_required}" = "n" ]; then
-		for romfile in "${romdir}"/*.rom; do
-			[ -f "${romfile}" ] || continue
-			strip_ucode "${romfile}"
-		done
-		for romfile in "${romdir}"/*.tmprom; do
-			[ -f "${romfile}" ] || continue
-			mv "${romfile}" "${romfile%.tmprom}.rom" || \
-			    err "!mv romfile, nukerom"
-		done
-	fi
 
 	# Hash the images before removing vendor files
 	# which "./vendor inject" uses for verification
@@ -163,20 +148,6 @@ nukerom()
 		./vendor inject -r "${romfile}" -b "${target}" -n nuke || \
 		    err "!vendor inject (nuke) ${romfile}, nukerom"
 	done
-}
-
-strip_ucode()
-{
-	romfile=${1}
-	_newrom_b="${romfile%.rom}_nomicrocode.tmprom"
-	cp "${romfile}" "${_newrom_b}" || err "!cp romfile ${romfile}, strip_u"
-	microcode_present="y"
-	"${cbfstool}" "${_newrom_b}" remove -n \
-	    cpu_microcode_blob.bin 2>/dev/null || microcode_present="n"
-	[ "${microcode_present}" = "n" ] || return 0
-	printf "REMARK: '%s' already lacks microcode\n" "${romfile}" 1>&2
-	printf "Renaming default ROM file instead.\n" 1>&2
-	mv "${romfile}" "${_newrom_b}" || err "!mv romfile ${romfile}, strip_u"
 }
 
 insert_copying_files()
