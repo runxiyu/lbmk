@@ -376,8 +376,6 @@ build_uboot_roms()
 {
 	tmprom="$(mkUbootRom "${cbrom}" "fallback/payload")"
 	newrom="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
-	[ "${initmode}" = "normal" ] && \
-		newrom="${romdir}/uboot_payload_${board}_${initmode}.rom"
 	x_ moverom "${tmprom}" "${newrom}"
 	x_ rm -f "${tmprom}"
 }
