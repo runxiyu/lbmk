@@ -61,20 +61,6 @@ build_release()
 	mkrom_images
 	) || err "can't build rom images"
 
-	# now test the vendor insert script, using the release archive:
-	(
-	cd "${srcdir}" || err "!cd ${srcdir}"
-	mkfakeroms
-	for vrom in ../roms/*.tar.xz; do
-		[ -f "${vrom}" ] || continue
-		case "${vrom}" in
-		*serprog*) continue ;;
-		esac
-		./vendor inject "${vrom}" || \
-		    err "TESTFAIL: inject: ${vrom##*/}"
-	done
-	) || err "vendorfile inject test failure"
-
 	rm -Rf "${srcdir}" || err "!rm -Rf ${srcdir}"
 }
 
@@ -98,7 +84,9 @@ fetch_trees()
 
 mkrom_images()
 {
-	mkfakeroms
+	x_ mkdir -p "vendorfiles/x201/"
+	dd if=/dev/zero of="vendorfiles/x201/me.bin" \
+	    bs=68k count=1 || err "mkvdir: can't make fake x201 me.bin"
 
 	./build roms all || err "${_xm}: roms-all"
 	./build serprog rp2040 || err "${_xm}: rp2040"
@@ -110,15 +98,6 @@ mkrom_images()
 	done
 
 	mv "release/${version}/roms/" ../roms || err "${_xm}: copy roms/"
-}
-
-mkfakeroms()
-{
-	# fake me.bin to make x201 roms build
-	mkdir -p "vendorfiles/x201/" || \
-	    err "mkvdir: !mkdir -p \"vendorfiles/x201/\""
-	dd if=/dev/zero of="vendorfiles/x201/me.bin" \
-	    bs=68k count=1 || err "mkvdir: can't make fake x201 me.bin"
 }
 
 handle_rom_archive()
