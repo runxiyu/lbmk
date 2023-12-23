@@ -97,6 +97,7 @@ handle_targets()
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
 		    "${mode}" "${project}" "${target}"
 		[ "${project}" != "coreboot" ] || [ -n "${mode}" ] || \
+		    [ "${target1}" = "utils" ] || \
 			x_ ./vendor download ${target}
 		x_ handle_defconfig
 	done
