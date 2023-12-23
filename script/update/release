@@ -49,48 +49,17 @@ build_release()
 	cd "${srcdir}" || err "${_xm}: !cd \"${srcdir}\""
 	fetch_trees
 	x_ mv src/docs docs
-	) || err "can't copy docs"
+	) || err "can't create release files"
 	(
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
-	) || err "can't create pre-crossgcc src tarball"
-	[ "${mode}" = "src" ] && return 0 # for src mode, xgcc tarballs are
-					  # not included in the src archive
-
-	# now build roms, then copy crossgcc to src and re-compress
-	# while compressing rom images too.
+	) || err "can't create src tarball"
+	[ "${mode}" = "src" ] && return 0
 
 	(
 	cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
 	mkrom_images
 	) || err "can't build rom images"
-	for _cbd in "${srcdir}/src/coreboot/"*; do
-		[ -d "${_cbd}/util/crossgcc/tarballs" ] || continue
-		_xgccdir="${vdir}/crossgcc/${_cbd##*/}"
-		mkdir -p "${_xgccdir}" || \
-		    err "build_release: !mkdir -p ${_xgccdir}"
-		cp -R "${_cbd}/util/crossgcc/tarballs/"* "${_xgccdir}" || \
-		    err "build_gcc: !copy xgcc ${_cbd}"
-	done
-	rm -Rf "${srcdir}" || err "build_release: !rm -Rf ${srcdir}"
-	(
-	cd "${srcdir%/*}" || err "${_xm} 2: mktarball \"${srcdir}\""
-	tar -xf "${srcdir##*/}.tar.xz" || err "!extract ${srcdir##*/}.tar.xz"
-	rm -f "${srcdir##*/}.tar.xz" || err "!rm -f ${srcdir##*/}.tar.xz"
-	) || err "can't extract pre-crossgcc src tarball"
-	for _xgcc in "${vdir}/crossgcc/"*; do
-		[ -d "${_xgcc}" ] || continue
-		mkdir -p "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs" || \
-		    err "!mkdir src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs"
-		mv "${_xgcc}/"* \
-		    "${srcdir}/src/coreboot/${_xgcc##*/}/util/crossgcc/tarballs/" \
-		    || err "!move xgcc tarballs to ${srcdir}/xgcc/${_xgcc##*/}"
-	done
-	rm -Rf "${vdir}/crossgcc" || err "!rm -Rf \"${vdir}/crossgcc\""
-	(
-	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
-	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
-	) || err "can't create src tarball with crossgcc"
 
 	# now test the vendor insert script, using the release archive:
 	(
