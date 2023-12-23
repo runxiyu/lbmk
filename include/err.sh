@@ -59,6 +59,8 @@ check_project()
 	    x_ printf "%s\n" "${version}" > version
 	xx_ printf "%s\n" "${versiondate}" > versiondate || \
 	    x_ printf "%s\n" "${versiondate}" > versiondate
+
+	export LOCALVERSION="-${projectname}-${version%%-*}"
 }
 
 setvars()

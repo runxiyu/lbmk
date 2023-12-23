@@ -45,7 +45,7 @@ main()
 	initialise_command $@ && shift 1
 
 	check_git
-	check_project "fail"
+	check_project
 	git_init
 
 	execute_command $@

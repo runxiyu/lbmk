@@ -21,6 +21,8 @@ main()
 		esac
 	done
 
+	check_project
+
 	vdir="${vdir}/${version}"
 	relname="${projectname}-${version}"
 	src_dirname="${relname}_src"

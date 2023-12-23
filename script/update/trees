@@ -10,8 +10,6 @@ set -u -e
 . "include/option.sh"
 . "include/git.sh"
 
-export LOCALVERSION="-${projectname}-${version%%-*}"
-
 eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
     elfdir listfile project target target_dir targets tree _f target1)"
 
@@ -35,6 +33,8 @@ main()
 	done
 	[ -z "${_f}" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "${project}" ] && err "project name not specified"
+
+	check_project
 
 	_cmd="build_projects"
 	[ -f "config/${project}/build.list" ] && _cmd="build_targets"
