@@ -21,7 +21,7 @@ kmapdir="config/grub/keymap"
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest t"
 pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
-v="romdir cbrom initmode displaymode cbcfg targetdir tree arch"
+v="romdir cbrom initmode displaymode cbcfg targetdir tree arch keymaps"
 v="${v} grub_timeout ubdir board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets)"
@@ -53,8 +53,7 @@ main()
 	    err "Cannot generate list of boards for building"
 
 	for x in ${boards}; do
-		eval "$(setvars "n" ${pv})"
-		eval "$(setvars "" ${v})"
+		eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
 		grub_background="background1280x800.png"
 		board="${x}"
 		check_target
@@ -65,7 +64,8 @@ main()
 
 	[ -z "${targets}" ] && err "No ROM images were compiled"
 	printf "\nROM images available in these directories:\n"
-	printf "%s^^ ROM images available in these directories.\n\n" "$targets"
+	eval "printf \"${targets}\""
+	printf "^^ ROM images available in these directories.\n\n"
 
 	printf "DO NOT flash ROM images from elf/ - please use bin/ instead.\n"
 }
@@ -127,20 +127,15 @@ prepare_target()
 	cbfstool="cbutils/${tree}/cbfstool"
 	cbrom="${cbdir}/build/coreboot.rom"
 
-	[ -f "${cbfstool}" ] || \
-		x_ ./update trees -b coreboot utils ${tree}
-
-	build_dependency_seabios
+	[ -f "${cbfstool}" ] || x_ ./update trees -b coreboot utils ${tree}
 
 	memtest_bin="memtest86plus/build64/memtest.bin"
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
 		x_ ./update trees -b memtest86plus
 
-	rm -f "${romdir}/"* || err "!prepare, rm files, ${romdir}"
-
-	build_dependency_grub
-	build_dependency_uboot
-	build_target
+	for bt in dependency_seabios dependency_grub dependency_uboot target; do
+		eval "build_${bt}"
+	done
 }
 
 build_dependency_seabios()
@@ -162,14 +157,15 @@ build_dependency_grub()
 	rebuild_grub="n"
 	[ -f "${grubelf}" ] || rebuild_grub="y"
 	for keymapfile in "${kmapdir}"/*.gkb; do
-		[ "${rebuild_grub}" = "y" ] || break
 		[ -f "${keymapfile}" ] || continue
 
+		keymaps="${keymaps} ${keymapfile}"
 		keymap="${keymapfile##*/}"
 		keymap="${keymap%.gkb}"
 		[ ! -f "elf/grub/keymap_${keymap}.cfg" ] && \
-		    rebuild_grub="y" && break
+		    rebuild_grub="y"
 	done
+	[ -n "${_keyboard}" ] && keymaps="${kmapdir}/${_keyboard}.gkb"
 	[ "${rebuild_grub}" = "y" ] || return 0
 	x_ ./build grub
 }
@@ -189,6 +185,8 @@ build_dependency_uboot()
 
 build_target()
 {
+	rm -f "${romdir}/"* || err "!prepare, rm files, ${romdir}"
+
 	for x in "normal" "vgarom" "libgfxinit"; do
 		initmode="${x}"
 		hmode="vesafb"
@@ -229,10 +227,8 @@ build_roms()
 	[ "${payload_memtest}" != "y" ] || \
 		x_ "${cbfstool}" "${cbrom}" add-payload \
 		    -f "src/${memtest_bin}" -n img/memtest -c lzma
-	[ "${payload_seabios}" = "y" ] && \
-		build_seabios_roms
-	[ "${payload_grub}" != "y" ] || \
-		x_ build_grub_roms "${cbrom}" "grub"
+	[ "${payload_seabios}" = "y" ] && build_seabios_roms
+	[ "${payload_grub}" != "y" ] || x_ build_grub_roms "${cbrom}" "grub"
 	[ "${payload_uboot}" = "y" ] || return 0
 	x_ cp "${_cbrom}" "${cbrom}"
 	build_uboot_roms
@@ -298,12 +294,6 @@ build_grub_roms()
 	[ -z "${grub_timeout}" ] || x_ "${cbfstool}" "${tmprom}" add \
 	    -f "${tmpcfg}" -n timeout.cfg -t raw
 	x_ rm -f "${tmpcfg}"
-
-	keymaps=""
-	for kmapfile in "${kmapdir}"/*; do
-		keymaps="${keymaps} ${kmapfile}"
-	done
-	[ -z "${_keyboard}" ] || keymaps="${kmapdir}/${_keyboard}.gkb"
 
 	for keymapfile in ${keymaps}; do
 		[ -f "${keymapfile}" ] || continue

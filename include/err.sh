@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
-version=""; versiondate=""; projectname=""; _nogit=""
+version=""; version_=""; versiondate=""; versiondate_=""; projectname=""; _nogit=""
 
 x_() {
 	[ $# -lt 1 ] || ${@} || err_exit err ${@}
@@ -48,17 +48,11 @@ check_project()
 	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
 	    --pretty='%ct' HEAD)" || versiondate="${versiondate_}"
 
-	[ -n "${versiondate}" ] || fail "Unknown version date" || \
-	    err "Unknown version date"
-	[ -n "${version}" ] || fail "Unknown version" || \
-	    err "Unknown version"
-	[ -n "${projectname}" ] || fail "Unknown project" || \
-	    err "Unknown project"
-
-	xx_ printf "%s\n" "${version}" > version || \
-	    x_ printf "%s\n" "${version}" > version
-	xx_ printf "%s\n" "${versiondate}" > versiondate || \
-	    x_ printf "%s\n" "${versiondate}" > versiondate
+	for p in projectname version versiondate; do
+		eval "[ -n \"\$$p\" ] || fail \"$p unset\" || err \"$p unset\""
+		p_="x_ printf \"%s\\n\" \"\$$p\" > $p"
+		eval "x$p_ || $p_"
+	done
 
 	export LOCALVERSION="-${projectname}-${version%%-*}"
 }
@@ -67,8 +61,7 @@ setvars()
 {
 	_setvars=""
 	[ $# -lt 2 ] && err "setvars: too few arguments"
-	val="${1}"
-	shift 1
+	val="${1}" && shift 1
 	for var in $@; do
 		_setvars="${var}=\"${val}\"; ${_setvars}"
 	done

@@ -37,22 +37,16 @@ main()
 {
 	xx_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
-	if [ "${1}" = "dependencies" ]; then
-		xx_ install_packages $@
-		lbmk_exit 0
-	fi
 
-	initialise_command $@ && shift 1
+	[ "${1}" = "dependencies" ] && xx_ install_packages $@ && lbmk_exit 0
 
-	check_git
-	check_project
-	git_init
-
-	execute_command $@
+	for cmd in initcmd check_git check_project git_init excmd; do
+		eval "${cmd} \$@"
+	done
 	lbmk_exit 0
 }
 
-initialise_command()
+initcmd()
 {
 	[ "$(id -u)" != "0" ] || fail "this command as root is not permitted"
 
@@ -104,11 +98,12 @@ git_init()
 	    fail "${PWD}: cannot git-tag ${projectname}/${version}"
 }
 
-execute_command()
+excmd()
 {
 	lbmkcmd="${buildpath}/${option}"
+	echo "TEST: $lbmkcmd"
 	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
-	"${lbmkcmd}" $@ || fail "execute_command: ${lbmkcmd} ${@}"
+	shift 1; "$lbmkcmd" $@ || fail "excmd: ${lbmkcmd} ${@}"
 }
 
 usage()
