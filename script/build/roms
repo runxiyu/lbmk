@@ -56,8 +56,8 @@ main()
 		eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
 		grub_background="background1280x800.png"
 		board="${x}"
-		check_target
-		prepare_target
+		configure_target
+		configure_dependencies
 		[ -d "bin/${board}" ] || continue
 		targets="* bin/${board}\n${targets}"
 	done
@@ -70,7 +70,7 @@ main()
 	printf "DO NOT flash ROM images from elf/ - please use bin/ instead.\n"
 }
 
-check_target()
+configure_target()
 {
 	targetdir="${cfgsdir}/${board}"
 	[ -f "${targetdir}/target.cfg" ] || \
@@ -119,7 +119,7 @@ check_target()
 	eval "payload_${_payload}=y"
 }
 
-prepare_target()
+configure_dependencies()
 {
 	romdir="bin/${board}"
 	cbdir="src/coreboot/${board}"
