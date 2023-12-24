@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
-version=""; version_=""; versiondate=""; versiondate_=""; projectname=""; _nogit=""
+version=""; versiondate=""; projectname=""; _nogit=""
 
 x_() {
 	[ $# -lt 1 ] || ${@} || err_exit err ${@}

@@ -40,7 +40,7 @@ mkvdir()
 {
 	mkdir -p "${vdir}" || err "mkvdir: !mkdir -p \"${vdir}\""
 	git clone . "${srcdir}" || err "mkdir: !gitclone \"${srcdir}\""
-	insert_version_files "${srcdir}" || err "mkvdir ${srcdir}: versionfile"
+	insert_version_files "$srcdir" || err "mkvdir $srcdir: versionfile"
 }
 
 build_release()
@@ -53,7 +53,7 @@ build_release()
 	) || err "can't create release files"
 	(
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
-	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "${_xm}: mksrc"
+	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "$_xm: mksrc"
 	) || err "can't create src tarball"
 	[ "${mode}" = "src" ] && return 0
 
@@ -78,8 +78,8 @@ fetch_trees()
 		    err "!rm -Rf \"src/${xp}/${xp}\""
 	done
 
-	find . -name ".git" -exec rm -Rf {} + || err "${_xm}: rm .git"
-	find . -name ".gitmodules" -exec rm -Rf {} + || err "${_xm}: rm .gitmod"
+	find . -name ".git" -exec rm -Rf {} + || err "$_xm: rm .git"
+	find . -name ".gitmodules" -exec rm -Rf {} + || err "$_xm: rm .gitmod"
 	x_ rm -Rf tmp .git
 }
 
@@ -119,7 +119,7 @@ handle_rom_archive()
 
 	romdir="${romdir}/bin/${target}"
 	mkdir -p "${romdir}" || err "!mkdir -p romdir, handle_rom_archive"
-	cp "${builddir}/"* "${romdir}" || err "!cp romdir, handle_rom_archive"
+	cp "$builddir/"* "$romdir" || err "!cp romdir, handle_rom_archive"
 
 	nukerom
 
@@ -128,7 +128,8 @@ handle_rom_archive()
 	insert_version_files "${romdir}" || \
 	    err "mkrom_tarball ${romdir}: versionfile"
 
-	insert_copying_files "$romdir" || err "!insert copy, handle 2, $romdir"
+	insert_copying_files "$romdir" || \
+	    err "!insert copy, handle 2, $romdir"
 	mkrom_tarball
 }
 
@@ -142,7 +143,8 @@ nukerom()
 	touch "${romdir}/vendorhashes" || err "!touch ${romdir}/vendorhashes"
 	(
 	cd "${romdir}" || err "!cd romdir ${romdir}, nukerom"
-	sha512sum ./*.rom >> vendorhashes || err "!create vendorhashes, nukerom"
+	sha512sum ./*.rom >> vendorhashes || \
+	    err "!create vendorhashes, nukerom"
 	) || err "can't create vendor hashes"
 
 	for romfile in "${romdir}"/*.rom; do
@@ -159,9 +161,11 @@ insert_copying_files()
 	# copy licenses to rom image archive, for completion
 	cp "src/grub/COPYING" "${l}/COPYING.grub" || return 1
 	cp "src/coreboot/default/COPYING" "${l}/COPYING.coreboot" || return 1
-	cp -R "src/coreboot/default/LICENSES" "${l}/LICENSES.coreboot" || return 1
+	cp -R "src/coreboot/default/LICENSES" "${l}/LICENSES.coreboot" || \
+	    return 1
 	cp "src/seabios/default/COPYING" "${l}/COPYING.coreboot" || return 1
-	cp "src/seabios/default/COPYING.LESSER" "${l}/COPYING.LESSER.seabios" || return 1
+	cp "src/seabios/default/COPYING.LESSER" "$l/COPYING.LESSER.seabios" \
+	    || return 1
 	cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot" || return 1
 	printf "Multiple licenses. Check corresponding %s source archive\n" \
 	    "${projectname}" > "${1}/COPYING" || return 1
@@ -173,11 +177,11 @@ mkrom_tarball()
 	f="release/${version}/roms/${archivename}"
 	mkdir -p "${f%/*}" || err "mkrom_tarball: !mkdir -p ${f%/*}"
 	(
-	cd "${romdir%"/bin/${target}"}" || err "!cd ${romdir%"/bin/${target}"}"
+	cd "${romdir%"/bin/$target"}" || err "!cd ${romdir%"/bin/$target"}"
 	mktarball "bin/${target}" "${archivename}.tar.xz"
 	) || err "can't create rom tarball"
 	mv "${romdir%"/bin/${target}"}/${archivename}.tar.xz"* "${f%/*}" || \
-	    err "!mktarball, rom, ${f%/*}/${romdir%"/bin/${target}"}/${archivename}.tar.xz"
+	    err "mktar ${f%/*}/${romdir%"/bin/$target"}/$archivename.tar.xz"
 
 	printf "Created ROM archive: %s" "${f%/*}/${archivename}.tar.xz"
 }
@@ -194,14 +198,15 @@ mktarball()
 	# preserve timestamps for reproducible tarballs
 	tar_implementation=$(tar --version | head -n1) || :
 
-	[ "${2%/*}" = "${2}" ] || mkdir -p "${2%/*}" || err "mk, !mkdir -p \"${2%/*}\""
+	[ "${2%/*}" = "${2}" ] || \
+		mkdir -p "${2%/*}" || err "mk, !mkdir -p \"${2%/*}\""
 	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
 		tar --sort=name --owner=root:0 --group=root:0 \
-		    --mtime="UTC 2023-11-06" -c "${1}" | xz -T0 -9e > "${2}" || \
+		    --mtime="UTC 2023-11-06" -c "$1" | xz -T0 -9e > "$2" || \
 		    err "mktarball 1, ${1}"
 	else
 		# TODO: reproducible tarballs on non-GNU systems
-		tar -c "${1}" | xz -T0 -9e > "${2}" || err "mktarball 2, ${1}"
+		tar -c "$1" | xz -T0 -9e > "$2" || err "mktarball 2, $1"
 	fi
 	(
 	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"

@@ -153,7 +153,7 @@ handle_src_tree()
 	if [ ! -d "${codedir}" ]; then
 		if [ "${mode}" = "distclean" ] || \
 		    [ "${mode}" = "crossgcc-clean" ]; then
-			printf "Directory %s doesn't exist; skipping clean\n" \
+			printf "Directory %s missing; skipping clean\n" \
 			    "${codedir}" 1>&2
 			return 1
 		fi
@@ -233,7 +233,8 @@ run_make_command()
 	[ -f "${codedir}/Makefile" ] || [ -f "${codedir}/makefile" ] || \
 	    [ -f "${codedir}/GNUmakefile" ] || return 1
 	[ "${project}" = "coreboot" ] && [ -z "${mode}" ] && \
-		x_ printf "%s\n" "${version%%-*}" >"$codedir/.coreboot-version"
+		x_ printf "%s\n" "${version%%-*}" \
+		    > "${codedir}/.coreboot-version"
 
 	x_ make ${mode} -j$(nproc) -C "${codedir}"
 
