@@ -30,7 +30,7 @@ main()
 	[ $# -gt 0 ] || err "No argument given"
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
-	_b="${board%%_*mb}" # shorthand (avoid duplicating config per rom size)
+	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
 
 	check_defconfig "${boarddir}" && exit 0
 	detect_firmware && exit 0
@@ -162,28 +162,28 @@ extract_intel_me()
 	[ -f "${_me}" ] && return 0
 
 	sdir="$(mktemp -d)"
-	mkdir -p "${sdir}" || err "extract_intel_me: !mkdir -p \"${sdir}\""
+	mkdir -p "$sdir" || err "extract_intel_me: !mkdir -p \"$sdir\""
 	(
-	[ "${cdir#/a}" != "${cdir}" ] && cdir="${cdir#/}"
-	cd "${cdir}" || err "extract_intel_me: !cd \"${cdir}\""
+	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
+	cd "$cdir" || err "extract_intel_me: !cd \"$cdir\""
 	for i in *; do
-		[ -f "${_me}" ] && break
-		[ -L "${i}" ] && continue
-		if [ -f "${i}" ]; then
-			"${mecleaner}" -r -t -O "${sdir}/vendorfile" \
-			    -M "${_me}" "${i}" && break
-			"${mecleaner}" -r -t -O "${_me}" "${i}" && break
-			"${me7updateparser}" -O "${_me}" "${i}" && break
+		[ -f "$_me" ] && break
+		[ -L "$i" ] && continue
+		if [ -f "$i" ]; then
+			"$mecleaner" -r -t -O "${sdir}/vendorfile" \
+			    -M "$_me" "$i" && break
+			"$mecleaner" -r -t -O "$_me" "$i" && break
+			"$me7updateparser" -O "$_me" "$i" && break
 			_7ztest="${_7ztest}a"
-			extract_archive "${i}" "${_7ztest}" || continue
-			extract_intel_me "${_me}" "${cdir}/${_7ztest}"
+			extract_archive "$i" "$_7ztest" || continue
+			extract_intel_me "$_me" "${cdir}/${_7ztest}"
 		elif [ -d "$i" ]; then
-			extract_intel_me "${_me}" "${cdir}/${i}"
+			extract_intel_me "$_me" "${cdir}/${i}"
 		else
 			continue
 		fi
 		cdir="${1}"
-		[ "${cdir#/a}" != "${cdir}" ] && cdir="${cdir#/}"
+		[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 		cd "${cdir}" || :
 	done
 	)

@@ -51,12 +51,13 @@ load_target_config()
 	. "${cfgsdir}/${1}/target.cfg" || \
 	    err "load_target_config ${cfgsdir}/${1}: cannot load config"
 
-	touch "${cfgsdir}/${1}/seen" || err "load_config $cfgsdir/$1: !mk seen"
+	touch "${cfgsdir}/${1}/seen" || \
+	    err "load_config $cfgsdir/$1: !mk seen"
 }
 
 prepare_new_tree()
 {
-	printf "Creating %s tree %s (%s)\n" "${project}" "${tree}" "${_target}"
+	printf "Creating %s tree %s (%s)\n" "$project" "$tree" "$_target"
 
 	remkdir "${tmp_git_dir%/*}"
 	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
@@ -121,7 +122,7 @@ clone_project()
 git_reset_rev()
 {
 	git -C "${1}" reset --hard ${2} || err "!git reset ${1} <- ${2}"
-	if [ "${project}" != "coreboot" ] && [ "${project}" != "u-boot" ] && \
+	if [ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
 	    [ -f "${1}/.gitmodules" ]; then
 		git -C "${1}" submodule update --init --checkout || \
 		    err "git_reset_rev ${1}: can't download submodules"
@@ -137,7 +138,7 @@ git_am_patches()
 		[ -f "${patch}" ] || continue
 		git -C "${sdir}" am "${patch}" || patchfail="y"
 		[ "${patchfail}" != "y" ] && continue
-		git -C "${sdir}" am --abort || err  "${sdir}: !git am --abort"
+		git -C "$sdir" am --abort || err  "$sdir: !git am --abort"
 		err  "!git am ${patch} -> ${sdir}"
 	done
 	for patches in "${patchdir}/"*; do

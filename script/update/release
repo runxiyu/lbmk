@@ -149,7 +149,7 @@ nukerom()
 
 	for romfile in "${romdir}"/*.rom; do
 		[ -f "${romfile}" ] || continue
-		./vendor inject -r "${romfile}" -b "${target}" -n nuke || \
+		./vendor inject -r "$romfile" -b "$target" -n nuke || \
 		    err "!vendor inject (nuke) ${romfile}, nukerom"
 	done
 }

@@ -29,7 +29,7 @@ check_git()
 
 git_err()
 {
-	printf "You need to set git name/email, like so:\n%s\n\n" "${1}" 1>&2
+	printf "You need to set git name/email, like so:\n%s\n\n" "$1" 1>&2
 	fail "Git name/email not configured" || \
 	    err "Git name/email not configured"
 }

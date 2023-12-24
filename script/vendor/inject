@@ -37,7 +37,7 @@ main()
 	inject_vendorfiles
 	[ "${nukemode}" = "nuke" ] && return 0
 	printf "Friendly reminder (this is *not* an error message):\n"
-	printf "Please always ensure that the files were inserted correctly.\n"
+	printf "Please ensure that the files were inserted correctly.\n"
 }
 
 check_board()
@@ -96,7 +96,7 @@ build_dependencies()
 	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
 		x_ ./update trees -b coreboot utils default
 	fi
-	[ -z "${new_mac}" ] || [ -f "${nvmutil}" ] || x_ make -C util/nvmutil
+	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
 	[ "${nukemode}" = "nuke" ] && return 0
 	x_ ./vendor download ${board}
 }
@@ -116,7 +116,7 @@ patch_release_roms()
 	_tmpdir="tmp/romdir"
 	remkdir "${_tmpdir}"
 	tar -xf "${archive}" -C "${_tmpdir}" || \
-	    err "patch_release_roms: !tar -xf \"${archive}\" -C \"${_tmpdir}\""
+	    err "patch_release_roms: !tar -xf \"$archive\" -C \"$_tmpdir\""
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
 		printf "patching rom: %s\n" "$x"
@@ -208,20 +208,20 @@ inject()
 	fi
 	if [ "${cbfsname}" = "IFD" ]; then
 		if [ "${nukemode}" != "nuke" ]; then
-			"${ifdtool}" -i ${_t}:${_dest} "${rom}" -O "$rom" || \
+			"$ifdtool" -i ${_t}:${_dest} "$rom" -O "$rom" || \
 			    err "inject: can't insert $_t ($dest) into $rom"
 		else
-			"${ifdtool}" --nuke ${_t} "${rom}" -O "${rom}" || \
-			    err "inject ${rom}: can't nuke ${_t} in IFD"
+			"$ifdtool" --nuke $_t "$rom" -O "$rom" || \
+			    err "inject $rom: can't nuke $_t in IFD"
 		fi
 	else
 		if [ "${nukemode}" != "nuke" ]; then
-			"${cbfstool}" "${rom}" add -f "${_dest}" \
-			    -n "${cbfsname}" -t ${_t} ${_offset} || \
+			"$cbfstool" "$rom" add -f "$_dest" \
+			    -n "$cbfsname" -t $_t $_offset || \
 			    err "inject $rom: can't insert $_t file $_dest"
 		else
-			"${cbfstool}" "${rom}" remove -n "${cbfsname}" || \
-			    err "inject $rom: can't remove ${cbfsname}"
+			"$cbfstool" "$rom" remove -n "$cbfsname" || \
+			    err "inject $rom: can't remove $cbfsname"
 		fi
 
 	fi

@@ -67,7 +67,7 @@ main()
 	eval "printf \"${targets}\""
 	printf "^^ ROM images available in these directories.\n\n"
 
-	printf "DO NOT flash ROM images from elf/ - please use bin/ instead.\n"
+	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
 
 configure_target()
@@ -80,7 +80,7 @@ configure_target()
 	. "${targetdir}/target.cfg"
 
 	[ -z "${grub_scan_disk}" ] && grub_scan_disk="both"
-	[ "${grub_scan_disk}" != "both" ] && [ "${grub_scan_disk}" != "ata" ] \
+	[ "$grub_scan_disk" != "both" ] && [ "$grub_scan_disk" != "ata" ] \
 	    && [ "${grub_scan_disk}" != "ahci" ] && \
 		grub_scan_disk="both"
 
@@ -98,16 +98,16 @@ configure_target()
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-withSeaBIOS will. For example, the board
 	# might have a graphics card whose vga rom coreboot doesn't execute
-	[ "${payload_grub}" != "y" ] && [ "${payload_seabios}" != "y" ] && \
+	[ "$payload_grub" != "y" ] && [ "$payload_seabios" != "y" ] && \
 	    [ "${payload_uboot}" != "y" ] && \
 		for configfile in "${targetdir}/config/"*; do
 			[ -e "${configfile}" ] || continue
 			err "target '${board}' defines no payload"
 		done
 
-	[ "${payload_uboot}" != "n" ] && [ "${payload_uboot}" != "y" ] && \
+	[ "$payload_uboot" != "n" ] && [ "$payload_uboot" != "y" ] && \
 		payload_uboot="n"
-	[ "${payload_uboot}" = "y" ] && [ -z "${uboot_config}" ] && \
+	[ "$payload_uboot" = "y" ] && [ -z "$uboot_config" ] && \
 		uboot_config="default"
 
 	# Override all payload directives with cmdline args
@@ -127,7 +127,7 @@ configure_dependencies()
 	cbfstool="cbutils/${tree}/cbfstool"
 	cbrom="${cbdir}/build/coreboot.rom"
 
-	[ -f "${cbfstool}" ] || x_ ./update trees -b coreboot utils ${tree}
+	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
 
 	memtest_bin="memtest86plus/build64/memtest.bin"
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
@@ -228,7 +228,7 @@ build_roms()
 		x_ "${cbfstool}" "${cbrom}" add-payload \
 		    -f "src/${memtest_bin}" -n img/memtest -c lzma
 	[ "${payload_seabios}" = "y" ] && build_seabios_roms
-	[ "${payload_grub}" != "y" ] || x_ build_grub_roms "${cbrom}" "grub"
+	[ "$payload_grub" != "y" ] || x_ build_grub_roms "$cbrom" "grub"
 	[ "${payload_uboot}" = "y" ] || return 0
 	x_ cp "${_cbrom}" "${cbrom}"
 	build_uboot_roms
@@ -337,15 +337,15 @@ mkSeabiosRom() {
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	x_ cp "${_cbrom}" "${tmprom}"
-	x_ "${cbfstool}" "${tmprom}" add-payload -f "${_seabioself}" \
+	x_ "$cbfstool" "$tmprom" add-payload -f "$_seabioself" \
 	    -n "${_seabios_cbfs_path}" -c lzma
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
-	z="2"; [ "${initmode}" = "vgarom" ] && z="0"
-	x_ "${cbfstool}" "${tmprom}" add-int -i $z -n etc/pci-optionrom-exec
-	x_ "${cbfstool}" "${tmprom}" add-int -i 0 -n etc/optionroms-checksum
-	[ "${initmode}" != "libgfxinit" ] || \
-		x_ "${cbfstool}" "${tmprom}" add -f "${seavgabiosrom}" \
+	z="2"; [ "$initmode" = "vgarom" ] && z="0"
+	x_ "$cbfstool" "$tmprom" add-int -i $z -n etc/pci-optionrom-exec
+	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
+	[ "$initmode" != "libgfxinit" ] || \
+		x_ "$cbfstool" "$tmprom" add -f "$seavgabiosrom" \
 		    -n vgaroms/seavgabios.bin -t raw
 
 	printf "%s\n" "${tmprom}"
@@ -387,12 +387,12 @@ mkUbootRom() {
 	_ubdir="elf/u-boot/${board}/${uboot_config}"
 	_ubootelf="${_ubdir}/u-boot.elf"
 	[ -f "${_ubootelf}" ] || _ubootelf="${_ubdir}/u-boot"
-	[ -f "${_ubootelf}" ] || err "mkUbootRom: ${board}: cant find u-boot"
+	[ -f "$_ubootelf" ] || err "mkUbootRom: $board: cant find u-boot"
 
 	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
 
 	x_ cp "${_cbrom}" "${tmprom}"
-	x_ "${cbfstool}" "${tmprom}" add-payload -f "${_ubootelf}" \
+	x_ "$cbfstool" "$tmprom" add-payload -f "$_ubootelf" \
 	    -n "${_uboot_cbfs_path}" -c lzma
 
 	printf "%s\n" "${tmprom}"

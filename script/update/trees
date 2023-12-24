@@ -31,8 +31,8 @@ main()
 		esac
 		shift; project="${OPTARG#src/}"; shift
 	done
-	[ -z "${_f}" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
-	[ -z "${project}" ] && err "project name not specified"
+	[ -z "$_f" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
+	[ -z "$project" ] && err "project name not specified"
 
 	check_project
 
@@ -43,7 +43,7 @@ main()
 
 build_projects()
 {
-	[ $# -gt 0 ] && x_ ./update trees ${_f} ${@}
+	[ $# -gt 0 ] && x_ ./update trees $_f $@
 
 	if [ "${mode}" = "fetch" ]; then
 		fetch_project_repo
@@ -51,9 +51,9 @@ build_projects()
 	fi
 
 	codedir="src/${project}"
-	[ -d "${codedir}" ] || x_ ./update trees -f "${project}"
+	[ -d "$codedir" ] || x_ ./update trees -f "$project"
 
-	if [ "${project}" = "uefitool" ]; then
+	if [ "$project" = "uefitool" ]; then
 	(
 		x_ cd src/uefitool
 		cmake UEFIExtract/ || [ -f Makefile ] || \
@@ -61,72 +61,72 @@ build_projects()
 	) || err "can't build cmake on uefiextract"
 	fi
 
-	[ "${mode}" = "distclean" ] && mode="clean"
+	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
 }
 
 build_targets()
 {
 	elfdir="elf/${project}"
-	[ "${elfdir}" = "elf/coreboot" ] && \
+	[ "$elfdir" = "elf/coreboot" ] && \
 		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 
 	cfgsdir="config/${project}"
-	[ -d "${cfgsdir}" ] || err "directory, ${cfgsdir}, does not exist"
+	[ -d "$cfgsdir" ] || err "directory, $cfgsdir, does not exist"
 
 	listfile="${cfgsdir}/build.list"
-	[ -f "${listfile}" ] || err "list file, ${listfile}, does not exist"
+	[ -f "$listfile" ] || err "list file, $listfile, does not exist"
 
 	# Build for all targets if no argument is given
-	[ $# -gt 0 ] && target1="${1}"
-	[ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ] && \
+	[ $# -gt 0 ] && target1="$1"
+	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && \
 		shift 1
-	targets=$(items "${cfgsdir}") || \
-	    err "Cannot get options for ${cfgsdir}"
+	targets=$(items "$cfgsdir") || \
+	    err "Cannot get options for $cfgsdir"
 	[ $# -gt 0 ] && targets=$@
 
-	[ -z "${mode}" ] && x_ mkdir -p "${elfdir}/"
+	[ -z "$mode" ] && x_ mkdir -p "$elfdir"
 
 	handle_targets
 }
 
 handle_targets()
 {
-	for x in ${targets}; do
+	for x in $targets; do
 		target="${x}"
 		printf "Running 'make %s' for project '%s, target '%s''\n" \
-		    "${mode}" "${project}" "${target}"
-		[ "${project}" != "coreboot" ] || [ -n "${mode}" ] || \
-		    [ "${target1}" = "utils" ] || \
-			x_ ./vendor download ${target}
+		    "$mode" "$project" "$target"
+		[ "$project" != "coreboot" ] || [ -n "$mode" ] || \
+		    [ "$target1" = "utils" ] || \
+			x_ ./vendor download $target
 		x_ handle_defconfig
 	done
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
 	[ -z "${mode}" ] || return 0
-	printf "Done! The files are stored under %s/\n\n" "${elfdir}"
+	printf "Done! The files are stored under %s/\n\n" "$elfdir"
 }
 
 handle_defconfig()
 {
-	handle_src_tree "${target}" || return 0
+	handle_src_tree "$target" || return 0
 
-	if [ "${target1}" = "utils" ] && [ "${project}" = "coreboot" ]; then
-		handle_coreboot_utils "${tree}"
+	if [ "$target1" = "utils" ] && [ "$project" = "coreboot" ]; then
+		handle_coreboot_utils "$tree"
 		return 0
 	fi
 
 	for y in "${target_dir}/config"/*; do
-		[ -f "${y}" ] || continue
-		config="${y}"
+		[ -f "$y" ] || continue
+		config="$y"
 		config_name="${config#"${target_dir}/config/"}"
 
 		printf "handle/make/config %s %s: handling config %s\n" \
-		    "${project}" "${target}" "${config_name}"
+		    "$project" "$target" "$config_name"
 
-		[ -n "${mode}" ] || check_config || continue
+		[ -n "$mode" ] || check_config || continue
 		handle_makefile
-		[ -n "${mode}" ] || copy_elf
+		[ -n "$mode" ] || copy_elf
 	done
 }
 
@@ -134,7 +134,7 @@ handle_src_tree()
 {
 	target_dir="${cfgsdir}/${target}"
 
-	if [ "${mode}" = "fetch" ]; then
+	if [ "$mode" = "fetch" ]; then
 		fetch_project_trees
 		return 1
 	fi
@@ -145,23 +145,23 @@ handle_src_tree()
 	. "${target_dir}/target.cfg" || \
 	    err "handle_src_tree ${target_dir}: cannot load target.cfg"
 
-	[ -z "${arch}" ] && err "handle_src_tree $project/$tree: arch unset"
-	[ -z "${tree}" ] && err "handle_src_tree $project/$tree: tree unset"
+	[ -z "$arch" ] && err "handle_src_tree $project/$tree: arch unset"
+	[ -z "$tree" ] && err "handle_src_tree $project/$tree: tree unset"
 
 	codedir="src/${project}/${tree}"
 
-	if [ ! -d "${codedir}" ]; then
-		if [ "${mode}" = "distclean" ] || \
-		    [ "${mode}" = "crossgcc-clean" ]; then
+	if [ ! -d "$codedir" ]; then
+		if [ "$mode" = "distclean" ] || \
+		    [ "$mode" = "crossgcc-clean" ]; then
 			printf "Directory %s missing; skipping clean\n" \
-			    "${codedir}" 1>&2
+			    "$codedir" 1>&2
 			return 1
 		fi
-		x_ ./update trees -f "${project}" "${target}"
+		x_ ./update trees -f "$project" "$target"
 	fi
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
-	[ -z "${mode}" ] || return 0
+	[ -z "$mode" ] || return 0
 	check_cross_compiler
 }
 
@@ -170,22 +170,21 @@ handle_src_tree()
 check_cross_compiler()
 {
 	[ "$project" = "u-boot" ] || [ "$project" = "coreboot" ] || return 0
-	[ -z "${arch}" ] && err "${project}/${tree}: arch isn't set"
+	[ -z "$arch" ] && err "${project}/${tree}: arch isn't set"
 
-	_arch="${arch}"
-	[ "${arch}" = "aarch64-elf" ] && _arch="aarch64-elf arm-eabi"
+	_arch="$arch"
+	[ "$arch" = "aarch64-elf" ] && _arch="aarch64-elf arm-eabi"
 
-	[ "${crossgcc_ada}" = "y" ] || [ "${crossgcc_ada}" = "n" ] || \
-		crossgcc_ada="y"
-	[ "${crossgcc_ada}" = "y" ] || export BUILD_LANGUAGES=c
+	[ "$crossgcc_ada" = "y" ] || [ "$crossgcc_ada" = "n" ] || crossgcc_ada=y
+	[ "$crossgcc_ada" = "y" ] || export BUILD_LANGUAGES=c
 
 	cbdir="src/coreboot/${tree}"
-	[ "${project}" != "coreboot" ] && cbdir="src/coreboot/default"
+	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 	x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
 
-	for xarch in ${_arch}; do
+	for xarch in $_arch; do
 		[ -d "${cbdir}/util/crossgcc/xgcc/${xarch}/" ] && continue
-		x_ make -C "${cbdir}" crossgcc-${xarch%-*} CPUS=$(nproc)
+		x_ make -C "$cbdir" crossgcc-${xarch%-*} CPUS=$(nproc)
 	done
 
 	# we *must* ensure that u-boot's build system uses crossgcc first
@@ -195,36 +194,36 @@ check_cross_compiler()
 
 check_config()
 {
-	[ -f "${config}" ] || \
+	[ -f "$config" ] || \
 		err "check_config: ${project}/${target}: configs missing"
 
 	dest_dir="${elfdir}/${target}/${config_name}"
 	# TODO: very hacky check. do it properly (based on build.list)
 	for elftest in "${dest_dir}"/*; do
-		[ -f "${elftest}" ] || continue
+		[ -f "$elftest" ] || continue
 		printf "Build already exists, so skipping build\n" 1>&2
 		return 1
 	done
-	x_ mkdir -p "${dest_dir}"
+	x_ mkdir -p "$dest_dir"
 }
 
 handle_makefile()
 {
-	x_ make clean -C "${codedir}"
-	x_ cp "${config}" "${codedir}/.config"
-	[ -n "${mode}" ] || make -C "${codedir}" silentoldconfig || \
-	    make -C "${codedir}" oldconfig || :
+	x_ make clean -C "$codedir"
+	x_ cp "$config" "${codedir}/.config"
+	[ -n "$mode" ] || make -C "$codedir" silentoldconfig || \
+	    make -C "$codedir" oldconfig || :
 
-	run_make_command || err "handle_makefile ${codedir}: no makefile!"
+	run_make_command || err "handle_makefile $codedir: no makefile!"
 
-	if [ -e "${codedir}/.git" ] && [ "${project}" = "u-boot" ] && \
-	    [ "${mode}" = "distclean" ]; then
-		x_ git -C "${codedir}" clean -fdx
+	if [ -e "${codedir}/.git" ] && [ "$project" = "u-boot" ] && \
+	    [ "$mode" = "distclean" ]; then
+		x_ git -C "$codedir" clean -fdx
 	elif [ "$mode" = "oldconfig" ] || [ "$mode" = "olddefconfig" ] || \
 	    [ "$mode" = "menuconfig" ] || [ "$mode" = "nconfig" ]; then
-		x_ cp "${codedir}/.config" "${config}"
-	elif [ "${mode}" = "savedefconfig" ]; then
-		x_ cp "${codedir}/defconfig" "${config}"
+		x_ cp "${codedir}/.config" "$config"
+	elif [ "$mode" = "savedefconfig" ]; then
+		x_ cp "${codedir}/defconfig" "$config"
 	fi
 }
 
@@ -232,24 +231,24 @@ run_make_command()
 {
 	[ -f "${codedir}/Makefile" ] || [ -f "${codedir}/makefile" ] || \
 	    [ -f "${codedir}/GNUmakefile" ] || return 1
-	[ "${project}" = "coreboot" ] && [ -z "${mode}" ] && \
+	[ "$project" = "coreboot" ] && [ -z "$mode" ] && \
 		x_ printf "%s\n" "${version%%-*}" \
 		    > "${codedir}/.coreboot-version"
 
-	x_ make ${mode} -j$(nproc) -C "${codedir}"
+	x_ make $mode -j$(nproc) -C "$codedir"
 
-	[ "${mode}" != "clean" ] && return 0
-	make -C "${codedir}" distclean 2>/dev/null || :
+	[ "$mode" != "clean" ] && return 0
+	make -C "$codedir" distclean 2>/dev/null || :
 }
 
 copy_elf()
 {
 	while read -r f; do
 		[ ! -f "${codedir}/$f" ] || \
-			x_ cp "${codedir}/${f}" "${dest_dir}/"
-	done < "${listfile}"
+			x_ cp "${codedir}/${f}" "$dest_dir"
+	done < "$listfile"
 
-	x_ make clean -C "${codedir}"
+	x_ make clean -C "$codedir"
 }
 
 main $@

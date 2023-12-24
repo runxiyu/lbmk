@@ -38,7 +38,7 @@ main()
 	xx_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
 
-	[ "${1}" = "dependencies" ] && xx_ install_packages $@ && lbmk_exit 0
+	[ "$1" = "dependencies" ] && xx_ install_packages $@ && lbmk_exit 0
 
 	for cmd in initcmd check_git check_project git_init excmd; do
 		eval "${cmd} \$@"
@@ -78,7 +78,7 @@ install_packages()
 
 	xx_ ${pkg_add} ${pkglist}
 	[ -z "${aur_notice}" ] && return 0
-	printf "You must install AUR packages: %s\n" "${aur_notice}" 1>&2
+	printf "You must install AUR packages: %s\n" "$aur_notice" 1>&2
 }
 
 # release archives contain .gitignore, but not .git.
@@ -93,7 +93,7 @@ git_init()
 	git add -A . || fail "${PWD}: cannot add files to Git repository"
 	git commit -m "${projectname} ${version}" --date "${cdate}" \
 	    --author="lbmk <lbmk@libreboot.org>" || \
-	    fail "${PWD}: can't commit ${projectname}/${version}, date ${cdate}"
+	    fail "$PWD: can't commit ${projectname}/${version}, date $cdate"
 	git tag -a "${version}" -m "${projectname} ${version}" || \
 	    fail "${PWD}: cannot git-tag ${projectname}/${version}"
 }
@@ -125,19 +125,19 @@ usage()
 
 mkversion()
 {
-	printf "revision: %s %s\n" "${projectname}" "${version}"
+	printf "revision: %s %s\n" "$projectname" "$version"
 	printf "revision date: %s\n" "$(date -Rud @${versiondate})"
 }
 
 lbmk_exit()
 {
-	tmp_cleanup || err "lbmk_exit: can't rm tmpdir upon exit $1: ${tmpdir}"
+	tmp_cleanup || err "lbmk_exit: can't rm tmpdir upon exit $1: $tmpdir"
 	exit $1
 }
 
 fail()
 {
-	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "${tmpdir}" 1>&2
+	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "$tmpdir" 1>&2
 	err "${1}"
 }
 
