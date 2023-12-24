@@ -1,0 +1,38 @@
+From 2d3124cf3c6c2e2de351fcafc572b19565b1d2a5 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 24 Dec 2023 08:52:55 +0000
+Subject: [PATCH 1/1] fix implicit typecast (fixes build error)
+
+typecasting an enum as (unsigned) should be safe
+
+Change-Id: Ib9d00d39020fef255eb4276bcc7d85c9973caed1
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ libflashrom.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libflashrom.c b/libflashrom.c
+index 0dec22ee..fb7d22a8 100644
+--- a/libflashrom.c
++++ b/libflashrom.c
+@@ -188,7 +188,7 @@ struct flashrom_board_info *flashrom_supported_boards(void)
+ 		for (; i < boards_known_size; ++i) {
+ 			supported_boards[i].vendor = binfo[i].vendor;
+ 			supported_boards[i].name = binfo[i].name;
+-			supported_boards[i].working = binfo[i].working;
++			supported_boards[i].working = (unsigned) binfo[i].working;
+ 		}
+ 	} else {
+ 		msg_gerr("Memory allocation error!\n");
+@@ -226,7 +226,7 @@ struct flashrom_chipset_info *flashrom_supported_chipsets(void)
+ 			supported_chipsets[i].chipset = chipset[i].device_name;
+ 			supported_chipsets[i].vendor_id = chipset[i].vendor_id;
+ 			supported_chipsets[i].chipset_id = chipset[i].device_id;
+-			supported_chipsets[i].status = chipset[i].status;
++			supported_chipsets[i].status = (unsigned) chipset[i].status;
+ 	  }
+ 	} else {
+ 		msg_gerr("Memory allocation error!\n");
+-- 
+2.39.2
+
