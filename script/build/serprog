@@ -71,7 +71,7 @@ print_boards()
 
 list_boards()
 {
-	basename -a -s .h "${1}/"*.h
+	basename -a -s .h "${1}/"*.h || err "list_boards $1: can't list boards"
 }
 
 main $@
