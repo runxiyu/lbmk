@@ -44,11 +44,7 @@ main()
 build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update trees $_f $@
-
-	if [ "${mode}" = "fetch" ]; then
-		fetch_project_repo
-		return 0
-	fi
+	[ "$mode" = "fetch" ] && eval "fetch_project_repo; return 0;"
 
 	codedir="src/${project}"
 	[ -d "$codedir" ] || x_ ./update trees -f "$project"
@@ -86,7 +82,6 @@ build_targets()
 	[ $# -gt 0 ] && targets=$@
 
 	[ -z "$mode" ] && x_ mkdir -p "$elfdir"
-
 	handle_targets
 }
 
@@ -111,10 +106,8 @@ handle_defconfig()
 {
 	handle_src_tree "$target" || return 0
 
-	if [ "$target1" = "utils" ] && [ "$project" = "coreboot" ]; then
-		handle_coreboot_utils "$tree"
-		return 0
-	fi
+	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && \
+		eval "handle_coreboot_utils \"$tree\"; return 0"
 
 	for y in "${target_dir}/config"/*; do
 		[ -f "$y" ] || continue
@@ -133,11 +126,7 @@ handle_defconfig()
 handle_src_tree()
 {
 	target_dir="${cfgsdir}/${target}"
-
-	if [ "$mode" = "fetch" ]; then
-		fetch_project_trees
-		return 1
-	fi
+	[ "$mode" = "fetch" ] && eval "fetch_project_trees; return 1;"
 
 	x_ mkdir -p "${elfdir}/${target}"
 	eval "$(setvars "" xarch xlang tree)"
@@ -236,7 +225,6 @@ copy_elf()
 		[ ! -f "${codedir}/$f" ] || \
 			x_ cp "${codedir}/${f}" "$dest_dir"
 	done < "$listfile"
-
 	x_ make clean -C "$codedir"
 }
 

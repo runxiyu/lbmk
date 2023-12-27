@@ -53,7 +53,6 @@ check_project()
 		p_="x_ printf \"%s\\n\" \"\$$p\" > $p"
 		eval "x$p_ || $p_"
 	done
-
 	export LOCALVERSION="-${projectname}-${version%%-*}"
 }
 

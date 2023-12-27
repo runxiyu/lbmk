@@ -46,9 +46,9 @@ scan_config()
 		set ${line} 1>/dev/null 2>/dev/null || :
 		if [ "${1%:}" = "depend" ]; then
 			depend="${depend} ${2}"
-			continue
+		else
+			eval "${1%:}=\"${2}\""
 		fi
-		eval "${1%:}=\"${2}\""
 	done << EOF
 	$(eval "awk '${awkstr}' \"${revfile}\"")
 EOF
