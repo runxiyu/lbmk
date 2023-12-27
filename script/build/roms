@@ -21,7 +21,7 @@ kmapdir="config/grub/keymap"
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest t"
 pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
-v="romdir cbrom initmode displaymode cbcfg targetdir tree arch keymaps"
+v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps"
 v="${v} grub_timeout ubdir board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets)"
@@ -84,7 +84,6 @@ configure_target()
 	    && [ "${grub_scan_disk}" != "ahci" ] && \
 		grub_scan_disk="both"
 
-	[ -z "$arch" ] && err "$board: arch not defined"
 	[ -z "$tree" ] && err "$board: tree not defined"
 
 	[ "${payload_memtest}" != "y" ] && payload_memtest="n"

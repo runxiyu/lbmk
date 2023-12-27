@@ -10,7 +10,7 @@ set -u -e
 . "include/option.sh"
 . "include/git.sh"
 
-eval "$(setvars "" arch cfgsdir codedir config config_name crossgcc_ada mode \
+eval "$(setvars "" xarch cfgsdir codedir config config_name xlang mode \
     elfdir listfile project target target_dir targets tree _f target1)"
 
 main()
@@ -140,12 +140,11 @@ handle_src_tree()
 	fi
 
 	x_ mkdir -p "${elfdir}/${target}"
-	eval "$(setvars "" arch tree)"
+	eval "$(setvars "" xarch xlang tree)"
 
 	. "${target_dir}/target.cfg" || \
 	    err "handle_src_tree ${target_dir}: cannot load target.cfg"
 
-	[ -z "$arch" ] && err "handle_src_tree $project/$tree: arch unset"
 	[ -z "$tree" ] && err "handle_src_tree $project/$tree: tree unset"
 
 	codedir="src/${project}/${tree}"
@@ -165,31 +164,21 @@ handle_src_tree()
 	check_cross_compiler
 }
 
-# set up cross-compiler (coreboot crossgcc) for u-boot and coreboot
-# (seabios and grub currently use hostcc, not crossgcc)
 check_cross_compiler()
 {
-	[ "$project" = "u-boot" ] || [ "$project" = "coreboot" ] || return 0
-	[ -z "$arch" ] && err "${project}/${tree}: arch isn't set"
+	for _xarch in $xarch; do
+		cbdir="src/coreboot/${tree}"
+		[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 
-	_arch="$arch"
-	[ "$arch" = "aarch64-elf" ] && _arch="aarch64-elf arm-eabi"
+		x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
 
-	[ "$crossgcc_ada" = "y" ] || [ "$crossgcc_ada" = "n" ] || crossgcc_ada=y
-	[ "$crossgcc_ada" = "y" ] || export BUILD_LANGUAGES=c
+		export PATH="${PWD}/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
+		export CROSS_COMPILE="${xarch% *}-"
+		[ -n "${xlang}" ] && export BUILD_LANGUAGES="$xlang"
 
-	cbdir="src/coreboot/${tree}"
-	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
-	x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
-
-	for xarch in $_arch; do
-		[ -d "${cbdir}/util/crossgcc/xgcc/${xarch}/" ] && continue
-		x_ make -C "$cbdir" crossgcc-${xarch%-*} CPUS=$(nproc)
+		[ -d "${cbdir}/util/crossgcc/xgcc/${_xarch}/" ] && continue
+		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$(nproc)
 	done
-
-	# we *must* ensure that u-boot's build system uses crossgcc first
-	export PATH="${PWD}/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
-	export CROSS_COMPILE="${_arch% *}-"
 }
 
 check_config()
