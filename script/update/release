@@ -128,8 +128,7 @@ handle_rom_archive()
 	insert_version_files "${romdir}" || \
 	    err "mkrom_tarball ${romdir}: versionfile"
 
-	insert_copying_files "$romdir" || \
-	    err "!insert copy, handle 2, $romdir"
+	insert_copying_files "$romdir" || err "!insert copy, handle 2, $romdir"
 	mkrom_tarball
 }
 

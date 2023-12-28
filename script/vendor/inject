@@ -14,10 +14,7 @@ eval "$(setvars "" archive rom modifygbe nukemode release new_mac)"
 main()
 {
 	[ $# -lt 1 ] && err "No options specified."
-	if [ "${1}" = "listboards" ]; then
-		items config/coreboot || :
-		exit 0
-	fi
+	[ "${1}" = "listboards" ] && eval "items config/coreboot || :; exit 0"
 
 	archive="${1}"
 
@@ -45,20 +42,16 @@ check_board()
 	failcheck="n"
 	check_release "${archive}" || failcheck="y"
 	if [ "${failcheck}" = "y" ]; then
-		[ -f "${rom}" ] || \
-			err "check_board: \"${rom}\" is not a valid path"
-		[ -z "${rom+x}" ] && \
-			err "check_board: no rom specified"
-		[ -n "${board+x}" ] || \
-			board=$(detect_board "${rom}")
+		[ -f "$rom" ] || err "check_board \"$rom\": invalid path"
+		[ -z "${rom+x}" ] && err "check_board: no rom specified"
+		[ -n "${board+x}" ] || board=$(detect_board "${rom}")
 	else
 		release="y"
 		board=$(detect_board "${archive}")
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	[ -d "${boarddir}" ] && return 0
-	err "check_board: board ${board} not found"
+	[ -d "$boarddir" ] || err "check_board: board $board missing"; return 0
 }
 
 check_release()
@@ -85,8 +78,7 @@ detect_board()
 	*)
 		err "detect_board $filename: could not detect board type"
 	esac	
-	[ -d "${boarddir}/" ] || \
-		err "detect_board: dir, ${boarddir}, doesn't exist"
+	[ -d "$boarddir" ] || err "detect_board: dir \"$boarddir\" missing"
 	printf "%s\n" "${board}"
 }
 
@@ -97,17 +89,12 @@ build_dependencies()
 		x_ ./update trees -b coreboot utils default
 	fi
 	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
-	[ "${nukemode}" = "nuke" ] && return 0
-	x_ ./vendor download ${board}
+	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
 }
 
 inject_vendorfiles()
 {
-	if [ "${release}" != "y" ]; then
-		patch_rom "${rom}"
-		return 0
-	fi
-	printf "patching release images\n"
+	[ "${release}" != "y" ] && eval "patch_rom \"$rom\"; return 0"
 	patch_release_roms
 }
 
@@ -134,18 +121,16 @@ patch_release_roms()
 	    err "patch_release_roms: ROMs did not match expected hashes"
 	) || err "can't verify vendor hashes"
 
-	if [ "${modifygbe}" = "true" ]; then
+	[ "${modifygbe}" = "true" ] && \
 		for x in "${_tmpdir}"/bin/*/*.rom ; do
 			modify_gbe "${x}"
 		done
-	fi
 
 	[ -d bin/release ] || x_ mkdir -p bin/release
 	x_ mv "${_tmpdir}"/bin/* bin/release/
+	x_ rm -Rf "${_tmpdir}"
 
 	printf "Success! Your ROMs are in bin/release\n"
-
-	x_ rm -Rf "${_tmpdir}"
 }
 
 patch_rom()
@@ -195,8 +180,7 @@ inject()
 		err "inject_${dl_type}: file missing, ${_dest}"
 
 	[ "$nukemode" = "nuke" ] || \
-		printf "Inserting %s/%s into file: %s\n" \
-		    "${cbfsname}" "${_t}" "$rom"
+		printf "Inserting %s/%s in file: %s\n" "$cbfsname" "$_t" "$rom"
 
 	if [ "${_t}" = "GbE" ]; then
 		x_ mkdir -p tmp
@@ -223,7 +207,6 @@ inject()
 			"$cbfstool" "$rom" remove -n "$cbfsname" || \
 			    err "inject $rom: can't remove $cbfsname"
 		fi
-
 	fi
 }
 

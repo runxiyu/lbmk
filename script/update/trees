@@ -98,8 +98,7 @@ handle_targets()
 	done
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
-	[ -z "${mode}" ] || return 0
-	printf "Done! The files are stored under %s/\n\n" "$elfdir"
+	[ -z "${mode}" ] && printf "Done! Check  %s/\n\n" "$elfdir"; return 0
 }
 
 handle_defconfig()
@@ -149,8 +148,7 @@ handle_src_tree()
 	fi
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
-	[ -z "$mode" ] || return 0
-	check_cross_compiler
+	[ -z "$mode" ] && check_cross_compiler; return 0
 }
 
 check_cross_compiler()
@@ -172,8 +170,7 @@ check_cross_compiler()
 
 check_config()
 {
-	[ -f "$config" ] || \
-		err "check_config: ${project}/${target}: configs missing"
+	[ -f "$config" ] || err "check_config: ${project}/${target}: no config"
 
 	dest_dir="${elfdir}/${target}/${config_name}"
 	# TODO: very hacky check. do it properly (based on build.list)
@@ -214,7 +211,6 @@ run_make_command()
 		    > "${codedir}/.coreboot-version"
 
 	x_ make $mode -j$(nproc) -C "$codedir"
-
 	[ "$mode" != "clean" ] && return 0
 	make -C "$codedir" distclean 2>/dev/null || :
 }

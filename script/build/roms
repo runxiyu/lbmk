@@ -165,8 +165,7 @@ build_dependency_grub()
 		    rebuild_grub="y"
 	done
 	[ -n "${_keyboard}" ] && keymaps="${kmapdir}/${_keyboard}.gkb"
-	[ "${rebuild_grub}" = "y" ] || return 0
-	x_ ./build grub
+	[ "${rebuild_grub}" = "y" ] && x_ ./build grub; return 0
 }
 
 build_dependency_uboot()
@@ -179,7 +178,7 @@ build_dependency_uboot()
 	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot" ] && \
 		ubootelf="${ubdir}/u-boot"
 	[ -f "${ubootelf}" ] && return 0
-	err "Could not find u-boot build for board, ${board}"
+	err "Can't find u-boot build for board, $board";
 }
 
 build_target()
@@ -365,7 +364,6 @@ mkSeabiosGrubonlyRom()
 	x_ rm -f "${tmpbootorder}"
 
 	x_ "${cbfstool}" "${_grubrom}" add-int -i 0 -n etc/show-boot-menu
-
 	x_ moverom "${_grubrom}" "${_newrom%.rom}_grubonly.rom"
 }
 

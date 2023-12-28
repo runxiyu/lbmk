@@ -90,8 +90,7 @@ verify_config()
 {
 	[ -z "${rev+x}" ] && err 'verify_config: rev not set'
 	[ -z "${loc+x}" ] && err 'verify_config: loc not set'
-	[ -z "${url+x}" ] && err 'verify_config: url not set'
-	return 0
+	[ -z "${url+x}" ] && err 'verify_config: url not set'; return 0
 }
 
 clone_project()
@@ -146,6 +145,5 @@ git_am_patches()
 		[ ! -d "${patches}" ] && continue
 		git_am_patches "${sdir}" "${patches}"
 	done
-	[ "${patchfail}" = "y" ] && return 1
-	return 0
+	[ "${patchfail}" = "y" ] && return 1; return 0
 }
