@@ -63,11 +63,11 @@ prepare_new_tree()
 	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
 	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
 	git_reset_rev "${tmp_git_dir}" "${rev}"
+	git_am_patches "${tmp_git_dir}" "$PWD/$cfgsdir/$tree/patches" || \
+	    err "prepare_new_tree ${project}/${tree}: patch fail"
 	[ ! -f "${tmp_git_dir}/.gitmodules" ] || \
 		git -C "${tmp_git_dir}" submodule update --init --checkout \
 		    || err "prepare_new_tree ${project}/${tree}: !submodules"
-	git_am_patches "${tmp_git_dir}" "$PWD/$cfgsdir/$tree/patches" || \
-	    err "prepare_new_tree ${project}/${tree}: patch fail"
 	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	mv "${tmp_git_dir}" "src/${project}/${tree}" || \
