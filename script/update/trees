@@ -210,9 +210,8 @@ run_make_command()
 	[ -z "$mode" ] && check_autoconf "$codedir"
 	check_makefile "$codedir" || return 1
 
-	[ "$project" = "coreboot" ] && [ -z "$mode" ] && \
-		x_ printf "%s\n" "${version%%-*}" \
-		    > "${codedir}/.coreboot-version"
+	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
+		printf "%s\n" "${version%%-*}" > "$codedir/.coreboot-version"
 
 	make $mode -j$(nproc) $makeargs -C "$codedir" || \
 	    err "run_make $codedir: !make $mode"
