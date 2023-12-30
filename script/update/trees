@@ -49,7 +49,7 @@ build_projects()
 	[ $# -gt 0 ] && x_ ./update trees $_f $@
 	[ "$mode" = "fetch" ] && eval "fetch_project_repo; return 0;"
 
-	load_target_config "$cfgsdir"
+	load_project_config "$cfgsdir"
 
 	codedir="src/${project}"
 	[ -d "$codedir" ] || x_ ./update trees -f "$project"
@@ -130,7 +130,7 @@ handle_src_tree()
 	target_dir="${cfgsdir}/${target}"
 	[ "$mode" = "fetch" ] && eval "fetch_project_trees; return 1;"
 
-	load_target_config "$target_dir"
+	load_project_config "$target_dir"
 
 	x_ mkdir -p "${elfdir}/${target}"
 
@@ -152,13 +152,13 @@ handle_src_tree()
 	[ -z "$mode" ] && check_cross_compiler; return 0
 }
 
-load_target_config()
+load_project_config()
 {
 	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs)"
 
 	[ -f "${1}/target.cfg" ] || return 0
 	. "${1}/target.cfg" || \
-	    err "load_target_config ${1}: cannot load target.cfg"; return 0
+	    err "load_project_config ${1}: cannot load target.cfg"; return 0
 }
 
 check_cross_compiler()
