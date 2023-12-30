@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2020-2023 Leah Rowe <leah@libreboot.org>
 
 vendir="vendorfiles"
 appdir="${vendir}/app"
@@ -9,6 +9,9 @@ cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
 cbfstool="cbutils/default/cbfstool"
+grubcfgsdir="config/grub"
+layoutdir="/boot/grub/layouts"
+. "${grubcfgsdir}/modules.list"
 
 eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \

@@ -33,6 +33,7 @@ main()
 	done
 	[ -z "$_f" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && err "project name not specified"
+	elfdir="elf/${project}"
 
 	check_project
 
@@ -63,7 +64,6 @@ build_projects()
 
 build_targets()
 {
-	elfdir="elf/${project}"
 	[ "$elfdir" = "elf/coreboot" ] && \
 		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 
@@ -204,15 +204,37 @@ handle_makefile()
 
 run_make_command()
 {
-	[ -f "${codedir}/Makefile" ] || [ -f "${codedir}/makefile" ] || \
-	    [ -f "${codedir}/GNUmakefile" ] || return 1
+	[ -z "$mode" ] && check_autoconf "$codedir"
+	check_makefile "$codedir" || return 1
+
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && \
 		x_ printf "%s\n" "${version%%-*}" \
 		    > "${codedir}/.coreboot-version"
 
-	x_ make $mode -j$(nproc) -C "$codedir"
+	make $mode -j$(nproc) FS_PAYLOAD_MODULES="" -C "$codedir" || \
+	    err "run_make $codedir: !make $mode"
+
 	[ "$mode" != "clean" ] && return 0
 	make -C "$codedir" distclean 2>/dev/null || :
+}
+
+check_autoconf()
+{
+	(
+	_cfgopt=""
+	cd "${codedir}" || err "!cd $codedir"
+	[ "$project" = "grub" ] && _cfgopt="--gnulib-srcdir=gnulib/ --no-git"
+	[ -f "bootstrap" ] && x_ ./bootstrap $_cfgopt
+	[ -f "autogen.sh" ] && x_ ./autogen.sh
+	[ "$project" = "grub" ] && _cfgopt="--with-platform=coreboot"
+	[ -f "configure" ] && x_ ./configure $_cfgopt; return 0
+	) || err "can't bootstrap project: $codedir"
+}
+
+check_makefile()
+{
+	[ -f "${1}/Makefile" ] || [ -f "${1}/makefile" ] || \
+	    [ -f "${1}/GNUmakefile" ] || return 1; return 0
 }
 
 copy_elf()

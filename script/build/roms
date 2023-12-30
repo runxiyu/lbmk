@@ -165,7 +165,49 @@ build_dependency_grub()
 		    rebuild_grub="y"
 	done
 	[ -n "${_keyboard}" ] && keymaps="${kmapdir}/${_keyboard}.gkb"
-	[ "${rebuild_grub}" = "y" ] && x_ ./build grub; return 0
+	[ "$rebuild_grub" = "y" ] || return 0
+	x_ ./update trees -b grub
+	remkdir elf/grub
+	build_keymap_configs
+	build_grub_payload
+}
+
+build_keymap_configs()
+{
+	for keylayoutfile in "${grubcfgsdir}/keymap/"*.gkb; do
+		[ -f "${keylayoutfile}" ] || continue
+		keymap="${keylayoutfile##"${grubcfgsdir}/keymap/"}"
+		keymap="${keymap%.gkb}"
+		printf "keymap %s\n" "${keymap}" > \
+		    "elf/grub/keymap_${keymap}.cfg" || err "!insert keymap"
+	done
+}
+
+build_grub_payload()
+{
+	./src/grub/grub-mkstandalone \
+	    --grub-mkimage="src/grub/grub-mkimage" \
+	    -O i386-coreboot \
+	    -o "elf/grub/grub.elf" \
+	    -d "src/grub/grub-core/" \
+	    --fonts= --themes= --locales=  \
+	    --modules="${grub_modules}" \
+	    --install-modules="${grub_install_modules}" \
+	    "${layoutdir}/colemak.gkb=${grubcfgsdir}/keymap/colemak.gkb" \
+	    "${layoutdir}/deqwertz.gkb=${grubcfgsdir}/keymap/deqwertz.gkb" \
+	    "${layoutdir}/esqwerty.gkb=${grubcfgsdir}/keymap/esqwerty.gkb" \
+	    "${layoutdir}/frazerty.gkb=${grubcfgsdir}/keymap/frazerty.gkb" \
+	    "${layoutdir}/frdvbepo.gkb=${grubcfgsdir}/keymap/frdvbepo.gkb" \
+	    "${layoutdir}/itqwerty.gkb=${grubcfgsdir}/keymap/itqwerty.gkb" \
+	    "${layoutdir}/svenska.gkb=${grubcfgsdir}/keymap/svenska.gkb" \
+	    "${layoutdir}/trqwerty.gkb=${grubcfgsdir}/keymap/trqwerty.gkb" \
+	    "${layoutdir}/ukdvorak.gkb=${grubcfgsdir}/keymap/ukdvorak.gkb" \
+	    "${layoutdir}/ukqwerty.gkb=${grubcfgsdir}/keymap/ukqwerty.gkb" \
+	    "${layoutdir}/usdvorak.gkb=${grubcfgsdir}/keymap/usdvorak.gkb" \
+	    "${layoutdir}/usqwerty.gkb=${grubcfgsdir}/keymap/usqwerty.gkb" \
+	    "/boot/grub/grub.cfg=${grubcfgsdir}/config/grub_memdisk.cfg" \
+	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" || \
+	    err "build_grub_elf: cannot build grub payload (grub-mkstandalone)"
 }
 
 build_dependency_uboot()
