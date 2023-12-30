@@ -11,7 +11,8 @@ set -u -e
 . "include/git.sh"
 
 eval "$(setvars "" xarch cfgsdir codedir config config_name xlang mode \
-    elfdir listfile project target target_dir targets tree _f target1)"
+    elfdir listfile project target target_dir targets tree _f target1 \
+    bootstrapargs autoconfargs)"
 
 main()
 {
@@ -34,6 +35,7 @@ main()
 	[ -z "$_f" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && err "project name not specified"
 	elfdir="elf/${project}"
+	cfgsdir="config/${project}"
 
 	check_project
 
@@ -46,6 +48,8 @@ build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update trees $_f $@
 	[ "$mode" = "fetch" ] && eval "fetch_project_repo; return 0;"
+
+	load_target_config "$cfgsdir"
 
 	codedir="src/${project}"
 	[ -d "$codedir" ] || x_ ./update trees -f "$project"
@@ -67,7 +71,6 @@ build_targets()
 	[ "$elfdir" = "elf/coreboot" ] && \
 		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 
-	cfgsdir="config/${project}"
 	[ -d "$cfgsdir" ] || err "directory, $cfgsdir, does not exist"
 
 	listfile="${cfgsdir}/build.list"
@@ -127,11 +130,9 @@ handle_src_tree()
 	target_dir="${cfgsdir}/${target}"
 	[ "$mode" = "fetch" ] && eval "fetch_project_trees; return 1;"
 
-	x_ mkdir -p "${elfdir}/${target}"
-	eval "$(setvars "" xarch xlang tree)"
+	load_target_config "$target_dir"
 
-	. "${target_dir}/target.cfg" || \
-	    err "handle_src_tree ${target_dir}: cannot load target.cfg"
+	x_ mkdir -p "${elfdir}/${target}"
 
 	[ -z "$tree" ] && err "handle_src_tree $project/$tree: tree unset"
 
@@ -149,6 +150,15 @@ handle_src_tree()
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
 	[ -z "$mode" ] && check_cross_compiler; return 0
+}
+
+load_target_config()
+{
+	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs)"
+
+	[ -f "${1}/target.cfg" ] || return 0
+	. "${1}/target.cfg" || \
+	    err "load_target_config ${1}: cannot load target.cfg"; return 0
 }
 
 check_cross_compiler()
@@ -223,11 +233,9 @@ check_autoconf()
 	(
 	_cfgopt=""
 	cd "${codedir}" || err "!cd $codedir"
-	[ "$project" = "grub" ] && _cfgopt="--gnulib-srcdir=gnulib/ --no-git"
-	[ -f "bootstrap" ] && x_ ./bootstrap $_cfgopt
+	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh
-	[ "$project" = "grub" ] && _cfgopt="--with-platform=coreboot"
-	[ -f "configure" ] && x_ ./configure $_cfgopt; return 0
+	[ -f "configure" ] && x_ ./configure $autoconfargs; return 0
 	) || err "can't bootstrap project: $codedir"
 }
 
