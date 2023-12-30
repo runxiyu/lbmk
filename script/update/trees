@@ -12,7 +12,7 @@ set -u -e
 
 eval "$(setvars "" xarch cfgsdir codedir config config_name xlang mode \
     elfdir listfile project target target_dir targets tree _f target1 \
-    bootstrapargs autoconfargs)"
+    bootstrapargs autoconfargs cmakedir)"
 
 main()
 {
@@ -53,14 +53,6 @@ build_projects()
 
 	codedir="src/${project}"
 	[ -d "$codedir" ] || x_ ./update trees -f "$project"
-
-	if [ "$project" = "uefitool" ]; then
-	(
-		x_ cd src/uefitool
-		cmake UEFIExtract/ || [ -f Makefile ] || \
-		    err "build_projects: !cmake UEFIExtract/"
-	) || err "can't build cmake on uefiextract"
-	fi
 
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
@@ -214,6 +206,7 @@ handle_makefile()
 
 run_make_command()
 {
+	check_cmake "$codedir"
 	[ -z "$mode" ] && check_autoconf "$codedir"
 	check_makefile "$codedir" || return 1
 
@@ -228,15 +221,27 @@ run_make_command()
 	make -C "$codedir" distclean 2>/dev/null || :
 }
 
+check_cmake()
+{
+	[ -z "${cmakedir}" ] || \
+		check_makefile "${1}" || \
+		    cmake -B "${1}" "${1}/${cmakedir}" || \
+		    check_makefile "${1}" || \
+		    err "check_cmake ${1}: can't cmake ${cmakedir}"
+	[ -z "${cmakedir}" ] || check_makefile "${1}" || \
+		err "check_cmake ${1}: could not generate Makefile"
+	return 0
+}
+
 check_autoconf()
 {
 	(
 	_cfgopt=""
-	cd "${codedir}" || err "!cd $codedir"
+	cd "${1}" || err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh
 	[ -f "configure" ] && x_ ./configure $autoconfargs; return 0
-	) || err "can't bootstrap project: $codedir"
+	) || err "can't bootstrap project: $1"
 }
 
 check_makefile()
