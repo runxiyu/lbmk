@@ -144,6 +144,8 @@ build_grub_payload()
 	[ "$payload_grub" != "y" ] && [ "$payload_seabios_withgrub" != "y" ] \
 	    && [ "${payload_seabios_grubonly}" != "y" ] && return 0
 
+	x_ mkdir -p elf/grub
+
 	for keymapfile in "${kmapdir}"/*.gkb; do
 		[ -f "${keymapfile}" ] || continue
 
