@@ -42,16 +42,12 @@ fetch_config()
 
 load_target_config()
 {
-	[ -f "${cfgsdir}/${1}/target.cfg" ] || \
-		err "${_xm} check: target.cfg does not exist"
+	[ -f "$cfgsdir/$1/target.cfg" ] || err "$1: target.cfg missing"
 	[ -f "${cfgsdir}/${1}/seen" ] && \
 		err "${_xm} check: infinite loop in tree definitions"
 
-	. "${cfgsdir}/${1}/target.cfg" || \
-	    err "load_target_config ${cfgsdir}/${1}: cannot load config"
-
-	touch "${cfgsdir}/${1}/seen" || \
-	    err "load_config $cfgsdir/$1: !mk seen"
+	. "$cfgsdir/$1/target.cfg" || err "load_target_config !$cfgsdir/$1"
+	touch "$cfgsdir/$1/seen" || err "load_config $cfgsdir/$1: !mk seen"
 }
 
 prepare_new_tree()
@@ -101,23 +97,16 @@ git_prep()
 	_patchdir="$1"
 	_loc="$2"
 
-	git -C "$tmpgit" reset --hard $rev || \
-	    err "!git -C $_patchdir reset $rev"
+	git -C "$tmpgit" reset --hard $rev || err "git -C $_loc: !reset $rev"
 	git_am_patches "$tmpgit" "$_patchdir" || err "!am $_loc $_patchdir"
 
-	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
-		git_submodule_update "$tmpgit"
-	[ $# -gt 2 ] && git_submodule_update "$tmpgit"	
+	if [ "$project" != "coreboot" ] || [ $# -gt 2 ]; then
+		[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
+		    update --init --checkout || err "git_prep $_loc: !submod"
+	fi
 
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
 	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
-}
-
-git_submodule_update()
-{
-	[ ! -f "${1}/.gitmodules" ] || \
-		git -C "${1}" submodule update --init --checkout || \
-		    err "git_sub ${1}: can't download submodules"; return 0
 }
 
 git_am_patches()
