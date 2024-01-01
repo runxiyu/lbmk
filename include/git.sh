@@ -115,9 +115,9 @@ clone_project()
 git_patch()
 {
 	git -C "${1}" reset --hard ${rev} || err "!git reset ${1} <- ${rev}"
-	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
-		git_submodule_update "${1}"
 	git_am_patches "$1" "$2" || err "git_patch $project: patch fail"
+	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
+		git_submodule_update "${1}"; return 0
 }
 
 git_submodule_update()
