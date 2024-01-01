@@ -58,13 +58,9 @@ prepare_new_tree()
 {
 	printf "Creating %s tree %s (%s)\n" "$project" "$tree" "$_target"
 
-	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
+	cp -R "src/${project}/${project}" "${tmpgit}" || \
 	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
-	git_patch "$tmp_git_dir" "$PWD/$cfgsdir/$tree/patches"
-	git_submodule_update "${tmp_git_dir}"
-
-	mv "${tmp_git_dir}" "src/${project}/${tree}" || \
-	    err "prepare_new_tree ${project}/${tree}: can't copy tmpclone"
+	git_prep "$PWD/$cfgsdir/$tree/patches" "src/$project/$tree" "update"
 }
 
 fetch_project_repo()
@@ -76,7 +72,7 @@ fetch_project_repo()
 	[ -z "${depend}" ] || for d in ${depend} ; do
 		x_ ./update trees -f ${d}
 	done
-	rm -Rf "${tmp_git_dir}" || err "fetch_repo: !rm -Rf ${tmp_git_dir}"
+	rm -Rf "${tmpgit}" || err "fetch_repo: !rm -Rf ${tmpgit}"
 }
 
 verify_config()
@@ -95,23 +91,29 @@ clone_project()
 		return 0
 	fi
 
-	git clone ${url} "${tmp_git_dir}" || \
-	    git clone ${bkup_url} "${tmp_git_dir}" || \
-	    err "clone_project: could not download ${project}"
-	git_patch "${tmp_git_dir}" "${PWD}/config/${project}/patches"
-
-	x_ rm -Rf "${loc}"
-	[ "${loc}" = "${loc%/*}" ] || x_ mkdir -p "${loc%/*}"
-	mv "${tmp_git_dir}" "${loc}" || \
-	    err "clone_project: !mv ${tmp_git_dir} ${loc}"
+	git clone $url "$tmpgit" || git clone $bkup_url "$tmpgit" \
+	    || err "clone_project: could not download ${project}"
+	git_prep "$PWD/config/$project/patches" "$loc"
 }
 
-git_patch()
+git_prep()
 {
-	git -C "${1}" reset --hard ${rev} || err "!git reset ${1} <- ${rev}"
-	git_am_patches "$1" "$2" || err "git_patch $project $1 $2: patch fail"
+	_patchdir="$1"
+	_loc="$2"
+
+	git -C "$tmpgit" reset --hard $rev || \
+	    err "!git -C $_patchdir reset $rev"
+	git_am_patches "$tmpgit" "$_patchdir" || \
+	    err "git_prep $project $_patchdir: patchfail"
+
 	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
-		git_submodule_update "${1}"; return 0
+		git_submodule_update "$tmpgit"
+	[ $# -gt 2 ] && git_submodule_update "$tmpgit"	
+
+	rm -Rf "$_loc" || err "git_prep: !rm -Rf $_loc"
+	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
+	mv "$tmpgit" "$_loc" || \
+	    err "git_prep $project $_patchdir: !mv $tmpgit $_loc"
 }
 
 git_submodule_update()
