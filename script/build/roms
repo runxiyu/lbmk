@@ -132,7 +132,7 @@ configure_dependencies()
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
 		x_ ./update trees -b memtest86plus
 
-	for bt in dependency_seabios dependency_grub dependency_uboot target; do
+	for bt in dependency_seabios grub_payload dependency_uboot target; do
 		eval "build_${bt}"
 	done
 }
@@ -148,43 +148,23 @@ build_dependency_seabios()
 	x_ ./update trees -b seabios
 }
 
-build_dependency_grub()
+build_grub_payload()
 {
 	[ "$payload_grub" != "y" ] && [ "$payload_seabios_withgrub" != "y" ] \
 	    && [ "${payload_seabios_grubonly}" != "y" ] && return 0
 
-	rebuild_grub="n"
-	[ -f "${grubelf}" ] || rebuild_grub="y"
 	for keymapfile in "${kmapdir}"/*.gkb; do
 		[ -f "${keymapfile}" ] || continue
 
 		keymaps="${keymaps} ${keymapfile}"
 		keymap="${keymapfile##*/}"
 		keymap="${keymap%.gkb}"
-		[ ! -f "elf/grub/keymap_${keymap}.cfg" ] && \
-		    rebuild_grub="y"
+		[ -f "elf/grub/keymap_$keymap.cfg" ] || printf "keymap %s\n" \
+		    "$keymap" > "elf/grub/keymap_$keymap.cfg" || err "!key"; :
 	done
 	[ -n "${_keyboard}" ] && keymaps="${kmapdir}/${_keyboard}.gkb"
-	[ "$rebuild_grub" = "y" ] || return 0
-	x_ ./update trees -b grub
-	remkdir elf/grub
-	build_keymap_configs
-	build_grub_payload
-}
+	[ -f "src/grub/grub-mkstandalone" ] || x_ ./update trees -b grub
 
-build_keymap_configs()
-{
-	for keylayoutfile in "${grubcfgsdir}/keymap/"*.gkb; do
-		[ -f "${keylayoutfile}" ] || continue
-		keymap="${keylayoutfile##"${grubcfgsdir}/keymap/"}"
-		keymap="${keymap%.gkb}"
-		printf "keymap %s\n" "${keymap}" > \
-		    "elf/grub/keymap_${keymap}.cfg" || err "!insert keymap"
-	done
-}
-
-build_grub_payload()
-{
 	./src/grub/grub-mkstandalone \
 	    --grub-mkimage="src/grub/grub-mkimage" \
 	    -O i386-coreboot \
