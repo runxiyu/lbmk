@@ -15,7 +15,6 @@ seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 grub_background="background1280x800.png"
 grubelf="elf/grub/grub.elf"
 cfgsdir="config/coreboot"
-kmapdir="config/grub/keymap"
 
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
@@ -146,7 +145,7 @@ build_grub_payload()
 
 	x_ mkdir -p elf/grub
 
-	for keymapfile in "${kmapdir}"/*.gkb; do
+	for keymapfile in config/grub/keymap/*.gkb; do
 		[ -f "${keymapfile}" ] || continue
 
 		keymaps="${keymaps} ${keymapfile}"
