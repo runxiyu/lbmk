@@ -62,12 +62,8 @@ prepare_new_tree()
 	remkdir "${tmp_git_dir%/*}"
 	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
 	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
-	git_reset_rev "${tmp_git_dir}" "${rev}"
-	git_am_patches "${tmp_git_dir}" "$PWD/$cfgsdir/$tree/patches" || \
-	    err "prepare_new_tree ${project}/${tree}: patch fail"
-	[ ! -f "${tmp_git_dir}/.gitmodules" ] || \
-		git -C "${tmp_git_dir}" submodule update --init --checkout \
-		    || err "prepare_new_tree ${project}/${tree}: !submodules"
+	git_patch "$tmp_git_dir" "$PWD/$cfgsdir/$tree/patches"
+	git_submodule_update "${tmp_git_dir}"
 	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	mv "${tmp_git_dir}" "src/${project}/${tree}" || \
@@ -107,9 +103,7 @@ clone_project()
 	git clone ${url} "${tmp_git_dir}" || \
 	    git clone ${bkup_url} "${tmp_git_dir}" || \
 	    err "clone_project: could not download ${project}"
-	git_reset_rev "${tmp_git_dir}" "${rev}"
-	git_am_patches "${tmp_git_dir}" "${PWD}/config/${project}/patches" \
-	    || err "clone_project ${project} ${loc}: patch fail"
+	git_patch "${tmp_git_dir}" "${PWD}/config/${project}/patches"
 	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	x_ rm -Rf "${loc}"
@@ -118,14 +112,19 @@ clone_project()
 	    err "clone_project: !mv ${tmp_git_dir} ${loc}"
 }
 
-git_reset_rev()
+git_patch()
 {
-	git -C "${1}" reset --hard ${2} || err "!git reset ${1} <- ${2}"
-	if [ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
-	    [ -f "${1}/.gitmodules" ]; then
+	git -C "${1}" reset --hard ${rev} || err "!git reset ${1} <- ${rev}"
+	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
+		git_submodule_update "${1}"
+	git_am_patches "$1" "$2" || err "git_patch $project: patch fail"
+}
+
+git_submodule_update()
+{
+	[ ! -f "${1}/.gitmodules" ] || \
 		git -C "${1}" submodule update --init --checkout || \
-		    err "git_reset_rev ${1}: can't download submodules"
-	fi
+		    err "git_sub ${1}: can't download submodules"; return 0
 }
 
 git_am_patches()
