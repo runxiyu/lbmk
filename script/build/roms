@@ -58,6 +58,7 @@ main()
 		board="${x}"
 		configure_target
 		build_payloads
+		build_target_mainboard
 		[ -d "bin/${board}" ] || continue
 		targets="* bin/${board}\n${targets}"
 	done
@@ -133,7 +134,7 @@ build_payloads()
 		x_ ./update trees -b memtest86plus
 
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
-	for bt in grub_payload dependency_uboot target; do
+	for bt in grub_payload dependency_uboot; do
 		eval "build_${bt}"
 	done
 }
@@ -193,7 +194,7 @@ build_uboot_payload()
 	err "Can't find u-boot build for board, $board";
 }
 
-build_target()
+build_target_mainboard()
 {
 	rm -f "${romdir}/"* || err "!prepare, rm files, ${romdir}"
 
