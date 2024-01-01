@@ -134,7 +134,7 @@ build_payloads()
 		x_ ./update trees -b memtest86plus
 
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
-	for bt in grub_payload dependency_uboot; do
+	for bt in grub_payload uboot_payload; do
 		eval "build_${bt}"
 	done
 }
