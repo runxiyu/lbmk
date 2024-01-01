@@ -156,6 +156,7 @@ build_grub_payload()
 		    "$keymap" > "elf/grub/keymap_$keymap.cfg" || err "!key"; :
 	done
 	[ -n "${_keyboard}" ] && keymaps="${kmapdir}/${_keyboard}.gkb"
+	[ -f "$grubelf" ] && return 0
 	[ -f "src/grub/grub-mkstandalone" ] || x_ ./update trees -b grub
 
 	./src/grub/grub-mkstandalone \
@@ -180,7 +181,7 @@ build_grub_payload()
 	    "${layoutdir}/usqwerty.gkb=${grubcfgsdir}/keymap/usqwerty.gkb" \
 	    "/boot/grub/grub.cfg=${grubcfgsdir}/config/grub_memdisk.cfg" \
 	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" || \
-	    err "build_grub_elf: cannot build grub payload (grub-mkstandalone)"
+	    err "could not generate grub.elf"
 }
 
 build_uboot_payload()
