@@ -132,20 +132,10 @@ configure_dependencies()
 	[ "${payload_memtest}" != "y" ] || [ -f "src/${memtest_bin}" ] || \
 		x_ ./update trees -b memtest86plus
 
-	for bt in dependency_seabios grub_payload dependency_uboot target; do
+	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
+	for bt in grub_payload dependency_uboot target; do
 		eval "build_${bt}"
 	done
-}
-
-build_dependency_seabios()
-{
-	[ "${payload_seabios}" = "y" ] || return 0
-	[ -f "${seavgabiosrom}" ] && \
-	    [ -f elf/seabios/default/libgfxinit/bios.bin.elf ] && \
-	    [ -f elf/seabios/default/vgarom/bios.bin.elf ] && \
-	    [ -f elf/seabios/default/normal/bios.bin.elf ] && return 0
-
-	x_ ./update trees -b seabios
 }
 
 build_grub_payload()
