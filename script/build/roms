@@ -133,16 +133,14 @@ build_payloads()
 		x_ ./update trees -b memtest86plus
 
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
-	for bt in grub_payload uboot_payload; do
-		eval "build_${bt}"
-	done
+	if [ "$payload_grub" = "y" ] || [ "$payload_seabios_withgrub" = "y" ] \
+	    || [ "$payload_seabios_grubonly" = "y" ]; then build_grub_payload
+	fi
+	[ "${payload_uboot}" = "y" ] && build_uboot_payload; return 0
 }
 
 build_grub_payload()
 {
-	[ "$payload_grub" != "y" ] && [ "$payload_seabios_withgrub" != "y" ] \
-	    && [ "${payload_seabios_grubonly}" != "y" ] && return 0
-
 	x_ mkdir -p elf/grub
 
 	for keymapfile in config/grub/keymap/*.gkb; do
@@ -185,8 +183,6 @@ build_grub_payload()
 
 build_uboot_payload()
 {
-	[ "${payload_uboot}" = "y" ] || return 0
-
 	x_ ./update trees -b u-boot ${board}
 	ubdir="elf/u-boot/${board}/${uboot_config}"
 	ubootelf="${ubdir}/u-boot.elf"
