@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# SPDX-FileCopyrightText: 2020-2023 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2020-2024 Leah Rowe <leah@libreboot.org>
 
 vendir="vendorfiles"
 appdir="${vendir}/app"
