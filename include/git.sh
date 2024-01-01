@@ -11,7 +11,6 @@ fetch_project_trees()
 	_target="${target}"
 	[ -d "src/${project}/${project}" ] || fetch_from_upstream
 	fetch_config
-	[ -z "${rev}" ] && err "fetch_project_trees $target: undefined rev"
 	if [ -d "src/${project}/${tree}" ]; then
 		printf "download/%s %s (%s): exists\n" \
 		    "${project}" "${tree}" "${_target}" 1>&2
@@ -62,20 +61,14 @@ prepare_new_tree()
 fetch_project_repo()
 {
 	scan_config "${project}" "config/git" "err"
-	verify_config
+	[ -z "${loc+x}" ] && err "fetch_project_repo $project: loc not set"
+	[ -z "${url+x}" ] && err "fetch_project_repo $project: url not set"
 
 	clone_project
 	[ -z "${depend}" ] || for d in ${depend} ; do
 		x_ ./update trees -f ${d}
 	done
 	rm -Rf "${tmpgit}" || err "fetch_repo: !rm -Rf ${tmpgit}"
-}
-
-verify_config()
-{
-	[ -z "${rev+x}" ] && err 'verify_config: rev not set'
-	[ -z "${loc+x}" ] && err 'verify_config: loc not set'
-	[ -z "${url+x}" ] && err 'verify_config: url not set'; return 0
 }
 
 clone_project()
@@ -97,6 +90,7 @@ git_prep()
 	_patchdir="$1"
 	_loc="$2"
 
+	[ -z "${rev+x}" ] && err "git_prep $_loc: rev not set"
 	git -C "$tmpgit" reset --hard $rev || err "git -C $_loc: !reset $rev"
 	git_am_patches "$tmpgit" "$_patchdir" || err "!am $_loc $_patchdir"
 
