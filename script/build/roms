@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2014-2016,2020,2021,2023 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2014-2016,2020,2021,2023,2024 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2021,2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
@@ -57,7 +57,7 @@ main()
 		grub_background="background1280x800.png"
 		board="${x}"
 		configure_target
-		configure_dependencies
+		build_payloads
 		[ -d "bin/${board}" ] || continue
 		targets="* bin/${board}\n${targets}"
 	done
@@ -118,7 +118,7 @@ configure_target()
 	eval "payload_${_payload}=y"
 }
 
-configure_dependencies()
+build_payloads()
 {
 	romdir="bin/${board}"
 	cbdir="src/coreboot/${board}"
@@ -180,7 +180,7 @@ build_grub_payload()
 	    err "build_grub_elf: cannot build grub payload (grub-mkstandalone)"
 }
 
-build_dependency_uboot()
+build_uboot_payload()
 {
 	[ "${payload_uboot}" = "y" ] || return 0
 
