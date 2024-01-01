@@ -4,7 +4,7 @@
 
 # This file is only used by update/project/trees
 
-eval "$(setvars "" _target rev _xm loc url bkup_url depend patchfail)"
+eval "$(setvars "" _target rev _xm loc url bkup_url depend)"
 
 fetch_project_trees()
 {
@@ -62,7 +62,6 @@ prepare_new_tree()
 	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
 	git_patch "$tmp_git_dir" "$PWD/$cfgsdir/$tree/patches"
 	git_submodule_update "${tmp_git_dir}"
-	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	mv "${tmp_git_dir}" "src/${project}/${tree}" || \
 	    err "prepare_new_tree ${project}/${tree}: can't copy tmpclone"
@@ -100,7 +99,6 @@ clone_project()
 	    git clone ${bkup_url} "${tmp_git_dir}" || \
 	    err "clone_project: could not download ${project}"
 	git_patch "${tmp_git_dir}" "${PWD}/config/${project}/patches"
-	[ "${patchfail}" = "y" ] && err "PATCH FAIL"
 
 	x_ rm -Rf "${loc}"
 	[ "${loc}" = "${loc%/*}" ] || x_ mkdir -p "${loc%/*}"
@@ -111,7 +109,7 @@ clone_project()
 git_patch()
 {
 	git -C "${1}" reset --hard ${rev} || err "!git reset ${1} <- ${rev}"
-	git_am_patches "$1" "$2" || err "git_patch $project: patch fail"
+	git_am_patches "$1" "$2" || err "git_patch $project $1 $2: patch fail"
 	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
 		git_submodule_update "${1}"; return 0
 }
@@ -125,20 +123,12 @@ git_submodule_update()
 
 git_am_patches()
 {
-	sdir="${1}" # assumed to be absolute path
-	patchdir="${2}" # ditto
-	for patch in "${patchdir}/"*; do
-		[ -L "${patch}" ] && continue
-		[ -f "${patch}" ] || continue
-		git -C "${sdir}" am "${patch}" || patchfail="y"
-		[ "${patchfail}" != "y" ] && continue
-		git -C "$sdir" am --abort || err  "$sdir: !git am --abort"
-		err  "!git am ${patch} -> ${sdir}"
+	for _patch in "$2/"*; do
+		[ -L "$_patch" ] || [ ! -f "$_patch" ] || git -C "$1" am \
+		    "$_patch" || err "git_am $1 $2: !git am $_patch"; continue
 	done
-	for patches in "${patchdir}/"*; do
-		[ -L "${patches}" ] && continue
-		[ ! -d "${patches}" ] && continue
-		git_am_patches "${sdir}" "${patches}"
+	for _patches in "$2/"*; do
+		[ ! -L "$_patches" ] && [ -d "$_patches" ] && \
+			git_am_patches "$1" "$_patches"; continue
 	done
-	[ "${patchfail}" = "y" ] && return 1; return 0
 }
