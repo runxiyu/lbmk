@@ -103,17 +103,14 @@ git_prep()
 
 	git -C "$tmpgit" reset --hard $rev || \
 	    err "!git -C $_patchdir reset $rev"
-	git_am_patches "$tmpgit" "$_patchdir" || \
-	    err "git_prep $project $_patchdir: patchfail"
+	git_am_patches "$tmpgit" "$_patchdir" || err "!am $_loc $_patchdir"
 
 	[ "$project" != "coreboot" ] && [ "$project" != "u-boot" ] && \
 		git_submodule_update "$tmpgit"
 	[ $# -gt 2 ] && git_submodule_update "$tmpgit"	
 
-	rm -Rf "$_loc" || err "git_prep: !rm -Rf $_loc"
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
-	mv "$tmpgit" "$_loc" || \
-	    err "git_prep $project $_patchdir: !mv $tmpgit $_loc"
+	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
 }
 
 git_submodule_update()
