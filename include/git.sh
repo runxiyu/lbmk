@@ -5,7 +5,6 @@
 # This file is only used by update/project/trees
 
 eval "$(setvars "" _target rev _xm loc url bkup_url depend patchfail)"
-tmp_git_dir="${PWD}/tmp/gitclone"
 
 fetch_project_trees()
 {
@@ -59,7 +58,6 @@ prepare_new_tree()
 {
 	printf "Creating %s tree %s (%s)\n" "$project" "$tree" "$_target"
 
-	remkdir "${tmp_git_dir%/*}"
 	cp -R "src/${project}/${project}" "${tmp_git_dir}" || \
 	    err "prepare_new_tree ${project}/${tree}: can't make tmpclone"
 	git_patch "$tmp_git_dir" "$PWD/$cfgsdir/$tree/patches"
@@ -91,8 +89,6 @@ verify_config()
 
 clone_project()
 {
-	remkdir "${tmp_git_dir%/}"
-
 	loc="${loc#src/}"
 	loc="src/${loc}"
 	if [ -d "${loc}" ]; then

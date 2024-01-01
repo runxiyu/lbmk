@@ -37,6 +37,7 @@ main()
 	elfdir="elf/${project}"
 	cfgsdir="config/${project}"
 
+	remkdir "${tmp_git_dir%/*}"
 	check_project
 
 	_cmd="build_projects"

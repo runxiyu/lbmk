@@ -12,6 +12,7 @@ cbfstool="cbutils/default/cbfstool"
 grubcfgsdir="config/grub"
 layoutdir="/boot/grub/layouts"
 . "${grubcfgsdir}/modules.list"
+tmp_git_dir="${PWD}/tmp/gitclone"
 
 eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
