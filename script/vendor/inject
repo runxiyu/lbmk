@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2023-2024 Leah Rowe <leah@libreboot.org>
 
 . "include/err.sh"
 . "include/option.sh"
 
 nvmutil="util/nvmutil/nvm"
 
-eval "$(setvars "" archive rom modifygbe nukemode release new_mac)"
+eval "$(setvars "" archive rom modifygbe nukemode release new_mac tree)"
 
 main()
 {
@@ -51,7 +51,11 @@ check_board()
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	[ -d "$boarddir" ] || err "check_board: board $board missing"; return 0
+	[ -d "$boarddir" ] || err "check_board: board $board missing"
+	[ -f "$boarddir/target.cfg" ] || \
+		err "check_board $board: target.cfg missing"
+	. "$boarddir/target.cfg" 2>/dev/null
+	[ -z "$tree" ] && err "check_board $board: tree undefined"; return 0
 }
 
 check_release()
@@ -84,9 +88,12 @@ detect_board()
 
 build_dependencies()
 {
-	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot default
+	cbdir="src/coreboot/$tree"
+	cbfstool="cbutils/$tree/cbfstool"
+	ifdtool="cbutils/$tree/ifdtool"
+	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot $tree
 	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
-		x_ ./update trees -b coreboot utils default
+		x_ ./update trees -b coreboot utils $tree
 	fi
 	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
@@ -144,6 +151,8 @@ patch_rom()
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && \
 		inject "mrc.bin" "${CONFIG_MRC_FILE}" "mrc" "0xfffa0000"
+	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && \
+		inject "fallback/refcode" "$CONFIG_REFCODE_BLOB_FILE" "stage"
 	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && \
 		inject "IFD" "${CONFIG_ME_BIN_PATH}" "me"
 	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && \
@@ -200,9 +209,14 @@ inject()
 		fi
 	else
 		if [ "${nukemode}" != "nuke" ]; then
-			"$cbfstool" "$rom" add -f "$_dest" \
-			    -n "$cbfsname" -t $_t $_offset || \
-			    err "inject $rom: can't insert $_t file $_dest"
+			if [ "$_t" = "stage" ]; then # broadwell refcode
+				"$cbfstool" "$rom" add-stage -f "$_dest" \
+				    -n "$cbfsname" -t stage -c lzma
+			else
+				"$cbfstool" "$rom" add -f "$_dest" \
+				    -n "$cbfsname" -t $_t $_offset || \
+				    err "$rom: can't insert $_t file $_dest"
+			fi
 		else
 			"$cbfstool" "$rom" remove -n "$cbfsname" || \
 			    err "inject $rom: can't remove $cbfsname"

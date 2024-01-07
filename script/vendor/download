@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2023-2024 Leah Rowe <leah@libreboot.org>
 
 . "include/err.sh"
 . "include/option.sh"
@@ -14,16 +14,15 @@ _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 _7ztest="a"
 
 e6400_unpack="${PWD}/src/bios_extract/dell_inspiron_1100_unpacker.py"
-kbc1126_ec_dump="${PWD}/${cbdir}/util/kbc1126/kbc1126_ec_dump"
 me7updateparser="${PWD}/util/me7_update_parser/me7_update_parser.py"
-mecleaner="${PWD}/${cbdir}/util/me_cleaner/me_cleaner.py"
 pfs_extract="${PWD}/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="${PWD}/src/uefitool/uefiextract"
 
 eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
-    is_rom)"
+    is_rom tree mecleaner kbc1126_ec_dump MRC_refcode_cbtree cbfstoolref \
+    MRC_refcode_gbe)"
 
 main()
 {
@@ -50,6 +49,13 @@ detect_firmware()
 
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
+	. "${boarddir}/target.cfg" 2>/dev/null
+	[ -z "$tree" ] && err "detect_firmware $boarddir: tree undefined"
+	cbdir="src/coreboot/$tree"
+	cbfstool="cbutils/$tree/cbfstool"
+
+	mecleaner="${PWD}/${cbdir}/util/me_cleaner/me_cleaner.py"
+	kbc1126_ec_dump="${PWD}/${cbdir}/util/kbc1126/kbc1126_ec_dump"
 
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
@@ -66,9 +72,14 @@ build_dependencies()
 		x_ ./update trees -f "${d}"
 	done
 	[ -f "${uefiextract}" ] || x_ ./update trees -b uefitool
-	[ -f "${kbc1126_ec_dump}" ] || x_ make -C "${cbdir}/util/kbc1126"
+	[ ! -d "${kbc1126_ec_dump%/*}" ] || [ -f "${kbc1126_ec_dump}" ] || x_ \
+	    make -C "${cbdir}/util/kbc1126"
+	[ -n "$MRC_refcode_cbtree" ] && \
+		cbfstoolref="cbutils/$MRC_refcode_cbtree/cbfstool"
+	[ -z "$cbfstoolref" ] || [ -f "$cbfstoolref" ] || \
+	    x_ ./update trees -b coreboot utils $MRC_refcode_cbtree
 	[ -f "${cbfstool}" ] && [ -f "${ifdtool}" ] && return 0
-	x_ ./update trees -b coreboot utils default
+	x_ ./update trees -b coreboot utils $tree
 }
 
 download_vendorfiles()
@@ -87,6 +98,10 @@ download_vendorfiles()
 		    "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 	[ -z "${CONFIG_HAVE_MRC}" ] && return 0
 	fetch "mrc" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" "$CONFIG_MRC_FILE"
+
+	# in case only mrc downloaded before, in a pair of mrc/refcode:
+	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && fetch "ref" "$MRC_url" \
+	    "$MRC_url_bkup" "$MRC_hash" "$CONFIG_REFCODE_BLOB_FILE"; return 0
 }
 
 fetch()
@@ -156,6 +171,9 @@ mkdirs()
 
 extract_intel_me()
 {
+	[ ! -f "$mecleaner" ] && \
+		err "extract_intel_me $cbdir: me_cleaner missing"
+
 	_me="${PWD}/${_dest}" # must always be an absolute path
 	cdir="${PWD}/${appdir}" # must always be an absolute path
 	[ $# -gt 0 ] && _me="${1}" && cdir="${2}"
@@ -198,6 +216,8 @@ extract_archive()
 
 extract_kbc1126ec()
 {
+	[ ! -f "$kbc1126_ec_dump" ] && \
+		err "extract_kbc1126ec $cbdir: kbc1126_ec_dump missing"
 	(
 	x_ cd "${appdir}/"
 	mv Rompaq/68*.BIN ec.bin || :
