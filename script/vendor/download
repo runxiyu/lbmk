@@ -21,8 +21,7 @@ uefiextract="${PWD}/src/uefitool/uefiextract"
 eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
-    is_rom tree mecleaner kbc1126_ec_dump MRC_refcode_cbtree cbfstoolref \
-    MRC_refcode_gbe)"
+    tree mecleaner kbc1126_ec_dump MRC_refcode_cbtree cbfstoolref MRC_refcode_gbe)"
 
 main()
 {
@@ -115,16 +114,12 @@ fetch()
 	[ "${5#/}" = "$5" ] || err "fetch: absolute path not allowed: '$5'"
 	_dest="${5##*../}"
 	_dl="${vendir}/cache/${dlsum}"
-	eval "$(setvars "n" dl_fail is_rom)"
+	dl_fail="n"
 
 	x_ mkdir -p "${_dl%/*}"
 
-	if [ "${dl}" = "rom" ] || [ "${dl_bkup}" = "rom" ]; then
-		is_rom="y"
-	else
-		dl_fail="y"
-		vendor_checksum "${dlsum}" "${_dl}" || dl_fail="n"
-	fi
+	dl_fail="y"
+	vendor_checksum "${dlsum}" "${_dl}" || dl_fail="n"
 	for url in "${dl}" "${dl_bkup}"; do
 		[ "${dl_fail}" = "n" ] && break
 		[ -z "${url}" ] && continue
@@ -159,14 +154,9 @@ mkdirs()
 	fi
 	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
 	remkdir "${appdir}"
-	if [ "${is_rom}" = "y" ]; then
-		cp "${_dl}" "${appdir}" || \
-		    err "mkdirs copyrom ${_dl}: can't copy to appdir"
-	else
-		extract_archive "${_dl}" "${appdir}" || \
-		    [ "${2}" = "extract_e6400vga" ] || \
-		    err "mkdirs ${1} ${2}: !extract"
-	fi
+	extract_archive "${_dl}" "${appdir}" || \
+	    [ "${2}" = "extract_e6400vga" ] || \
+	    err "mkdirs ${1} ${2}: !extract"
 }
 
 extract_intel_me()
