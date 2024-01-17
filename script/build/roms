@@ -152,7 +152,7 @@ build_grub_payload()
 		[ -f "elf/grub/keymap_$keymap.cfg" ] || printf "keymap %s\n" \
 		    "$keymap" > "elf/grub/keymap_$keymap.cfg" || err "!key"; :
 	done
-	[ -n "${_keyboard}" ] && keymaps="${kmapdir}/${_keyboard}.gkb"
+	[ -n "$_keyboard" ] && keymaps="${grubcfgsdir}/keymap/${_keyboard}.gkb"
 	[ -f "$grubelf" ] && return 0
 	[ -f "src/grub/grub-mkstandalone" ] || x_ ./update trees -b grub
 
