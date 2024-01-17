@@ -147,12 +147,8 @@ build_grub_payload()
 		[ -f "${keymapfile}" ] || continue
 
 		keymaps="${keymaps} ${keymapfile}"
-		keymap="${keymapfile##*/}"
-		keymap="${keymap%.gkb}"
-		[ -f "elf/grub/keymap_$keymap.cfg" ] || printf "keymap %s\n" \
-		    "$keymap" > "elf/grub/keymap_$keymap.cfg" || err "!key"; :
 	done
-	[ -z "$_keyboard" ] || [ -f "$grubcfgsdir/keymap/$_keyboard.gkb" ] && \
+	[ -z "$_keyboard" ] || [ -f "$grubcfgsdir/keymap/$_keyboard.gkb" ] || \
 		err "build_grub_payload: $_keyboard layout not defined"
 	[ -n "$_keyboard" ] && keymaps="${grubcfgsdir}/keymap/${_keyboard}.gkb"
 	[ -f "$grubelf" ] && return 0
@@ -166,18 +162,6 @@ build_grub_payload()
 	    --fonts= --themes= --locales=  \
 	    --modules="${grub_modules}" \
 	    --install-modules="${grub_install_modules}" \
-	    "${layoutdir}/colemak.gkb=${grubcfgsdir}/keymap/colemak.gkb" \
-	    "${layoutdir}/deqwertz.gkb=${grubcfgsdir}/keymap/deqwertz.gkb" \
-	    "${layoutdir}/esqwerty.gkb=${grubcfgsdir}/keymap/esqwerty.gkb" \
-	    "${layoutdir}/frazerty.gkb=${grubcfgsdir}/keymap/frazerty.gkb" \
-	    "${layoutdir}/frdvbepo.gkb=${grubcfgsdir}/keymap/frdvbepo.gkb" \
-	    "${layoutdir}/itqwerty.gkb=${grubcfgsdir}/keymap/itqwerty.gkb" \
-	    "${layoutdir}/svenska.gkb=${grubcfgsdir}/keymap/svenska.gkb" \
-	    "${layoutdir}/trqwerty.gkb=${grubcfgsdir}/keymap/trqwerty.gkb" \
-	    "${layoutdir}/ukdvorak.gkb=${grubcfgsdir}/keymap/ukdvorak.gkb" \
-	    "${layoutdir}/ukqwerty.gkb=${grubcfgsdir}/keymap/ukqwerty.gkb" \
-	    "${layoutdir}/usdvorak.gkb=${grubcfgsdir}/keymap/usdvorak.gkb" \
-	    "${layoutdir}/usqwerty.gkb=${grubcfgsdir}/keymap/usqwerty.gkb" \
 	    "/boot/grub/grub.cfg=${grubcfgsdir}/config/grub_memdisk.cfg" \
 	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" || \
 	    err "could not generate grub.elf"
@@ -310,8 +294,11 @@ build_grub_roms()
 		[ -f "${keymapfile}" ] || continue
 		keymap="${keymapfile##*/}"
 		keymap="${keymap%.gkb}"
-		tmpgrubrom=$(mkGrubRom "${keymap}" "${tmprom}") || \
-		    err "build_grub_roms ${board}: could not create tmprom"
+
+		tmpgrubrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
+		x_ cp "${tmprom}" "${tmpgrubrom}"
+		x_ "$cbfstool" "$tmpgrubrom" add -f "$keymapfile" \
+		    -n keymap.gkb -t raw
 
 		newrom="${romdir}/${payload1}_${board}_${initmode}_"
 		newrom="${newrom}${displaymode}_${keymap}.rom"
@@ -323,20 +310,6 @@ build_grub_roms()
 			mkSeabiosGrubonlyRom "${tmpgrubrom}" "${newrom}"
 		x_ rm -f "${tmpgrubrom}"
 	done
-}
-
-# make a rom in /tmp/ and then print the path of that ROM
-mkGrubRom() {
-	_keymap="${1}"
-	_cbrom="${2}"
-
-	keymapcfg="elf/grub/keymap_${_keymap}.cfg"
-
-	tmprom=$(mktemp -t coreboot_rom.XXXXXXXXXX)
-	x_ cp "${_cbrom}" "${tmprom}"
-	x_ "$cbfstool" "$tmprom" add -f "$keymapcfg" -n keymap.cfg -t raw
-
-	printf "%s\n" "${tmprom}"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
