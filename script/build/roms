@@ -152,6 +152,8 @@ build_grub_payload()
 		[ -f "elf/grub/keymap_$keymap.cfg" ] || printf "keymap %s\n" \
 		    "$keymap" > "elf/grub/keymap_$keymap.cfg" || err "!key"; :
 	done
+	[ -z "$_keyboard" ] || [ -f "$grubcfgsdir/keymap/$_keyboard.gkb" ] && \
+		err "build_grub_payload: $_keyboard layout not defined"
 	[ -n "$_keyboard" ] && keymaps="${grubcfgsdir}/keymap/${_keyboard}.gkb"
 	[ -f "$grubelf" ] && return 0
 	[ -f "src/grub/grub-mkstandalone" ] || x_ ./update trees -b grub
