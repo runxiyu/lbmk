@@ -38,7 +38,7 @@ fetch_config()
 		_target="${tree}"
 	done
 	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
-		x_ update trees -f "$project" "$tree_depend"; return 0
+		x_ ./update trees -f "$project" "$tree_depend"; return 0
 }
 
 load_target_config()
