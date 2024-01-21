@@ -4,7 +4,7 @@
 
 # This file is only used by update/project/trees
 
-eval "$(setvars "" _target rev _xm loc url bkup_url depend xtree)"
+eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree)"
 
 fetch_project_trees()
 {
@@ -37,6 +37,8 @@ fetch_config()
 		[ "${_target}" = "${tree}" ] && break
 		_target="${tree}"
 	done
+	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
+		x_ update trees -f "$project" "$tree_depend"; return 0
 }
 
 load_target_config()
