@@ -51,6 +51,11 @@ build_release()
 	fetch_trees
 	x_ mv src/docs docs
 	) || err "can't create release files"
+
+	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
+	    --abbrev-commit > "${srcdir}/CHANGELOG" || \
+	    err "build_release $srcdir: couldn't generate changelog"
+
 	(
 	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "$_xm: mksrc"
