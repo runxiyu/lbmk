@@ -4,7 +4,7 @@
 
 # This file is only used by update/project/trees
 
-eval "$(setvars "" _target rev _xm loc url bkup_url depend)"
+eval "$(setvars "" _target rev _xm loc url bkup_url depend xtree)"
 
 fetch_project_trees()
 {
@@ -97,10 +97,21 @@ git_prep()
 	if [ "$project" != "coreboot" ] || [ $# -gt 2 ]; then
 		[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
 		    update --init --checkout || err "git_prep $_loc: !submod"
+		if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && \
+		    [ "$xtree" != "$tree" ]; then
+			(
+			cd "$tmpgit/util" || err "prep $_loc: !cd $tmpgit/util"
+			rm -Rf crossgcc || err "prep $_loc: !rm xgcc"
+			ln -s "../../$xtree/util/crossgcc" crossgcc || \
+			    err "prep $_loc: can't create xgcc symlink"
+			) || err "prep $_loc: can't create xgcc symlink"
+		fi
 	fi
 
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
 	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
+	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
+		x_ ./update project trees -f coreboot "$xtree"; return 0
 }
 
 git_am_patches()
