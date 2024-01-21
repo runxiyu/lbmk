@@ -48,7 +48,9 @@ main()
 build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update trees $_f $@
-	[ "$mode" = "fetch" ] && eval "fetch_project_repo; return 0;"
+
+	[ "$mode" = "fetch" ] && [ ! -f "CHANGELOG" ] && \
+		eval "fetch_project_repo; return 0;"
 
 	load_project_config "$cfgsdir"
 
@@ -121,7 +123,8 @@ handle_defconfig()
 handle_src_tree()
 {
 	target_dir="${cfgsdir}/${target}"
-	[ "$mode" = "fetch" ] && eval "fetch_project_trees; return 1;"
+	[ "$mode" = "fetch" ] && [ ! -f "CHANGELOG" ] && \
+		eval "fetch_project_trees; return 1;"
 
 	load_project_config "$target_dir"
 
