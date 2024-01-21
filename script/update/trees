@@ -12,7 +12,7 @@ set -u -e
 
 eval "$(setvars "" xarch cfgsdir codedir config config_name xlang mode \
     elfdir listfile project target target_dir targets tree _f target1 \
-    bootstrapargs autoconfargs cmakedir makeargs autogenargs)"
+    bootstrapargs autoconfargs cmakedir makeargs autogenargs xtree)"
 
 main()
 {
@@ -159,6 +159,7 @@ check_cross_compiler()
 	for _xarch in $xarch; do
 		cbdir="src/coreboot/${tree}"
 		[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
+		[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
 		x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
 
