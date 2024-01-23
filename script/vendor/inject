@@ -82,7 +82,6 @@ detect_board()
 	*)
 		err "detect_board $filename: could not detect board type"
 	esac	
-	[ -d "$boarddir" ] || err "detect_board: dir \"$boarddir\" missing"
 	printf "%s\n" "${board}"
 }
 
