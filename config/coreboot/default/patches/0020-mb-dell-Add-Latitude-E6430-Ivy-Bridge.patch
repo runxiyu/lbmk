@@ -122,10 +122,10 @@ index 0000000000..e4c799803e
 +	default "Latitude E6430"
 +
 +config PS2K_EISAID
-+	default "DLLK0534"
++	default "PNP0303"
 +
 +config PS2M_EISAID
-+	default "DLL0534"
++	default "PNP0F13"
 +
 +config USBDEBUG_HCD_INDEX
 +	default 2
