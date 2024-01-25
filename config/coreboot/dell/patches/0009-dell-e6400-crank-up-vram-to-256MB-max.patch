@@ -1,7 +1,7 @@
-From 1116145917035a92cc92a34e6a914a9506d17680 Mon Sep 17 00:00:00 2001
+From f318da0563ecb2386ac368e04bad88a8aacbc83d Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Wed, 1 Nov 2023 16:33:11 +0000
-Subject: [PATCH 1/1] dell/e6400: crank up vram to 256MB (max)
+Subject: [PATCH 9/9] dell/e6400: crank up vram to 256MB (max)
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

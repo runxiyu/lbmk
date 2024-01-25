@@ -1,7 +1,7 @@
-From 7d5452bc3358cf82eea48fde312494bcb4ca8101 Mon Sep 17 00:00:00 2001
+From de4eeaf6d44cb05c60c0b0d54b43cdb88686b998 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 12 May 2023 19:55:15 -0600
-Subject: [PATCH 19/22] Remove warning for coreboot images built without a
+Subject: [PATCH 5/9] Remove warning for coreboot images built without a
  payload
 
 I added this in upstream to prevent people from accidentally flashing
@@ -9,19 +9,19 @@ roms without a payload resulting in a no boot situation, but in
 libreboot lbmk handles the payload and thus this warning always comes
 up. This has caused confusion and concern so just patch it out.
 ---
- payloads/Makefile.inc | 13 +------------
+ payloads/Makefile.mk | 13 +------------
  1 file changed, 1 insertion(+), 12 deletions(-)
 
-diff --git a/payloads/Makefile.inc b/payloads/Makefile.inc
-index e735443a76..4f1692a873 100644
---- a/payloads/Makefile.inc
-+++ b/payloads/Makefile.inc
+diff --git a/payloads/Makefile.mk b/payloads/Makefile.mk
+index a2336aa876..4f1692a873 100644
+--- a/payloads/Makefile.mk
++++ b/payloads/Makefile.mk
 @@ -49,16 +49,5 @@ distclean-payloads:
  print-repo-info-payloads:
  	-$(foreach payload, $(PAYLOADS_LIST), $(MAKE) -C $(payload) print-repo-info 2>/dev/null; )
  
 -ifeq ($(CONFIG_PAYLOAD_NONE),y)
--files_added:: warn_no_payload
+-show_notices:: warn_no_payload
 -endif
 -
 -warn_no_payload:

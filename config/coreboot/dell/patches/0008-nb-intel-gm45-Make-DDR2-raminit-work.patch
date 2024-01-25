@@ -1,7 +1,7 @@
-From e047dc3c95063f27517cd6754e9cbe496ac9313d Mon Sep 17 00:00:00 2001
+From f26df5dff7be4b0c9d8dced1cf6ed07472a174c7 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Mon, 10 May 2021 22:40:59 +0200
-Subject: [PATCH] [NOT FOR MERGE] nb/intel/gm45: Make DDR2 raminit work
+Subject: [PATCH 8/9] nb/intel/gm45: Make DDR2 raminit work
 
 List of changes:
  - Update some timing and ODT values
@@ -14,12 +14,16 @@ Tested on Toshiba Satellite A300-1ME with two 2 GiB DDR2-800 SO-DIMMs.
 Change-Id: Ibaee524b8ff652ddadd66cb0eb680401b988ff7c
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
+ src/northbridge/intel/gm45/gm45.h             |  2 +-
+ src/northbridge/intel/gm45/raminit.c          | 90 +++++++++++++++++--
+ .../intel/gm45/raminit_rcomp_calibration.c    | 27 ++++--
+ 3 files changed, 106 insertions(+), 13 deletions(-)
 
 diff --git a/src/northbridge/intel/gm45/gm45.h b/src/northbridge/intel/gm45/gm45.h
-index f28c6d1..bdf0432 100644
+index d929533d92..997f8a0e5a 100644
 --- a/src/northbridge/intel/gm45/gm45.h
 +++ b/src/northbridge/intel/gm45/gm45.h
-@@ -419,7 +419,7 @@
+@@ -419,7 +419,7 @@ void igd_compute_ggc(sysinfo_t *const sysinfo);
  int raminit_read_vco_index(void);
  u32 raminit_get_rank_addr(unsigned int channel, unsigned int rank);
  
@@ -29,10 +33,10 @@ index f28c6d1..bdf0432 100644
  void raminit_receive_enable_calibration(int ddr_type, const timings_t *, const dimminfo_t *);
  void raminit_write_training(const mem_clock_t, const dimminfo_t *, int s3resume);
 diff --git a/src/northbridge/intel/gm45/raminit.c b/src/northbridge/intel/gm45/raminit.c
-index ecada7b..2b8c44e 100644
+index b7e013959a..df8f46fbbc 100644
 --- a/src/northbridge/intel/gm45/raminit.c
 +++ b/src/northbridge/intel/gm45/raminit.c
-@@ -1049,7 +1049,7 @@
+@@ -1047,7 +1047,7 @@ static void rcomp_initialization(const int spd_type, const stepping_t stepping,
  	}
  
  	/* Perform RCOMP calibration for DDR3. */
@@ -41,7 +45,7 @@ index ecada7b..2b8c44e 100644
  
  	/* Run initial RCOMP. */
  	mchbar_setbits32(0x418, 1 << 17);
-@@ -1119,7 +1119,7 @@
+@@ -1117,7 +1117,7 @@ static void dram_program_timings(const int spd_type, const timings_t *const timi
  				reg = (reg & ~(0xf << 10)) | (2 << 10);
  			else
  				reg = (reg & ~(0xf << 10)) | (3 << 10);
@@ -50,7 +54,7 @@ index ecada7b..2b8c44e 100644
  		} else if (timings->mem_clock != MEM_CLOCK_1067MT) {
  			reg = (reg & ~(0x7 << 15)) | ((9 - timings->CAS) << 15);
  			reg = (reg & ~(0xf << 10)) | ((timings->CAS - 3) << 10);
-@@ -1288,11 +1288,11 @@
+@@ -1286,11 +1286,11 @@ static void ddr2_odt_setup(const timings_t *const timings, const int sff)
  		reg = (reg & ~(0xf << (44 - 32))) | (8 << (44 - 32));
  		reg = (reg & ~(0xf << (40 - 32))) | (7 << (40 - 32));
  		if (timings->mem_clock == MEM_CLOCK_667MT) {
@@ -66,7 +70,7 @@ index ecada7b..2b8c44e 100644
  		}
  		mchbar_write32(CxODT_HIGH(ch), reg);
  
-@@ -2217,6 +2217,84 @@
+@@ -2209,6 +2209,84 @@ void raminit(sysinfo_t *const sysinfo, const int s3resume)
  		raminit_write_training(timings->mem_clock, dimms, s3resume);
  	}
  
@@ -152,10 +156,10 @@ index ecada7b..2b8c44e 100644
  
  	/* Program final memory map (with real values). */
 diff --git a/src/northbridge/intel/gm45/raminit_rcomp_calibration.c b/src/northbridge/intel/gm45/raminit_rcomp_calibration.c
-index aef863f..b74765f 100644
+index aef863f05a..b74765fd9c 100644
 --- a/src/northbridge/intel/gm45/raminit_rcomp_calibration.c
 +++ b/src/northbridge/intel/gm45/raminit_rcomp_calibration.c
-@@ -161,11 +161,13 @@
+@@ -161,11 +161,13 @@ static void lookup_and_write(const int a1step,
  		mchbar += 4;
  	}
  }
@@ -170,7 +174,7 @@ index aef863f..b74765f 100644
  	enum {
  		PULL_UP = 0,
  		PULL_DOWN = 1,
-@@ -196,6 +198,10 @@
+@@ -196,6 +198,10 @@ void raminit_rcomp_calibration(const stepping_t stepping) {
  		reg = mchbar_read32(0x518);
  		lut_idx[channel][group][PULL_UP] = (reg >> 24) & 0x7f;
  		lut_idx[channel][group][PULL_DOWN] = (reg >> 16) & 0x7f;
@@ -181,7 +185,7 @@ index aef863f..b74765f 100644
  	}
  	/* Cleanup? */
  	mchbar_setbits32(0x400, 1 << 3);
-@@ -216,13 +222,19 @@
+@@ -216,13 +222,19 @@ void raminit_rcomp_calibration(const stepping_t stepping) {
  	for (channel = 0; channel < 2; ++channel) {
  		for (group = 0; group < 6; ++group) {
  			for (pu_pd = PULL_DOWN; pu_pd >= PULL_UP; --pu_pd) {
@@ -206,7 +210,7 @@ index aef863f..b74765f 100644
  			mchbar += 0x0010;
  			/* Channel B knows only the first two groups. */
  			if ((1 == channel) && (1 == group))
-@@ -230,4 +242,7 @@
+@@ -230,4 +242,7 @@ void raminit_rcomp_calibration(const stepping_t stepping) {
  		}
  		mchbar += 0x0040;
  	}
@@ -214,3 +218,6 @@ index aef863f..b74765f 100644
 +	mchbar_clrsetbits32(0x4d0, 0x3f << 26, magic_comp[0] << 26);
 +	mchbar_clrsetbits32(0x4d0, 0x3f << 20, magic_comp[1] << 20);
  }
+-- 
+2.39.2
+
