@@ -1,7 +1,7 @@
-From 9faa780b2ac45bc1bf61aa252364ee3158c4cb10 Mon Sep 17 00:00:00 2001
+From a3a0969075163be413f968b03671aa5d8662672a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:18:26 +0100
-Subject: [PATCH 07/22] gigabyte/ga-g41m-es2l: set VRAM to 256MiB by default
+Subject: [PATCH 07/30] gigabyte/ga-g41m-es2l: set VRAM to 256MiB by default
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

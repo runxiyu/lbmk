@@ -1,7 +1,7 @@
-From 5fc03fbf8c7fa30588dab93c76b5532ce03b1610 Mon Sep 17 00:00:00 2001
+From 2eae87815675aebd472b6042777fe51279be4550 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:10:33 +0100
-Subject: [PATCH 05/22] lenovo/t400: set VRAM to 256MiB VRAM by default
+Subject: [PATCH 05/30] lenovo/t400: set VRAM to 256MiB VRAM by default
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

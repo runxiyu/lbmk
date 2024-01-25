@@ -1,0 +1,145 @@
+From 88652afd52b0a8e0fc8bb1656e59d8ae4796d847 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Thu, 25 Jan 2024 14:30:03 +0000
+Subject: [PATCH 27/30] rebase dell/e6530 to newer coreboot code
+
+i diffed nicholas's current e6430 patch, versus the old one,
+prior to this revision update in lbmk, also cross referencing
+the original e6430 and e6530 patches, diffing them, and the
+result in this patch. most notably, spd data is now defined in
+the devicetree, instead of early_init.c as per:
+
+commit 45e4ab4a660cb7ce312f2d11a153f2d9ef4158da
+Author: Keith Hui <buurin@gmail.com>
+Date:   Sat Jul 22 12:49:05 2023 -0400
+    mb/*: Update SPD mapping for sandybridge boards
+
+This should work fine. Will test after this builds.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/mainboard/dell/e6530/Kconfig       | 15 +++++++++++----
+ src/mainboard/dell/e6530/cmos.layout   |  2 +-
+ src/mainboard/dell/e6530/devicetree.cb |  8 +++++---
+ src/mainboard/dell/e6530/early_init.c  | 12 +++---------
+ 4 files changed, 20 insertions(+), 17 deletions(-)
+
+diff --git a/src/mainboard/dell/e6530/Kconfig b/src/mainboard/dell/e6530/Kconfig
+index 582adddbd4..a104566890 100644
+--- a/src/mainboard/dell/e6530/Kconfig
++++ b/src/mainboard/dell/e6530/Kconfig
+@@ -20,18 +20,25 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SYSTEM_TYPE_LAPTOP
+ 	select USE_NATIVE_RAMINIT
+ 
++config DRAM_RESET_GATE_GPIO
++	default 60
++
+ config MAINBOARD_DIR
+ 	default "dell/e6530"
+ 
+ config MAINBOARD_PART_NUMBER
+ 	default "Latitude E6530"
+ 
+-config VGA_BIOS_ID
+-	default "8086,0166"
++config PS2K_EISAID
++	default "DLLK0534"
+ 
+-config DRAM_RESET_GATE_GPIO
+-	default 60
++config PS2M_EISAID
++	default "DLL0534"
+ 
+ config USBDEBUG_HCD_INDEX
+ 	default 2
++
++config VGA_BIOS_ID
++	default "8086,0166"
++
+ endif
+diff --git a/src/mainboard/dell/e6530/cmos.layout b/src/mainboard/dell/e6530/cmos.layout
+index e85ea4c661..1aa7e77bce 100644
+--- a/src/mainboard/dell/e6530/cmos.layout
++++ b/src/mainboard/dell/e6530/cmos.layout
+@@ -25,7 +25,7 @@ entries
+ # coreboot config options: EC
+ 412	1	e	1	bluetooth
+ 413	1	e	1	wwan
+-415	1	e	1	wlan
++414	1	e	1	wlan
+ 
+ # coreboot config options: ME
+ 424	1	e	14	me_state
+diff --git a/src/mainboard/dell/e6530/devicetree.cb b/src/mainboard/dell/e6530/devicetree.cb
+index 96eed178c5..37135bcf0f 100644
+--- a/src/mainboard/dell/e6530/devicetree.cb
++++ b/src/mainboard/dell/e6530/devicetree.cb
+@@ -12,6 +12,8 @@ chip northbridge/intel/sandybridge # FIXME: GPU registers may not always apply.
+ 	register "gpu_panel_power_up_delay" = "400"
+ 	register "gpu_pch_backlight" = "0x13121312"
+ 
++	register "spd_addresses" = "{0x50, 0, 0x52, 0}"
++
+ 	device domain 0x0 on
+ 		subsystemid 0x1028 0x0535 inherit
+ 
+@@ -24,7 +26,7 @@ chip northbridge/intel/sandybridge # FIXME: GPU registers may not always apply.
+ 			register "gen1_dec" = "0x007c0681"
+ 			register "gen2_dec" = "0x005c0921"
+ 			register "gen3_dec" = "0x003c07e1"
+-			register "gen4_dec" = "0x007c0901"
++			register "gen4_dec" = "0x00000911" # Ports 0x910/0x911 for EC
+ 			register "gpi0_routing" = "2"
+ 			register "pcie_hotplug_map" = "{ 0, 0, 1, 1, 0, 0, 0, 0 }"
+ 			register "pcie_port_coalesce" = "1"
+@@ -37,7 +39,7 @@ chip northbridge/intel/sandybridge # FIXME: GPU registers may not always apply.
+ 			register "xhci_switchable_ports" = "0x0000000f"
+ 
+ 			device ref xhci		on end # USB 3.0 Controller
+-			device ref mei1		off end # Management Engine Interface 1
++			device ref mei1		on end # Management Engine Interface 1
+ 			device ref mei2		off end # Management Engine Interface 2
+ 			device ref me_ide_r	off end # Management Engine IDE-R
+ 			device ref me_kt	on end # Management Engine KT
+@@ -48,7 +50,7 @@ chip northbridge/intel/sandybridge # FIXME: GPU registers may not always apply.
+ 			device ref pcie_rp2	on end # PCIe Port #2
+ 			device ref pcie_rp3	on end # PCIe Port #3
+ 			device ref pcie_rp4	on end # PCIe Port #4
+-			device ref pcie_rp5	off end # PCIe Port #5
++			device ref pcie_rp5	on end # PCIe Port #5
+ 			device ref pcie_rp6	on end # PCIe Port #6
+ 			device ref pcie_rp7	off end # PCIe Port #7
+ 			device ref pcie_rp8	off end # PCIe Port #8
+diff --git a/src/mainboard/dell/e6530/early_init.c b/src/mainboard/dell/e6530/early_init.c
+index d57f48e7f1..2b40f6963f 100644
+--- a/src/mainboard/dell/e6530/early_init.c
++++ b/src/mainboard/dell/e6530/early_init.c
+@@ -4,7 +4,6 @@
+ #include <bootblock_common.h>
+ #include <device/pci_ops.h>
+ #include <ec/dell/mec5035/mec5035.h>
+-#include <northbridge/intel/sandybridge/raminit_native.h>
+ #include <southbridge/intel/bd82x6x/pch.h>
+ 
+ const struct southbridge_usb_port mainboard_usb_ports[] = {
+@@ -26,13 +25,8 @@ const struct southbridge_usb_port mainboard_usb_ports[] = {
+ 
+ void bootblock_mainboard_early_init(void)
+ {
+-	pci_write_config16(PCI_DEV(0, 0x1f, 0), 0x82, 0x1c0f);
+-	pci_write_config16(PCI_DEV(0, 0x1f, 0), 0x80, 0x0000);
++	pci_write_config16(PCH_LPC_DEV, LPC_EN, CNF1_LPC_EN | MC_LPC_EN
++			| KBC_LPC_EN | FDD_LPC_EN | LPT_LPC_EN
++			| COMB_LPC_EN | COMA_LPC_EN);
+ 	mec5035_early_init();
+ }
+-
+-void mainboard_get_spd(spd_raw_data *spd, bool id_only)
+-{
+-	read_spd(&spd[0], 0x50, id_only);
+-	read_spd(&spd[2], 0x52, id_only);
+-}
+-- 
+2.39.2
+

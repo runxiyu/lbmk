@@ -1,7 +1,7 @@
-From 0721e7e984bc83861bce3d47632b717848673749 Mon Sep 17 00:00:00 2001
+From ad812d008d570c1655bff13a9026f39a9efdcbc9 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 31 Oct 2023 18:24:39 +0000
-Subject: [PATCH 1/1] crank up vram allocation on more intel boards
+Subject: [PATCH 23/30] crank up vram allocation on more intel boards
 
 these were added to libreboot, and it's a policy of
 libreboot to max out the vram settings. this was

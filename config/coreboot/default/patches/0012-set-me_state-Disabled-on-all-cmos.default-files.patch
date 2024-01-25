@@ -1,7 +1,7 @@
-From 81febff42c66bd53e44176f14b651339b503a9f3 Mon Sep 17 00:00:00 2001
+From 531ef34ece796f38cb8a13a54856e46e79842e29 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Wed, 2 Mar 2022 21:50:01 +0000
-Subject: [PATCH 12/22] set me_state=Disabled on all cmos.default files!
+Subject: [PATCH 12/30] set me_state=Disabled on all cmos.default files!
 
 yeah. why the hell isn't this the default
 

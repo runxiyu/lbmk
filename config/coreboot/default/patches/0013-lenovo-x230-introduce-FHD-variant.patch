@@ -1,7 +1,7 @@
-From c73269315626678c191ea494338581abdc417f21 Mon Sep 17 00:00:00 2001
+From 7b9003f98c7c685b2fe56781f3b0916018037b72 Mon Sep 17 00:00:00 2001
 From: Alexander Couzens <lynxis@fe80.eu>
 Date: Sat, 19 Mar 2022 13:42:33 +0000
-Subject: [PATCH 13/22] lenovo/x230: introduce FHD variant
+Subject: [PATCH 13/30] lenovo/x230: introduce FHD variant
 
 There is a modification for the x230 which uses the 2nd DP from the dock
 as the integrated panel's connection, which allows using a custom eDP
@@ -36,7 +36,7 @@ Signed-off-by: Felix Singer <felixsinger@posteo.net>
 ---
  src/mainboard/lenovo/x230/Kconfig             |  15 ++++++++-----
  src/mainboard/lenovo/x230/Kconfig.name        |   3 +++
- src/mainboard/lenovo/x230/Makefile.inc        |   5 +++++
+ src/mainboard/lenovo/x230/Makefile.mk         |   5 +++++
  .../lenovo/x230/variants/x230_edp/data.vbt    | Bin 0 -> 4281 bytes
  .../x230/variants/x230_edp/gma-mainboard.ads  |  21 ++++++++++++++++++
  5 files changed, 38 insertions(+), 6 deletions(-)
@@ -111,10 +111,10 @@ index 1a01436879..e7290a12dd 100644
 +
 +config BOARD_LENOVO_X230_EDP
 +	bool "ThinkPad X230 eDP Mod (2K/FHD)"
-diff --git a/src/mainboard/lenovo/x230/Makefile.inc b/src/mainboard/lenovo/x230/Makefile.inc
+diff --git a/src/mainboard/lenovo/x230/Makefile.mk b/src/mainboard/lenovo/x230/Makefile.mk
 index 8e801f145d..6e6f9f90b9 100644
---- a/src/mainboard/lenovo/x230/Makefile.inc
-+++ b/src/mainboard/lenovo/x230/Makefile.inc
+--- a/src/mainboard/lenovo/x230/Makefile.mk
++++ b/src/mainboard/lenovo/x230/Makefile.mk
 @@ -5,4 +5,9 @@ bootblock-y += variants/$(VARIANT_DIR)/gpio.c
  romstage-y += variants/$(VARIANT_DIR)/early_init.c
  romstage-y += variants/$(VARIANT_DIR)/gpio.c

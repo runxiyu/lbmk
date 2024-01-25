@@ -1,7 +1,7 @@
-From 89c47fad6e97fc6a7113ebbdedfcc42ae2b6fc7f Mon Sep 17 00:00:00 2001
+From 936a8f113772c93d7501e7133159ab4e23436222 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 22:57:08 +0000
-Subject: [PATCH 1/1] use mirrorservice.org for gcc downloads
+Subject: [PATCH 25/30] use mirrorservice.org for gcc downloads
 
 the gnu.org 302 redirect often fails
 
@@ -11,7 +11,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
-index 87f80ba7f6..b3aad5df7d 100755
+index 36565a906c..4d4ca06113 100755
 --- a/util/crossgcc/buildgcc
 +++ b/util/crossgcc/buildgcc
 @@ -67,11 +67,11 @@ NASM_ARCHIVE="nasm-${NASM_VERSION}.tar.bz2"

@@ -1,11 +1,36 @@
-From 757b8965ccdd8ecd0eeec33aee3685dd9a33d34e Mon Sep 17 00:00:00 2001
+From 4e0b62e6f0977cf922b1947955538ddca63bb954 Mon Sep 17 00:00:00 2001
 From: Riku Viitanen <riku.viitanen@protonmail.com>
-Date: Sat, 23 Dec 2023 23:09:46 +0200
-Subject: [PATCH] mb/hp: Add Compaq Elite 8300 CMT port
+Date: Sat, 23 Dec 2023 19:02:10 +0200
+Subject: [PATCH 30/30] mb/hp: Add Compaq Elite 8300 CMT port
 
+Based on autoport and Z220 SuperIO code.
+
+With SeaBIOS and Nouveau on Debian, only nomodeset works with GTX 780
+(must use proprietary driver instead).
+
+Tested by xilynx / spot_ on #libreboot:
+- i3-3220, native raminit 2x2GB, M378B5773DH0-CH9 + MT8JTF25664AZ-1G6M1
+- Celeron G1620, native raminit 1x4GB, MT8JTF51264AZ-1G6E1
+- Booting Debian with Linux 6.1.0-16-amd64 via SeaBIOS
+- All SATA ports
+- Audio: internal speaker, headphone and microphone plugs
+- Rebooting
+- S3 suspend and wake
+- libgfxinit: VGA, DisplayPort
+- Ethernet
+- Super I/O: fan speeds stay in control
+- GPU in PEG slot
+
+Untested:
+- EHCI debugging
+- Other PCI/PCIe slots
+- PS/2
+- Serial, parallel ports
+
+Change-Id: Ie6ec60d2f4ee50d5e3fa2847c19fa4cf0ab73363
 Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
 ---
- .../hp/compaq_elite_8300_cmt/Kconfig          |  38 ++++
+ .../hp/compaq_elite_8300_cmt/Kconfig          |  39 ++++
  .../hp/compaq_elite_8300_cmt/Kconfig.name     |   2 +
  .../hp/compaq_elite_8300_cmt/Makefile.inc     |   7 +
  .../hp/compaq_elite_8300_cmt/acpi/ec.asl      |   1 +
@@ -15,14 +40,15 @@ Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
  .../hp/compaq_elite_8300_cmt/board_info.txt   |   5 +
  .../hp/compaq_elite_8300_cmt/cmos.default     |   7 +
  .../hp/compaq_elite_8300_cmt/cmos.layout      |  74 +++++++
+ .../hp/compaq_elite_8300_cmt/data.vbt         | Bin 0 -> 3902 bytes
  .../hp/compaq_elite_8300_cmt/devicetree.cb    | 161 +++++++++++++++
  .../hp/compaq_elite_8300_cmt/dsdt.asl         |  26 +++
- .../hp/compaq_elite_8300_cmt/early_init.c     |  41 ++++
+ .../hp/compaq_elite_8300_cmt/early_init.c     |  31 +++
  .../compaq_elite_8300_cmt/gma-mainboard.ads   |  17 ++
  src/mainboard/hp/compaq_elite_8300_cmt/gpio.c | 191 ++++++++++++++++++
  .../hp/compaq_elite_8300_cmt/hda_verb.c       |  33 +++
  .../hp/compaq_elite_8300_cmt/mainboard.c      |  16 ++
- 17 files changed, 670 insertions(+)
+ 18 files changed, 661 insertions(+)
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/Kconfig.name
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/Makefile.inc
@@ -33,6 +59,7 @@ Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/board_info.txt
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/cmos.default
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/cmos.layout
+ create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/data.vbt
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/dsdt.asl
  create mode 100644 src/mainboard/hp/compaq_elite_8300_cmt/early_init.c
@@ -43,10 +70,10 @@ Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
 
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
 new file mode 100644
-index 0000000000..d3a5c3b389
+index 0000000000..d2bfd35dc4
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,39 @@
 +if BOARD_HP_COMPAQ_ELITE_8300_CMT
 +
 +config BOARD_SPECIFIC_OPTIONS
@@ -56,6 +83,7 @@ index 0000000000..d3a5c3b389
 +	select HAVE_ACPI_TABLES
 +	select HAVE_CMOS_DEFAULT
 +	select HAVE_OPTION_TABLE
++	select INTEL_GMA_HAVE_VBT
 +	select INTEL_INT15
 +	select MAINBOARD_HAS_TPM1
 +	select MAINBOARD_HAS_LIBGFXINIT
@@ -286,6 +314,43 @@ index 0000000000..1fc83b1a55
 +checksums
 +
 +checksum 392 415 984
+diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/data.vbt b/src/mainboard/hp/compaq_elite_8300_cmt/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ba627e152b65d779a80529d3811ec4d21c1b1e54
+GIT binary patch
+literal 3902
+zcmdT{U2GIp6h5;vvp;uc+U>N$b}h{<64)*MnJ%?9P1V_-)?HZIZFkwM#K;zQp(Lf0
+z<tLDc9kdaQ30aLnL^K;s2=dhMWTFo|nZ_7XjUmSPK!^{95W@p8ks#}tpO&8zIx!OQ
+zPQE$ko;~;Lz2}~D=XOmtlA-CLNM|A&X^#!0H)V!X1yJCH+Hrg@ZIQ%qdRr`<32%!e
+zhohV5IamQTwRf%o6o9FhLR}l4OH3XpP6S4SG(9$1II_L8yRfU+nK)!=G!;$I@QxkD
+ziDGH&K(Rp6*_Xmpr<F+L;O>b69XhyYd$H6<buRR#UELiUx+zsQbar)jhLo-lr6HwH
+z>Fo<WE0Nehba-<rkql=N!$Wj<l*SV2a5_D(Ig)&trbdV3iAW+d5R-_pl<3~6Bc<KD
+z#t+ayG>9yU(vE~()R;1j?k!Dq(D1|r9o2pI)6wGoV(Cz^&><0>;1cWR7zP*~YL5XE
+z{3`?=k6Yy2an&85Zl2-7jM~D`7^g}MH^6WOPE9askfBLVUBl5fj(Wi%F%Ax(<(|k=
+zUH4c9hXO|5?0UW22lb}G1;Fb@mzSZ8u5fTU59si@;V}EXTQ}(rl%Wn?F&a92X)&+>
+zPTj@>Ls7r4(ffK2={zn6t_hS-cTaC$zZ!`R#y2KYqnT`O>nqx^H{P7_!|gKQVi}A&
+z)G!L9*Z>@59dMlOh4owoes{Vd<dPwV$RfrOM_mMtBi==PggB45i1-TeHR314Rm63~
+z9|&+0AczJ;Ga`TpA^H)6h!kQgqJWr0I1j?@szU?Z5NsM_$vRVlmxGf*(9T-+vzFa+
+z!`K`kmJ}>$kl1)tt1cJZseb2!YSsO`J_8jQ^hAhROmRyl4au@8tDixs`{k^Dwd%=Z
+zH-yjQdy~%q^YKY<!Z~QsaFSLvP<_4(KebAii%moAUIzzXdbGph$OYv=h6VegT-HIX
+zhmBa>th;}v$r!Z-pnAN<1I)+#R``=|huU|*W1ew~tpBFsG0q;_jCFT6Ulxt*TNv8#
+z2{`>`$JM`Jd{F+EzpU7VIlvml?AFW1Xv$0tKyom(Ej2b-oERG0Q?%Jx8HYk6s9{*E
+z_)hegWIm-8PLF`1DpU2QrTKj4;VUElwQBD4f+hZ<s%)PPsp_Q#i!T5@)2taxv1ghG
+z<B&&<DI4jDn$!FOh>Zbggj@JDLYbjpK69X2PaAVr^Xn{6e+%<?63)ABGAHVvOwA0G
+zop-g`)B~42TA5y1<#p#*n`4^oSOPu_>i&oRk>LBlzUQG|c;s(9<VO#^<&i}~RuI}x
+z<RL<GguYJXG9hOOy+q_62>FFjhafiyq*<UbLCy*!FVMFH`LsYj73iEG|16MS1xiG@
+zNhE7UniS<%MKUhZlcHP^$pw+li}F>GTo<V<$!jFiA<>K^@07@tL{CZbd5K(<q}Cgp
+z=D5OWb(o)+1@4lFyO?u`hP=smQS!Cx@SCx8`ItCXGEp|?Se~I$OQ9>*L<3rb71Ew*
+zhn0l-*|a>v(n`=1+Du-&m2f&k|07qiv~u)9FuttfVcu_x;V>QXdsXjZ?db(%oNhK5
+zme#7yVBD-k)j4Zp4ohoWFJ0rv5wpCVNbYROUKoL9Ww31Rg%2ZHHV$2!ik&#T)={qH
+z{mrUEty8JFXPPS;w@^`Y*;z%PU#m>bK7$Oci}}Epjc<@x;b&~*!<k@Zeq?5~lKODv
+zA_EJ8u45$aFet6+Tz;mY_(sgz72qmZ5DkWZn3D#BWHRv7#wxD)p^~C26;X-mqrjL$
+z8S4>Op}BgEe0X$iI{Gx<zTS2<*M4^|Sg17^@EYY@zAl0)<Ta?zd%bn~D02?r)iu%P
+wm+F7xwtgQt<KA_UyAYqlTkT_cS089?Pr=)R7|a9^*a9j1U$>1p1;4R>1E3jwQUCw|
+
+literal 0
+HcmV?d00001
+
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
 new file mode 100644
 index 0000000000..f4efabd792
@@ -487,16 +552,15 @@ index 0000000000..e8e2b3a3e5
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/early_init.c b/src/mainboard/hp/compaq_elite_8300_cmt/early_init.c
 new file mode 100644
-index 0000000000..f6b9c0a106
+index 0000000000..99b7891c70
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/early_init.c
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,31 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +
 +#include <bootblock_common.h>
 +#include <superio/nuvoton/npcd378/npcd378.h>
 +#include <superio/nuvoton/common/nuvoton.h>
-+#include <northbridge/intel/sandybridge/raminit_native.h>
 +#include <southbridge/intel/bd82x6x/pch.h>
 +
 +#define SERIAL_DEV PNP_DEV(0x2e, NPCD378_SP2)
@@ -522,15 +586,6 @@ index 0000000000..f6b9c0a106
 +{
 +	if (CONFIG(CONSOLE_SERIAL))
 +		nuvoton_enable_serial(SERIAL_DEV, CONFIG_TTYS0_BASE);
-+}
-+
-+void mainboard_get_spd(spd_raw_data *spd, bool id_only)
-+{
-+	/* BTX mainboard: Reversed mapping */
-+	read_spd(&spd[3], 0x50, id_only);
-+	read_spd(&spd[2], 0x51, id_only);
-+	read_spd(&spd[1], 0x52, id_only);
-+	read_spd(&spd[0], 0x53, id_only);
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/gma-mainboard.ads b/src/mainboard/hp/compaq_elite_8300_cmt/gma-mainboard.ads
 new file mode 100644
@@ -814,5 +869,5 @@ index 0000000000..8dbd95ef96
 +	.enable_dev = mainboard_enable,
 +};
 -- 
-2.43.0
+2.39.2
 

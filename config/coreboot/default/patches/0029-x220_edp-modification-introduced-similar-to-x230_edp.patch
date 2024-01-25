@@ -1,12 +1,12 @@
-From 38b9e571e5b2a7116b06fb9d99bccd8b03450f9a Mon Sep 17 00:00:00 2001
+From f07ed32c36978327709a113967ec40e5ba8d828e Mon Sep 17 00:00:00 2001
 From: risapav <risapav@gmail.com>
 Date: Sun, 17 Dec 2023 16:54:07 +0100
-Subject: [PATCH] x220_edp modification introduced, similar to x230_edp
+Subject: [PATCH 29/30] x220_edp modification introduced, similar to x230_edp
 
 ---
  src/mainboard/lenovo/x220/Kconfig             |  13 ++++++-----
  src/mainboard/lenovo/x220/Kconfig.name        |   3 +++
- src/mainboard/lenovo/x220/Makefile.inc        |   6 +++++
+ src/mainboard/lenovo/x220/Makefile.mk         |   6 +++++
  .../lenovo/x220/variants/x220_edp/data.vbt    | Bin 0 -> 4281 bytes
  .../x220/variants/x220_edp/gma-mainboard.ads  |  21 ++++++++++++++++++
  5 files changed, 38 insertions(+), 5 deletions(-)
@@ -74,10 +74,10 @@ index 988ac4fb55..cd501954e0 100644
 +	
 +config BOARD_LENOVO_X220_EDP
 +	bool "ThinkPad X220 eDP Mod (2K/FHD)"
-diff --git a/src/mainboard/lenovo/x220/Makefile.inc b/src/mainboard/lenovo/x220/Makefile.inc
+diff --git a/src/mainboard/lenovo/x220/Makefile.mk b/src/mainboard/lenovo/x220/Makefile.mk
 index b104bb52a9..052bf17a22 100644
---- a/src/mainboard/lenovo/x220/Makefile.inc
-+++ b/src/mainboard/lenovo/x220/Makefile.inc
+--- a/src/mainboard/lenovo/x220/Makefile.mk
++++ b/src/mainboard/lenovo/x220/Makefile.mk
 @@ -4,6 +4,12 @@ bootblock-y += variants/$(VARIANT_DIR)/gpio.c
  romstage-y += variants/$(VARIANT_DIR)/gpio.c
  romstage-y += variants/$(VARIANT_DIR)/romstage.c
@@ -160,5 +160,5 @@ index 0000000000..f7cf0bc264
 +
 +end GMA.Mainboard;
 -- 
-2.40.1
+2.39.2
 
