@@ -1,5 +1,5 @@
 {docs}{
-	rev: 06ac864b9a738b5daec3736ddb0fb2f94f127ee0
+	rev: 693a4f811d321d81f685a5822caf8d639e778832
 	loc: docs
 	url: https://codeberg.org/vimuser/untitled
 	bkup_url: https://notabug.org/untitled/untitled
@@ -8,7 +8,7 @@
 }
 
 {mdfiles}{
-	rev: 6ebb88528e342cae48ee75a6f1bfa1b71002e1c3
+	rev: 660d9d87c7424c3311d535e6bb6bbeba66bcacbc
 	loc: docs/www/html
 	url: https://codeberg.org/libreboot/lbwww
 	bkup_url: https://git.disroot.org/libreboot/lbwww
@@ -16,14 +16,14 @@
 }
 
 {imgfiles}{
-	rev: 918c0ba07cf45f07836fa8c312fc51b48db32e0a
+	rev: 54aee63ca18400f8de667ab16146f88f47a05488
 	loc: docs/www/html/site/img
 	url: https://codeberg.org/libreboot/lbwww-img
 	bkup_url: https://git.disroot.org/libreboot/lbwww-img
 }
 
 {untitledwww}{
-	rev: 78cdadea40143a7e55b8eae48f4239d31ebb5c16
+	rev: d8e2043c1512eb1171c274559ce82e8093ef393f
 	loc: docs/www/untitled
 	url: https://codeberg.org/vimuser/untitled-website
 	bkup_url: https://notabug.org/untitled/untitled-website
