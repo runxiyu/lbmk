@@ -30,6 +30,7 @@ fetch_from_upstream()
 fetch_config()
 {
 	rm -f "${cfgsdir}/"*/seen || err "fetch_config ${cfgsdir}: !rm seen"
+	eval "$(setvars "" xtree tree_depend)"
 	while true; do
 		eval "$(setvars "" rev tree)"
 		_xm="fetch_config ${project}/${_target}"
@@ -62,6 +63,8 @@ prepare_new_tree()
 
 fetch_project_repo()
 {
+	eval "$(setvars "" xtree tree_depend)"
+
 	scan_config "${project}" "config/git" "err"
 	[ -z "${loc+x}" ] && err "fetch_project_repo $project: loc not set"
 	[ -z "${url+x}" ] && err "fetch_project_repo $project: url not set"
