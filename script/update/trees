@@ -150,7 +150,8 @@ handle_src_tree()
 
 load_project_config()
 {
-	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs)"
+	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs \
+	    xtree tree_depend)"
 
 	[ -f "${1}/target.cfg" ] || return 0
 	. "${1}/target.cfg" || \
