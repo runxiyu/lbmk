@@ -1,0 +1,6 @@
+{flashprog}{
+	rev: ddb6d926783d4f9cbee04c7392718ed8f89daa0e
+	loc: flashprog
+	url: https://review.sourcearcade.org/flashprog
+	bkup_url: https://github.com/SourceArcade/flashprog.git
+}
