@@ -4,7 +4,8 @@ autoconf autogen automake autopoint autotools-dev bc binutils-arm-none-eabi \
 bison build-essential cmake curl device-tree-compiler doxygen e2fsprogs efitools \
 flex gawk gcc-arm-linux-gnueabi gcc-arm-none-eabi gdb gettext git gnat help2man \
 innoextract libdevmapper-dev libfdt-dev libfont-freetype-perl libfreetype6-dev \
-libftdi-dev libfuse-dev libgnutls28-dev liblz4-tool liblzma-dev libncurses5-dev \
+libftdi-dev libfuse-dev libgnutls28-dev libgpiod-dev libjaylink-dev liblz4-tool \
+liblzma-dev libncurses5-dev \
 libncurses-dev libnewlib-arm-none-eabi libopts25 libopts25-dev libpci-dev \
 libpython3-dev libsdl2-dev libselinux1-dev libssl-dev libtool libusb-1.0-0 \
 libusb-1.0-0-dev lz4 lzma lzma-alone m4 nasm openssl p7zip p7zip-full parted \
