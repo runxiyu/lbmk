@@ -1,6 +1,6 @@
 # Dell Laptop Internal Flashing
 
-This utility allows you to use flashrom's internal programmer to program the
+This utility allows you to use flashprog's internal programmer to program the
 entire BIOS flash chip from software while still running the original Dell
 BIOS, which normally restricts software writes to the flash chip. It seems like
 this works on any Dell laptop that has an EC similar to the SMSC MEC5035 on the
@@ -55,7 +55,7 @@ please test the utility and report whether or not it actually works for you.
   for the first time, which will tell the EC to set the descriptor override on
   the next boot. Then you will need to shut down the system, after which the
   system will automatically boot up. You should then re-run the utility to
-  disable SMM, after which you can run flashrom. Finally, you should run the
+  disable SMM, after which you can run flashprog. Finally, you should run the
   utility a third time to reenable SMM so that shutdown works properly
   afterwards.
 - On 1st Generation Intel Core systems such as the E6410 and newer, run the
@@ -78,7 +78,7 @@ each region of the flash, which are enforced by the chipset.
 
 On the Latitude E6400, the host has read-only access to the IFD, no access to
 the ME region, and read-write access to the PD, GBE, and BIOS regions. In order
-for flashrom to write to the entire flash internally, the host needs full
+for flashprog to write to the entire flash internally, the host needs full
 permissions to all of these regions. Since the IFD is read only, we cannot
 change these permissions unless we directly access the chip using an external
 programmer, which defeats the purpose of internal flashing.
@@ -107,7 +107,7 @@ that the BIOSWE bit was never set to 1.  Unfortunately, the BLE bit cannot be
 set back to 0 once it is set to 1, so this functionality cannot be disabled
 after it is first enabled by the BIOS.
 
-Older versions of the E6400 BIOS did not set the BLE bit, allowing flashrom to
+Older versions of the E6400 BIOS did not set the BLE bit, allowing flashprog to
 flash the entire flash chip internally after only setting the descriptor
 override. However, more recent versions do set it, so we may have hit a dead
 end unless we force downgrade to an older version (though there is a more

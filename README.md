@@ -81,7 +81,7 @@ automating much of the coreboot image creation and customization.
 Secondly, the project produces documentation aimed at non-technical users.
 Thirdly, the project attempts to provide excellent user support via IRC.
 
-Libreboot already comes with a payload (GRUB), flashrom and other
+Libreboot already comes with a payload (GRUB), flashprog and other
 needed parts. Everything is fully integrated, in a way where most of
 the complicated steps that are otherwise required, are instead done
 for the user in advance.
