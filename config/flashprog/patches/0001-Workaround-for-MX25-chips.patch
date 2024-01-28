@@ -1,0 +1,87 @@
+From 294433aeac82764ea22caf0c17b05cf4127aaa19 Mon Sep 17 00:00:00 2001
+From: consts <grudnevkv@gmail.com>
+Date: Fri, 2 Mar 2018 07:03:37 +0000
+Subject: [PATCH] Workaround for MX25 chips
+
+TEST: In-system programming a ThinkPad X200 using a clip and
+pico-serprog works now. It just doesn't without this hack.
+
+Chip: MX25L6405D
+
+Tested-by: Riku Viitanen <riku.viitanen@protonmail.com>
+Change-Id: I43a306b67862b59c1dcd02729e189f3bf73f481b
+---
+ cli_classic.c        | 5 +++++
+ include/programmer.h | 1 +
+ spi.c                | 9 +++++++++
+ 3 files changed, 15 insertions(+)
+
+diff --git a/cli_classic.c b/cli_classic.c
+index 1ffe4dd..3b50d23 100644
+--- a/cli_classic.c
++++ b/cli_classic.c
+@@ -67,6 +67,7 @@ static void cli_classic_usage(const char *name)
+ 	       " -o | --output <logfile>            log output to <logfile>\n"
+ 	       "      --flash-contents <ref-file>   assume flash contents to be <ref-file>\n"
+ 	       " -L | --list-supported              print supported devices\n"
++	       " -m | --workaround-mx               keep flash busy before sending command\n"
+ #if CONFIG_PRINT_WIKI == 1
+ 	       " -z | --list-supported-wiki         print supported devices in wiki syntax\n"
+ #endif
+@@ -290,6 +291,7 @@ int main(int argc, char *argv[])
+ 		{"help",		0, NULL, 'h'},
+ 		{"version",		0, NULL, 'R'},
+ 		{"output",		1, NULL, 'o'},
++		{"workaround-mx", 	0, NULL, 'm'},
+ 		{NULL,			0, NULL, 0},
+ 	};
+ 
+@@ -506,6 +508,9 @@ int main(int argc, char *argv[])
+ 				cli_classic_abort_usage("No log filename specified.\n");
+ 			}
+ 			break;
++		case 'm': /* --workaround-mx */
++			workaround_mx = 1;
++			break;
+ 		default:
+ 			cli_classic_abort_usage(NULL);
+ 			break;
+diff --git a/include/programmer.h b/include/programmer.h
+index 4fee2ef..7e78598 100644
+--- a/include/programmer.h
++++ b/include/programmer.h
+@@ -355,6 +355,7 @@ enum ich_chipset {
+ 	CHIPSET_GEMINI_LAKE,
+ 	CHIPSET_ELKHART_LAKE,
+ };
++extern int workaround_mx; /* workaround for MX25* chips, makes flash operations more reliable, less failures */
+ 
+ /* ichspi.c */
+ #if CONFIG_INTERNAL == 1
+diff --git a/spi.c b/spi.c
+index 6e61f53..f8f5d11 100644
+--- a/spi.c
++++ b/spi.c
+@@ -26,10 +26,19 @@
+ #include "programmer.h"
+ #include "spi.h"
+ 
++int workaround_mx; /* Make operations with MX25* chips more reliable */
++
+ int spi_send_command(const struct flashctx *flash, unsigned int writecnt,
+ 		     unsigned int readcnt, const unsigned char *writearr,
+ 		     unsigned char *readarr)
+ {
++	if (workaround_mx) {
++		const unsigned char cmd[JEDEC_READ_OUTSIZE] = {JEDEC_READ, 0, 0, 0};
++		unsigned char buf[256];
++		/* keep flash busy for some time, keep CS warm before sending actual command */
++		flash->mst->spi.command(flash, sizeof(cmd), sizeof(buf), cmd, buf);
++	}
++	/* actual command */
+ 	return flash->mst->spi.command(flash, writecnt, readcnt, writearr,
+ 				       readarr);
+ }
+-- 
+2.43.0
+
