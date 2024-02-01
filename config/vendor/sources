@@ -143,7 +143,7 @@
 	E6400_VGA_romname mod_21.bin
 }
 
-{e6420}{
+{e6420 e6520}{
 	DL_hash 81c9917938c4a2a4f128c976250451931efd0f25b51ff34f058ddacb8eec27272691371864a683ec7abcb924fea32592d061584c7b2571a5d3e84eb870281cc3
 	DL_url https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
 	DL_url_bkup https://web.archive.org/web/20220202201637/https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
