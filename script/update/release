@@ -25,6 +25,7 @@ main()
 
 	vdir="${vdir}/${version}"
 	relname="${projectname}-${version}"
+	[ "${mode}" = "u-boot" ] && relname="u-boot-for-${relname}"
 	src_dirname="${relname}_src"
 	srcdir="${vdir}/${src_dirname}"
 
@@ -49,7 +50,7 @@ build_release()
 	(
 	cd "${srcdir}" || err "${_xm}: !cd \"${srcdir}\""
 	fetch_trees
-	x_ mv src/docs docs
+	[ "${mode}" = "u-boot" ] || x_ mv src/docs docs
 	) || err "can't create release files"
 
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
@@ -57,10 +58,19 @@ build_release()
 	    err "build_release $srcdir: couldn't generate changelog"
 
 	(
-	cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
-	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "$_xm: mksrc"
+	if [ "${mode}" = "u-boot" ]; then
+		cd "${srcdir}/src/" || err "${_xm}: mktarball \"${srcdir}\""
+		mktarball u-boot "../../${srcdir##*/}.tar.xz" || \
+		    err "$_xm: mksrc"
+		# make a src archive containing only u-boot
+	else
+		cd "${srcdir%/*}" || err "${_xm}: mktarball \"${srcdir}\""
+		mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || \
+		    err "$_xm: mksrc"
+	fi
 	) || err "can't create src tarball"
 	[ "${mode}" = "src" ] && return 0
+	[ "${mode}" = "u-boot" ] && return 0
 
 	(
 	cd "${srcdir}" || err "${_xm}: 2 !cd \"${srcdir}\""
@@ -73,9 +83,12 @@ build_release()
 fetch_trees()
 {
 	for x in config/git/*; do
+		[ "${mode}" = "u-boot" ] && break
 		[ ! -f "${x}" ] || ./update trees -f "${x#config/git/}" || \
 		    err "${_xm}: fetch ${x#config/git/}"
 	done
+	[ "${mode}" = "u-boot" ] && x_ ./update trees -f u-boot
+
 	for x in config/*/build.list; do
 		[ -f "${x}" ] || continue
 		xp="${x#*/}"; xp="${xp%/*}"
