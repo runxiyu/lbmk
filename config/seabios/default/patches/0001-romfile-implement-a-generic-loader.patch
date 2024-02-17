@@ -1,0 +1,86 @@
+From 2aff8adc1dcd1315877fdb4ac4ef5e649c5b7d11 Mon Sep 17 00:00:00 2001
+From: Riku Viitanen <riku.viitanen@protonmail.com>
+Date: Sat, 10 Feb 2024 21:23:33 +0200
+Subject: [PATCH 1/2] romfile: implement a generic loader
+
+romfile_loadfile_g:
+Based on romfile_loadfile but more flexible. User has to supply pointer
+to a malloc function and the number of trailing padding bytes. Thus, any
+memory region may be used.
+
+romfile_loadfile:
+It is now a wrapper around romfile_loadfile_g. Functionality is the same.
+
+Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
+---
+ src/romfile.c | 25 ++++++++++++++++++++-----
+ src/romfile.h |  2 ++
+ 2 files changed, 22 insertions(+), 5 deletions(-)
+
+diff --git a/src/romfile.c b/src/romfile.c
+index b598274e..8bf95713 100644
+--- a/src/romfile.c
++++ b/src/romfile.c
+@@ -47,10 +47,12 @@ romfile_find(const char *name)
+     return __romfile_findprefix(name, strlen(name) + 1, NULL);
+ }
+ 
+-// Helper function to find, malloc_tmphigh, and copy a romfile.  This
+-// function adds a trailing zero to the malloc'd copy.
++// Generic function to find romfile, malloc (using provided function
++// pointer), and copy a romfile. add_len specifies how many additional
++// trailing bytes to reserve. The extra bytes will not be initialised.
+ void *
+-romfile_loadfile(const char *name, int *psize)
++romfile_loadfile_g(const char *name, int *psize,
++                   void *(*malloc_fn)(), int add_len)
+ {
+     struct romfile_s *file = romfile_find(name);
+     if (!file)
+@@ -60,7 +62,7 @@ romfile_loadfile(const char *name, int *psize)
+     if (!filesize)
+         return NULL;
+ 
+-    char *data = malloc_tmphigh(filesize+1);
++    char *data = malloc_fn(filesize+add_len);
+     if (!data) {
+         warn_noalloc();
+         return NULL;
+@@ -74,7 +76,20 @@ romfile_loadfile(const char *name, int *psize)
+     }
+     if (psize)
+         *psize = filesize;
+-    data[filesize] = '\0';
++
++    return data;
++}
++
++// Helper function to find, malloc_tmphigh, and copy a romfile.  This
++// function adds a trailing zero to the malloc'd copy.
++void *
++romfile_loadfile(const char *name, int *psize)
++{
++    char *data = romfile_loadfile_g(name, psize, &malloc_tmphigh, 1);
++    if (!data)
++        return NULL;
++
++    data[*psize] = '\0';
+     return data;
+ }
+ 
+diff --git a/src/romfile.h b/src/romfile.h
+index 3e0f8200..a320a5bc 100644
+--- a/src/romfile.h
++++ b/src/romfile.h
+@@ -13,6 +13,8 @@ struct romfile_s {
+ void romfile_add(struct romfile_s *file);
+ struct romfile_s *romfile_findprefix(const char *prefix, struct romfile_s *prev);
+ struct romfile_s *romfile_find(const char *name);
++void *romfile_loadfile_g(const char *name, int *psize,
++                         void *(*malloc_fn)(), int add_len);
+ void *romfile_loadfile(const char *name, int *psize);
+ u64 romfile_loadint(const char *name, u64 defval);
+ 
+-- 
+2.43.0
+

@@ -120,6 +120,19 @@
 	EC_url_bkup https://web.archive.org/web/20211231004901/https://ftp.ext.hp.com/pub/softpaq/sp85501-86000/sp85528.exe
 }
 
+# 68SVD family ROM
+# for 8560w
+# release notes: https://support.hp.com/soar-attachment/519/col44309-ob-185196-2-ob-185196-2_sp78085_releasedoc.html
+{hp8560w}{
+	DL_hash 81c9917938c4a2a4f128c976250451931efd0f25b51ff34f058ddacb8eec27272691371864a683ec7abcb924fea32592d061584c7b2571a5d3e84eb870281cc3
+	DL_url https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
+	DL_url_bkup https://web.archive.org/web/20220202201637/https://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/83rf46ww.exe
+
+	EC_hash 8e2bc5dca1a1cf0cfc1ac9df74eb6fda333f8ae560019f8182a49d3a716d72938f6cde4aa5ee56942def08207d3ef95706653bd238768fd029da43e9a4fbcc67
+	EC_url https://ftp.hp.com/pub/softpaq/sp78001-78500/sp78085.exe
+	EC_url_bkup https://web.archive.org/web/20230402085323/https://ftp.hp.com/pub/softpaq/sp78001-78500/sp78085.exe
+}
+
 # 68ICE or 68ICF family ROM
 # for 8470p, 8470w, 6470b, 8570p, 6570b
 # release notes: https://support.hp.com/soar-attachment/1021/col43350-ob-229442-2-ob-229442-2_sp96091_releasedoc.html

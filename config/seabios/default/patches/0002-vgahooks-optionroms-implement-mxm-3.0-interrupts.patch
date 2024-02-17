@@ -1,0 +1,188 @@
+From 1e7c443d069ef817c4e699bd6675efff4ebddb86 Mon Sep 17 00:00:00 2001
+From: Riku Viitanen <riku.viitanen@protonmail.com>
+Date: Sat, 10 Feb 2024 21:38:17 +0200
+Subject: [PATCH 2/2] vgahooks, optionroms: implement mxm 3.0 interrupts
+
+VGAROMs on MXM graphics cards need certain int15h functions present.
+
+Tested on a HP EliteBook 8560w with coreboot and Quadro 2000M. A warning
+is displayed for 30 seconds and performance is nerfed:
+
+	ERROR: Valid MXM Structure not found.
+	POST halted for 30 seconds, P-state limited to P10...
+
+This patch implements the minimum required on this system (and implemented
+by the OEM BIOS): functions 0 and 1.
+
+These functions are specific to the MXM 3.0 Software Specification,
+earlier versions are not implemented due to lack of hardware. Documentation
+for versions 2.1 and 3.0 can be found freely online.
+
+Functions aren't specific to mainboards or GPUs (though some mainboards
+could need more functions implemented). The structure is
+mainboard-specific and is read from romfile "mxm-30-sis".
+
+It can be extracted from vendor BIOS by running those same interrupts.
+I wrote a tool to do it on Linux: https://codeberg.org/Riku_V/mxmdump/
+
+Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
+---
+ src/optionroms.c |  9 +++++++
+ src/vgahooks.c   | 69 ++++++++++++++++++++++++++++++++++++++++++++++++
+ src/vgahooks.h   |  9 +++++++
+ 3 files changed, 87 insertions(+)
+ create mode 100644 src/vgahooks.h
+
+diff --git a/src/optionroms.c b/src/optionroms.c
+index e906ab97..fcce7900 100644
+--- a/src/optionroms.c
++++ b/src/optionroms.c
+@@ -22,6 +22,7 @@
+ #include "string.h" // memset
+ #include "util.h" // get_pnp_offset
+ #include "tcgbios.h" // tpm_*
++#include "vgahooks.h" // MXM30SIS
+ 
+ static int EnforceChecksum, S3ResumeVga, RunPCIroms;
+ 
+@@ -463,6 +464,14 @@ vgarom_setup(void)
+     RunPCIroms = romfile_loadint("etc/pci-optionrom-exec", 2);
+     ScreenAndDebug = romfile_loadint("etc/screen-and-debug", 1);
+ 
++    // Load MXM 3.0 System Information Structure
++    void *mxm_sis = romfile_loadfile_g("mxm-30-sis", NULL, &malloc_low, 0);
++    if (mxm_sis) {
++        MXM30SIS = (u32)mxm_sis;
++    } else {
++        MXM30SIS = 0;
++    }
++
+     // Clear option rom memory
+     memset((void*)BUILD_ROM_START, 0, rom_get_max() - BUILD_ROM_START);
+ 
+diff --git a/src/vgahooks.c b/src/vgahooks.c
+index 1f149532..a94840b2 100644
+--- a/src/vgahooks.c
++++ b/src/vgahooks.c
+@@ -18,8 +18,10 @@
+ #define VH_VIA 1
+ #define VH_INTEL 2
+ #define VH_SMI 3
++#define VH_MXM 4
+ 
+ int VGAHookHandlerType VARFSEG;
++u32 MXM30SIS VARFSEG;
+ 
+ static void
+ handle_155fXX(struct bregs *regs)
+@@ -59,6 +61,7 @@ via_155f02(struct bregs *regs)
+     dprintf(1, "Warning: VGA TV/CRT output type is hardcoded\n");
+ }
+ 
++
+ static void
+ via_155f18(struct bregs *regs)
+ {
+@@ -296,6 +299,69 @@ winent_mb6047_setup(struct pci_device *pci)
+     SmiBootDisplay = 0x02;
+ }
+ 
++/****************************************************************
++ * MXM VGA hooks
++ ****************************************************************/
++
++// Function 0: Return Specification Support Level
++static void
++mxm_V30_F00(struct bregs *regs)
++{
++    regs->ax = 0x005f; // Success
++    regs->bl = 0x30; // MXM 3.0
++    regs->cx = 0x0003; // Supported Functions
++    set_success(regs);
++}
++
++// Function 1: Return a Pointer to the MXM Structure
++static void
++mxm_V30_F01(struct bregs *regs)
++{
++    switch (regs->cx) {
++    case 0x0030:
++        regs->ax = 0x005f; // Success
++        regs->es = GET_GLOBAL(MXM30SIS)/16;
++        regs->di = GET_GLOBAL(MXM30SIS)%16;
++        set_success(regs);
++        break;
++    default:
++        handle_155fXX(regs);
++        break;
++    }
++}
++
++static void
++mxm_V30(struct bregs *regs)
++{
++    switch (regs->bx) {
++    case 0xff00: mxm_V30_F00(regs); break;
++    case 0xff01: mxm_V30_F01(regs); break;
++    default:   handle_155fXX(regs); break;
++    }
++}
++
++static void
++mxm_155f80(struct bregs *regs)
++{
++    // TODO: implement other versions, like 2.1
++    mxm_V30(regs);
++}
++
++static void
++mxm_155f(struct bregs *regs)
++{
++    switch (regs->al) {
++    case 0x80: mxm_155f80(regs); break;
++    default:   handle_155fXX(regs); break;
++    }
++}
++
++void
++mxm_setup(void)
++{
++    VGAHookHandlerType = VH_MXM;
++}
++
+ /****************************************************************
+  * Entry and setup
+  ****************************************************************/
+@@ -313,6 +379,7 @@ handle_155f(struct bregs *regs)
+     switch (htype) {
+     case VH_VIA:   via_155f(regs); break;
+     case VH_INTEL: intel_155f(regs); break;
++    case VH_MXM:   mxm_155f(regs); break;
+     default:       handle_155fXX(regs); break;
+     }
+ }
+@@ -352,4 +419,6 @@ vgahook_setup(struct pci_device *pci)
+         via_setup(pci);
+     else if (pci->vendor == PCI_VENDOR_ID_INTEL)
+         intel_setup(pci);
++    else if (GET_GLOBAL(MXM30SIS))
++        mxm_setup();
+ }
+diff --git a/src/vgahooks.h b/src/vgahooks.h
+new file mode 100644
+index 00000000..f0c203af
+--- /dev/null
++++ b/src/vgahooks.h
+@@ -0,0 +1,9 @@
++#ifndef __VGAHOOKS_H
++#define __VGAHOOKS_H
++
++#include "types.h" // u32
++
++extern u32 MXM30SIS;
++
++
++#endif // vgahooks.h
+-- 
+2.43.0
+

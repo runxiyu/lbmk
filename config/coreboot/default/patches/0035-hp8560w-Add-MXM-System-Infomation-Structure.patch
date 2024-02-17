@@ -1,0 +1,41 @@
+From b2cf0657a2058118baf6f4ec96e356de3c9e493e Mon Sep 17 00:00:00 2001
+From: Riku Viitanen <riku.viitanen@protonmail.com>
+Date: Sun, 11 Feb 2024 19:02:20 +0200
+Subject: [PATCH] hp8560w: Add MXM System Infomation Structure
+
+Change-Id: I45b421f2d7baf8ca8dedbd3b1ab1e38392b6219b
+Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
+---
+ src/mainboard/hp/snb_ivb_laptops/Makefile.mk      |   6 ++++++
+ .../hp/snb_ivb_laptops/variants/8560w/mxm-30-sis  | Bin 0 -> 129 bytes
+ 2 files changed, 6 insertions(+)
+ create mode 100644 src/mainboard/hp/snb_ivb_laptops/variants/8560w/mxm-30-sis
+
+diff --git a/src/mainboard/hp/snb_ivb_laptops/Makefile.mk b/src/mainboard/hp/snb_ivb_laptops/Makefile.mk
+index c007bb68cd..7950abbc4e 100644
+--- a/src/mainboard/hp/snb_ivb_laptops/Makefile.mk
++++ b/src/mainboard/hp/snb_ivb_laptops/Makefile.mk
+@@ -9,3 +9,9 @@ ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += variants/$(VARIANT_DIR)/gma-mainb
+ 
+ # FIXME: Other variants with same size onboard RAM may exist.
+ SPD_SOURCES = hynix_4g
++
++ifeq ($(CONFIG_BOARD_HP_8560W),y)
++cbfs-files-y += mxm-30-sis
++mxm-30-sis-file := variants/$(VARIANT_DIR)/mxm-30-sis
++mxm-30-sis-type := raw
++endif
+diff --git a/src/mainboard/hp/snb_ivb_laptops/variants/8560w/mxm-30-sis b/src/mainboard/hp/snb_ivb_laptops/variants/8560w/mxm-30-sis
+new file mode 100644
+index 0000000000000000000000000000000000000000..7e4e245a50d8d5d36ddb22e3b1aed3fa87a2f57d
+GIT binary patch
+literal 129
+zcmeZ`@Qr6?sAMn@-0}aX9Rou`%?mKiz;Fq|&xF!hw;=rNM_^h3Dy{$(SAdE$zF=lx
+o@?l{RW{6;7W}LwIl$Vj2apDSgHUS2PJFE;0Kxqas5d=FN0HAs+0RR91
+
+literal 0
+HcmV?d00001
+
+-- 
+2.43.1
+
