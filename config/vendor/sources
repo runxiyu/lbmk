@@ -23,7 +23,7 @@
 
 # NOTE: google's manifest for archives containing mrc.bin, used here:
 # https://web.archive.org/web/20210211071412/https://dl.google.com/dl/edgedl/chromeos/recovery/recovery.conf
-{t440pmrc w541mrc t440plibremrc w541 dell9020mt dell9020mtvga}{
+{t440pmrc w541mrc t440plibremrc w541 dell9020mt dell9020sff_12mb}{
 	DL_hash f3d79aec805c8b0094a4081be76b3a22d329c479ad18210449b7acc3236ccfc4a2103eaa7c5b79a4872bfd699eede047efd46dfb06dc8f47e3216fc254612998
 	DL_url https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
 	DL_url_bkup https://web.archive.org/web/20211120031520/https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
