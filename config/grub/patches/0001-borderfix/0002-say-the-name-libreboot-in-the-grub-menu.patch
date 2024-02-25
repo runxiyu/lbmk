@@ -16,7 +16,7 @@ index bd4431000..31308e16a 100644
    grub_term_cls (term);
  
 -  msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
-+  msg_formatted = grub_xasprintf (_("Libreboot 20240126 release, based on coreboot.    https://libreboot.org/"));
++  msg_formatted = grub_xasprintf (_("Libreboot 20240225 release, based on coreboot.    https://libreboot.org/"));
    if (!msg_formatted)
      return;
  
