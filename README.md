@@ -111,7 +111,7 @@ written in Markdown and hosted in a [separate
 repository](https://codeberg.org/libreboot/lbwww) where you can send patches.
 
 Any and all development discussion and user support are all done on the IRC
-channel. More information is on https://libreboot.org/contact.html.
+channel. More information is on <https://libreboot.org/contact.html>.
 
 LICENSE FOR THIS README
 =======================
