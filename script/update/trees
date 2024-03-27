@@ -172,7 +172,7 @@ check_cross_compiler()
 		[ -n "${xlang}" ] && export BUILD_LANGUAGES="$xlang"
 
 		[ -d "${cbdir}/util/crossgcc/xgcc/${_xarch}/" ] && continue
-		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$(nproc)
+		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$threads
 	done
 }
 
@@ -219,7 +219,7 @@ run_make_command()
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
 		printf "%s\n" "${version%%-*}" > "$codedir/.coreboot-version"
 
-	make $mode -j$(nproc) $makeargs -C "$codedir" || \
+	make $mode -j$threads $makeargs -C "$codedir" || \
 	    $err "run_make $codedir: !make $mode"
 
 	[ "$mode" != "clean" ] && return 0

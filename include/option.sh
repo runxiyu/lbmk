@@ -22,6 +22,14 @@ eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE _dest board boarddir \
     CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE)"
 
+threads=
+set | grep LBMK_THREADS 1>/dev/null 2>/dev/null || threads=$(nproc) || :
+[ -z "$threads" ] && threads=$LBMK_THREADS
+[ -z "$threads" ] && threads=1 # LBMK_THREADS not set, and nproc failed
+
+expr "X$threads" : "X-\{0,1\}[0123456789][0123456789]*$" \
+    1>/dev/null 2>/dev/null || threads=1 # user specified a non-integer
+
 items()
 {
 	rval=1
