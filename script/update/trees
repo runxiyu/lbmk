@@ -28,12 +28,12 @@ main()
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
-		*) err "Invalid option" ;;
+		*) $err "Invalid option" ;;
 		esac
 		shift; project="${OPTARG#src/}"; shift
 	done
-	[ -z "$_f" ] && err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
-	[ -z "$project" ] && err "project name not specified"
+	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
+	[ -z "$project" ] && $err "project name not specified"
 	elfdir="elf/${project}"
 	cfgsdir="config/${project}"
 
@@ -66,17 +66,17 @@ build_targets()
 	[ "$elfdir" = "elf/coreboot" ] && \
 		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 
-	[ -d "$cfgsdir" ] || err "directory, $cfgsdir, does not exist"
+	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
 
 	listfile="${cfgsdir}/build.list"
-	[ -f "$listfile" ] || err "list file, $listfile, does not exist"
+	[ -f "$listfile" ] || $err "list file, $listfile, does not exist"
 
 	# Build for all targets if no argument is given
 	[ $# -gt 0 ] && target1="$1"
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && \
 		shift 1
 	targets=$(items "$cfgsdir") || \
-	    err "Cannot get options for $cfgsdir"
+	    $err "Cannot get options for $cfgsdir"
 	[ $# -gt 0 ] && targets=$@
 
 	[ -z "$mode" ] && x_ mkdir -p "$elfdir"
@@ -130,7 +130,7 @@ handle_src_tree()
 
 	x_ mkdir -p "${elfdir}/${target}"
 
-	[ -z "$tree" ] && err "handle_src_tree $project/$tree: tree unset"
+	[ -z "$tree" ] && $err "handle_src_tree $project/$tree: tree unset"
 
 	codedir="src/${project}/${tree}"
 
@@ -155,7 +155,7 @@ load_project_config()
 
 	[ -f "${1}/target.cfg" ] || return 0
 	. "${1}/target.cfg" || \
-	    err "load_project_config ${1}: cannot load target.cfg"; return 0
+	    $err "load_project_config ${1}: cannot load target.cfg"; return 0
 }
 
 check_cross_compiler()
@@ -178,7 +178,7 @@ check_cross_compiler()
 
 check_config()
 {
-	[ -f "$config" ] || err "check_config: ${project}/${target}: no config"
+	[ -f "$config" ] || $err "check_config: ${project}/${target}: no config"
 
 	dest_dir="${elfdir}/${target}/${config_name}"
 	# TODO: very hacky check. do it properly (based on build.list)
@@ -197,7 +197,7 @@ handle_makefile()
 	[ -n "$mode" ] || make -C "$codedir" silentoldconfig || \
 	    make -C "$codedir" oldconfig || :
 
-	run_make_command || err "handle_makefile $codedir: no makefile!"
+	run_make_command || $err "handle_makefile $codedir: no makefile!"
 
 	if [ -e "${codedir}/.git" ] && [ "$project" = "u-boot" ] && \
 	    [ "$mode" = "distclean" ]; then
@@ -220,7 +220,7 @@ run_make_command()
 		printf "%s\n" "${version%%-*}" > "$codedir/.coreboot-version"
 
 	make $mode -j$(nproc) $makeargs -C "$codedir" || \
-	    err "run_make $codedir: !make $mode"
+	    $err "run_make $codedir: !make $mode"
 
 	[ "$mode" != "clean" ] && return 0
 	make -C "$codedir" distclean 2>/dev/null || :
@@ -232,9 +232,9 @@ check_cmake()
 		check_makefile "${1}" || \
 		    cmake -B "${1}" "${1}/${cmakedir}" || \
 		    check_makefile "${1}" || \
-		    err "check_cmake ${1}: can't cmake ${cmakedir}"
+		    $err "check_cmake ${1}: can't cmake ${cmakedir}"
 	[ -z "${cmakedir}" ] || check_makefile "${1}" || \
-		err "check_cmake ${1}: could not generate Makefile"
+		$err "check_cmake ${1}: could not generate Makefile"
 	return 0
 }
 
@@ -242,11 +242,11 @@ check_autoconf()
 {
 	(
 	_cfgopt=""
-	cd "${1}" || err "!cd $1"
+	cd "${1}" || $err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh ${autogenargs}
 	[ -f "configure" ] && x_ ./configure $autoconfargs; return 0
-	) || err "can't bootstrap project: $1"
+	) || $err "can't bootstrap project: $1"
 }
 
 check_makefile()

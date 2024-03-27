@@ -17,8 +17,8 @@ usage="usage: ./build firmware serprog <rp2040|stm32> [board]"
 
 main()
 {
-	[ -z "${1+x}" ] && err "${usage}"
-	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && err "$usage"
+	[ -z "${1+x}" ] && $err "${usage}"
+	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "$usage"
 	if [ "${1}" = "rp2040" ]; then
 		boards_dir=${pico_sdk_dir}/src/boards/include/boards
 		[ -d "$pico_src_dir" ] || x_ ./update trees -f "pico-serprog"
@@ -71,7 +71,7 @@ print_boards()
 
 list_boards()
 {
-	basename -a -s .h "${1}/"*.h || err "list_boards $1: can't list boards"
+	basename -a -s .h "${1}/"*.h || $err "list_boards $1: can't list boards"
 }
 
 main $@

@@ -43,10 +43,9 @@ scan_config()
 {
 	awkstr=" /\{.*${1}.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
 	confdir="${2}"
-	_fail="${3}"
 	revfile="$(mktemp -t sources.XXXXXXXXXX)"
 	cat "${confdir}/"* > "${revfile}" || \
-	    "${_fail}" "scan_config ${confdir}: Cannot concatenate files"
+	    $err "scan_config ${confdir}: Cannot concatenate files"
 	while read -r line ; do
 		set ${line} 1>/dev/null 2>/dev/null || :
 		if [ "${1%:}" = "depend" ]; then
@@ -57,7 +56,7 @@ scan_config()
 	done << EOF
 	$(eval "awk '${awkstr}' \"${revfile}\"")
 EOF
-	rm -f "$revfile" || "$_fail" "scan_config: Cannot remove tmpfile"
+	rm -f "$revfile" || $err "scan_config: Cannot remove tmpfile"
 }
 
 check_defconfig()
@@ -81,6 +80,6 @@ handle_coreboot_utils()
 
 remkdir()
 {
-	rm -Rf "${1}" || err "remkdir: !rm -Rf \"${1}\""
-	mkdir -p "${1}" || err "remkdir: !mkdir -p \"${1}\""
+	rm -Rf "${1}" || $err "remkdir: !rm -Rf \"${1}\""
+	mkdir -p "${1}" || $err "remkdir: !mkdir -p \"${1}\""
 }

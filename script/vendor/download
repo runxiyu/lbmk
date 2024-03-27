@@ -25,14 +25,14 @@ eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup 
 
 main()
 {
-	[ $# -gt 0 ] || err "No argument given"
+	[ $# -gt 0 ] || $err "No argument given"
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
 	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
 
 	check_defconfig "${boarddir}" && exit 0
 	detect_firmware && exit 0
-	scan_config "${_b}" "config/vendor" "err"
+	scan_config "${_b}" "config/vendor"
 
 	build_dependencies
 	download_vendorfiles
@@ -49,7 +49,7 @@ detect_firmware()
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
 	. "${boarddir}/target.cfg" 2>/dev/null
-	[ -z "$tree" ] && err "detect_firmware $boarddir: tree undefined"
+	[ -z "$tree" ] && $err "detect_firmware $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"
 	cbfstool="cbutils/$tree/cbfstool"
 
@@ -110,8 +110,8 @@ fetch()
 	dl_bkup="${3}"
 	dlsum="${4}"
 	[ "${5}" = "/dev/null" ] && return 0
-	[ "${5# }" = "$5" ] || err "fetch: space not allowed in _dest: '$5'"
-	[ "${5#/}" = "$5" ] || err "fetch: absolute path not allowed: '$5'"
+	[ "${5# }" = "$5" ] || $err "fetch: space not allowed in _dest: '$5'"
+	[ "${5#/}" = "$5" ] || $err "fetch: absolute path not allowed: '$5'"
 	_dest="${5##*../}"
 	_dl="${vendir}/cache/${dlsum}"
 	dl_fail="n"
@@ -129,14 +129,14 @@ fetch()
 		vendor_checksum "${dlsum}" "${_dl}" || dl_fail="n"
 	done
 	[ "${dl_fail}" = "y" ] && \
-		err "fetch ${dlsum}: matched file unavailable"
+		$err "fetch ${dlsum}: matched file unavailable"
 
 	x_ rm -Rf "${_dl}_extracted"
 	mkdirs "${_dest}" "extract_${dl_type}" || return 0
 	eval "extract_${dl_type}"
 
 	[ -f "${_dest}" ] && return 0
-	err "extract_${dl_type} (fetch): missing file: '${_dest}'"
+	$err "extract_${dl_type} (fetch): missing file: '${_dest}'"
 }
 
 vendor_checksum()
@@ -152,17 +152,17 @@ mkdirs()
 		printf "mkdirs %s %s: already downloaded\n" "$1" "$2" 1>&2
 		return 1
 	fi
-	mkdir -p "${1%/*}" || err "mkdirs: !mkdir -p ${1%/*}"
+	mkdir -p "${1%/*}" || $err "mkdirs: !mkdir -p ${1%/*}"
 	remkdir "${appdir}"
 	extract_archive "${_dl}" "${appdir}" || \
 	    [ "${2}" = "extract_e6400vga" ] || \
-	    err "mkdirs ${1} ${2}: !extract"
+	    $err "mkdirs ${1} ${2}: !extract"
 }
 
 extract_intel_me()
 {
 	[ ! -f "$mecleaner" ] && \
-		err "extract_intel_me $cbdir: me_cleaner missing"
+		$err "extract_intel_me $cbdir: me_cleaner missing"
 
 	_me="${PWD}/${_dest}" # must always be an absolute path
 	cdir="${PWD}/${appdir}" # must always be an absolute path
@@ -170,10 +170,10 @@ extract_intel_me()
 	[ -f "${_me}" ] && return 0
 
 	sdir="$(mktemp -d)"
-	mkdir -p "$sdir" || err "extract_intel_me: !mkdir -p \"$sdir\""
+	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
 	(
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-	cd "$cdir" || err "extract_intel_me: !cd \"$cdir\""
+	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\""
 	for i in *; do
 		[ -f "$_me" ] && break
 		[ -L "$i" ] && continue
@@ -195,7 +195,7 @@ extract_intel_me()
 		cd "${cdir}" || :
 	done
 	)
-	rm -Rf "${sdir}" || err "extract_intel_me: !rm -Rf ${sdir}"
+	rm -Rf "${sdir}" || $err "extract_intel_me: !rm -Rf ${sdir}"
 }
 
 extract_archive()
@@ -207,44 +207,44 @@ extract_archive()
 extract_kbc1126ec()
 {
 	[ ! -f "$kbc1126_ec_dump" ] && \
-		err "extract_kbc1126ec $cbdir: kbc1126_ec_dump missing"
+		$err "extract_kbc1126ec $cbdir: kbc1126_ec_dump missing"
 	(
 	x_ cd "${appdir}/"
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f ec.bin ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || err "can't extract Rom.bin"
+		    unar -D 68*.CAB Rom.bin || $err "can't extract Rom.bin"
 		x_ mv Rom.bin ec.bin
 	fi
-	[ -f ec.bin ] || err "extract_kbc1126_ec ${board}: can't extract"
+	[ -f ec.bin ] || $err "extract_kbc1126_ec ${board}: can't extract"
 	"${kbc1126_ec_dump}" ec.bin || \
-	    err "extract_kbc1126_ec ${board}: can't extract ecfw1/2.bin"
-	) || err "can't extract kbc1126 ec firmware"
+	    $err "extract_kbc1126_ec ${board}: can't extract ecfw1/2.bin"
+	) || $err "can't extract kbc1126 ec firmware"
 	ec_ex="y"
 	for i in 1 2; do
 		[ -f "${appdir}/ec.bin.fw${i}" ] || ec_ex="n"
 	done
 	[ "${ec_ex}" = "y" ] || \
-	    err "extract_kbc1126_ec ${board}: didn't extract ecfw1/2.bin"
+	    $err "extract_kbc1126_ec ${board}: didn't extract ecfw1/2.bin"
 	cp "${appdir}/"ec.bin.fw* "${_dest%/*}/" || \
-	    err "extract_kbc1126_ec ${board}: can't copy ec binaries"
+	    $err "extract_kbc1126_ec ${board}: can't copy ec binaries"
 }
 
 extract_e6400vga()
 {
 	for v in E6400_VGA_offset E6400_VGA_romname; do
-		eval "[ -z \"\$$v\" ] && err \"extract_e6400vga: $v undefined\""
+		eval "[ -z \"\$$v\" ] && $err \"extract_e6400vga: $v undefined\""
 	done
 	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
 	(
 	x_ cd "${appdir}"
-	[ -f "bios.bin" ] || err "extract_e6400vga: can't extract bios.bin"
+	[ -f "bios.bin" ] || $err "extract_e6400vga: can't extract bios.bin"
 	"${e6400_unpack}" bios.bin || printf "TODO: fix dell extract util\n"
 	[ -f "${E6400_VGA_romname}" ] || \
-		err "extract_e6400vga: can't extract vga rom from bios.bin"
-	) || err "can't extract e6400 vga rom"
+		$err "extract_e6400vga: can't extract vga rom from bios.bin"
+	) || $err "can't extract e6400 vga rom"
 	cp "${appdir}/${E6400_VGA_romname}" "${_dest}" || \
-	    err "extract_e6400vga ${board}: can't copy vga rom to ${_dest}"
+	    $err "extract_e6400vga ${board}: can't copy vga rom to ${_dest}"
 }
 
 extract_sch5545ec()
@@ -258,9 +258,9 @@ extract_sch5545ec()
 
 	# this makes the file defined by _sch5545ec_fw available to copy
 	"${uefiextract}" "${_bios}" || \
-	    err "extract_sch5545ec: cannot extract from uefi image"
+	    $err "extract_sch5545ec: cannot extract from uefi image"
 	cp "${_sch5545ec_fw}" "${_dest}" || \
-	    err "extract_sch5545ec: cannot copy sch5545ec firmware file"
+	    $err "extract_sch5545ec: cannot copy sch5545ec firmware file"
 }
 
 main $@

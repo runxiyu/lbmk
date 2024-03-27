@@ -13,7 +13,7 @@ eval "$(setvars "" archive rom modifygbe nukemode release new_mac tree)"
 
 main()
 {
-	[ $# -lt 1 ] && err "No options specified."
+	[ $# -lt 1 ] && $err "No options specified."
 	[ "${1}" = "listboards" ] && eval "items config/coreboot || :; exit 0"
 
 	archive="${1}"
@@ -42,8 +42,8 @@ check_board()
 	failcheck="n"
 	check_release "${archive}" || failcheck="y"
 	if [ "${failcheck}" = "y" ]; then
-		[ -f "$rom" ] || err "check_board \"$rom\": invalid path"
-		[ -z "${rom+x}" ] && err "check_board: no rom specified"
+		[ -f "$rom" ] || $err "check_board \"$rom\": invalid path"
+		[ -z "${rom+x}" ] && $err "check_board: no rom specified"
 		[ -n "${board+x}" ] || board=$(detect_board "${rom}")
 	else
 		release="y"
@@ -51,11 +51,11 @@ check_board()
 	fi
 
 	boarddir="${cbcfgsdir}/${board}"
-	[ -d "$boarddir" ] || err "check_board: board $board missing"
+	[ -d "$boarddir" ] || $err "check_board: board $board missing"
 	[ -f "$boarddir/target.cfg" ] || \
-		err "check_board $board: target.cfg missing"
+		$err "check_board $board: target.cfg missing"
 	. "$boarddir/target.cfg" 2>/dev/null
-	[ -z "$tree" ] && err "check_board $board: tree undefined"; return 0
+	[ -z "$tree" ] && $err "check_board $board: tree undefined"; return 0
 }
 
 check_release()
@@ -80,7 +80,7 @@ detect_board()
 		_stripped_prefix=${filename#*_}
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
-		err "detect_board $filename: could not detect board type"
+		$err "detect_board $filename: could not detect board type"
 	esac	
 	printf "%s\n" "${board}"
 }
@@ -109,7 +109,7 @@ patch_release_roms()
 	_tmpdir="tmp/romdir"
 	remkdir "${_tmpdir}"
 	tar -xf "${archive}" -C "${_tmpdir}" || \
-	    err "patch_release_roms: !tar -xf \"$archive\" -C \"$_tmpdir\""
+	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"$_tmpdir\""
 
 	for x in "${_tmpdir}"/bin/*/*.rom ; do
 		printf "patching rom: %s\n" "$x"
@@ -118,14 +118,14 @@ patch_release_roms()
 
 	(
 	cd "${_tmpdir}/bin/"* || \
-	    err "patch_release_roms: !cd ${_tmpdir}/bin/*"
+	    $err "patch_release_roms: !cd ${_tmpdir}/bin/*"
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	[ "${nukemode}" = "nuke" ] || sha512sum --status -c vendorhashes || \
 	    sha1sum --status -c vendorhashes || sha512sum --status -c \
 	    blobhashes || sha1sum --status -c blobhashes || \
-	    err "patch_release_roms: ROMs did not match expected hashes"
-	) || err "can't verify vendor hashes"
+	    $err "patch_release_roms: ROMs did not match expected hashes"
+	) || $err "can't verify vendor hashes"
 
 	[ "${modifygbe}" = "true" ] && \
 		for x in "${_tmpdir}"/bin/*/*.rom ; do
@@ -143,7 +143,7 @@ patch_rom()
 {
 	rom="${1}"
 
-	check_defconfig "$boarddir" && err "patch_rom $boarddir: no configs"
+	check_defconfig "$boarddir" && $err "patch_rom $boarddir: no configs"
 
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
@@ -174,18 +174,18 @@ patch_rom()
 inject()
 {
 	[ $# -lt 3 ] && \
-		err "inject $@, $rom: usage: inject name path type (offset)"
+		$err "inject $@, $rom: usage: inject name path type (offset)"
 
 	eval "$(setvars "" cbfsname _dest _t _offset)"
 	cbfsname="${1}"
 	_dest="${2##*../}"
 	_t="${3}"
 	[ $# -gt 3 ] && _offset="-b ${4}" && [ -z "${4}" ] && \
-	    err "inject $@, $rom: offset passed, but empty (not defined)"
+	    $err "inject $@, $rom: offset passed, but empty (not defined)"
 
-	[ -z "${_dest}" ] && err "inject $@, ${rom}: empty destination path"
+	[ -z "${_dest}" ] && $err "inject $@, ${rom}: empty destination path"
 	[ ! -f "${_dest}" ] && [ "${nukemode}" != "nuke" ] && \
-		err "inject_${dl_type}: file missing, ${_dest}"
+		$err "inject_${dl_type}: file missing, ${_dest}"
 
 	[ "$nukemode" = "nuke" ] || \
 		printf "Inserting %s/%s in file: %s\n" "$cbfsname" "$_t" "$rom"
@@ -193,18 +193,18 @@ inject()
 	if [ "${_t}" = "GbE" ]; then
 		x_ mkdir -p tmp
 		cp "${_dest}" "tmp/gbe.bin" || \
-		    err "inject: !cp \"${_dest}\" \"tmp/gbe.bin\""
+		    $err "inject: !cp \"${_dest}\" \"tmp/gbe.bin\""
 		_dest="tmp/gbe.bin"
 		"${nvmutil}" "${_dest}" setmac "${new_mac}" || \
-		    err "inject ${_dest}: can't change mac address"
+		    $err "inject ${_dest}: can't change mac address"
 	fi
 	if [ "${cbfsname}" = "IFD" ]; then
 		if [ "${nukemode}" != "nuke" ]; then
 			"$ifdtool" -i ${_t}:${_dest} "$rom" -O "$rom" || \
-			    err "inject: can't insert $_t ($dest) into $rom"
+			    $err "inject: can't insert $_t ($dest) into $rom"
 		else
 			"$ifdtool" --nuke $_t "$rom" -O "$rom" || \
-			    err "inject $rom: can't nuke $_t in IFD"
+			    $err "inject $rom: can't nuke $_t in IFD"
 		fi
 	else
 		if [ "${nukemode}" != "nuke" ]; then
@@ -214,11 +214,11 @@ inject()
 			else
 				"$cbfstool" "$rom" add -f "$_dest" \
 				    -n "$cbfsname" -t $_t $_offset || \
-				    err "$rom: can't insert $_t file $_dest"
+				    $err "$rom: can't insert $_t file $_dest"
 			fi
 		else
 			"$cbfstool" "$rom" remove -n "$cbfsname" || \
-			    err "inject $rom: can't remove $cbfsname"
+			    $err "inject $rom: can't remove $cbfsname"
 		fi
 	fi
 }

@@ -14,6 +14,7 @@ export LC_ALL=C
 . "include/option.sh"
 
 eval "$(setvars "" option aur_notice tmpdir)"
+err="fail"
 
 tmpdir_was_set="y"
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
@@ -35,10 +36,10 @@ buildpath="./script/${linkname}"
 
 main()
 {
-	xx_ id -u 1>/dev/null 2>/dev/null
-	[ $# -lt 1 ] && fail "Too few arguments. Try: ${0} help"
+	x_ id -u 1>/dev/null 2>/dev/null
+	[ $# -lt 1 ] && $err "Too few arguments. Try: ${0} help"
 
-	[ "$1" = "dependencies" ] && xx_ install_packages $@ && lbmk_exit 0
+	[ "$1" = "dependencies" ] && x_ install_packages $@ && lbmk_exit 0
 
 	for cmd in initcmd check_git check_project git_init excmd; do
 		eval "${cmd} \$@"
@@ -48,7 +49,7 @@ main()
 
 initcmd()
 {
-	[ "$(id -u)" != "0" ] || fail "this command as root is not permitted"
+	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
 	check_project
 
@@ -69,14 +70,14 @@ install_packages()
 		printf "You must specify a distro, namely:\n" 1>&2
 		printf "Look at files under config/dependencies/\n" 1>&2
 		printf "Example: ./build dependencies debian\n" 1>&2
-		fail "install_packages: target not specified"
+		$err "install_packages: target not specified"
 	fi
 
-	[ -f "config/dependencies/${2}" ] || fail "Unsupported target"
+	[ -f "config/dependencies/${2}" ] || $err "Unsupported target"
 
 	. "config/dependencies/${2}"
 
-	xx_ ${pkg_add} ${pkglist}
+	x_ ${pkg_add} ${pkglist}
 	[ -z "${aur_notice}" ] && return 0
 	printf "You must install AUR packages: %s\n" "$aur_notice" 1>&2
 }
@@ -85,24 +86,24 @@ install_packages()
 # lbmk can be run from lbmk.git, or an archive.
 git_init()
 {
-	[ -L ".git" ] && fail "Reference .git is a symlink"
+	[ -L ".git" ] && $err "Reference .git is a symlink"
 	[ -e ".git" ] && return 0
 	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
 
-	git init || fail "${PWD}: cannot initialise Git repository"
-	git add -A . || fail "${PWD}: cannot add files to Git repository"
+	git init || $err "${PWD}: cannot initialise Git repository"
+	git add -A . || $err "${PWD}: cannot add files to Git repository"
 	git commit -m "${projectname} ${version}" --date "${cdate}" \
 	    --author="lbmk <lbmk@libreboot.org>" || \
-	    fail "$PWD: can't commit ${projectname}/${version}, date $cdate"
+	    $err "$PWD: can't commit ${projectname}/${version}, date $cdate"
 	git tag -a "${version}" -m "${projectname} ${version}" || \
-	    fail "${PWD}: cannot git-tag ${projectname}/${version}"
+	    $err "${PWD}: cannot git-tag ${projectname}/${version}"
 }
 
 excmd()
 {
 	lbmkcmd="${buildpath}/${option}"
-	[ -f "${lbmkcmd}" ] || fail "Invalid command. Run: ${linkpath} help"
-	shift 1; "$lbmkcmd" $@ || fail "excmd: ${lbmkcmd} ${@}"
+	[ -f "${lbmkcmd}" ] || $err "Invalid command. Run: ${linkpath} help"
+	shift 1; "$lbmkcmd" $@ || $err "excmd: ${lbmkcmd} ${@}"
 }
 
 usage()
@@ -131,14 +132,14 @@ mkversion()
 
 lbmk_exit()
 {
-	tmp_cleanup || err "lbmk_exit: can't rm tmpdir upon exit $1: $tmpdir"
+	tmp_cleanup || err_ "lbmk_exit: can't rm tmpdir upon exit $1: $tmpdir"
 	exit $1
 }
 
 fail()
 {
 	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "$tmpdir" 1>&2
-	err "${1}"
+	err_ "${1}"
 }
 
 tmp_cleanup()
