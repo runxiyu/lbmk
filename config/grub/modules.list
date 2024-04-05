@@ -36,6 +36,7 @@ crypto \
 cryptodisk \
 diskfilter \
 echo \
+xhci \
 ehci \
 eval \
 exfat \
