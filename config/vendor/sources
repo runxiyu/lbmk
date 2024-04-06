@@ -23,7 +23,7 @@
 
 # haswell boards, but use broadwell mrc.bin. uses me9 and
 # the broadwell mrc, but without broadwell refcode
-{dell9020sffbmrc dell9020mtbmrc}{
+{dell9020sffbmrc dell9020mtbmrc t440pbmrc w541bmrc}{
 	DL_hash f3d79aec805c8b0094a4081be76b3a22d329c479ad18210449b7acc3236ccfc4a2103eaa7c5b79a4872bfd699eede047efd46dfb06dc8f47e3216fc254612998
 	DL_url https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
 	DL_url_bkup https://web.archive.org/web/20211120031520/https://download.lenovo.com/pccbbs/mobiles/glrg22ww.exe
