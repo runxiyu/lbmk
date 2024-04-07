@@ -1,0 +1,594 @@
+From f6340f3fe21e948ba94d0429467882c2fb90b77e Mon Sep 17 00:00:00 2001
+From: Mate Kukri <kukri.mate@gmail.com>
+Date: Sat, 6 Apr 2024 23:25:15 +0100
+Subject: [PATCH 1/1] mb/dell/optiplex_9020: Implement late HWM initialization
+
+There are 4 different chassis types specified by vendor firmware, each
+with a slightly different HWM configuration.
+
+The chassis type to use is determined at runtime by reading a set of
+4 PCH GPIOs: 70, 38, 17, and 0.
+
+Additionally vendor firmware also provides an option to run the fans at
+full speed. This is substituted with a coreboot nvram option in this
+implementation.
+
+This was tested to make fan control work on my OptiPlex 7020 SFF.
+
+NOTE: This is superficially similar to the OptiPlex 9010's SCH5545
+however the OptiPlex 9020's SCH5555 does not use externally
+programmed EC firmware.
+
+Change-Id: Ibdccd3fc7364e03e84ca606592928410624eed43
+Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
+---
+ src/mainboard/dell/optiplex_9020/Makefile.inc |   3 +-
+ src/mainboard/dell/optiplex_9020/bootblock.c  |  25 +-
+ src/mainboard/dell/optiplex_9020/cmos.default |   1 +
+ src/mainboard/dell/optiplex_9020/cmos.layout  |   5 +-
+ src/mainboard/dell/optiplex_9020/mainboard.c  | 382 ++++++++++++++++++
+ src/mainboard/dell/optiplex_9020/sch5555_ec.c |  54 +++
+ src/mainboard/dell/optiplex_9020/sch5555_ec.h |   7 +
+ 7 files changed, 455 insertions(+), 22 deletions(-)
+ create mode 100644 src/mainboard/dell/optiplex_9020/sch5555_ec.c
+ create mode 100644 src/mainboard/dell/optiplex_9020/sch5555_ec.h
+
+diff --git a/src/mainboard/dell/optiplex_9020/Makefile.inc b/src/mainboard/dell/optiplex_9020/Makefile.inc
+index 6ca2f2afaa..08e2e53577 100644
+--- a/src/mainboard/dell/optiplex_9020/Makefile.inc
++++ b/src/mainboard/dell/optiplex_9020/Makefile.inc
+@@ -2,4 +2,5 @@
+ 
+ romstage-y += gpio.c
+ ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
+-bootblock-y += bootblock.c
++ramstage-y += sch5555_ec.c
++bootblock-y += bootblock.c sch5555_ec.c
+diff --git a/src/mainboard/dell/optiplex_9020/bootblock.c b/src/mainboard/dell/optiplex_9020/bootblock.c
+index 2837cf9cf1..e5e759273e 100644
+--- a/src/mainboard/dell/optiplex_9020/bootblock.c
++++ b/src/mainboard/dell/optiplex_9020/bootblock.c
+@@ -4,29 +4,14 @@
+ #include <device/pnp_ops.h>
+ #include <superio/smsc/sch555x/sch555x.h>
+ #include <southbridge/intel/lynxpoint/pch.h>
+-
+-static void ec_write(uint8_t addr1, uint16_t addr2, uint8_t val)
+-{
+-	// Clear EC-to-Host mailbox
+-	uint8_t tmp = inb(SCH555x_EMI_IOBASE + 1);
+-	outb(tmp, SCH555x_EMI_IOBASE + 1);
+-
+-	// Send address and value to the EC
+-	sch555x_emi_write16(0, (addr1 * 2) | 0x101);
+-	sch555x_emi_write32(4, val | (addr2 << 16));
+-
+-	// Wait for acknowledgement message from EC
+-	outb(1, SCH555x_EMI_IOBASE);
+-	size_t timeout = 0;
+-	do {} while (++timeout < 0xfff && (inb(SCH555x_EMI_IOBASE + 1) & 1) == 0);
+-}
++#include "sch5555_ec.h"
+ 
+ struct ec_init_entry {
+ 	uint16_t addr;
+ 	uint8_t val;
+ };
+ 
+-static void ec_init(void)
++static void bootblock_ec_init(void)
+ {
+ 	/*
+ 	 * Tables from CORE_PEI
+@@ -108,9 +93,9 @@ void mainboard_config_superio(void)
+ 	outb(0x01, SCH555x_RUNTIME_IOBASE + SCH555x_RUNTIME_UNK1);
+ 	outb(0x0f, SCH555x_RUNTIME_IOBASE + SCH555x_RUNTIME_LED);
+ 
+-	// Magic EC init
+-	ec_init();
++	// Perform bootblock EC initialization
++	bootblock_ec_init();
+ 
+-	// Magic EC init is needed for UART1 initialization to work
++	// Bootblock EC initialization is required for UART1 to work
+ 	sch555x_enable_serial(SERIAL_DEV, CONFIG_TTYS0_BASE);
+ }
+diff --git a/src/mainboard/dell/optiplex_9020/cmos.default b/src/mainboard/dell/optiplex_9020/cmos.default
+index 7bccc80e51..1909abcb9f 100644
+--- a/src/mainboard/dell/optiplex_9020/cmos.default
++++ b/src/mainboard/dell/optiplex_9020/cmos.default
+@@ -3,3 +3,4 @@ debug_level=Debug
+ nmi=Disable
+ power_on_after_fail=Disable
+ iommu=Disable
++fan_full_speed=Disable
+diff --git a/src/mainboard/dell/optiplex_9020/cmos.layout b/src/mainboard/dell/optiplex_9020/cmos.layout
+index 72ff9c4bee..4a1496a878 100644
+--- a/src/mainboard/dell/optiplex_9020/cmos.layout
++++ b/src/mainboard/dell/optiplex_9020/cmos.layout
+@@ -22,7 +22,10 @@ entries
+ 409	2	e	5	power_on_after_fail
+ 
+ # turn iommu on or off
+-412	1	e	6	iommu
++411	1	e	6	iommu
++
++# coreboot config options: EC
++412	1	e	1	fan_full_speed
+ 
+ # coreboot config options: check sums
+ 984	16	h	0	check_sum
+diff --git a/src/mainboard/dell/optiplex_9020/mainboard.c b/src/mainboard/dell/optiplex_9020/mainboard.c
+index c834fea5d3..10b8aaca0e 100644
+--- a/src/mainboard/dell/optiplex_9020/mainboard.c
++++ b/src/mainboard/dell/optiplex_9020/mainboard.c
+@@ -1,7 +1,12 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
++#include <bootstate.h>
++#include <cpu/x86/msr.h>
+ #include <device/device.h>
+ #include <drivers/intel/gma/int15.h>
++#include <option.h>
++#include <southbridge/intel/lynxpoint/lp_gpio.h>
++#include "sch5555_ec.h"
+ 
+ static void mainboard_enable(struct device *dev)
+ {
+@@ -13,3 +18,380 @@ static void mainboard_enable(struct device *dev)
+ struct chip_operations mainboard_ops = {
+ 	.enable_dev = mainboard_enable,
+ };
++
++#define HWM_TAB_ADD_TEMP_TARGET 1
++#define HWM_TAB_PKG_POWER_ANY	0xffff
++
++struct hwm_tab_entry {
++	uint16_t addr;
++	uint8_t val;
++	uint8_t flags;
++	uint16_t pkg_power;
++};
++
++struct hwm_tab_entry HWM_TAB3[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x00, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0x8a, 0, 0x0010 },
++	{ 0x086, 0x4c, 0, 0x0010 },
++	{ 0x08a, 0x66, 0, 0x0010 },
++	{ 0x08b, 0x5b, 0, 0x0010 },
++	{ 0x090, 0x65, 0, 0xffff },
++	{ 0x091, 0x70, 0, 0xffff },
++	{ 0x092, 0x86, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x0e, 0, 0xffff },
++	{ 0x0a1, 0x0e, 0, 0xffff },
++	{ 0x0ae, 0x7c, 0, 0xffff },
++	{ 0x0af, 0x86, 0, 0xffff },
++	{ 0x0b0, 0x9a, 0, 0xffff },
++	{ 0x0b3, 0x9a, 0, 0xffff },
++	{ 0x0b6, 0x08, 0, 0xffff },
++	{ 0x0b7, 0x08, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0x0020 },
++	{ 0x0ea, 0x5c, 0, 0x0010 },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x0fd, 0x01, 0, 0xffff },
++	{ 0x1a1, 0x00, 0, 0xffff },
++	{ 0x1a2, 0x00, 0, 0xffff },
++	{ 0x1b1, 0x08, 0, 0xffff },
++	{ 0x1be, 0x99, 0, 0xffff },
++	{ 0x280, 0xa0, 0, 0x0010 },
++	{ 0x281, 0x0f, 0, 0x0010 },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x288, 0x68, 0, 0x0010 },
++	{ 0x289, 0x10, 0, 0x0010 },
++	{ 0x28a, 0x03, 0, 0xffff },
++	{ 0x28b, 0x0a, 0, 0xffff },
++	{ 0x28c, 0x80, 0, 0xffff },
++	{ 0x28d, 0x03, 0, 0xffff },
++};
++
++struct hwm_tab_entry HWM_TAB4[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x00, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0x99, 0, 0x0020 },
++	{ 0x085, 0xad, 0, 0x0010 },
++	{ 0x086, 0x1c, 0, 0xffff },
++	{ 0x08a, 0x39, 0, 0x0020 },
++	{ 0x08a, 0x41, 0, 0x0010 },
++	{ 0x08b, 0x76, 0, 0x0020 },
++	{ 0x08b, 0x8b, 0, 0x0010 },
++	{ 0x090, 0x5e, 0, 0xffff },
++	{ 0x091, 0x5e, 0, 0xffff },
++	{ 0x092, 0x86, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x0a, 0, 0xffff },
++	{ 0x0a1, 0x0a, 0, 0xffff },
++	{ 0x0ae, 0x7c, 0, 0xffff },
++	{ 0x0af, 0x7c, 0, 0xffff },
++	{ 0x0b0, 0x9a, 0, 0xffff },
++	{ 0x0b3, 0x7c, 0, 0xffff },
++	{ 0x0b6, 0x08, 0, 0xffff },
++	{ 0x0b7, 0x08, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0x0020 },
++	{ 0x0ea, 0x5c, 0, 0x0010 },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x0fd, 0x01, 0, 0xffff },
++	{ 0x1a1, 0x00, 0, 0xffff },
++	{ 0x1a2, 0x00, 0, 0xffff },
++	{ 0x1b1, 0x08, 0, 0xffff },
++	{ 0x1be, 0x90, 0, 0xffff },
++	{ 0x280, 0x94, 0, 0x0020 },
++	{ 0x281, 0x11, 0, 0x0020 },
++	{ 0x280, 0x94, 0, 0x0010 },
++	{ 0x281, 0x11, 0, 0x0010 },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x288, 0x28, 0, 0x0020 },
++	{ 0x289, 0x0a, 0, 0x0020 },
++	{ 0x288, 0x28, 0, 0x0010 },
++	{ 0x289, 0x0a, 0, 0x0010 },
++	{ 0x28a, 0x03, 0, 0xffff },
++	{ 0x28b, 0x0a, 0, 0xffff },
++	{ 0x28c, 0x80, 0, 0xffff },
++	{ 0x28d, 0x03, 0, 0xffff },
++};
++
++struct hwm_tab_entry HWM_TAB5[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x00, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0x66, 0, 0x0020 },
++	{ 0x085, 0x5d, 0, 0x0010 },
++	{ 0x086, 0x1c, 0, 0xffff },
++	{ 0x08a, 0x39, 0, 0x0020 },
++	{ 0x08a, 0x41, 0, 0x0010 },
++	{ 0x08b, 0x76, 0, 0x0020 },
++	{ 0x08b, 0x80, 0, 0x0010 },
++	{ 0x090, 0x5d, 0, 0x0020 },
++	{ 0x090, 0x5e, 0, 0x0010 },
++	{ 0x091, 0x5e, 0, 0xffff },
++	{ 0x092, 0x86, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa3, 0, 0x0020 },
++	{ 0x098, 0xa4, 0, 0x0010 },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x08, 0, 0xffff },
++	{ 0x0a1, 0x0a, 0, 0xffff },
++	{ 0x0ae, 0x7c, 0, 0xffff },
++	{ 0x0af, 0x7c, 0, 0xffff },
++	{ 0x0b0, 0x9a, 0, 0xffff },
++	{ 0x0b3, 0x7c, 0, 0xffff },
++	{ 0x0b6, 0x08, 0, 0xffff },
++	{ 0x0b7, 0x08, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0x0020 },
++	{ 0x0ea, 0x5c, 0, 0x0010 },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x0fd, 0x01, 0, 0xffff },
++	{ 0x1a1, 0x00, 0, 0xffff },
++	{ 0x1a2, 0x00, 0, 0xffff },
++	{ 0x1b1, 0x08, 0, 0xffff },
++	{ 0x1be, 0x98, 0, 0x0020 },
++	{ 0x1be, 0x90, 0, 0x0010 },
++	{ 0x280, 0x94, 0, 0x0020 },
++	{ 0x281, 0x11, 0, 0x0020 },
++	{ 0x280, 0x94, 0, 0x0010 },
++	{ 0x281, 0x11, 0, 0x0010 },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x288, 0x28, 0, 0x0020 },
++	{ 0x289, 0x0a, 0, 0x0020 },
++	{ 0x288, 0x28, 0, 0x0010 },
++	{ 0x289, 0x0a, 0, 0x0010 },
++	{ 0x28a, 0x03, 0, 0xffff },
++	{ 0x28b, 0x0a, 0, 0xffff },
++	{ 0x28c, 0x80, 0, 0xffff },
++	{ 0x28d, 0x03, 0, 0xffff },
++};
++
++struct hwm_tab_entry HWM_TAB6[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x00, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0x98, 0, 0xffff },
++	{ 0x086, 0x3c, 0, 0xffff },
++	{ 0x08a, 0x39, 0, 0x0020 },
++	{ 0x08a, 0x3d, 0, 0x0010 },
++	{ 0x08b, 0x44, 0, 0x0020 },
++	{ 0x08b, 0x51, 0, 0x0010 },
++	{ 0x090, 0x61, 0, 0xffff },
++	{ 0x091, 0x6d, 0, 0xffff },
++	{ 0x092, 0x86, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0x9f, 0, 0x0020 },
++	{ 0x098, 0xa4, 0, 0x0010 },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x0e, 0, 0xffff },
++	{ 0x0a1, 0x0e, 0, 0xffff },
++	{ 0x0ae, 0x7c, 0, 0xffff },
++	{ 0x0af, 0x7c, 0, 0xffff },
++	{ 0x0b0, 0x9b, 0, 0x0020 },
++	{ 0x0b0, 0x98, 0, 0x0010 },
++	{ 0x0b3, 0x9a, 0, 0xffff },
++	{ 0x0b6, 0x08, 0, 0xffff },
++	{ 0x0b7, 0x08, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0x0020 },
++	{ 0x0ea, 0x5c, 0, 0x0010 },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x0fd, 0x01, 0, 0xffff },
++	{ 0x1a1, 0x00, 0, 0xffff },
++	{ 0x1a2, 0x00, 0, 0xffff },
++	{ 0x1b1, 0x08, 0, 0xffff },
++	{ 0x1be, 0x9a, 0, 0x0020 },
++	{ 0x1be, 0x96, 0, 0x0010 },
++	{ 0x280, 0x94, 0, 0x0020 },
++	{ 0x281, 0x11, 0, 0x0020 },
++	{ 0x280, 0x94, 0, 0x0010 },
++	{ 0x281, 0x11, 0, 0x0010 },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x288, 0x94, 0, 0x0020 },
++	{ 0x289, 0x11, 0, 0x0020 },
++	{ 0x288, 0x94, 0, 0x0010 },
++	{ 0x289, 0x11, 0, 0x0010 },
++	{ 0x28a, 0x03, 0, 0xffff },
++	{ 0x28b, 0x0a, 0, 0xffff },
++	{ 0x28c, 0x80, 0, 0xffff },
++	{ 0x28d, 0x03, 0, 0xffff },
++};
++
++static uint8_t get_chassis_type(void)
++{
++	uint8_t gpio_chassis_type;
++
++	// Read chassis type from GPIO
++	gpio_chassis_type = get_gpio(70) << 3 | get_gpio(38) << 2 |
++			    get_gpio(17) << 1 | get_gpio(0);
++
++	printk(BIOS_DEBUG, "GPIO chassis type = %#x\n", gpio_chassis_type);
++
++	// Turn it into internal chassis index
++	switch (gpio_chassis_type) {
++	case 0x08:
++	case 0x0a:
++		return 4;
++	case 0x0b:
++		return 3;
++	case 0x0c:
++		return 5;
++	case 0x0d: // SFF
++	case 0x0e:
++	case 0x0f:
++		return 6;
++	default:
++		die("Unknown GPIO chassis type\n");
++	}
++
++}
++
++static uint8_t get_temp_target(void)
++{
++	uint8_t val = rdmsr(0x1a2).lo >> 8 & 0xff;
++	if (!val)
++		val = 20;
++	return 0x95 - val;
++}
++
++static uint16_t get_pkg_power(void)
++{
++	uint8_t rapl_power_unit = rdmsr(0x606).lo & 0xf;
++	if (rapl_power_unit)
++		rapl_power_unit = 2 << (rapl_power_unit - 1);
++	uint16_t pkg_power_info = rdmsr(0x614).lo & 0x7fff;
++	if (pkg_power_info / rapl_power_unit > 0x41)
++		return 32;
++	else
++		return 16;
++}
++
++static void apply_hwm_tab(struct hwm_tab_entry *arr, size_t size)
++{
++	uint8_t temp_target = get_temp_target();
++	uint16_t pkg_power = get_pkg_power();
++
++	printk(BIOS_DEBUG, "Temp target = %#x\n", temp_target);
++	printk(BIOS_DEBUG, "Package power = %#x\n", pkg_power);
++
++	for (size_t i = 0; i < size; ++i) {
++		// Skip entry if it doesn't apply for this package power
++		if (arr[i].pkg_power != pkg_power &&
++		    arr[i].pkg_power != HWM_TAB_PKG_POWER_ANY)
++			continue;
++
++		uint8_t val = arr[i].val;
++
++		// Add temp target to value if requested (current tables never do)
++		if (arr[i].flags & HWM_TAB_ADD_TEMP_TARGET)
++			val += temp_target;
++
++		// Perform write
++		ec_write(1, arr[i].addr, val);
++
++	}
++}
++
++static void sch5555_ec_hwm_init(void *arg)
++{
++	uint8_t chassis_type, saved_2fc;
++
++	printk(BIOS_DEBUG, "OptiPlex 9020 late HWM init\n");
++
++	saved_2fc = ec_read(1, 0x2fc);
++	ec_write(1, 0x2fc, 0xa0);
++	ec_write(1, 0x2fd, 0x32);
++
++	// Apply HWM table based on chassis type
++	chassis_type = get_chassis_type();
++	printk(BIOS_DEBUG, "Chassis type = %#x\n", chassis_type);
++	switch (chassis_type) {
++	case 3:
++		apply_hwm_tab(HWM_TAB3, ARRAY_SIZE(HWM_TAB3));
++		break;
++	case 4:
++		apply_hwm_tab(HWM_TAB4, ARRAY_SIZE(HWM_TAB4));
++		break;
++	case 5:
++		apply_hwm_tab(HWM_TAB5, ARRAY_SIZE(HWM_TAB5));
++		break;
++	case 6:
++		apply_hwm_tab(HWM_TAB6, ARRAY_SIZE(HWM_TAB6));
++		break;
++	default:
++		die("Unknown chassis type\n");
++	}
++
++	if (CONFIG_MAX_CPUS > 2) {
++		ec_write(1, 0x9e, 0x30);
++		ec_write(1, 0xeb, ec_read(1, 0xea));
++	}
++
++	ec_write(1, 0x2fc, saved_2fc);
++
++	// Apply full speed fan config if requested
++	if (get_uint_option("fan_full_speed", 0)) {
++		printk(BIOS_DEBUG, "Setting full fan speed\n");
++		ec_write(1, 0x80, 0x60 | ec_read(1, 0x80));
++		ec_write(1, 0x81, 0x60 | ec_read(1, 0x81));
++	}
++
++	ec_read(1, 0xb8);
++
++	if ((chassis_type == 4 || chassis_type == 5) && ec_read(1, 0x26) == 0) {
++		ec_write(1, 0xa0, ec_read(1, 0xa0) & 0xfb);
++		ec_write(1, 0xa1, ec_read(1, 0xa1) & 0xfb);
++		ec_write(1, 0xa2, ec_read(1, 0xa2) & 0xfb);
++		ec_write(1, 0x8a, 0x99);
++		ec_write(1, 0x8b, 0x47);
++		ec_write(1, 0x8c, 0x91);
++	}
++}
++
++BOOT_STATE_INIT_ENTRY(BS_POST_DEVICE, BS_ON_EXIT, sch5555_ec_hwm_init, NULL);
+diff --git a/src/mainboard/dell/optiplex_9020/sch5555_ec.c b/src/mainboard/dell/optiplex_9020/sch5555_ec.c
+new file mode 100644
+index 0000000000..92244da9ab
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_9020/sch5555_ec.c
+@@ -0,0 +1,54 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <arch/io.h>
++#include <device/pnp_ops.h>
++#include <superio/smsc/sch555x/sch555x.h>
++#include "sch5555_ec.h"
++
++uint8_t ec_read(uint8_t addr1, uint16_t addr2)
++{
++	// clear ec-to-host mailbox
++	uint8_t tmp = inb(SCH555x_EMI_IOBASE + 1);
++	outb(tmp, SCH555x_EMI_IOBASE + 1);
++
++	// send address
++	outw(0 | 0x8001, SCH555x_EMI_IOBASE + 2);
++	outw((addr1 * 2) | 0x100, SCH555x_EMI_IOBASE + 4);
++
++	outw(4 | 0x8002, SCH555x_EMI_IOBASE + 2);
++	outl(addr2 << 16, SCH555x_EMI_IOBASE + 4);
++
++	// send message to ec
++	outb(1, SCH555x_EMI_IOBASE);
++
++	// wait for ack
++	for (size_t timeout = 0; timeout < 0xfff; ++timeout)
++		if (inb(SCH555x_EMI_IOBASE + 1) & 1)
++			break;
++
++	// read result
++	outw(4 | 0x8000, SCH555x_EMI_IOBASE + 2);
++	return inb(SCH555x_EMI_IOBASE + 4);
++}
++
++void ec_write(uint8_t addr1, uint16_t addr2, uint8_t val)
++{
++	// clear ec-to-host mailbox
++	uint8_t tmp = inb(SCH555x_EMI_IOBASE + 1);
++	outb(tmp, SCH555x_EMI_IOBASE + 1);
++
++	// send address and value
++	outw(0 | 0x8001, SCH555x_EMI_IOBASE + 2);
++	outw((addr1 * 2) | 0x101, SCH555x_EMI_IOBASE + 4);
++
++	outw(4 | 0x8002, SCH555x_EMI_IOBASE + 2);
++	outl(val | (addr2 << 16), SCH555x_EMI_IOBASE + 4);
++
++	// send message to ec
++	outb(1, SCH555x_EMI_IOBASE);
++
++	// wait for ack
++	for (size_t timeout = 0; timeout < 0xfff; ++timeout)
++		if (inb(SCH555x_EMI_IOBASE + 1) & 1)
++			break;
++}
+diff --git a/src/mainboard/dell/optiplex_9020/sch5555_ec.h b/src/mainboard/dell/optiplex_9020/sch5555_ec.h
+new file mode 100644
+index 0000000000..6e703ff865
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_9020/sch5555_ec.h
+@@ -0,0 +1,7 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#pragma once
++
++uint8_t ec_read(uint8_t addr1, uint16_t addr2);
++
++void ec_write(uint8_t addr1, uint16_t addr2, uint8_t val);
+-- 
+2.39.2
+
