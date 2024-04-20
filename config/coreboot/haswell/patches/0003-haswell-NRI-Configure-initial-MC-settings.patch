@@ -1,7 +1,7 @@
-From 1b0b17d85256193de825fa7ff0e04767c818f2fc Mon Sep 17 00:00:00 2001
+From 574f4965976b56f98a825dea71e919fefb2c8547 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 17:22:07 +0200
-Subject: [PATCH 13/26] haswell NRI: Configure initial MC settings
+Subject: [PATCH 03/20] haswell NRI: Configure initial MC settings
 
 Program initial memory controller settings. Many of these values will be
 adjusted later during training.
@@ -9,7 +9,7 @@ adjusted later during training.
 Change-Id: If33846b51cb1bab5d0458fe626e13afb1bdc900e
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   2 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   2 +
  .../haswell/native_raminit/configure_mc.c     | 822 ++++++++++++++++++
  .../haswell/native_raminit/raminit_main.c     |   2 +
  .../haswell/native_raminit/raminit_native.h   | 101 +++
@@ -21,10 +21,10 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  create mode 100644 src/northbridge/intel/haswell/native_raminit/reg_structs.h
  create mode 100644 src/northbridge/intel/haswell/native_raminit/timings_refresh.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index 2769e0bbb4..fc55277a65 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -1,8 +1,10 @@
  ## SPDX-License-Identifier: GPL-2.0-or-later
  
@@ -38,14 +38,14 @@ index 2769e0bbb4..fc55277a65 100644
 +romstage-y += timings_refresh.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/configure_mc.c b/src/northbridge/intel/haswell/native_raminit/configure_mc.c
 new file mode 100644
-index 0000000000..2a667b075b
+index 0000000000..88249725a7
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/configure_mc.c
 @@ -0,0 +1,822 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
 +#include <assert.h>
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <console/console.h>
 +#include <delay.h>
 +#include <lib.h>
@@ -131,22 +131,22 @@ index 0000000000..2a667b075b
 +
 +static const uint8_t rxb_trad[2][5][4] = {
 +	{	/* Vdd low */
-+		/*  1067 MHz,     1333 MHz,     1600 MHz,     1867 MHz,     2133 MHz, */
++		/* 1067 MT/s,    1333 MT/s,    1600 MT/s,    1867 MT/s,    2133 MT/s, */
 +		{4, 3, 3, 2}, {4, 4, 3, 2}, {5, 4, 3, 3}, {5, 4, 4, 3}, {5, 4, 4, 3},
 +	},
 +	{	/* Vdd hi */
-+		/*  1067 MHz,     1333 MHz,     1600 MHz,     1867 MHz,     2133 MHz, */
++		/* 1067 MT/s,    1333 MT/s,    1600 MT/s,    1867 MT/s,    2133 MT/s, */
 +		{4, 3, 3, 2}, {4, 4, 3, 2}, {5, 4, 3, 3}, {5, 4, 4, 3}, {4, 4, 3, 3},
 +	},
 +};
 +
 +static const uint8_t rxb_ultx[2][3][4] = {
 +	{	/* Vdd low */
-+		/*  1067 MHz,     1333 MHz,     1600 MHz, */
++		/* 1067 MT/s,    1333 MT/s,    1600 MT/s, */
 +		{5, 6, 6, 5}, {5, 6, 6, 5}, {4, 6, 6, 6},
 +	},
 +	{	/* Vdd hi */
-+		/*  1067 MHz,     1333 MHz,     1600 MHz, */
++		/* 1067 MT/s,    1333 MT/s,    1600 MT/s, */
 +		{7, 6, 6, 5}, {7, 6, 6, 5}, {7, 6, 6, 6},
 +	},
 +};
@@ -277,7 +277,7 @@ index 0000000000..2a667b075b
 +	const int16_t coding[] = {0, -125, -62, -31, 250, 125, 62, 31};
 +	*best_a = 0;
 +	*best_b = 0;
-+	int16_t	best_err = slope;
++	int16_t best_err = slope;
 +	for (uint8_t b = 0; b < ARRAY_SIZE(coding); b++) {
 +		for (uint8_t a = b; a < ARRAY_SIZE(coding); a++) {
 +			int16_t	error = slope - (coding[a] + coding[b]);
@@ -865,10 +865,10 @@ index 0000000000..2a667b075b
 +	return RAMINIT_STATUS_SUCCESS;
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-index 5f2be980d4..3a773cfa19 100644
+index 2fea658415..fcc981ad04 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-@@ -23,6 +23,7 @@ static const struct task_entry cold_boot[] = {
+@@ -22,6 +22,7 @@ static const struct task_entry cold_boot[] = {
  	{ collect_spd_info,                                       true, "PROCSPD",    },
  	{ initialise_mpll,                                        true, "INITMPLL",   },
  	{ convert_timings,                                        true, "CONVTIM",    },
@@ -876,7 +876,7 @@ index 5f2be980d4..3a773cfa19 100644
  };
  
  /* Return a generic stepping value to make stepping checks simpler */
-@@ -54,6 +55,7 @@ static void initialize_ctrl(struct sysinfo *ctrl)
+@@ -53,6 +54,7 @@ static void initialize_ctrl(struct sysinfo *ctrl)
  
  	ctrl->cpu = cpu_get_cpuid();
  	ctrl->stepping = get_stepping(ctrl->cpu);

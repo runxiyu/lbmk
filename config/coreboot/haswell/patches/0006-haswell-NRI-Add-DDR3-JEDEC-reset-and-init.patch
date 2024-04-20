@@ -1,7 +1,7 @@
-From d24def01ec15f41a48331ef1e236270b2df90b84 Mon Sep 17 00:00:00 2001
+From 1ea9b05694da7ee61d49d9cd2b7e533a98e42321 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 21:49:40 +0200
-Subject: [PATCH 16/26] haswell NRI: Add DDR3 JEDEC reset and init
+Subject: [PATCH 06/20] haswell NRI: Add DDR3 JEDEC reset and init
 
 Implement JEDEC reset and init sequence for DDR3. The MRS commands are
 issued through the REUT (Robust Electrical Unified Testing) hardware.
@@ -9,25 +9,25 @@ issued through the REUT (Robust Electrical Unified Testing) hardware.
 Change-Id: I2a0c066537021b587599228086727cb1e041bff5
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   3 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   3 +
  .../intel/haswell/native_raminit/ddr3.c       | 217 ++++++++++++++++++
  .../haswell/native_raminit/io_comp_control.c  |  19 ++
  .../haswell/native_raminit/jedec_reset.c      | 120 ++++++++++
  .../haswell/native_raminit/raminit_main.c     |   2 +
- .../haswell/native_raminit/raminit_native.h   | 101 ++++++++
+ .../haswell/native_raminit/raminit_native.h   |  99 ++++++++
  .../haswell/native_raminit/reg_structs.h      | 154 +++++++++++++
  .../intel/haswell/native_raminit/reut.c       | 196 ++++++++++++++++
  .../intel/haswell/registers/mchbar.h          |  21 ++
  src/southbridge/intel/lynxpoint/pch.h         |   2 +
- 10 files changed, 835 insertions(+)
+ 10 files changed, 833 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/ddr3.c
  create mode 100644 src/northbridge/intel/haswell/native_raminit/jedec_reset.c
  create mode 100644 src/northbridge/intel/haswell/native_raminit/reut.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index 37d527e972..e9212df9e6 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -1,11 +1,14 @@
  ## SPDX-License-Identifier: GPL-2.0-or-later
  
@@ -267,7 +267,7 @@ index 0000000000..6ddb11488b
 +	return reut_issue_zq(ctrl, ctrl->chanmap, ZQ_INIT);
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/io_comp_control.c b/src/northbridge/intel/haswell/native_raminit/io_comp_control.c
-index 7e96c08938..ad8c848e57 100644
+index d45b608dd3..8a55fd81b2 100644
 --- a/src/northbridge/intel/haswell/native_raminit/io_comp_control.c
 +++ b/src/northbridge/intel/haswell/native_raminit/io_comp_control.c
 @@ -8,6 +8,25 @@
@@ -423,10 +423,10 @@ index 0000000000..de0f676758
 +	return status;
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-index 136a8ba989..73ff180b8c 100644
+index 559dfc3a4e..94b268468c 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-@@ -25,6 +25,7 @@ static const struct task_entry cold_boot[] = {
+@@ -24,6 +24,7 @@ static const struct task_entry cold_boot[] = {
  	{ convert_timings,                                        true, "CONVTIM",    },
  	{ configure_mc,                                           true, "CONFMC",     },
  	{ configure_memory_map,                                   true, "MEMMAP",     },
@@ -434,7 +434,7 @@ index 136a8ba989..73ff180b8c 100644
  };
  
  /* Return a generic stepping value to make stepping checks simpler */
-@@ -58,6 +59,7 @@ static void initialize_ctrl(struct sysinfo *ctrl)
+@@ -57,6 +58,7 @@ static void initialize_ctrl(struct sysinfo *ctrl)
  	ctrl->stepping = get_stepping(ctrl->cpu);
  	ctrl->vdd_mv = is_hsw_ult() ? 1350 : 1500; /** FIXME: Hardcoded, does it matter? **/
  	ctrl->dq_pins_interleaved = cfg->dq_pins_interleaved;
@@ -443,7 +443,7 @@ index 136a8ba989..73ff180b8c 100644
  }
  
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 4763b25e8d..e3cf4254a0 100644
+index 4763b25e8d..4bc2a4955f 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -27,6 +27,30 @@
@@ -498,25 +498,23 @@ index 4763b25e8d..e3cf4254a0 100644
  	union tc_bank_rank_c_reg tc_bankrank_c[NUM_CHANNELS];
  	union tc_bank_rank_d_reg tc_bankrank_d[NUM_CHANNELS];
 +
-+	uint16_t mr0[NUM_CHANNELS][NUM_SLOTRANKS];
-+	uint16_t mr1[NUM_CHANNELS][NUM_SLOTRANKS];
-+	uint16_t mr2[NUM_CHANNELS][NUM_SLOTRANKS];
-+	uint16_t mr3[NUM_CHANNELS][NUM_SLOTRANKS];
++	uint16_t mr0[NUM_CHANNELS][NUM_SLOTS];
++	uint16_t mr1[NUM_CHANNELS][NUM_SLOTS];
++	uint16_t mr2[NUM_CHANNELS][NUM_SLOTS];
++	uint16_t mr3[NUM_CHANNELS][NUM_SLOTS];
  };
  
  static inline bool is_hsw_ult(void)
-@@ -196,6 +227,55 @@ static inline void clear_data_offset_train_all(struct sysinfo *ctrl)
+@@ -196,6 +227,53 @@ static inline void clear_data_offset_train_all(struct sysinfo *ctrl)
  	memset(ctrl->data_offset_train, 0, sizeof(ctrl->data_offset_train));
  }
  
 +/* Number of ticks to wait in units of 69.841279 ns (citation needed) */
 +static inline void tick_delay(const uint32_t delay)
 +{
-+	volatile uint32_t junk;
-+
 +	/* Just perform reads to a random register */
 +	for (uint32_t start = 0; start <= delay; start++)
-+		junk = mchbar_read32(REUT_ERR_DATA_STATUS);
++		mchbar_read32(REUT_ERR_DATA_STATUS);
 +}
 +
 +/*
@@ -561,7 +559,7 @@ index 4763b25e8d..e3cf4254a0 100644
  void raminit_main(enum raminit_boot_mode bootmode);
  
  enum raminit_status collect_spd_info(struct sysinfo *ctrl);
-@@ -203,6 +283,7 @@ enum raminit_status initialise_mpll(struct sysinfo *ctrl);
+@@ -203,6 +281,7 @@ enum raminit_status initialise_mpll(struct sysinfo *ctrl);
  enum raminit_status convert_timings(struct sysinfo *ctrl);
  enum raminit_status configure_mc(struct sysinfo *ctrl);
  enum raminit_status configure_memory_map(struct sysinfo *ctrl);
@@ -569,7 +567,7 @@ index 4763b25e8d..e3cf4254a0 100644
  
  void configure_timings(struct sysinfo *ctrl);
  void configure_refresh(struct sysinfo *ctrl);
-@@ -215,8 +296,28 @@ uint32_t get_tXS_offset(uint32_t mem_clock_mhz);
+@@ -215,8 +294,28 @@ uint32_t get_tXS_offset(uint32_t mem_clock_mhz);
  uint32_t get_tZQOPER(uint32_t mem_clock_mhz, bool lpddr);
  uint32_t get_tZQCS(uint32_t mem_clock_mhz, bool lpddr);
  
@@ -779,7 +777,7 @@ index 70487e1640..9929f617fe 100644
  	struct __packed {
 diff --git a/src/northbridge/intel/haswell/native_raminit/reut.c b/src/northbridge/intel/haswell/native_raminit/reut.c
 new file mode 100644
-index 0000000000..c55cdd9c7e
+index 0000000000..31019f74a1
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/reut.c
 @@ -0,0 +1,196 @@
@@ -938,9 +936,9 @@ index 0000000000..c55cdd9c7e
 +{
 +	/** TODO: Issuing ZQ commands differs for LPDDR **/
 +	if (ctrl->lpddr)
-+		die("%s: LPDDR not yet supported in ZQ calibration\n");
++		die("%s: LPDDR not yet supported in ZQ calibration\n", __func__);
 +
-+	uint8_t opcode; /* NOTE: Only used for LPDDR */
++	__maybe_unused uint8_t opcode; /* NOTE: Only used for LPDDR */
 +	uint16_t zq = 0;
 +	switch (zq_type) {
 +	case ZQ_INIT:
@@ -958,7 +956,7 @@ index 0000000000..c55cdd9c7e
 +		opcode = 0xc3;
 +		break;
 +	default:
-+		die("%s: ZQ type %u is invalid\n", zq_type);
++		die("%s: ZQ type %u is invalid\n", __func__, zq_type);
 +	}
 +
 +	/* ZQCS on single-channel needs a longer delay */
@@ -1021,7 +1019,7 @@ index 2acc5cbbc8..4fc78a7f43 100644
  
  /* MCDECS */
 diff --git a/src/southbridge/intel/lynxpoint/pch.h b/src/southbridge/intel/lynxpoint/pch.h
-index 74b4d50017..16bef5032a 100644
+index 07f4b9dc16..5b3696347c 100644
 --- a/src/southbridge/intel/lynxpoint/pch.h
 +++ b/src/southbridge/intel/lynxpoint/pch.h
 @@ -586,6 +586,8 @@ void mainboard_config_rcba(void);

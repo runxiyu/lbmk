@@ -1,7 +1,7 @@
-From 89ff35083af68d1b24c1633886202ecc153af67d Mon Sep 17 00:00:00 2001
+From b872fb9fc10d1789989072b8533b797152e6cb54 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 21:24:50 +0200
-Subject: [PATCH 15/26] haswell NRI: Program memory map
+Subject: [PATCH 05/20] haswell NRI: Program memory map
 
 This is very similar to Sandy/Ivy Bridge, except that there's several
 registers to program in GDXCBAR. One of these GDXCBAR registers has a
@@ -12,7 +12,7 @@ bit was the only reason why native raminit did not work.
 Change-Id: I3af73a018a7ba948701a542e661e7fefd57591fe
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../intel/haswell/native_raminit/memory_map.c | 183 ++++++++++++++++++
  .../haswell/native_raminit/raminit_main.c     |   1 +
  .../haswell/native_raminit/raminit_native.h   |   1 +
@@ -20,10 +20,10 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  5 files changed, 188 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/memory_map.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index fc55277a65..37d527e972 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -4,6 +4,7 @@ romstage-y += configure_mc.c
  romstage-y += lookup_timings.c
  romstage-y += init_mpll.c
@@ -222,10 +222,10 @@ index 0000000000..e3aded2b37
 +	return 0;
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-index 3a773cfa19..136a8ba989 100644
+index fcc981ad04..559dfc3a4e 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-@@ -24,6 +24,7 @@ static const struct task_entry cold_boot[] = {
+@@ -23,6 +23,7 @@ static const struct task_entry cold_boot[] = {
  	{ initialise_mpll,                                        true, "INITMPLL",   },
  	{ convert_timings,                                        true, "CONVTIM",    },
  	{ configure_mc,                                           true, "CONFMC",     },

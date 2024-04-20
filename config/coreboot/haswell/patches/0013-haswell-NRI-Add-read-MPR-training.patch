@@ -1,25 +1,25 @@
-From 6781cec818501f7afd6ee26464fd4556ac3068cb Mon Sep 17 00:00:00 2001
+From e263f0d2e9d6d016d603342651da261bbcb6af1f Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 11:35:49 +0200
-Subject: [PATCH 23/26] haswell NRI: Add read MPR training
+Subject: [PATCH 13/20] haswell NRI: Add read MPR training
 
 Implement read training using DDR3 MPR (Multi-Purpose Register).
 
 Change-Id: Id17cb2c4c399ac9bcc937b595b58f863c152461b
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/raminit_main.c     |   1 +
  .../haswell/native_raminit/raminit_native.h   |   4 +
- .../haswell/native_raminit/train_read_mpr.c   | 240 ++++++++++++++++++
+ .../haswell/native_raminit/train_read_mpr.c   | 241 ++++++++++++++++++
  .../intel/haswell/registers/mchbar.h          |   2 +-
- 5 files changed, 247 insertions(+), 1 deletion(-)
+ 5 files changed, 248 insertions(+), 1 deletion(-)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/train_read_mpr.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index e2fbfb4211..c442be0728 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -16,4 +16,5 @@ romstage-y += setup_wdb.c
  romstage-y += spd_bitmunching.c
  romstage-y += testing_io.c
@@ -39,7 +39,7 @@ index 7d444659c3..264d1468f5 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 500fc28909..a7551ad63c 100644
+index 5242b16f28..49e9214656 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -27,6 +27,8 @@
@@ -59,7 +59,7 @@ index 500fc28909..a7551ad63c 100644
  	RAMINIT_STATUS_UNSPECIFIED_ERROR, /** TODO: Deprecated in favor of specific values **/
  };
  
-@@ -435,6 +438,7 @@ enum raminit_status configure_mc(struct sysinfo *ctrl);
+@@ -433,6 +436,7 @@ enum raminit_status configure_mc(struct sysinfo *ctrl);
  enum raminit_status configure_memory_map(struct sysinfo *ctrl);
  enum raminit_status do_jedec_init(struct sysinfo *ctrl);
  enum raminit_status train_receive_enable(struct sysinfo *ctrl);
@@ -69,13 +69,13 @@ index 500fc28909..a7551ad63c 100644
  void configure_refresh(struct sysinfo *ctrl);
 diff --git a/src/northbridge/intel/haswell/native_raminit/train_read_mpr.c b/src/northbridge/intel/haswell/native_raminit/train_read_mpr.c
 new file mode 100644
-index 0000000000..0225e1a384
+index 0000000000..ade1e36148
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/train_read_mpr.c
-@@ -0,0 +1,240 @@
+@@ -0,0 +1,241 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <console/console.h>
 +#include <delay.h>
 +#include <northbridge/intel/haswell/haswell.h>
@@ -206,7 +206,8 @@ index 0000000000..0225e1a384
 +		for (dqs_delay = RMPR_START; dqs_delay < RMPR_STOP; dqs_delay += RMPR_STEP) {
 +			printk(RMPR_PLOT, "% 5d", dqs_delay);
 +			const enum regfile_mode regfile = REG_FILE_USE_START;
-+			change_1d_margin_multicast(ctrl, RdT, dqs_delay, 0, false, regfile);
++			/* Looks like MRC uses rank 0 here, but it feels wrong */
++			change_1d_margin_multicast(ctrl, RdT, dqs_delay, rank, false, regfile);
 +			for (uint8_t channel = 0; channel < NUM_CHANNELS; channel++) {
 +				if (!rank_in_ch(ctrl, rank, channel))
 +					continue;

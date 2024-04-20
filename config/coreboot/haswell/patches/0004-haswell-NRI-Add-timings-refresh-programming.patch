@@ -1,7 +1,7 @@
-From b64d728bfe7c8ee44af252338257e95d87864659 Mon Sep 17 00:00:00 2001
+From d94843c7c0e25cb6da4040b845556034fdb0e2c3 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 20:59:58 +0200
-Subject: [PATCH 14/26] haswell NRI: Add timings/refresh programming
+Subject: [PATCH 04/20] haswell NRI: Add timings/refresh programming
 
 Program the registers with timing and refresh parameters.
 
@@ -16,7 +16,7 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  5 files changed, 452 insertions(+), 2 deletions(-)
 
 diff --git a/src/northbridge/intel/haswell/native_raminit/lookup_timings.c b/src/northbridge/intel/haswell/native_raminit/lookup_timings.c
-index 038686c844..afe2c615d2 100644
+index 8b81c7c341..b8d6c1ef40 100644
 --- a/src/northbridge/intel/haswell/native_raminit/lookup_timings.c
 +++ b/src/northbridge/intel/haswell/native_raminit/lookup_timings.c
 @@ -60,3 +60,105 @@ uint32_t get_tXP(const uint32_t mem_clock_mhz)
@@ -262,14 +262,14 @@ index d11cda4b3d..70487e1640 100644
  	struct __packed {
  		uint32_t enable_cmd_limit :  1; // Bits  0:0
 diff --git a/src/northbridge/intel/haswell/native_raminit/timings_refresh.c b/src/northbridge/intel/haswell/native_raminit/timings_refresh.c
-index a9d960f31b..20a05b359b 100644
+index a9d960f31b..54fee0121d 100644
 --- a/src/northbridge/intel/haswell/native_raminit/timings_refresh.c
 +++ b/src/northbridge/intel/haswell/native_raminit/timings_refresh.c
 @@ -1,13 +1,242 @@
  /* SPDX-License-Identifier: GPL-2.0-or-later */
  
 +#include <assert.h>
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <console/console.h>
 +#include <delay.h>
 +#include <device/pci_ops.h>
@@ -458,7 +458,7 @@ index a9d960f31b..20a05b359b 100644
  {
 -	/** TODO: Stub **/
 +	if (ctrl->lpddr)
-+		die("%s: Missing support for LPDDR\n");
++		die("%s: Missing support for LPDDR\n", __func__);
 +
 +	const uint8_t odt_stretch = get_odt_stretch(ctrl);
 +	const union tc_bank_reg tc_bank = make_tc_bank(ctrl);

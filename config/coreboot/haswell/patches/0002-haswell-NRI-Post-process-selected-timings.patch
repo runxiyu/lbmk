@@ -1,7 +1,7 @@
-From faabed9ca8974b2e7192c55b59a9d28d75e72df6 Mon Sep 17 00:00:00 2001
+From 42b21fdce8c8bade53d9d86515f88b0665a4c1b1 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 16:29:55 +0200
-Subject: [PATCH 12/26] haswell NRI: Post-process selected timings
+Subject: [PATCH 02/20] haswell NRI: Post-process selected timings
 
 Once the MPLL has been initialised, convert the timings from the SPD to
 be in DCLKs, which is what the hardware expects. In addition, calculate
@@ -10,7 +10,7 @@ the values for tREFI and tXP.
 Change-Id: Id02caf858f75b9e08016762b3aefda282b274386
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/lookup_timings.c   |  62 +++++++++++
  .../haswell/native_raminit/raminit_main.c     |   1 +
  .../haswell/native_raminit/raminit_native.h   |   8 ++
@@ -18,10 +18,10 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  5 files changed, 172 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/lookup_timings.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index c125d84f0b..2769e0bbb4 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -1,5 +1,6 @@
  ## SPDX-License-Identifier: GPL-2.0-or-later
  
@@ -31,13 +31,13 @@ index c125d84f0b..2769e0bbb4 100644
  romstage-y += raminit_main.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/lookup_timings.c b/src/northbridge/intel/haswell/native_raminit/lookup_timings.c
 new file mode 100644
-index 0000000000..038686c844
+index 0000000000..8b81c7c341
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/lookup_timings.c
 @@ -0,0 +1,62 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <types.h>
 +
 +#include "raminit_native.h"
@@ -98,10 +98,10 @@ index 0000000000..038686c844
 +	return lookup_timing(mem_clock_mhz, lut, ARRAY_SIZE(lut));
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-index 09545422c0..5f2be980d4 100644
+index bf745e943f..2fea658415 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-@@ -22,6 +22,7 @@ struct task_entry {
+@@ -21,6 +21,7 @@ struct task_entry {
  static const struct task_entry cold_boot[] = {
  	{ collect_spd_info,                                       true, "PROCSPD",    },
  	{ initialise_mpll,                                        true, "INITMPLL",   },
@@ -137,7 +137,7 @@ index a54581abc7..01e5ed1bd6 100644
 +
  #endif
 diff --git a/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c b/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c
-index dbe02c72d0..becbea0725 100644
+index 2dab8504c4..7d98341a7e 100644
 --- a/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c
 +++ b/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c
 @@ -204,3 +204,103 @@ enum raminit_status collect_spd_info(struct sysinfo *ctrl)
@@ -221,7 +221,7 @@ index dbe02c72d0..becbea0725 100644
 +	 */
 +
 +	/* tCK is special */
-+	printk(BIOS_DEBUG, "Selected tCK          : %u ns\n", ctrl->tCK / 256);
++	printk(BIOS_DEBUG, "Selected tCK          : %u ps\n", ctrl->tCK * 1000 / 256);
 +
 +	/* Primary timings */
 +	printk(BIOS_DEBUG, "Selected tAA          : %uT\n", ctrl->tAA);

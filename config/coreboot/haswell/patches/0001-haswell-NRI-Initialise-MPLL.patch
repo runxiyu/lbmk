@@ -1,7 +1,7 @@
-From 77a89d55ab7a715dc20c34a6edacaaf781b56087 Mon Sep 17 00:00:00 2001
+From cce5392f272b0acc493f47f9b5ca3cf90ce901e8 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
-Date: Sat, 7 May 2022 14:36:10 +0200
-Subject: [PATCH 11/26] haswell NRI: Initialise MPLL
+Date: Thu, 11 Apr 2024 17:25:07 +0200
+Subject: [PATCH 01/20] haswell NRI: Initialise MPLL
 
 Add code to initialise the MPLL (Memory PLL). The procedure is similar
 to the one for Sandy/Ivy Bridge, but it is not worth factoring out.
@@ -9,20 +9,20 @@ to the one for Sandy/Ivy Bridge, but it is not worth factoring out.
 Change-Id: I978c352de68f6d8cecc76f4ae3c12daaf4be9ed6
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   2 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   2 +
  .../intel/haswell/native_raminit/init_mpll.c  | 210 ++++++++++++++++++
  .../haswell/native_raminit/io_comp_control.c  |  22 ++
- .../haswell/native_raminit/raminit_main.c     |   1 +
+ .../haswell/native_raminit/raminit_main.c     |   3 +-
  .../haswell/native_raminit/raminit_native.h   |  11 +
  .../intel/haswell/registers/mchbar.h          |   3 +
- 6 files changed, 249 insertions(+)
+ 6 files changed, 250 insertions(+), 1 deletion(-)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/init_mpll.c
  create mode 100644 src/northbridge/intel/haswell/native_raminit/io_comp_control.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index ebf7abc6ec..c125d84f0b 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -1,5 +1,7 @@
  ## SPDX-License-Identifier: GPL-2.0-or-later
  
@@ -33,13 +33,13 @@ index ebf7abc6ec..c125d84f0b 100644
  romstage-y += spd_bitmunching.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/init_mpll.c b/src/northbridge/intel/haswell/native_raminit/init_mpll.c
 new file mode 100644
-index 0000000000..2faa183724
+index 0000000000..1f3f2c29a9
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/init_mpll.c
 @@ -0,0 +1,210 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <console/console.h>
 +#include <delay.h>
 +#include <device/pci_ops.h>
@@ -249,13 +249,13 @@ index 0000000000..2faa183724
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/io_comp_control.c b/src/northbridge/intel/haswell/native_raminit/io_comp_control.c
 new file mode 100644
-index 0000000000..7e96c08938
+index 0000000000..d45b608dd3
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/io_comp_control.c
 @@ -0,0 +1,22 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <console/console.h>
 +#include <northbridge/intel/haswell/haswell.h>
 +#include <timer.h>
@@ -276,13 +276,15 @@ index 0000000000..7e96c08938
 +	return RAMINIT_STATUS_POLL_TIMEOUT;
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-index 2d2cfa48bb..09545422c0 100644
+index 19ec5859ac..bf745e943f 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-@@ -21,6 +21,7 @@ struct task_entry {
+@@ -19,7 +19,8 @@ struct task_entry {
+ };
  
  static const struct task_entry cold_boot[] = {
- 	{ collect_spd_info,                                       true, "PROCSPD",    },
+-	{ collect_spd_info,           true, "PROCSPD",    },
++	{ collect_spd_info,                                       true, "PROCSPD",    },
 +	{ initialise_mpll,                                        true, "INITMPLL",   },
  };
  

@@ -1,7 +1,7 @@
-From 42e43eb210bbb172af8e5ad064326c4570be8654 Mon Sep 17 00:00:00 2001
+From 936d432822fcd9aa2f018444cdc89e48e6d257d5 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 23:12:18 +0200
-Subject: [PATCH 17/26] haswell NRI: Add pre-training steps
+Subject: [PATCH 07/20] haswell NRI: Add pre-training steps
 
 Implement pre-training steps, which consist of enabling ECC I/O and
 filling the WDB (Write Data Buffer, stores test patterns) through a
@@ -10,19 +10,19 @@ magic LDAT port.
 Change-Id: Ie2e09e3b218c4569ed8de5c5e1b05d491032e0f1
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
- .../haswell/native_raminit/raminit_main.c     |  34 ++++
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
+ .../haswell/native_raminit/raminit_main.c     |  35 ++++
  .../haswell/native_raminit/raminit_native.h   |  24 +++
  .../haswell/native_raminit/reg_structs.h      |  45 +++++
  .../intel/haswell/native_raminit/setup_wdb.c  | 159 ++++++++++++++++++
  .../intel/haswell/registers/mchbar.h          |   9 +
- 6 files changed, 272 insertions(+)
+ 6 files changed, 273 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/setup_wdb.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index e9212df9e6..8d7d4e4db0 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -10,5 +10,6 @@ romstage-y += memory_map.c
  romstage-y += raminit_main.c
  romstage-y += raminit_native.c
@@ -31,10 +31,18 @@ index e9212df9e6..8d7d4e4db0 100644
  romstage-y += spd_bitmunching.c
  romstage-y += timings_refresh.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-index 73ff180b8c..5e4674957d 100644
+index 94b268468c..5e4674957d 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
-@@ -13,6 +13,39 @@
+@@ -3,6 +3,7 @@
+ #include <assert.h>
+ #include <console/console.h>
+ #include <cpu/intel/haswell/haswell.h>
++#include <delay.h>
+ #include <device/pci_ops.h>
+ #include <northbridge/intel/haswell/chip.h>
+ #include <northbridge/intel/haswell/haswell.h>
+@@ -12,6 +13,39 @@
  
  #include "raminit_native.h"
  
@@ -74,7 +82,7 @@ index 73ff180b8c..5e4674957d 100644
  struct task_entry {
  	enum raminit_status (*task)(struct sysinfo *);
  	bool is_enabled;
-@@ -26,6 +59,7 @@ static const struct task_entry cold_boot[] = {
+@@ -25,6 +59,7 @@ static const struct task_entry cold_boot[] = {
  	{ configure_mc,                                           true, "CONFMC",     },
  	{ configure_memory_map,                                   true, "MEMMAP",     },
  	{ do_jedec_init,                                          true, "JEDECINIT",  },
@@ -83,7 +91,7 @@ index 73ff180b8c..5e4674957d 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index e3cf4254a0..f29c2ec366 100644
+index 4bc2a4955f..1971b44b66 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -35,6 +35,13 @@
@@ -100,7 +108,7 @@ index e3cf4254a0..f29c2ec366 100644
  /* ZQ calibration types */
  enum {
  	ZQ_INIT,	/* DDR3: ZQCL with tZQinit, LPDDR3: ZQ Init  with tZQinit  */
-@@ -318,6 +325,23 @@ void reut_issue_mrs_all(
+@@ -316,6 +323,23 @@ void reut_issue_mrs_all(
  
  enum raminit_status reut_issue_zq(struct sysinfo *ctrl, uint8_t chanmask, uint8_t zq_type);
  

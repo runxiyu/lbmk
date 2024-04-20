@@ -1,7 +1,7 @@
-From 9fba0468e75877cbda62f5eaeef1946d6489a8f9 Mon Sep 17 00:00:00 2001
+From 7f5c3f8c6c8960d1c374b9c95821c19f230fa34f Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:56:00 +0200
-Subject: [PATCH 19/26] haswell NRI: Add range tracking library
+Subject: [PATCH 09/20] haswell NRI: Add range tracking library
 
 Implement a small library used to keep track of passing ranges. This
 will be used by 1D training algorithms when margining some parameter.
@@ -9,17 +9,17 @@ will be used by 1D training algorithms when margining some parameter.
 Change-Id: I8718e85165160afd7c0c8e730b5ce6c9c00f8a60
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../intel/haswell/native_raminit/ranges.c     | 109 ++++++++++++++++++
  .../intel/haswell/native_raminit/ranges.h     |  68 +++++++++++
  3 files changed, 178 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/ranges.c
  create mode 100644 src/northbridge/intel/haswell/native_raminit/ranges.h
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index 6e1b365602..2da950771d 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -9,6 +9,7 @@ romstage-y += io_comp_control.c
  romstage-y += memory_map.c
  romstage-y += raminit_main.c

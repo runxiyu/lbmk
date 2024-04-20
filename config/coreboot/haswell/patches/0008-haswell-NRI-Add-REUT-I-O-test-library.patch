@@ -1,25 +1,25 @@
-From f4dd460d609276de7cb7db91f145a404451a2301 Mon Sep 17 00:00:00 2001
+From 49a7ef2401922a8492ba577a43235bcfba7ea822 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:11:29 +0200
-Subject: [PATCH 18/26] haswell NRI: Add REUT I/O test library
+Subject: [PATCH 08/20] haswell NRI: Add REUT I/O test library
 
 Implement a library to run I/O tests using the REUT hardware.
 
 Change-Id: Id7b207cd0a3989ddd23c88c6b1f0cfa79d2c861f
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/raminit_native.h   | 110 +++
  .../haswell/native_raminit/reg_structs.h      | 121 +++
- .../intel/haswell/native_raminit/testing_io.c | 742 ++++++++++++++++++
+ .../intel/haswell/native_raminit/testing_io.c | 744 ++++++++++++++++++
  .../intel/haswell/registers/mchbar.h          |  30 +
- 5 files changed, 1004 insertions(+)
+ 5 files changed, 1006 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/testing_io.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index 8d7d4e4db0..6e1b365602 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -12,4 +12,5 @@ romstage-y += raminit_native.c
  romstage-y += reut.c
  romstage-y += setup_wdb.c
@@ -27,7 +27,7 @@ index 8d7d4e4db0..6e1b365602 100644
 +romstage-y += testing_io.c
  romstage-y += timings_refresh.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index f29c2ec366..56df36ca8d 100644
+index 1971b44b66..7f19fde4cc 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -58,6 +58,88 @@ enum {
@@ -120,9 +120,9 @@ index f29c2ec366..56df36ca8d 100644
  	CT_ITERATION_CLOCK = 0,
  	CT_ITERATION_CMD_NORTH,
 @@ -199,6 +281,10 @@ struct sysinfo {
- 	uint16_t mr1[NUM_CHANNELS][NUM_SLOTRANKS];
- 	uint16_t mr2[NUM_CHANNELS][NUM_SLOTRANKS];
- 	uint16_t mr3[NUM_CHANNELS][NUM_SLOTRANKS];
+ 	uint16_t mr1[NUM_CHANNELS][NUM_SLOTS];
+ 	uint16_t mr2[NUM_CHANNELS][NUM_SLOTS];
+ 	uint16_t mr3[NUM_CHANNELS][NUM_SLOTS];
 +
 +	uint8_t dq_pat;
 +
@@ -130,7 +130,7 @@ index f29c2ec366..56df36ca8d 100644
  };
  
  static inline bool is_hsw_ult(void)
-@@ -342,6 +428,30 @@ void write_wdb_va_pat(
+@@ -340,6 +426,30 @@ void write_wdb_va_pat(
  void program_wdb_lfsr(const struct sysinfo *ctrl, bool cleanup);
  void setup_wdb(const struct sysinfo *ctrl);
  
@@ -309,10 +309,10 @@ index 7aa8d8c8b2..b943259b91 100644
  		uint32_t start_test    :  1; // Bits  0:0
 diff --git a/src/northbridge/intel/haswell/native_raminit/testing_io.c b/src/northbridge/intel/haswell/native_raminit/testing_io.c
 new file mode 100644
-index 0000000000..7716fc4285
+index 0000000000..2632c238f8
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/testing_io.c
-@@ -0,0 +1,742 @@
+@@ -0,0 +1,744 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
 +#include <console/console.h>
@@ -535,8 +535,10 @@ index 0000000000..7716fc4285
 +	const uint8_t en_cadb,
 +	const uint8_t subseq_wait)
 +{
-+	if (!chanmask)
-+		die("\n%s: invalid chanmask\n", __func__, chanmask);
++	if (!chanmask) {
++		printk(BIOS_ERR, "\n%s: chanmask is invalid\n", __func__);
++		return;
++	}
 +
 +	/*
 +	 * Prepare variables needed for both channels.

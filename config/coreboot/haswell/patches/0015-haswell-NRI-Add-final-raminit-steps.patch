@@ -1,7 +1,7 @@
-From d041b14f3af69db5f4598c84e3f53c9cd572ffb5 Mon Sep 17 00:00:00 2001
+From eba8680d618db95028e3f984f25881df0e67abf7 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 14:29:05 +0200
-Subject: [PATCH 25/26] haswell NRI: Add final raminit steps
+Subject: [PATCH 15/20] haswell NRI: Add final raminit steps
 
 Implement the remaining raminit steps. Although many training steps are
 missing, this is enough to boot on the Asrock B85M Pro4.
@@ -10,7 +10,7 @@ Change-Id: I94f3b65f0218d4da4fda4d84592dfd91f77f8f21
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
  src/northbridge/intel/haswell/Kconfig         |   4 +-
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/activate_mc.c      | 388 ++++++++++++++++++
  .../haswell/native_raminit/raminit_main.c     |   5 +-
  .../haswell/native_raminit/raminit_native.c   |   5 +-
@@ -21,10 +21,10 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  create mode 100644 src/northbridge/intel/haswell/native_raminit/activate_mc.c
 
 diff --git a/src/northbridge/intel/haswell/Kconfig b/src/northbridge/intel/haswell/Kconfig
-index b659bf6d98..61f2a3c64c 100644
+index 4b83a25bc1..c6ab27184e 100644
 --- a/src/northbridge/intel/haswell/Kconfig
 +++ b/src/northbridge/intel/haswell/Kconfig
-@@ -10,12 +10,12 @@ config NORTHBRIDGE_INTEL_HASWELL
+@@ -11,12 +11,12 @@ config NORTHBRIDGE_INTEL_HASWELL
  if NORTHBRIDGE_INTEL_HASWELL
  
  config USE_NATIVE_RAMINIT
@@ -39,10 +39,10 @@ index b659bf6d98..61f2a3c64c 100644
  
  config HASWELL_VBOOT_IN_BOOTBLOCK
  	depends on VBOOT
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index 40c2f5e014..d97da72890 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -1,5 +1,6 @@
  ## SPDX-License-Identifier: GPL-2.0-or-later
  
@@ -466,10 +466,10 @@ index 1ff23be615..3a65fb01fb 100644
 -	die("NATIVE RAMINIT: More Magic (tm) required.\n");
  }
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.c b/src/northbridge/intel/haswell/native_raminit/raminit_native.c
-index bd9bc8e692..1ea729b23d 100644
+index 2fed93de5b..5f7ceec222 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.c
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.c
-@@ -200,8 +200,6 @@ void perform_raminit(const int s3resume)
+@@ -199,8 +199,6 @@ void perform_raminit(const int s3resume)
  		else
  			me_status = ME_INIT_STATUS_SUCCESS;
  
@@ -478,7 +478,7 @@ index bd9bc8e692..1ea729b23d 100644
  		intel_early_me_init_done(me_status);
  	}
  
-@@ -217,7 +215,8 @@ void perform_raminit(const int s3resume)
+@@ -214,7 +212,8 @@ void perform_raminit(const int s3resume)
  	}
  
  	/* Save training data on non-S3 resumes */
@@ -489,10 +489,10 @@ index bd9bc8e692..1ea729b23d 100644
  
  	/** TODO: setup_sdram_meminfo **/
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 666b233c45..98e39cb76e 100644
+index 86d89f2120..9bab57b518 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -449,6 +449,8 @@ enum raminit_status do_jedec_init(struct sysinfo *ctrl);
+@@ -447,6 +447,8 @@ enum raminit_status do_jedec_init(struct sysinfo *ctrl);
  enum raminit_status train_receive_enable(struct sysinfo *ctrl);
  enum raminit_status train_read_mpr(struct sysinfo *ctrl);
  enum raminit_status train_jedec_write_leveling(struct sysinfo *ctrl);

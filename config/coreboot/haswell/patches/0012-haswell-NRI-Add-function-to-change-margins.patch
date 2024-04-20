@@ -1,7 +1,7 @@
-From 8c3874195c0fc1af9d0b84611496689da1c19d8c Mon Sep 17 00:00:00 2001
+From c24b26594bfab47a8709ed7fb5cb77307fb73a53 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 11:58:59 +0200
-Subject: [PATCH 22/26] haswell NRI: Add function to change margins
+Subject: [PATCH 12/20] haswell NRI: Add function to change margins
 
 Implement a function to change margin parameters. Haswell provides a
 register to apply an offset to margin parameters during training, so
@@ -19,14 +19,14 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  4 files changed, 188 insertions(+)
 
 diff --git a/src/northbridge/intel/haswell/native_raminit/change_margin.c b/src/northbridge/intel/haswell/native_raminit/change_margin.c
-index 12da59580f..4ba9cfa5c6 100644
+index 055c666eee..299c44a6b0 100644
 --- a/src/northbridge/intel/haswell/native_raminit/change_margin.c
 +++ b/src/northbridge/intel/haswell/native_raminit/change_margin.c
 @@ -1,5 +1,6 @@
  /* SPDX-License-Identifier: GPL-2.0-or-later */
  
 +#include <assert.h>
- #include <commonlib/clamp.h>
+ #include <commonlib/bsd/clamp.h>
  #include <console/console.h>
  #include <delay.h>
 @@ -152,3 +153,138 @@ void download_regfile(
@@ -169,7 +169,7 @@ index 12da59580f..4ba9cfa5c6 100644
 +	change_margin(ctrl, param, value0, true, 0, rank, 0, update_ctrl, regfile);
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index a36ebfacd1..500fc28909 100644
+index b4e8c7de5a..5242b16f28 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -35,6 +35,18 @@
@@ -206,7 +206,7 @@ index a36ebfacd1..500fc28909 100644
  /* ZQ calibration types */
  enum {
  	ZQ_INIT,	/* DDR3: ZQCL with tZQinit, LPDDR3: ZQ Init  with tZQinit  */
-@@ -516,6 +536,25 @@ void download_regfile(
+@@ -514,6 +534,25 @@ void download_regfile(
  	bool read_rf_rd,
  	bool read_rf_wr);
  

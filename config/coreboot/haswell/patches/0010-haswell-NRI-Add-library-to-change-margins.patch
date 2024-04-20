@@ -1,24 +1,24 @@
-From 54cfbe4cf53d16f747bfcfadd20445a0f5f1e5db Mon Sep 17 00:00:00 2001
+From 8ad18cc335f60a78f47ab9e5a7994f6075b6a176 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 01:11:03 +0200
-Subject: [PATCH 20/26] haswell NRI: Add library to change margins
+Subject: [PATCH 10/20] haswell NRI: Add library to change margins
 
 Implement a library to change Rx/Tx margins. It will be expanded later.
 
 Change-Id: I0b55aba428d8b4d4e16d2fbdec57235ce3ce8adf
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/change_margin.c    | 154 ++++++++++++++++++
  .../haswell/native_raminit/raminit_native.h   |  50 ++++++
  .../intel/haswell/registers/mchbar.h          |   9 +
  4 files changed, 214 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/change_margin.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index 2da950771d..ebe9e9b762 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -1,5 +1,6 @@
  ## SPDX-License-Identifier: GPL-2.0-or-later
  
@@ -28,13 +28,13 @@ index 2da950771d..ebe9e9b762 100644
  romstage-y += jedec_reset.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/change_margin.c b/src/northbridge/intel/haswell/native_raminit/change_margin.c
 new file mode 100644
-index 0000000000..12da59580f
+index 0000000000..055c666eee
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/change_margin.c
 @@ -0,0 +1,154 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
-+#include <commonlib/clamp.h>
++#include <commonlib/bsd/clamp.h>
 +#include <console/console.h>
 +#include <delay.h>
 +#include <northbridge/intel/haswell/haswell.h>
@@ -187,7 +187,7 @@ index 0000000000..12da59580f
 +	mchbar_write32(reg, ddr_data_control_0.raw);
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 56df36ca8d..7c1a786780 100644
+index 7f19fde4cc..906b3143b9 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -117,6 +117,30 @@ enum test_stop {
@@ -221,7 +221,7 @@ index 56df36ca8d..7c1a786780 100644
  struct wdb_pat {
  	uint32_t start_ptr;	/* Starting pointer in WDB */
  	uint32_t stop_ptr;	/* Stopping pointer in WDB */
-@@ -452,6 +476,32 @@ uint8_t select_reut_ranks(struct sysinfo *ctrl, uint8_t channel, uint8_t rankmas
+@@ -450,6 +474,32 @@ uint8_t select_reut_ranks(struct sysinfo *ctrl, uint8_t channel, uint8_t rankmas
  void run_mpr_io_test(bool clear_errors);
  uint8_t run_io_test(struct sysinfo *ctrl, uint8_t chanmask, uint8_t dq_pat, bool clear_errors);
  

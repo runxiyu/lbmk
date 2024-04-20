@@ -1,7 +1,7 @@
-From 20fe4fa852d3e13851a01b51dc984ec5976c864e Mon Sep 17 00:00:00 2001
+From bebe0b74bede64b03aa1e3781310ef539465627b Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 12:56:04 +0200
-Subject: [PATCH 24/26] haswell NRI: Add write leveling
+Subject: [PATCH 14/20] haswell NRI: Add write leveling
 
 Implement JEDEC write leveling, which is done in two steps. The first
 step uses the JEDEC procedure to do "fine" write leveling, i.e. align
@@ -11,18 +11,18 @@ read-write test to correct "coarse" cycle errors.
 Change-Id: I27678523fe22c38173a688e2a4751c259a20f009
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/raminit_main.c     |   1 +
  .../haswell/native_raminit/raminit_native.h   |  10 +
- .../train_jedec_write_leveling.c              | 580 ++++++++++++++++++
+ .../train_jedec_write_leveling.c              | 581 ++++++++++++++++++
  .../intel/haswell/registers/mchbar.h          |   2 +
- 5 files changed, 594 insertions(+)
+ 5 files changed, 595 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/train_jedec_write_leveling.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index c442be0728..40c2f5e014 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -16,5 +16,6 @@ romstage-y += setup_wdb.c
  romstage-y += spd_bitmunching.c
  romstage-y += testing_io.c
@@ -43,7 +43,7 @@ index 264d1468f5..1ff23be615 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index a7551ad63c..666b233c45 100644
+index 49e9214656..86d89f2120 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -59,6 +59,9 @@
@@ -76,7 +76,7 @@ index a7551ad63c..666b233c45 100644
  /* Number of ticks to wait in units of 69.841279 ns (citation needed) */
  static inline void tick_delay(const uint32_t delay)
  {
-@@ -439,6 +448,7 @@ enum raminit_status configure_memory_map(struct sysinfo *ctrl);
+@@ -437,6 +446,7 @@ enum raminit_status configure_memory_map(struct sysinfo *ctrl);
  enum raminit_status do_jedec_init(struct sysinfo *ctrl);
  enum raminit_status train_receive_enable(struct sysinfo *ctrl);
  enum raminit_status train_read_mpr(struct sysinfo *ctrl);
@@ -86,10 +86,10 @@ index a7551ad63c..666b233c45 100644
  void configure_refresh(struct sysinfo *ctrl);
 diff --git a/src/northbridge/intel/haswell/native_raminit/train_jedec_write_leveling.c b/src/northbridge/intel/haswell/native_raminit/train_jedec_write_leveling.c
 new file mode 100644
-index 0000000000..1ba28a3bd4
+index 0000000000..ef6483e2bd
 --- /dev/null
 +++ b/src/northbridge/intel/haswell/native_raminit/train_jedec_write_leveling.c
-@@ -0,0 +1,580 @@
+@@ -0,0 +1,581 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +
 +#include <assert.h>
@@ -106,7 +106,8 @@ index 0000000000..1ba28a3bd4
 +
 +static void reset_dram_dll(struct sysinfo *ctrl, const uint8_t channel, const uint8_t rank)
 +{
-+	reut_issue_mrs(ctrl, channel, BIT(rank), 0, ctrl->mr0[channel][rank] | MR0_DLL_RESET);
++	const uint16_t mr0reg = ctrl->mr0[channel][rank / 2];
++	reut_issue_mrs(ctrl, channel, BIT(rank), 0, mr0reg | MR0_DLL_RESET);
 +}
 +
 +static void program_wdb_pattern(struct sysinfo *ctrl, const bool invert)
@@ -463,7 +464,7 @@ index 0000000000..1ba28a3bd4
 +				continue;
 +
 +			/** TODO: Differs for LPDDR **/
-+			uint16_t mr1reg = ctrl->mr1[channel][rank];
++			uint16_t mr1reg = ctrl->mr1[channel][rank / 2];
 +			mr1reg &= ~MR1_QOFF_ENABLE;
 +			mr1reg |= MR1_WL_ENABLE;
 +			if (is_hsw_ult()) {
@@ -605,7 +606,7 @@ index 0000000000..1ba28a3bd4
 +			mchbar_write32(REUT_ch_MISC_ODT_CTRL(channel), 0);
 +
 +			/** TODO: Differs for LPDDR **/
-+			const uint16_t mr1reg = ctrl->mr1[channel][rank] | MR1_QOFF_ENABLE;
++			const uint16_t mr1reg = ctrl->mr1[channel][rank / 2] | MR1_QOFF_ENABLE;
 +			reut_issue_mrs(ctrl, channel, BIT(rank), 1, mr1reg);
 +
 +			printk(BIOS_DEBUG, "\nC%u.R%u:  LftEdge Width\n", channel, rank);

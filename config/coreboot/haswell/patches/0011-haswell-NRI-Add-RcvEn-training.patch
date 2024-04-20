@@ -1,14 +1,14 @@
-From ac8843553af34855d0331554c03280e66c4ea582 Mon Sep 17 00:00:00 2001
+From 4254a9ff03658d7a6f1a4e32cfe4c65dbfc072f8 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:05:41 +0200
-Subject: [PATCH 21/26] haswell NRI: Add RcvEn training
+Subject: [PATCH 11/20] haswell NRI: Add RcvEn training
 
 Implement the RcvEn (Receive Enable) calibration procedure.
 
 Change-Id: Ifbfa520f3e0486c56d0988ce67af2ddb9cf29888
 Signed-off-by: Angel Pons <th3fanbus@gmail.com>
 ---
- .../intel/haswell/native_raminit/Makefile.inc |   1 +
+ .../intel/haswell/native_raminit/Makefile.mk  |   1 +
  .../haswell/native_raminit/raminit_main.c     |   1 +
  .../haswell/native_raminit/raminit_native.h   |  14 +
  .../haswell/native_raminit/reg_structs.h      |  13 +
@@ -17,10 +17,10 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  6 files changed, 593 insertions(+)
  create mode 100644 src/northbridge/intel/haswell/native_raminit/train_receive_enable.c
 
-diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.inc b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+diff --git a/src/northbridge/intel/haswell/native_raminit/Makefile.mk b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 index ebe9e9b762..e2fbfb4211 100644
---- a/src/northbridge/intel/haswell/native_raminit/Makefile.inc
-+++ b/src/northbridge/intel/haswell/native_raminit/Makefile.inc
+--- a/src/northbridge/intel/haswell/native_raminit/Makefile.mk
++++ b/src/northbridge/intel/haswell/native_raminit/Makefile.mk
 @@ -16,3 +16,4 @@ romstage-y += setup_wdb.c
  romstage-y += spd_bitmunching.c
  romstage-y += testing_io.c
@@ -39,7 +39,7 @@ index 5e4674957d..7d444659c3 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 7c1a786780..a36ebfacd1 100644
+index 906b3143b9..b4e8c7de5a 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 @@ -42,6 +42,9 @@
@@ -83,7 +83,7 @@ index 7c1a786780..a36ebfacd1 100644
  /* Number of ticks to wait in units of 69.841279 ns (citation needed) */
  static inline void tick_delay(const uint32_t delay)
  {
-@@ -401,6 +414,7 @@ enum raminit_status convert_timings(struct sysinfo *ctrl);
+@@ -399,6 +412,7 @@ enum raminit_status convert_timings(struct sysinfo *ctrl);
  enum raminit_status configure_mc(struct sysinfo *ctrl);
  enum raminit_status configure_memory_map(struct sysinfo *ctrl);
  enum raminit_status do_jedec_init(struct sysinfo *ctrl);
