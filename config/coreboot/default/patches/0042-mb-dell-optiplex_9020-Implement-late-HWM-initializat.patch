@@ -1,13 +1,13 @@
-From f6340f3fe21e948ba94d0429467882c2fb90b77e Mon Sep 17 00:00:00 2001
+From c58e0fea2a4e591e5ecd8a1f376c3b3af0fbb306 Mon Sep 17 00:00:00 2001
 From: Mate Kukri <kukri.mate@gmail.com>
-Date: Sat, 6 Apr 2024 23:25:15 +0100
+Date: Thu, 18 Apr 2024 20:28:45 +0100
 Subject: [PATCH 1/1] mb/dell/optiplex_9020: Implement late HWM initialization
 
 There are 4 different chassis types specified by vendor firmware, each
 with a slightly different HWM configuration.
 
 The chassis type to use is determined at runtime by reading a set of
-4 PCH GPIOs: 70, 38, 17, and 0.
+4 PCH GPIOs: 70, 38, 17, and 1.
 
 Additionally vendor firmware also provides an option to run the fans at
 full speed. This is substituted with a coreboot nvram option in this
@@ -26,10 +26,10 @@ Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
  src/mainboard/dell/optiplex_9020/bootblock.c  |  25 +-
  src/mainboard/dell/optiplex_9020/cmos.default |   1 +
  src/mainboard/dell/optiplex_9020/cmos.layout  |   5 +-
- src/mainboard/dell/optiplex_9020/mainboard.c  | 382 ++++++++++++++++++
+ src/mainboard/dell/optiplex_9020/mainboard.c  | 387 ++++++++++++++++++
  src/mainboard/dell/optiplex_9020/sch5555_ec.c |  54 +++
- src/mainboard/dell/optiplex_9020/sch5555_ec.h |   7 +
- 7 files changed, 455 insertions(+), 22 deletions(-)
+ src/mainboard/dell/optiplex_9020/sch5555_ec.h |  10 +
+ 7 files changed, 463 insertions(+), 22 deletions(-)
  create mode 100644 src/mainboard/dell/optiplex_9020/sch5555_ec.c
  create mode 100644 src/mainboard/dell/optiplex_9020/sch5555_ec.h
 
@@ -119,7 +119,7 @@ index 72ff9c4bee..4a1496a878 100644
  # coreboot config options: check sums
  984	16	h	0	check_sum
 diff --git a/src/mainboard/dell/optiplex_9020/mainboard.c b/src/mainboard/dell/optiplex_9020/mainboard.c
-index c834fea5d3..10b8aaca0e 100644
+index c834fea5d3..0b7829c736 100644
 --- a/src/mainboard/dell/optiplex_9020/mainboard.c
 +++ b/src/mainboard/dell/optiplex_9020/mainboard.c
 @@ -1,7 +1,12 @@
@@ -130,18 +130,19 @@ index c834fea5d3..10b8aaca0e 100644
  #include <device/device.h>
  #include <drivers/intel/gma/int15.h>
 +#include <option.h>
-+#include <southbridge/intel/lynxpoint/lp_gpio.h>
++#include <southbridge/intel/common/gpio.h>
 +#include "sch5555_ec.h"
  
  static void mainboard_enable(struct device *dev)
  {
-@@ -13,3 +18,380 @@ static void mainboard_enable(struct device *dev)
+@@ -13,3 +18,385 @@ static void mainboard_enable(struct device *dev)
  struct chip_operations mainboard_ops = {
  	.enable_dev = mainboard_enable,
  };
 +
-+#define HWM_TAB_ADD_TEMP_TARGET 1
++#define HWM_TAB_ADD_TEMP_TARGET	1
 +#define HWM_TAB_PKG_POWER_ANY	0xffff
++#define CHASSIS_TYPE_UNKNOWN	0xff
 +
 +struct hwm_tab_entry {
 +	uint16_t addr;
@@ -390,7 +391,7 @@ index c834fea5d3..10b8aaca0e 100644
 +
 +	// Read chassis type from GPIO
 +	gpio_chassis_type = get_gpio(70) << 3 | get_gpio(38) << 2 |
-+			    get_gpio(17) << 1 | get_gpio(0);
++			    get_gpio(17) << 1 | get_gpio(1);
 +
 +	printk(BIOS_DEBUG, "GPIO chassis type = %#x\n", gpio_chassis_type);
 +
@@ -408,7 +409,7 @@ index c834fea5d3..10b8aaca0e 100644
 +	case 0x0f:
 +		return 6;
 +	default:
-+		die("Unknown GPIO chassis type\n");
++		return CHASSIS_TYPE_UNKNOWN;
 +	}
 +
 +}
@@ -469,9 +470,15 @@ index c834fea5d3..10b8aaca0e 100644
 +	ec_write(1, 0x2fc, 0xa0);
 +	ec_write(1, 0x2fd, 0x32);
 +
-+	// Apply HWM table based on chassis type
 +	chassis_type = get_chassis_type();
-+	printk(BIOS_DEBUG, "Chassis type = %#x\n", chassis_type);
++
++	if (chassis_type != CHASSIS_TYPE_UNKNOWN) {
++		printk(BIOS_DEBUG, "Chassis type = %#x\n", chassis_type);
++	} else {
++		printk(BIOS_DEBUG, "WARNING: Unknown chassis type\n");
++	}
++
++	// Apply HWM table based on chassis type
 +	switch (chassis_type) {
 +	case 3:
 +		apply_hwm_tab(HWM_TAB3, ARRAY_SIZE(HWM_TAB3));
@@ -485,19 +492,17 @@ index c834fea5d3..10b8aaca0e 100644
 +	case 6:
 +		apply_hwm_tab(HWM_TAB6, ARRAY_SIZE(HWM_TAB6));
 +		break;
-+	default:
-+		die("Unknown chassis type\n");
 +	}
 +
-+	if (CONFIG_MAX_CPUS > 2) {
-+		ec_write(1, 0x9e, 0x30);
-+		ec_write(1, 0xeb, ec_read(1, 0xea));
-+	}
++	// NOTE: vendor firmware applies these when "max core address" > 2
++	// i think this is always the case
++	ec_write(1, 0x9e, 0x30);
++	ec_write(1, 0xeb, ec_read(1, 0xea));
 +
 +	ec_write(1, 0x2fc, saved_2fc);
 +
-+	// Apply full speed fan config if requested
-+	if (get_uint_option("fan_full_speed", 0)) {
++	// Apply full speed fan config if requested or if the chassis type is unknown
++	if (chassis_type == CHASSIS_TYPE_UNKNOWN || get_uint_option("fan_full_speed", 0)) {
 +		printk(BIOS_DEBUG, "Setting full fan speed\n");
 +		ec_write(1, 0x80, 0x60 | ec_read(1, 0x80));
 +		ec_write(1, 0x81, 0x60 | ec_read(1, 0x81));
@@ -518,7 +523,7 @@ index c834fea5d3..10b8aaca0e 100644
 +BOOT_STATE_INIT_ENTRY(BS_POST_DEVICE, BS_ON_EXIT, sch5555_ec_hwm_init, NULL);
 diff --git a/src/mainboard/dell/optiplex_9020/sch5555_ec.c b/src/mainboard/dell/optiplex_9020/sch5555_ec.c
 new file mode 100644
-index 0000000000..92244da9ab
+index 0000000000..a1067ac063
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_9020/sch5555_ec.c
 @@ -0,0 +1,54 @@
@@ -546,7 +551,7 @@ index 0000000000..92244da9ab
 +	outb(1, SCH555x_EMI_IOBASE);
 +
 +	// wait for ack
-+	for (size_t timeout = 0; timeout < 0xfff; ++timeout)
++	for (size_t retry = 0; retry < 0xfff; ++retry)
 +		if (inb(SCH555x_EMI_IOBASE + 1) & 1)
 +			break;
 +
@@ -572,23 +577,26 @@ index 0000000000..92244da9ab
 +	outb(1, SCH555x_EMI_IOBASE);
 +
 +	// wait for ack
-+	for (size_t timeout = 0; timeout < 0xfff; ++timeout)
++	for (size_t retry = 0; retry < 0xfff; ++retry)
 +		if (inb(SCH555x_EMI_IOBASE + 1) & 1)
 +			break;
 +}
 diff --git a/src/mainboard/dell/optiplex_9020/sch5555_ec.h b/src/mainboard/dell/optiplex_9020/sch5555_ec.h
 new file mode 100644
-index 0000000000..6e703ff865
+index 0000000000..7e399e8e74
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_9020/sch5555_ec.h
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,10 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +
-+#pragma once
++#ifndef __SCH5555_EC_H__
++#define __SCH5555_EC_H__
 +
 +uint8_t ec_read(uint8_t addr1, uint16_t addr2);
 +
 +void ec_write(uint8_t addr1, uint16_t addr2, uint8_t val);
++
++#endif
 -- 
 2.39.2
 
