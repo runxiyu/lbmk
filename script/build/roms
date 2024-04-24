@@ -20,7 +20,7 @@ cfgsdir="config/coreboot"
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest t"
 pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
-v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps"
+v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
 v="${v} grub_timeout ubdir board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets)"
@@ -56,6 +56,13 @@ main()
 		grub_background="background1280x800.png"
 		board="${x}"
 		configure_target
+
+		# exclude certain targets from the release
+		if [ "$release" = "n" ] && [ "$lbmk_release" = "y" ]; then
+			printf "Skipping target: %s\n" "$x"
+			continue
+		fi
+
 		build_payloads
 		build_target_mainboard
 		[ -d "bin/${board}" ] || continue

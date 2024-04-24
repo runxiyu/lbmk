@@ -9,6 +9,8 @@ set -u -e
 
 eval "$(setvars "" vdir relname src_dirname srcdir _xm target romdir mode)"
 
+export LBMK_RELEASE="y"
+
 main()
 {
 	vdir="release"

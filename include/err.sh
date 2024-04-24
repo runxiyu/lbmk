@@ -4,6 +4,13 @@
 version=""; versiondate=""; projectname=""; _nogit=""
 err="err_"
 
+# if "y": a coreboot target won't be built if target.cfg says release="n"
+# (this is used to exclude certain build targets from releases)
+lbmk_release=
+set | grep LBMK_RELEASE 1>/dev/null 2>/dev/null || lbmk_release="n" || :
+[ -z "$lbmk_release" ] && lbmk_release="$LBMK_RELEASE"
+[ "$lbmk_release" = "n" ] || [ "$lbmk_release" = "y" ] || lbmk_release="n"
+
 x_() {
 	[ $# -lt 1 ] || ${@} || $err "Unhandled non-zero exit: $@"; return 0
 }

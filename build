@@ -13,6 +13,8 @@ export LC_ALL=C
 . "include/err.sh"
 . "include/option.sh"
 
+export LBMK_RELEASE="$lbmk_release"
+
 eval "$(setvars "" option aur_notice tmpdir)"
 err="fail"
 
