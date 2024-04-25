@@ -1,0 +1,49 @@
+From cd3c553a313a26494e5dc31ff8323c3a919f190a Mon Sep 17 00:00:00 2001
+From: Mate Kukri <kukri.mate@gmail.com>
+Date: Wed, 10 Apr 2024 20:31:35 +0100
+Subject: [PATCH 1/1] mb/dell/optiplex_9020: Add support for TPM1.2 device
+
+These machines come with a TPM1.2 device by default. It is somewhat
+obsolete these days, but there is no harm in enabling it.
+
+Change-Id: Iec05321862aed58695c256b00494e5953219786d
+Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/81827
+Reviewed-by: Angel Pons <th3fanbus@gmail.com>
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+---
+ src/mainboard/dell/optiplex_9020/Kconfig       | 2 ++
+ src/mainboard/dell/optiplex_9020/devicetree.cb | 3 +++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/src/mainboard/dell/optiplex_9020/Kconfig b/src/mainboard/dell/optiplex_9020/Kconfig
+index 774a72f161..296938aa8d 100644
+--- a/src/mainboard/dell/optiplex_9020/Kconfig
++++ b/src/mainboard/dell/optiplex_9020/Kconfig
+@@ -12,7 +12,9 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select INTEL_GMA_HAVE_VBT
+ 	select INTEL_INT15
+ 	select MAINBOARD_HAS_LIBGFXINIT
++	select MAINBOARD_HAS_TPM1
+ 	select MAINBOARD_USES_IFD_GBE_REGION
++	select MEMORY_MAPPED_TPM
+ 	select NORTHBRIDGE_INTEL_HASWELL
+ 	select SERIRQ_CONTINUOUS_MODE
+ 	select SOUTHBRIDGE_INTEL_LYNXPOINT
+diff --git a/src/mainboard/dell/optiplex_9020/devicetree.cb b/src/mainboard/dell/optiplex_9020/devicetree.cb
+index 7bfa6736a6..e5cbd64127 100644
+--- a/src/mainboard/dell/optiplex_9020/devicetree.cb
++++ b/src/mainboard/dell/optiplex_9020/devicetree.cb
+@@ -70,6 +70,9 @@ chip northbridge/intel/haswell
+ 					device pnp 2e.b  off end	# Floppy Controller
+ 					device pnp 2e.11 off end	# Parallel Port
+ 				end
++				chip drivers/pc80/tpm
++					device pnp 0c31.0 on end
++				end
+ 			end
+ 			device pci 1f.2 on  end				# SATA controller 1
+ 			device pci 1f.3 on  end				# SMBus
+-- 
+2.39.2
+
