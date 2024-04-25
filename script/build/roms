@@ -201,7 +201,8 @@ build_target_mainboard()
 			    [ "$displaymode" != "txtmode" ] && continue
 			cbcfg="${targetdir}/config/${initmode}_${displaymode}"
 			[ "${initmode}" = "normal" ] && cbcfg="${cbcfg%_*}"
-			build_roms "${cbcfg}"	
+			build_roms "${cbcfg}"
+			x_ rm -f "$cbrom"
 		done
 	done
 }
