@@ -15,22 +15,8 @@ export LC_ALL=C
 
 export LBMK_RELEASE="$lbmk_release"
 
-eval "$(setvars "" option aur_notice tmpdir)"
+eval "$(setvars "" option aur_notice)"
 err="fail"
-
-tmpdir_was_set="y"
-set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
-if [ "${tmpdir_was_set}" = "y" ]; then
-	[ "${TMPDIR%_*}" = "/tmp/lbmk" ] || tmpdir_was_set="n"
-fi
-if [ "${tmpdir_was_set}" = "n" ]; then
-	export TMPDIR="/tmp"
-	tmpdir="$(mktemp -d -t lbmk_XXXXXXXX)"
-	export TMPDIR="${tmpdir}"
-else
-	export TMPDIR="${TMPDIR}"
-	tmpdir="${TMPDIR}"
-fi
 
 linkpath="${0}"
 linkname="${linkpath##*/}"

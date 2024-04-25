@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
 version=""; versiondate=""; projectname=""; _nogit=""
-err="err_"
+err="err_"; tmpdir=""
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
@@ -10,6 +10,20 @@ lbmk_release=
 set | grep LBMK_RELEASE 1>/dev/null 2>/dev/null || lbmk_release="n" || :
 [ -z "$lbmk_release" ] && lbmk_release="$LBMK_RELEASE"
 [ "$lbmk_release" = "n" ] || [ "$lbmk_release" = "y" ] || lbmk_release="n"
+
+tmpdir_was_set="y"
+set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
+if [ "${tmpdir_was_set}" = "y" ]; then
+	[ "${TMPDIR%_*}" = "/tmp/lbmk" ] || tmpdir_was_set="n"
+fi
+if [ "${tmpdir_was_set}" = "n" ]; then
+	export TMPDIR="/tmp"
+	tmpdir="$(mktemp -d -t lbmk_XXXXXXXX)"
+	export TMPDIR="${tmpdir}"
+else
+	export TMPDIR="${TMPDIR}"
+	tmpdir="${TMPDIR}"
+fi
 
 x_() {
 	[ $# -lt 1 ] || ${@} || $err "Unhandled non-zero exit: $@"; return 0
