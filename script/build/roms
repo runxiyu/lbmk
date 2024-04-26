@@ -497,8 +497,23 @@ usage()
 		./build roms x200_8mb x60
 		./build roms x60 -p grub -d corebootfb -k usqwerty
 
-	possible values for 'target':
-	$(items "config/coreboot")
+	to see possible values for 'target':
+
+		./build roms list
+
+	to see targets of only a given status (stable, unstable,
+	broken, untested and unknown), try e.g.
+
+		./build roms list stable
+		./build roms list unstable untested
+		./build roms list unknown
+		./build roms list broken
+		./build roms list broken stable
+
+	the value is set in target.cfg for each board. if status
+	is unitialised, it defaults to "unknown". only stable/unstable
+	targets are permitted in releases; broken, untested and
+	unknown are not allowed, but are accessible via normal building
 
 	Refer to the ${projectname} documentation for more information.
 	EOF
