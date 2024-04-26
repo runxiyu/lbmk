@@ -24,20 +24,33 @@ v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
 v="${v} grub_timeout ubdir board grub_scan_disk uboot_config status"
 eval "$(setvars "n" ${pv})"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets \
-    skipped)"
+    skipped listboards list_type)"
 
 main()
 {
 	check_project
 
 	while [ $# -gt 0 ]; do
+
+		if [ "$listboards" = "y" ]; then
+			[ "$1" = "stable" ] || [ "$1" = "unstable" ] || \
+			    [ "$1" = "broken" ] || [ "$1" = "untested" ] || \
+			    [ "$1" = "unknown" ] || \
+				$err "invalid list type '$1'"
+			list_type="$list_type $1"
+			list_type="${list_type# }"
+			shift 1; continue
+		fi
+
 		case ${1} in
 		help)
 			usage
 			exit 0 ;;
 		list)
-			items config/coreboot || :
-			exit 0 ;;
+			boards=$(items config/coreboot) || \
+			    $err "Cannot generate list of boards for list"
+			listboards="y"
+			shift 1; continue ;;
 		-d) _displaymode="${2}" ;;
 		-p) _payload="${2}" ;;
 		-k) _keyboard="${2}" ;;
@@ -48,6 +61,9 @@ main()
 		esac
 		shift 2
 	done
+
+	[ "$listboards" = "y" ] && [ -z "$list_type" ] && \
+		list_type="stable unstable broken untested unknown"
 
 	[ "${all}" != "y" ] || boards=$(items config/coreboot) || \
 	    $err "Cannot generate list of boards for building"
@@ -63,6 +79,14 @@ main()
 
 		handle_status
 
+		if [ "$listboards" = "y" ]; then
+			for _list_type in $list_type; do
+				[ "$status" != "$_list_type" ] && continue
+				printf "%s\n" "$board"
+			done
+			continue
+		fi
+
 		# exclude certain targets from the release
 		skip_board && \
 		    printf "Skip target %s(%s)\n" "$board" "$status" && \
@@ -74,6 +98,8 @@ main()
 		[ -d "bin/${board}" ] || continue
 		targets="* bin/${board}\n${targets}"
 	done
+
+	[ "$listboards" = "y" ] && return 0
 
 	if [ -n "$skipped" ]; then	
 		printf "\nThese targets were skipped:\n"
@@ -143,13 +169,15 @@ handle_status()
 	    [ "$status" = "broken" ] || [ "$status" = "untested" ] || \
 		status="unknown"
 
-	printf "Handling target: %s (status=%s)\n" "$board" "$status"
+	[ "$listboards" != "y" ] && \
+		printf "Handling target: %s (status=%s)\n" "$board" "$status"
 
 	[ "$status" = "broken" ] && release="n"
 	[ "$status" = "unknown" ] && release="n"
 	[ "$status" = "untested" ] && release="n"
 
-	[ "$status" != "stable" ] && [ "$status" != "$release_type" ] && \
+	[ "$listboards" != "y" ] && \
+	    [ "$status" != "stable" ] && [ "$status" != "$release_type" ] && \
 		printf "WARNING: %s not marked stable (status=%s):\n\n" \
 		    "$board" "$status"; return 0
 }
