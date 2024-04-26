@@ -1,0 +1,1 @@
+broken s3 resume/suspend, no battery indicator/status

@@ -1,0 +1,2 @@
+broken s3 resume/suspend, no battery indicator/status.
+nouveau crashes xorg under linux (can use nomodeset)
