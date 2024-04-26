@@ -1,0 +1,23 @@
+From 4c5971a6fcf7e948f7df4d0ce2ab0751060cb2ca Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@retroboot.org>
+Date: Fri, 19 Mar 2021 05:54:58 +0000
+Subject: [PATCH 01/18] apple/macbook21: Set default VRAM to 64MiB instead of
+ 8MiB
+
+---
+ src/mainboard/apple/macbook21/cmos.default | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mainboard/apple/macbook21/cmos.default b/src/mainboard/apple/macbook21/cmos.default
+index cf1bc4566e..dc0df3b6d6 100644
+--- a/src/mainboard/apple/macbook21/cmos.default
++++ b/src/mainboard/apple/macbook21/cmos.default
+@@ -5,4 +5,4 @@ boot_devices=''
+ boot_default=0x40
+ cmos_defaults_loaded=Yes
+ lpt=Enable
+-gfx_uma_size=8M
++gfx_uma_size=64M
+-- 
+2.39.2
+

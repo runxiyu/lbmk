@@ -1,0 +1,51 @@
+From 0bc5a67f926e193a429cce4028fb382c49fa08f8 Mon Sep 17 00:00:00 2001
+From: Bill XIE <persmule@hardenedlinux.org>
+Date: Fri, 3 Nov 2023 12:34:01 +0800
+Subject: [PATCH 2/2] drivers/pc80/rtc/option.c: Reset only CMOS range covered
+ by checksum
+
+Proposed in the comment of commit 29030d0f3dad
+("drivers/pc80/rtc/option.c: Stop resetting CMOS during s3 resume"),
+during sanitize_cmos(), only reset CMOS range covered by checksum and
+the checksum itself from the file cmos.default in CBFS, in order to
+prevent other runtime data in CMOS (e.g. the DRAM training data on
+GM45 platforms for s3 resume) being erased.
+
+Tested: cherry-pick this commit before commit 44a48ce7a46c ("Kconfig:
+	Bring HEAP_SIZE to a common, large value"), which is already
+	before my commit 29030d0f3dad , Thinkpad X200 with
+	CONFIG(STATIC_OPTION_TABLE) can resume from s3 again,
+	indicating that DRAM training data are no longer erased.
+
+Signed-off-by: Bill XIE <persmule@hardenedlinux.org>
+Co-authored-by: Jonathon Hall <jonathon.hall@puri.sm>
+Change-Id: I872bf5f41422bc3424cd8631e932aaae2ae82f7a
+Reviewed-on: https://review.coreboot.org/c/coreboot/+/78906
+Tested-by: build bot (Jenkins) <no-reply@coreboot.org>
+Reviewed-by: Nico Huber <nico.h@gmx.de>
+Reviewed-by: Jonathon Hall <jonathon.hall@puri.sm>
+---
+ src/drivers/pc80/rtc/option.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/drivers/pc80/rtc/option.c b/src/drivers/pc80/rtc/option.c
+index e6cfa175ad..cb18e14ae9 100644
+--- a/src/drivers/pc80/rtc/option.c
++++ b/src/drivers/pc80/rtc/option.c
+@@ -213,8 +213,12 @@ void sanitize_cmos(void)
+ 			return;
+ 
+ 		u8 control_state = cmos_disable_rtc();
+-		for (i = 14; i < MIN(128, length); i++)
++		/* Copy checked range and the checksum from the default */
++		for (i = LB_CKS_RANGE_START; i < MIN(LB_CKS_RANGE_END + 1, length); i++)
+ 			cmos_write_inner(cmos_default[i], i);
++		/* CMOS checksum takes 2 bytes */
++		cmos_write_inner(cmos_default[LB_CKS_LOC], LB_CKS_LOC);
++		cmos_write_inner(cmos_default[LB_CKS_LOC + 1], LB_CKS_LOC + 1);
+ 		cmos_restore_rtc(control_state);
+ 	}
+ }
+-- 
+2.39.2
+
