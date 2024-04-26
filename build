@@ -7,13 +7,8 @@
 
 set -u -e
 
-export LC_COLLATE=C
-export LC_ALL=C
-
 . "include/err.sh"
 . "include/option.sh"
-
-export LBMK_RELEASE="$lbmk_release"
 
 eval "$(setvars "" option aur_notice)"
 err="fail"

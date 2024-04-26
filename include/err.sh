@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org>
 
+export LC_COLLATE=C
+export LC_ALL=C
+
 version=""; versiondate=""; projectname=""; _nogit=""
 err="err_"; tmpdir=""
 
@@ -10,6 +13,7 @@ lbmk_release=
 set | grep LBMK_RELEASE 1>/dev/null 2>/dev/null || lbmk_release="n" || :
 [ -z "$lbmk_release" ] && lbmk_release="$LBMK_RELEASE"
 [ "$lbmk_release" = "n" ] || [ "$lbmk_release" = "y" ] || lbmk_release="n"
+export LBMK_RELEASE="$lbmk_release"
 
 tmpdir_was_set="y"
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
