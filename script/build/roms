@@ -59,7 +59,7 @@ main()
 
 		configure_target
 		[ "$board" = "$tree" ] && \
-			return 1
+			continue
 
 		handle_status
 
