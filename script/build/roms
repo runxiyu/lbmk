@@ -197,6 +197,8 @@ skip_board()
 			cat -u "$targetdir/warn.txt" || \
 			    $err "!cat $targetdir/warn.txt"
 		fi
+		printf "\nTo disable this dialog when building, do:\n"
+		printf "export LBMK_STATUS=n\n\n"
 		while true; do
 			printf "Board %s has status '%s'. Skip? [y/n]" \
 			    "$board" "$status"
