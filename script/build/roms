@@ -190,7 +190,7 @@ skip_board()
 		return 1
 
 	if [ "$lbmk_release" != "y" ] && [ "$status" != "stable" ] && \
-	    [ "$status" != "$release_type" ]; then
+	    [ "$status" != "$release_type" ] && [ "$lbmk_status" = "y" ]; then
 		if [ -f "$targetdir/warn.txt" ]; then
 			printf "Regarding board '%s' (status '%s'):\n" \
 			    "$board" "$status"

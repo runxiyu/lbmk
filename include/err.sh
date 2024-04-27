@@ -5,7 +5,7 @@ export LC_COLLATE=C
 export LC_ALL=C
 
 version=""; versiondate=""; projectname=""; _nogit=""
-err="err_"; tmpdir=""; release_type=""
+err="err_"; tmpdir=""; release_type=""; lbmk_status=""
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
@@ -25,6 +25,13 @@ set | grep LBMK_VERSION_TYPE 1>/dev/null 2>/dev/null && \
 [ -z "$release_type" ] || [ "$release_type" = "stable" ] || \
     [ "$release_type" = "unstable" ] || release_type=""
 export LBMK_VERSION_TYPE="$release_type"
+
+# if set to n via export, status checks will be skipped during
+# all builds, and all targets will be built regardless of status.
+# this replicates the old behaviour of lbmk, prior to the checks.
+set | grep LBMK_STATUS 1>/dev/null 2>/dev/null && lbmk_status="$LBMK_STATUS"
+[ "$lbmk_status" = "y" ] || [ "$lbmk_status" = "n" ] || lbmk_status="y"
+export LBMK_STATUS="$lbmk_status"
 
 tmpdir_was_set="y"
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
