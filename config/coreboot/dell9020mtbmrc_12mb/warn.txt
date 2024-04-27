@@ -1,0 +1,1 @@
+Completely stable with graphics, but IOMMU disabled by default; graphics cards only work with IOMMU turned off. Intel graphics works fine with IOMMU turned on. IOMMU is needed for Qubes to work properly. To turn on IOMMU, do this to your ROM before flashing (ONLY do this if using Intel graphics): ./nvramtool -C libreboot.rom -w iommu=Enable
