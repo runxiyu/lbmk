@@ -199,15 +199,13 @@ handle_makefile()
 
 	run_make_command || $err "handle_makefile $codedir: no makefile!"
 
-	if [ -e "${codedir}/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ]; then
-		x_ git -C "$codedir" clean -fdx
-	elif [ "$mode" = "oldconfig" ] || [ "$mode" = "olddefconfig" ] || \
-	    [ "$mode" = "menuconfig" ] || [ "$mode" = "nconfig" ]; then
-		x_ cp "${codedir}/.config" "$config"
-	elif [ "$mode" = "savedefconfig" ]; then
-		x_ cp "${codedir}/defconfig" "$config"
-	fi
+	_copy=".config"
+	[ "$mode" = "savedefconfig" ] && _copy="defconfig"
+	[ "${mode%config}" = "$mode" ] || x_ cp "$codedir/$_copy" "$config"
+
+	[ -e "${codedir}/.git" ] && [ "$project" = "u-boot" ] && \
+	    [ "$mode" = "distclean" ] && \
+		x_ git -C "$codedir" clean -fdx; return 0
 }
 
 run_make_command()
