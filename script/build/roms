@@ -168,27 +168,27 @@ skip_board()
 		printf "WARNING: %s not stable (status=%s):\n\n" \
 		    "$board" "$status"
 
-	[ "$release" = "n" ] && [ "$lbmk_release" = "y" ] && \
-		return 0
+	[ "$lbmk_release" = "y" ] && [ "$release" = "n" ] && return 0
+	[ "$lbmk_release" = "y" ] && [ "$status" = "broken" ] && return 0
 
-	if [ "$lbmk_release" != "y" ] && [ "$status" != "stable" ] && \
-	    [ "$lbmk_status" = "y" ]; then
-		if [ -f "$targetdir/warn.txt" ]; then
-			printf "Regarding board '%s' (status '%s'):\n" \
-			    "$board" "$status"
-			cat -u "$targetdir/warn.txt" || \
-			    $err "!cat $targetdir/warn.txt"
-		fi
-		printf "\nTo disable this dialog when building, do:\n"
-		printf "export LBMK_STATUS=n\n\n"
-		while true; do
-			printf "Board %s has status '%s'. Skip? [y/n]" \
-			    "$board" "$status"
-			read -r skip
-			[ "$skip" = "y" ] && return 0
-			[ "$skip" = "n" ] && return 1; continue
-		done
-	fi; return 1
+	[ "$lbmk_status" = "y" ] || return 1
+	[ "$status" = "stable" ] && return 1
+
+	if [ -f "$targetdir/warn.txt" ]; then
+		printf "Regarding board '%s' (status '%s'):\n" \
+		    "$board" "$status"
+		cat -u "$targetdir/warn.txt" || \
+		    $err "!cat $targetdir/warn.txt"
+	fi
+	printf "\nTo disable this dialog when building, do:\n"
+	printf "export LBMK_STATUS=n\n\n"
+	while true; do
+		printf "Board %s has status '%s'. Skip? [y/n]" \
+		    "$board" "$status"
+		read -r skip
+		[ "$skip" = "y" ] && return 0
+		[ "$skip" = "n" ] && return 1; continue
+	done
 }
 
 build_payloads()
