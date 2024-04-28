@@ -168,18 +168,18 @@ skip_board()
 		printf "WARNING: %s not stable (status=%s):\n\n" \
 		    "$board" "$status"
 
-	[ "$lbmk_release" = "y" ] && [ "$release" = "n" ] && return 0
-	[ "$lbmk_release" = "y" ] && [ "$status" = "broken" ] && return 0
-
-	[ "$lbmk_status" = "y" ] || return 1
-	[ "$status" = "stable" ] && return 1
-
-	if [ -f "$targetdir/warn.txt" ]; then
+	if [ -f "$targetdir/warn.txt" ] && [ "$listboards" != "y" ]; then
 		printf "Regarding board '%s' (status '%s'):\n" \
 		    "$board" "$status"
 		cat -u "$targetdir/warn.txt" || \
 		    $err "!cat $targetdir/warn.txt"
 	fi
+
+	[ "$lbmk_release" = "y" ] && [ "$release" = "n" ] && return 0
+	[ "$lbmk_release" = "y" ] && [ "$status" = "broken" ] && return 0
+	[ "$lbmk_status" = "y" ] || return 1
+	[ "$status" = "stable" ] && return 1
+
 	printf "\nTo disable this dialog when building, do:\n"
 	printf "export LBMK_STATUS=n\n\n"
 	while true; do
