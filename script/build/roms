@@ -176,7 +176,7 @@ skip_board()
 	fi
 
 	[ "$lbmk_release" = "y" ] && [ "$release" = "n" ] && return 0
-	[ "$lbmk_release" = "y" ] && [ "$status" = "broken" ] && return 0
+	[ "$lbmk_release" = "y" ] && [ "$status" != "broken" ] && return 1
 	[ "$lbmk_status" = "y" ] || return 1
 	[ "$status" = "stable" ] && return 1
 
