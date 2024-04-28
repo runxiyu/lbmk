@@ -72,12 +72,11 @@ main()
 		eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
 		grub_background="background1280x800.png"
 		board="${x}"
+		status="unknown"
 
 		configure_target
 		[ "$board" = "$tree" ] && \
 			continue
-
-		handle_status
 
 		if [ "$listboards" = "y" ]; then
 			for _list_type in $list_type; do
@@ -163,34 +162,17 @@ configure_target()
 	eval "payload_${_payload}=y"
 }
 
-handle_status()
-{
-	[ "$status" = "stable" ] || [ "$status" = "unstable" ] || \
-	    [ "$status" = "broken" ] || [ "$status" = "untested" ] || \
-		status="unknown"
-
-	[ "$listboards" != "y" ] && \
-		printf "Handling target: %s (status=%s)\n" "$board" "$status"
-
-	[ "$status" = "broken" ] && release="n"
-	[ "$status" = "unknown" ] && release="n"
-	[ "$status" = "untested" ] && release="n"
-
-	[ "$listboards" != "y" ] && \
-	    [ "$status" != "stable" ] && [ "$status" != "$release_type" ] && \
-		printf "WARNING: %s not marked stable (status=%s):\n\n" \
-		    "$board" "$status"; return 0
-}
-
 skip_board()
 {
+	[ "$listboards" != "y" ] && [ "$status" != "stable" ] && \
+		printf "WARNING: %s not stable (status=%s):\n\n" \
+		    "$board" "$status"
+
 	[ "$release" = "n" ] && [ "$lbmk_release" = "y" ] && \
 		return 0
-	[ -n "$release_type" ] && [ "$status" = "$release_type" ] && \
-		return 1
 
 	if [ "$lbmk_release" != "y" ] && [ "$status" != "stable" ] && \
-	    [ "$status" != "$release_type" ] && [ "$lbmk_status" = "y" ]; then
+	    [ "$lbmk_status" = "y" ]; then
 		if [ -f "$targetdir/warn.txt" ]; then
 			printf "Regarding board '%s' (status '%s'):\n" \
 			    "$board" "$status"
