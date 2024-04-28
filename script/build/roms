@@ -33,10 +33,6 @@ main()
 	while [ $# -gt 0 ]; do
 
 		if [ "$listboards" = "y" ]; then
-			[ "$1" = "stable" ] || [ "$1" = "unstable" ] || \
-			    [ "$1" = "broken" ] || [ "$1" = "untested" ] || \
-			    [ "$1" = "unknown" ] || \
-				$err "invalid list type '$1'"
 			list_type="$list_type $1"
 			list_type="${list_type# }"
 			shift 1; continue
@@ -62,9 +58,6 @@ main()
 		shift 2
 	done
 
-	[ "$listboards" = "y" ] && [ -z "$list_type" ] && \
-		list_type="stable unstable broken untested unknown"
-
 	[ "${all}" != "y" ] || boards=$(items config/coreboot) || \
 	    $err "Cannot generate list of boards for building"
 
@@ -79,11 +72,11 @@ main()
 			continue
 
 		if [ "$listboards" = "y" ]; then
+			[ -z "$list_type" ] && printf "%s\n" "$board"
 			for _list_type in $list_type; do
 				[ "$status" != "$_list_type" ] && continue
 				printf "%s\n" "$board"
-			done
-			continue
+			done; continue
 		fi
 
 		# exclude certain targets from the release
