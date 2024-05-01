@@ -1,0 +1,1 @@
+HP EliteBook 8560w has broken wifi. See issue https://codeberg.org/libreboot/lbmk/issues/201 - may affect other HP machines so setting them as unstable. The machines should otherwise boot reliably and you can use them - if wifi doesn't work, you can use a usb wifi dongle or, on HP desktops, use an add-on wifi card.
