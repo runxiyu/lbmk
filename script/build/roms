@@ -157,12 +157,15 @@ configure_target()
 
 skip_board()
 {
-	[ "$listboards" != "y" ] && [ "$status" != "stable" ] && \
-		printf "WARNING: %s not stable (status=%s):\n\n" \
+	if [ "$listboards" != "y" ] && [ "$status" != "stable" ]; then
+		printf "\n\n\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+		printf "\t__WARNING: %s has status '%s'__\n" \
 		    "$board" "$status"
+		printf "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"
+	fi
 
 	if [ -f "$targetdir/warn.txt" ] && [ "$listboards" != "y" ]; then
-		printf "Regarding board '%s' (status '%s'):\n" \
+		printf "Regarding target '%s' (status '%s'):\n\n" \
 		    "$board" "$status"
 		cat -u "$targetdir/warn.txt" || \
 		    $err "!cat $targetdir/warn.txt"
@@ -176,7 +179,7 @@ skip_board()
 	printf "\nTo disable this dialog when building, do:\n"
 	printf "export LBMK_STATUS=n\n\n"
 	while true; do
-		printf "Board %s has status '%s'. Skip? [y/n]" \
+		printf "Board %s has status '%s'. Skip? [y/n] " \
 		    "$board" "$status"
 		read -r skip
 		[ "$skip" = "y" ] && return 0
