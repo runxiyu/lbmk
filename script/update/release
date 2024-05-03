@@ -185,6 +185,7 @@ insert_copying_files()
 	cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot" || return 1
 	printf "Multiple licenses. Check corresponding %s source archive\n" \
 	    "${projectname}" > "${1}/COPYING" || return 1
+	rm -f src/u-boot/*/test/lib/strlcat.c || return 1
 }
 
 mkrom_tarball()
