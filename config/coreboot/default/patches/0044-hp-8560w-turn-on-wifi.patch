@@ -1,0 +1,47 @@
+From 4ccef4fffd98071c339cb4135e2d8c805e554378 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Fri, 3 May 2024 17:45:52 +0100
+Subject: [PATCH 1/1] hp/8560w: turn on wifi
+
+according to angel pons, this gpio is WLAN_TRN_OFF#
+and setting it high will make wifi work. testing with
+this change as suggested by angel. see:
+
+https://review.coreboot.org/c/coreboot/+/39398/4/src/mainboard/hp/snb_ivb_laptops/variants/8560w/gpio.c#158
+
+if it makes it into a libreboot release, you can assume
+the fix works. right now we have this problem:
+
+https://codeberg.org/libreboot/lbmk/issues/201
+
+Riku reported:
+
+[  333.890080] atkbd serio0: Unknown key pressed (translated set 2, code 0xf8 on isa0060/serio0).
+[  333.890102] atkbd serio0: Use 'setkeycodes e078 <keycode>' to make it known.
+[  334.104069] atkbd serio0: Unknown key released (translated set 2, code 0xf8 on isa0060/serio0).
+[  334.104090] atkbd serio0: Use 'setkeycodes e078 <keycode>' to make it known.
+
+The wifi stays to hardblocked in rfkill. When the wireless button
+is pressed, nothing changes except for these lines in dmesg.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/mainboard/hp/snb_ivb_laptops/variants/8560w/gpio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mainboard/hp/snb_ivb_laptops/variants/8560w/gpio.c b/src/mainboard/hp/snb_ivb_laptops/variants/8560w/gpio.c
+index 560d668d6f..10cd11ce48 100644
+--- a/src/mainboard/hp/snb_ivb_laptops/variants/8560w/gpio.c
++++ b/src/mainboard/hp/snb_ivb_laptops/variants/8560w/gpio.c
+@@ -155,7 +155,7 @@ static const struct pch_gpio_set2 pch_gpio_set2_level = {
+ 	.gpio37 = GPIO_LEVEL_LOW,
+ 	.gpio49 = GPIO_LEVEL_LOW,
+ 	.gpio53 = GPIO_LEVEL_HIGH,
+-	.gpio57 = GPIO_LEVEL_LOW,
++	.gpio57 = GPIO_LEVEL_HIGH,
+ 	.gpio60 = GPIO_LEVEL_HIGH,
+ 	.gpio61 = GPIO_LEVEL_HIGH,
+ };
+-- 
+2.39.2
+
