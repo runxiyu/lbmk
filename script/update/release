@@ -220,7 +220,7 @@ mktarball()
 	printf "\nCreating archive: %s\n\n" "$2"
 	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
 		tar --sort=name --owner=root:0 --group=root:0 \
-		    --mtime="UTC 2024-02-25" -c "$1" | xz -T$threads -9e \
+		    --mtime="UTC 2024-05-04" -c "$1" | xz -T$threads -9e \
 		    > "$2" || $err "mktarball 1, ${1}"
 	else
 		# TODO: reproducible tarballs on non-GNU systems
