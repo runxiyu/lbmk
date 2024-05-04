@@ -1,3 +1,3 @@
-Battery indicator not working yet. S3 suspend/resume may be broken. May shut down instead of throttle on high CPU temperature; use the intel_pstate driver to cap speeds, and monitor performance via CPU stress test and lm-sensors/xsensors utility, before using the machine regularly.
+Battery indicator not working yet. May shut down instead of throttle on high CPU temperature; use the intel_pstate driver to cap speeds, and monitor performance via CPU stress test and lm-sensors/xsensors utility, before using the machine regularly.
 
 If you have the nvidia gpu variant, please use e6400nvidia_4mb instead.
