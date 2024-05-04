@@ -1,0 +1,133 @@
+From 9ff35368733c5e5a852ebd6295f262710553913b Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Fri, 3 May 2024 16:31:12 -0600
+Subject: [PATCH] mb/dell/: Add S3 SMI handler for SNB/IVB Latitudes
+
+This should fix S3 suspend on these systems
+
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/mainboard/dell/e5420/smihandler.c | 9 +++++++++
+ src/mainboard/dell/e5520/smihandler.c | 9 +++++++++
+ src/mainboard/dell/e5530/smihandler.c | 9 +++++++++
+ src/mainboard/dell/e6420/smihandler.c | 9 +++++++++
+ src/mainboard/dell/e6430/smihandler.c | 9 +++++++++
+ src/mainboard/dell/e6520/smihandler.c | 9 +++++++++
+ src/mainboard/dell/e6530/smihandler.c | 9 +++++++++
+ 7 files changed, 63 insertions(+)
+ create mode 100644 src/mainboard/dell/e5420/smihandler.c
+ create mode 100644 src/mainboard/dell/e5520/smihandler.c
+ create mode 100644 src/mainboard/dell/e5530/smihandler.c
+ create mode 100644 src/mainboard/dell/e6420/smihandler.c
+ create mode 100644 src/mainboard/dell/e6430/smihandler.c
+ create mode 100644 src/mainboard/dell/e6520/smihandler.c
+ create mode 100644 src/mainboard/dell/e6530/smihandler.c
+
+diff --git a/src/mainboard/dell/e5420/smihandler.c b/src/mainboard/dell/e5420/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e5420/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+diff --git a/src/mainboard/dell/e5520/smihandler.c b/src/mainboard/dell/e5520/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e5520/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+diff --git a/src/mainboard/dell/e5530/smihandler.c b/src/mainboard/dell/e5530/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e5530/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+diff --git a/src/mainboard/dell/e6420/smihandler.c b/src/mainboard/dell/e6420/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e6420/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+diff --git a/src/mainboard/dell/e6430/smihandler.c b/src/mainboard/dell/e6430/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e6430/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+diff --git a/src/mainboard/dell/e6520/smihandler.c b/src/mainboard/dell/e6520/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e6520/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+diff --git a/src/mainboard/dell/e6530/smihandler.c b/src/mainboard/dell/e6530/smihandler.c
+new file mode 100644
+index 0000000000..334d7b1a5f
+--- /dev/null
++++ b/src/mainboard/dell/e6530/smihandler.c
+@@ -0,0 +1,9 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	mec5035_sleep(slp_typ);
++}
+-- 
+2.44.0
+
