@@ -8,7 +8,7 @@
 }
 
 {mdfiles}{
-	rev: 660d9d87c7424c3311d535e6bb6bbeba66bcacbc
+	rev: 20fd775c855428ecff647a42823746863fd57efe
 	loc: docs/www/html
 	url: https://codeberg.org/libreboot/lbwww
 	bkup_url: https://git.disroot.org/libreboot/lbwww
@@ -16,7 +16,7 @@
 }
 
 {imgfiles}{
-	rev: 54aee63ca18400f8de667ab16146f88f47a05488
+	rev: 625bb7535d388a235bec47a8ce822cda10b53692
 	loc: docs/www/html/site/img
 	url: https://codeberg.org/libreboot/lbwww-img
 	bkup_url: https://git.disroot.org/libreboot/lbwww-img
