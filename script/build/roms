@@ -62,41 +62,7 @@ main()
 	    $err "Cannot generate list of boards for building"
 
 	for x in ${boards}; do
-		eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
-		grub_background="background1280x800.png"
-		board="${x}"
-		status="unknown"
-
-		configure_target
-		[ "$board" = "$tree" ] && \
-			continue
-
-		if [ "$listboards" = "y" ]; then
-			[ -z "$list_type" ] && printf "%s\n" "$board"
-			for _list_type in $list_type; do
-				if [ "${_list_type#_}" = "$_list_type" ]; then
-					[ "$status" != "$_list_type" ] && \
-						continue
-					printf "%s\n" "$board"
-				else
-					[ "$status" = "${_list_type#_}" ] && \
-						continue
-					printf "%s\n" "$board"
-					break
-				fi
-			done; continue
-		fi
-
-		# exclude certain targets from the release
-		skip_board && \
-		    printf "Skip target %s(%s)\n" "$board" "$status" && \
-		    skipped="* $board($status)\n$skipped" && continue
-
-		build_payloads
-		build_target_mainboard
-
-		[ -d "bin/${board}" ] || continue
-		targets="* bin/${board}\n${targets}"
+		handle_target
 	done
 
 	[ "$listboards" = "y" ] && return 0
@@ -113,6 +79,31 @@ main()
 	printf "^^ ROM images available in these directories.\n\n"
 
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
+}
+
+handle_target()
+{
+	eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
+	grub_background="background1280x800.png"
+	board="${x}"
+	status="unknown"
+
+	configure_target
+	[ "$board" = "$tree" ] && \
+		return 0
+
+	print_target_name && return 0
+
+	# exclude certain targets from the release
+	skip_board && \
+	    printf "Skip target %s(%s)\n" "$board" "$status" && \
+	    skipped="* $board($status)\n$skipped" && return 0
+
+	build_payloads
+	build_target_mainboard
+
+	[ -d "bin/${board}" ] || return 0
+	targets="* bin/${board}\n${targets}"
 }
 
 configure_target()
@@ -161,6 +152,26 @@ configure_target()
 	    payload_seabios_withgrub payload_uboot payload_grub_withseabios \
 	    payload_seabios_grubonly)"
 	eval "payload_${_payload}=y"
+}
+
+print_target_name()
+{
+	[ "$listboards" = "y" ] || return 1
+
+	[ -z "$list_type" ] && printf "%s\n" "$board"
+
+	for _list_type in $list_type; do
+		if [ "${_list_type#_}" = "$_list_type" ]; then
+			[ "$status" != "$_list_type" ] && \
+				continue
+			printf "%s\n" "$board"
+			break
+		elif [ "$status" != "${_list_type#_}" ]; then
+			printf "%s\n" "$board"
+			break
+		fi
+	done
+	return 0
 }
 
 skip_board()
