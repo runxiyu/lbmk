@@ -74,8 +74,16 @@ main()
 		if [ "$listboards" = "y" ]; then
 			[ -z "$list_type" ] && printf "%s\n" "$board"
 			for _list_type in $list_type; do
-				[ "$status" != "$_list_type" ] && continue
-				printf "%s\n" "$board"
+				if [ "${_list_type#_}" = "$_list_type" ]; then
+					[ "$status" != "$_list_type" ] && \
+						continue
+					printf "%s\n" "$board"
+				else
+					[ "$status" = "${_list_type#_}" ] && \
+						continue
+					printf "%s\n" "$board"
+					break
+				fi
 			done; continue
 		fi
 
