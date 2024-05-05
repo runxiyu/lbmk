@@ -62,7 +62,7 @@ main()
 	    $err "Cannot generate list of boards for building"
 
 	for x in ${boards}; do
-		handle_target
+		handle_target "$x"
 	done
 
 	[ "$listboards" = "y" ] && return 0
@@ -85,7 +85,7 @@ handle_target()
 {
 	eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
 	grub_background="background1280x800.png"
-	board="${x}"
+	board="$1"
 	status="unknown"
 
 	configure_target
