@@ -95,9 +95,11 @@ handle_target()
 	print_target_name && return 0
 
 	# exclude certain targets from the release
-	skip_board && \
-	    printf "Skip target %s(%s)\n" "$board" "$status" && \
-	    skipped="* $board($status)\n$skipped" && return 0
+	if skip_board; then
+		printf "Skip target %s(%s)\n" "$board" "$status"
+		skipped="* $board($status)\n$skipped"
+		return 0
+	fi
 
 	build_payloads
 	build_target_mainboard
