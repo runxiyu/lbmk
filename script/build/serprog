@@ -5,7 +5,7 @@
 
 set -u -e
 
-. "include/err.sh"
+. "include/option.sh"
 
 eval "$(setvars "" pico_sdk_dir pico_src_dir stm32_src_dir boards_dir)"
 

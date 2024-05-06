@@ -8,7 +8,6 @@
 
 set -u -e
 
-. "include/err.sh"
 . "include/option.sh"
 
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"

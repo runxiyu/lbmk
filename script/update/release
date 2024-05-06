@@ -4,7 +4,6 @@
 
 set -u -e
 
-. "include/err.sh"
 . "include/option.sh"
 
 eval "$(setvars "" vdir relname src_dirname srcdir _xm target romdir mode)"
