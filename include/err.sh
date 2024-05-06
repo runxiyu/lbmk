@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2022, 2024 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2022-2024 Leah Rowe <leah@libreboot.org>
 
 export LC_COLLATE=C
 export LC_ALL=C
