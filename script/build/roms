@@ -558,6 +558,9 @@ usage()
 
 		./build roms list
 
+	Can also build serprog images:
+	${serprog_usage}		
+
 	to see targets of only a given status (stable, unstable,
 	broken, untested and unknown), try e.g.
 
