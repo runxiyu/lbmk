@@ -106,8 +106,8 @@ fetch_trees()
 mkrom_images()
 {
 	./build roms all || $err "${_xm}: roms-all"
-	./build serprog rp2040 || $err "${_xm}: rp2040"
-	./build serprog stm32 || $err "${_xm}: stm32"
+	./build roms serprog rp2040 || $err "${_xm}: rp2040"
+	./build roms serprog stm32 || $err "${_xm}: stm32"
 
 	for rombuild in bin/*; do
 		[ -d "${rombuild}" ] || continue

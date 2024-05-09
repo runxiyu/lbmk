@@ -10,10 +10,14 @@ set -u -e
 
 . "include/option.sh"
 
+serprog_usage="usage: ./build roms serprog <rp2040|stm32> [board]"
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 grub_background="background1280x800.png"
 grubelf="elf/grub/grub.elf"
 cfgsdir="config/coreboot"
+pico_src_dir="src/pico-serprog"
+pico_sdk_dir="src/pico-sdk"
+stm32_src_dir="src/stm32-vserprog"
 
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
@@ -21,16 +25,15 @@ pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest t"
 pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
 v="${v} grub_timeout ubdir board grub_scan_disk uboot_config status"
-eval "$(setvars "n" ${pv})"
+eval "$(setvars "n" ${pv} serprog)"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets \
-    skipped listboards list_type)"
+    skipped listboards list_type serprog_boards_dir)"
 
 main()
 {
 	check_project
 
 	while [ $# -gt 0 ]; do
-
 		if [ "$listboards" = "y" ]; then
 			list_type="$list_type $1"
 			list_type="${list_type# }"
@@ -46,6 +49,9 @@ main()
 			    $err "Cannot generate list of boards for list"
 			listboards="y"
 			shift 1; continue ;;
+		serprog)
+			serprog="y"
+			shift 1; break ;;
 		-d) _displaymode="${2}" ;;
 		-p) _payload="${2}" ;;
 		-k) _keyboard="${2}" ;;
@@ -57,12 +63,16 @@ main()
 		shift 2
 	done
 
-	[ "${all}" != "y" ] || boards=$(items config/coreboot) || \
-	    $err "Cannot generate list of boards for building"
-
-	for x in ${boards}; do
-		handle_target "$x"
-	done
+	if [ "$serprog" = "y" ]; then
+		handle_serprog $@
+		return 0
+	else
+		[ "${all}" != "y" ] || boards=$(items config/coreboot) || \
+			$err "Cannot generate list of boards for building"
+		for x in ${boards}; do
+			handle_coreboot_target "$x"
+		done
+	fi
 
 	[ "$listboards" = "y" ] && return 0
 
@@ -80,7 +90,67 @@ main()
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
 
-handle_target()
+handle_serprog()
+{
+	[ -z "${1+x}" ] && $err "${serprog_usage}"
+	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "$serprog_usage"
+	if [ "${1}" = "rp2040" ]; then
+		serprog_boards_dir=${pico_sdk_dir}/src/boards/include/boards
+		[ -d "$pico_src_dir" ] || x_ ./update trees -f "pico-serprog"
+	elif [ "${1}" = "stm32" ]; then
+		serprog_boards_dir=${stm32_src_dir}/boards
+		[ -d "$stm32_src_dir" ] || x_ ./update trees -f "stm32-vserprog"
+	fi
+	x_ mkdir -p "bin/serprog_${1}"
+
+	if [ $# -gt 1 ] && [ "${2}" = "list" ]; then
+		print_serprog_boards ${serprog_boards_dir}
+	elif [ $# -gt 1 ]; then
+		build_${1}_rom "${2}"
+	else
+		printf "Building all serprog targets\n"
+		list_serprog_boards "${serprog_boards_dir}" | \
+			while read -r board; do
+				build_${1}_rom "${board}"
+			done
+	fi
+}
+
+build_rp2040_rom()
+{
+	board=${1}
+	printf "Building pico-serprog for %s\n" "${board}"
+	x_ cmake -DPICO_BOARD="$board" -DPICO_SDK_PATH="$pico_sdk_dir" \
+	    -B "${pico_src_dir}/build" "${pico_src_dir}"
+	x_ cmake --build "${pico_src_dir}/build"
+	x_ mv ${pico_src_dir}/build/pico_serprog.uf2 \
+	   bin/serprog_rp2040/serprog_${board}.uf2
+	printf "output to bin/serprog_rp2040/serprog_%s.uf2\n" "$board"
+}
+
+build_stm32_rom()
+{
+	board=${1}
+	printf "Building stm32-vserprog for %s\n" "${board}"
+	x_ make -C $stm32_src_dir libopencm3-just-make BOARD=$board
+	x_ make -C ${stm32_src_dir} BOARD=${board}
+	x_ mv ${stm32_src_dir}/stm32-vserprog.hex \
+	   bin/serprog_stm32/serprog_${board}.hex
+	printf "output to bin/serprog_stm32/serprog_%s.hex\n" "$board"
+}
+
+print_serprog_boards()
+{
+	printf "Available boards:\n"
+	list_serprog_boards "${1}"
+}
+
+list_serprog_boards()
+{
+	basename -a -s .h "${1}/"*.h || $err "list_boards $1: can't list boards"
+}
+
+handle_coreboot_target()
 {
 	eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
 	grub_background="background1280x800.png"
