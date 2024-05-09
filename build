@@ -7,7 +7,7 @@
 
 set -u -e
 
-if [ "./${0##*/}" != "${0}" ]; then
+if [ "./${0##*/}" != "${0}" ] || [ ! -f "build" ] || [ -L "build" ]; then
 	printf "You must run this in the lbmk work directory.\n" 1>&2
 	exit 1
 fi
