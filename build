@@ -7,6 +7,11 @@
 
 set -u -e
 
+if [ "./${0##*/}" != "${0}" ]; then
+	printf "You must run this in the lbmk work directory.\n" 1>&2
+	exit 1
+fi
+
 . "include/option.sh"
 
 eval "$(setvars "" option aur_notice)"
