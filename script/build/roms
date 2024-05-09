@@ -172,7 +172,6 @@ print_target_name()
 			break
 		fi
 	done
-	return 0
 }
 
 skip_board()
