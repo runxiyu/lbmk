@@ -1,13 +1,7 @@
-#!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-only
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # SPDX-FileCopyrightText: 2023-2024 Leah Rowe <leah@libreboot.org>
-
-. "include/option.sh"
-. "include/mrc.sh"
-
-export PATH="${PATH}:/sbin"
 
 _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 _7ztest="a"
@@ -16,14 +10,19 @@ e6400_unpack="${PWD}/src/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="${PWD}/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="${PWD}/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="${PWD}/src/uefitool/uefiextract"
+nvmutil="util/nvmutil/nvm"
 
 eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
-    tree mecleaner kbc1126_ec_dump MRC_refcode_cbtree cbfstoolref MRC_refcode_gbe)"
+    tree mecleaner kbc1126_ec_dump MRC_refcode_cbtree MRC_refcode_gbe new_mac \
+    cbfstoolref release nukemode modifygbe rom archive)"
 
-main()
+vendor_download()
 {
+	set +u +e
+	export PATH="${PATH}:/sbin"
+
 	[ $# -gt 0 ] || $err "No argument given"
 	board="${1}"
 	boarddir="${cbcfgsdir}/${board}"
@@ -33,7 +32,7 @@ main()
 	detect_firmware && exit 0
 	scan_config "${_b}" "config/vendor"
 
-	build_dependencies
+	build_dependencies_download
 	download_vendorfiles
 }
 
@@ -48,6 +47,7 @@ detect_firmware()
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
 	. "${boarddir}/target.cfg" 2>/dev/null
+
 	[ -z "$tree" ] && $err "detect_firmware $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"
 	cbfstool="cbutils/$tree/cbfstool"
@@ -62,7 +62,7 @@ detect_firmware()
 	printf "Vendor files not needed for: %s\n" "${board}" 1>&2
 }
 
-build_dependencies()
+build_dependencies_download()
 {
 	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
@@ -169,6 +169,7 @@ extract_intel_me()
 	[ -f "${_me}" ] && return 0
 
 	sdir="$(mktemp -d)"
+	[ -z "$sdir" ] && return 0
 	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
 	(
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
@@ -262,4 +263,216 @@ extract_sch5545ec()
 	    $err "extract_sch5545ec: cannot copy sch5545ec firmware file"
 }
 
-main $@
+vendor_inject()
+{
+	set +u +e
+
+	[ $# -lt 1 ] && $err "No options specified."
+	[ "${1}" = "listboards" ] && eval "items config/coreboot || :; exit 0"
+
+	archive="${1}"
+
+	while getopts n:r:b:m: option; do
+		case "${option}" in
+		n) nukemode="${OPTARG}" ;;
+		r) rom=${OPTARG} ;;
+		b) board=${OPTARG} ;;
+		m) modifygbe=true
+		   new_mac=${OPTARG} ;;
+		*) : ;;
+		esac
+	done
+
+	check_board
+	build_dependencies_inject
+	inject_vendorfiles
+	[ "${nukemode}" = "nuke" ] && return 0
+	printf "Friendly reminder (this is *not* an error message):\n"
+	printf "Please ensure that the files were inserted correctly.\n"
+}
+
+check_board()
+{
+	failcheck="n"
+	check_release "${archive}" || failcheck="y"
+	if [ "${failcheck}" = "y" ]; then
+		[ -f "$rom" ] || $err "check_board \"$rom\": invalid path"
+		[ -z "${rom+x}" ] && $err "check_board: no rom specified"
+		[ -n "${board+x}" ] || board=$(detect_board "${rom}")
+	else
+		release="y"
+		board=$(detect_board "${archive}")
+	fi
+
+	boarddir="${cbcfgsdir}/${board}"
+	[ -d "$boarddir" ] || $err "check_board: board $board missing"
+	[ -f "$boarddir/target.cfg" ] || \
+		$err "check_board $board: target.cfg missing"
+	. "$boarddir/target.cfg" 2>/dev/null
+	[ -z "$tree" ] && $err "check_board $board: tree undefined"; return 0
+}
+
+check_release()
+{
+	[ -f "${archive}" ] || return 1
+	[ "${archive##*.}" = "xz" ] || return 1
+	printf "%s\n" "Release archive ${archive} detected"
+}
+
+# This function tries to determine the board from the filename of the rom.
+# It will only succeed if the filename is not changed from the build/download
+detect_board()
+{
+	path="${1}"
+	filename=$(basename "${path}")
+	case ${filename} in
+	grub_*)
+		board=$(echo "${filename}" | cut -d '_' -f2-3) ;;
+	seabios_withgrub_*)
+		board=$(echo "${filename}" | cut -d '_' -f3-4) ;;
+	*.tar.xz)
+		_stripped_prefix=${filename#*_}
+		board="${_stripped_prefix%.tar.xz}" ;;
+	*)
+		$err "detect_board $filename: could not detect board type"
+	esac
+	printf "%s\n" "${board}"
+}
+
+build_dependencies_inject()
+{
+	cbdir="src/coreboot/$tree"
+	cbfstool="cbutils/$tree/cbfstool"
+	ifdtool="cbutils/$tree/ifdtool"
+	[ -d "${cbdir}" ] || x_ ./update trees -f coreboot $tree
+	if [ ! -f "${cbfstool}" ] || [ ! -f "${ifdtool}" ]; then
+		x_ ./update trees -b coreboot utils $tree
+	fi
+	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
+	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
+}
+
+inject_vendorfiles()
+{
+	[ "${release}" != "y" ] && eval "patch_rom \"$rom\"; return 0"
+	patch_release_roms
+}
+
+patch_release_roms()
+{
+	_tmpdir="tmp/romdir"
+	remkdir "${_tmpdir}"
+	tar -xf "${archive}" -C "${_tmpdir}" || \
+	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"$_tmpdir\""
+
+	for x in "${_tmpdir}"/bin/*/*.rom ; do
+		printf "patching rom: %s\n" "$x"
+		patch_rom "${x}"
+	done
+
+	(
+	cd "${_tmpdir}/bin/"* || \
+	    $err "patch_release_roms: !cd ${_tmpdir}/bin/*"
+
+	# NOTE: For compatibility with older rom releases, defer to sha1
+	[ "${nukemode}" = "nuke" ] || sha512sum --status -c vendorhashes || \
+	    sha1sum --status -c vendorhashes || sha512sum --status -c \
+	    blobhashes || sha1sum --status -c blobhashes || \
+	    $err "patch_release_roms: ROMs did not match expected hashes"
+	) || $err "can't verify vendor hashes"
+
+	[ "${modifygbe}" = "true" ] && \
+		for x in "${_tmpdir}"/bin/*/*.rom ; do
+			modify_gbe "${x}"
+		done
+
+	[ -d bin/release ] || x_ mkdir -p bin/release
+	x_ mv "${_tmpdir}"/bin/* bin/release/
+	x_ rm -Rf "${_tmpdir}"
+
+	printf "Success! Your ROMs are in bin/release\n"
+}
+
+patch_rom()
+{
+	rom="${1}"
+
+	check_defconfig "$boarddir" && $err "patch_rom $boarddir: no configs"
+
+	set -- "${boarddir}/config/"*
+	. "${1}" 2>/dev/null
+
+	[ "$CONFIG_HAVE_MRC" = "y" ] && \
+		inject "mrc.bin" "${CONFIG_MRC_FILE}" "mrc" "0xfffa0000"
+	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && \
+		inject "fallback/refcode" "$CONFIG_REFCODE_BLOB_FILE" "stage"
+	[ "${CONFIG_HAVE_ME_BIN}" = "y" ] && \
+		inject "IFD" "${CONFIG_ME_BIN_PATH}" "me"
+	[ "${CONFIG_KBC1126_FIRMWARE}" = "y" ] && \
+		inject "ecfw1.bin" "$CONFIG_KBC1126_FW1" "raw" \
+		    "${CONFIG_KBC1126_FW1_OFFSET}" && \
+		inject "ecfw2.bin" "$CONFIG_KBC1126_FW2" "raw" \
+		    "${CONFIG_KBC1126_FW2_OFFSET}"
+	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
+		inject "pci${CONFIG_VGA_BIOS_ID}.rom" \
+		    "${CONFIG_VGA_BIOS_FILE}" "optionrom"
+	[ "${CONFIG_INCLUDE_SMSC_SCH5545_EC_FW}" = "y" ] && \
+	    [ -n "${CONFIG_SMSC_SCH5545_EC_FW_FILE}" ] && \
+		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
+	[ "${modifygbe}" = "true" ] && ! [ "${release}" = "y" ] && \
+		inject "IFD" "${CONFIG_GBE_BIN_PATH}" "GbE"
+
+	printf "ROM image successfully patched: %s\n" "${rom}"
+}
+
+inject()
+{
+	[ $# -lt 3 ] && \
+		$err "inject $@, $rom: usage: inject name path type (offset)"
+
+	eval "$(setvars "" cbfsname _dest _t _offset)"
+	cbfsname="${1}"
+	_dest="${2##*../}"
+	_t="${3}"
+	[ $# -gt 3 ] && _offset="-b ${4}" && [ -z "${4}" ] && \
+	    $err "inject $@, $rom: offset passed, but empty (not defined)"
+
+	[ -z "${_dest}" ] && $err "inject $@, ${rom}: empty destination path"
+	[ ! -f "${_dest}" ] && [ "${nukemode}" != "nuke" ] && \
+		$err "inject_${dl_type}: file missing, ${_dest}"
+
+	[ "$nukemode" = "nuke" ] || \
+		printf "Inserting %s/%s in file: %s\n" "$cbfsname" "$_t" "$rom"
+
+	if [ "${_t}" = "GbE" ]; then
+		x_ mkdir -p tmp
+		cp "${_dest}" "tmp/gbe.bin" || \
+		    $err "inject: !cp \"${_dest}\" \"tmp/gbe.bin\""
+		_dest="tmp/gbe.bin"
+		"${nvmutil}" "${_dest}" setmac "${new_mac}" || \
+		    $err "inject ${_dest}: can't change mac address"
+	fi
+	if [ "${cbfsname}" = "IFD" ]; then
+		if [ "${nukemode}" != "nuke" ]; then
+			"$ifdtool" -i ${_t}:${_dest} "$rom" -O "$rom" || \
+			    $err "inject: can't insert $_t ($dest) into $rom"
+		else
+			"$ifdtool" --nuke $_t "$rom" -O "$rom" || \
+			    $err "inject $rom: can't nuke $_t in IFD"
+		fi
+	else
+		if [ "${nukemode}" != "nuke" ]; then
+			if [ "$_t" = "stage" ]; then # broadwell refcode
+				"$cbfstool" "$rom" add-stage -f "$_dest" \
+				    -n "$cbfsname" -t stage -c lzma
+			else
+				"$cbfstool" "$rom" add -f "$_dest" \
+				    -n "$cbfsname" -t $_t $_offset || \
+				    $err "$rom: can't insert $_t file $_dest"
+			fi
+		else
+			"$cbfstool" "$rom" remove -n "$cbfsname" || \
+			    $err "inject $rom: can't remove $cbfsname"
+		fi
+	fi
+}
