@@ -2,8 +2,6 @@
 # SPDX-FileCopyrightText: 2020,2021,2023,2024 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-# This file is only used by update/project/trees
-
 eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree)"
 
 fetch_project_trees()
