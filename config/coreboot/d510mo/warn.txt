@@ -1,1 +1,0 @@
-this board has never been stable, and has not been tested in Libreboot 20240504 so no ROM images included for it in that release

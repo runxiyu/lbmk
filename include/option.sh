@@ -36,13 +36,12 @@ setvars()
 	printf "%s\n" "${_setvars% }"
 }
 eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
-    CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 _nogit \
+    CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 versiondate \
     CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
-    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH tmpdir \
-    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE \
+    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH tmpdir _nogit \
+    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE version \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE _dest board boarddir lbmk_release \
-    CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE lbmk_status threads \
-    version versiondate projectname)"
+    CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE threads projectname)"
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
@@ -50,13 +49,6 @@ set | grep LBMK_RELEASE 1>/dev/null 2>/dev/null || lbmk_release="n" || :
 [ -z "$lbmk_release" ] && lbmk_release="$LBMK_RELEASE"
 [ "$lbmk_release" = "n" ] || [ "$lbmk_release" = "y" ] || lbmk_release="n"
 export LBMK_RELEASE="$lbmk_release"
-
-# if set to n via export, status checks will be skipped during
-# all builds, and all targets will be built regardless of status.
-# this replicates the old behaviour of lbmk, prior to the checks.
-set | grep LBMK_STATUS 1>/dev/null 2>/dev/null && lbmk_status="$LBMK_STATUS"
-[ "$lbmk_status" = "y" ] || [ "$lbmk_status" = "n" ] || lbmk_status="y"
-export LBMK_STATUS="$lbmk_status"
 
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
 if [ "${tmpdir_was_set}" = "y" ]; then

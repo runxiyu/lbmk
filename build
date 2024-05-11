@@ -126,7 +126,6 @@ usage()
 mkrelease()
 {
 	export LBMK_RELEASE="y"
-	export LBMK_STATUS="n"
 
 	vdir="release"
 	while getopts d:m: option; do

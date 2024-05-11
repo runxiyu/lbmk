@@ -1,1 +1,0 @@
-Incomplete UEFI implementation but should boot most distros fine. Debian Bookworm installed and the first 1GB or so of the partition got corrupted. Leave the first 2GB or so unpartitioned, when installing any distro.

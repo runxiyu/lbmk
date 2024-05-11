@@ -24,31 +24,23 @@ stm32_src_dir="src/stm32-vserprog"
 pv="payload_grub payload_grub_withseabios payload_seabios payload_memtest t"
 pv="${pv} payload_seabios_withgrub payload_seabios_grubonly payload_uboot memtest_bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
-v="${v} grub_timeout ubdir board grub_scan_disk uboot_config status"
+v="${v} grub_timeout ubdir board grub_scan_disk uboot_config"
 eval "$(setvars "n" ${pv} serprog)"
 eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets \
-    skipped listboards list_type serprog_boards_dir)"
+    serprog_boards_dir)"
 
 main()
 {
 	check_project
 
 	while [ $# -gt 0 ]; do
-		if [ "$listboards" = "y" ]; then
-			list_type="$list_type $1"
-			list_type="${list_type# }"
-			shift 1; continue
-		fi
-
 		case ${1} in
 		help)
 			usage
 			exit 0 ;;
 		list)
-			boards=$(items config/coreboot) || \
-			    $err "Cannot generate list of boards for list"
-			listboards="y"
-			shift 1; continue ;;
+			x_ items config/coreboot
+			return 0 ;;
 		serprog)
 			serprog="y"
 			shift 1; break ;;
@@ -72,14 +64,6 @@ main()
 		for x in ${boards}; do
 			handle_coreboot_target "$x"
 		done
-	fi
-
-	[ "$listboards" = "y" ] && return 0
-
-	if [ -n "$skipped" ]; then	
-		printf "\nThese targets were skipped:\n"
-		eval "printf \"${skipped}\""
-		printf "^^ These targets were skipped.\n\n"
 	fi
 
 	[ -z "${targets}" ] && $err "No ROM images were compiled"
@@ -155,18 +139,11 @@ handle_coreboot_target()
 	eval "$(setvars "n" ${pv}) $(setvars "" ${v})"
 	grub_background="background1280x800.png"
 	board="$1"
-	status="unknown"
 
 	configure_target
-	[ "$board" = "$tree" ] && \
-		return 0
-
-	print_target_name && return 0
-
-	# exclude certain targets from the release
-	if skip_board; then
-		printf "Skip target %s(%s)\n" "$board" "$status"
-		skipped="* $board($status)\n$skipped"
+	[ "$board" = "$tree" ] && return 0
+	if [ "$lbmk_release" = "y" ] && [ "$release" = "n" ]; then
+		printf "Target '%s' disabled for release.\n" "$board"
 		return 0
 	fi
 
@@ -223,57 +200,6 @@ configure_target()
 	    payload_seabios_withgrub payload_uboot payload_grub_withseabios \
 	    payload_seabios_grubonly)"
 	eval "payload_${_payload}=y"
-}
-
-print_target_name()
-{
-	[ "$listboards" = "y" ] || return 1
-
-	[ -z "$list_type" ] && printf "%s\n" "$board"
-
-	for _list_type in $list_type; do
-		if [ "${_list_type#_}" = "$_list_type" ]; then
-			[ "$status" != "$_list_type" ] && \
-				continue
-			printf "%s\n" "$board"
-			break
-		elif [ "$status" != "${_list_type#_}" ]; then
-			printf "%s\n" "$board"
-			break
-		fi
-	done
-}
-
-skip_board()
-{
-	if [ "$listboards" != "y" ] && [ "$status" != "stable" ]; then
-		printf "\n\n\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		printf "\t__WARNING: %s has status '%s'__\n" \
-		    "$board" "$status"
-		printf "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"
-	fi
-
-	if [ -f "$targetdir/warn.txt" ] && [ "$listboards" != "y" ]; then
-		printf "Regarding target '%s' (status '%s'):\n\n" \
-		    "$board" "$status"
-		cat -u "$targetdir/warn.txt" || \
-		    $err "!cat $targetdir/warn.txt"
-	fi
-
-	[ "$lbmk_release" = "y" ] && [ "$release" = "n" ] && return 0
-	[ "$lbmk_release" = "y" ] && [ "$status" != "broken" ] && return 1
-	[ "$lbmk_status" = "y" ] || return 1
-	[ "$status" = "stable" ] && return 1
-
-	printf "\nTo disable this dialog when building, do:\n"
-	printf "export LBMK_STATUS=n\n\n"
-	while true; do
-		printf "Board %s has status '%s'. Skip? [y/n] " \
-		    "$board" "$status"
-		read -r skip
-		[ "$skip" = "y" ] && return 0
-		[ "$skip" = "n" ] && return 1; continue
-	done
 }
 
 build_payloads()
