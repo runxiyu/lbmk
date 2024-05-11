@@ -8,8 +8,6 @@ eval "$(setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL)"
 
 extract_ref()
 {
-	# refcode needed on broadwell, but not needed on haswell
-
 	# we check mrc twice, because each check only verifies one file,
 	# but refcode is downloaded alongside mrc. in cases where lbmk
 	# erred, downloading only mrc, we must ensure downloading refcode

@@ -96,10 +96,6 @@ download_vendorfiles()
 		    "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 	[ -z "${CONFIG_HAVE_MRC}" ] && return 0
 	fetch "mrc" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" "$CONFIG_MRC_FILE"
-
-	# in case only mrc downloaded before, in a pair of mrc/refcode:
-	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && fetch "ref" "$MRC_url" \
-	    "$MRC_url_bkup" "$MRC_hash" "$CONFIG_REFCODE_BLOB_FILE"; return 0
 }
 
 fetch()
