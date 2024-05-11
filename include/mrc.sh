@@ -6,18 +6,6 @@
 
 eval "$(setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL)"
 
-extract_ref()
-{
-	# we check mrc twice, because each check only verifies one file,
-	# but refcode is downloaded alongside mrc. in cases where lbmk
-	# erred, downloading only mrc, we must ensure downloading refcode
-	[ -n "$CONFIG_MRC_FILE" ] || \
-		$err "extract_ref $board: CONFIG_MRC_FILE not defined"
-
-	# the extract_mrc function actually downloads the refcode
-	fetch "mrc" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" "$CONFIG_MRC_FILE"
-}
-
 extract_mrc()
 {
 	[ -z "$MRC_board" ] && $err "extract_mrc $MRC_hash: MRC_board not set"
