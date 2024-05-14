@@ -146,18 +146,12 @@ mkrelease()
 	srcdir="${vdir}/${src_dirname}"
 
 	[ -e "${vdir}" ] && $err "already exists: \"${vdir}\""
+	mkdir -p "${vdir}" || $err "mkvdir: !mkdir -p \"${vdir}\""
+	git clone . "${srcdir}" || $err "mkdir: !gitclone \"${srcdir}\""
 
-	mkvdir
 	build_release
 
 	printf "\n\nDONE! Check release files under %s\n" "${vdir}"
-}
-
-mkvdir()
-{
-	mkdir -p "${vdir}" || $err "mkvdir: !mkdir -p \"${vdir}\""
-	git clone . "${srcdir}" || $err "mkdir: !gitclone \"${srcdir}\""
-	insert_version_files "$srcdir" || $err "mkvdir $srcdir: versionfile"
 }
 
 build_release()
