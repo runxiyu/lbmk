@@ -66,11 +66,16 @@ main()
 		done
 	fi
 
-	[ -z "${targets}" ] && $err "No ROM images were compiled"
-	printf "\nROM images available in these directories:\n"
-	eval "printf \"${targets}\""
-	printf "^^ ROM images available in these directories.\n\n"
+	bstr="directories"
+	[ "$lbmk_release" = "y" ] && bstr="tarballs"
 
+	[ -z "${targets}" ] && $err "No ROM images were compiled"
+	printf "\nROM images available in these %s:\n" "$bstr"
+	eval "printf \"${targets}\""
+	printf "^^ ROM images available in these %s.\n\n" "$bstr"
+
+	[ "$lbmk_release" = "y" ] && \
+		printf "Always run the inject command on release images!\n"
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
 
@@ -89,6 +94,7 @@ handle_serprog()
 
 	if [ $# -gt 1 ] && [ "${2}" = "list" ]; then
 		print_serprog_boards ${serprog_boards_dir}
+		return 0
 	elif [ $# -gt 1 ]; then
 		build_${1}_rom "${2}"
 	else
@@ -98,6 +104,8 @@ handle_serprog()
 				build_${1}_rom "${board}"
 			done
 	fi
+
+	[ "$lbmk_release" = "y" ] && mktar_release "bin/serprog_$1"; return 0
 }
 
 build_rp2040_rom()
@@ -151,7 +159,9 @@ handle_coreboot_target()
 	build_target_mainboard
 
 	[ -d "bin/${board}" ] || return 0
-	targets="* bin/${board}\n${targets}"
+	[ "$lbmk_release" = "y" ] || targets="* bin/${board}\n${targets}"
+	[ "$lbmk_release" = "y" ] && targets="* bin/$board.tar.xz\n$targets"
+	[ "$lbmk_release" = "y" ] && mktar_release "bin/$board"; return 0
 }
 
 configure_target()
@@ -264,7 +274,7 @@ build_uboot_payload()
 
 build_target_mainboard()
 {
-	rm -f "${romdir}/"* || $err "!prepare, rm files, ${romdir}"
+	x_ rm -Rf "${romdir}"
 
 	for x in "normal" "vgarom" "libgfxinit"; do
 		initmode="${x}"
@@ -460,6 +470,13 @@ moverom()
 
 	x_ mkdir -p "${2%/*}"
 	x_ cp "$1" "$2"
+	[ "$lbmk_release" = "y" ] || return 0
+
+	(
+	cd "${2%/*}" || $err "moverom, !cd \"${2%/*}\""
+	sha512sum ./"${2##*/}" >> vendorhashes || $err "!$2 vendorhashes"
+	) || $err "Cannot create checksum for '$2'"
+	x_ ./vendor inject -r "${2}" -b "$board" -n nuke
 }
 
 usage()

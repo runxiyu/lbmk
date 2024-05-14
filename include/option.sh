@@ -171,3 +171,41 @@ check_project()
 	done
 	export LOCALVERSION="-${projectname}-${version%%-*}"
 }
+
+mktar_release()
+{
+	x_ insert_version_files "$1"
+	mktarball "$1" "${1}.tar.xz"
+	x_ rm -Rf "$1"
+}
+
+mktarball()
+{
+	# preserve timestamps for reproducible tarballs
+	tar_implementation=$(tar --version | head -n1) || :
+
+	[ "${2%/*}" = "${2}" ] || \
+		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
+	printf "\nCreating archive: %s\n\n" "$2"
+	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
+		tar --sort=name --owner=root:0 --group=root:0 \
+		    --mtime="UTC 2024-05-04" -c "$1" | xz -T$threads -9e \
+		    > "$2" || $err "mktarball 1, ${1}"
+	else
+		# TODO: reproducible tarballs on non-GNU systems
+		tar -c "$1" | xz -T$threads -9e > "$2" || \
+		    $err "mktarball 2, $1"
+	fi
+	(
+	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
+	sha512sum "${2##*/}" > "${2##*/}.sha512" || \
+	    $err "!sha512sum \"${2##*/}\" > \"${2##*/}.sha512\""
+	) || $err "failed to create tarball checksum"
+}
+
+insert_version_files()
+{
+	printf "%s\n" "${version}" > "${1}/version" || return 1
+	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
+	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
+}

@@ -223,128 +223,13 @@ mkrom_images()
 	./build roms serprog rp2040 || $err "${_xm}: rp2040"
 	./build roms serprog stm32 || $err "${_xm}: stm32"
 
-	for rombuild in bin/*; do
-		[ -d "${rombuild}" ] || continue
-		handle_rom_archive "${rombuild}"
+	for rombuild in bin/*.tar.xz; do
+		[ -f "${rombuild}" ] || continue
+		tarball="release/$version/roms/${relname}_${rombuild##*/}"
+		mv "$rombuild" "$tarball" || $err "Cannot create $tarball"
 	done
 
 	mv "release/${version}/roms/" ../roms || $err "${_xm}: copy roms/"
-}
-
-handle_rom_archive()
-{
-	builddir="${1}"
-	romdir="tmp/romdir"
-	rm -Rf "${romdir}" || $err "!rm romdir, handle_rom_archive"
-	target="${builddir##*/}"
-
-	if [ ! -f "config/coreboot/${target}/target.cfg" ]; then
-		# No config, just make a tarball
-		tarball="release/${version}/roms/${relname}_${target}.tar.xz"
-		insert_copying_files "${builddir}" || \
-		    $err "!insert copy, handle, ${builddir}"
-		mktarball "${builddir}" "${tarball}"
-		return 0
-	fi
-
-	romdir="${romdir}/bin/${target}"
-	mkdir -p "${romdir}" || $err "!mkdir -p romdir, handle_rom_archive"
-	cp "$builddir/"* "$romdir" || $err "!cp romdir, handle_rom_archive"
-
-	nukerom
-
-	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
-	    "${version}" "${projectname}" "${version}" "${target##*/}"
-	insert_version_files "${romdir}" || \
-	    $err "mkrom_tarball ${romdir}: versionfile"
-
-	insert_copying_files "$romdir" || $err "!insert copy, handle 2, $romdir"
-	mkrom_tarball
-}
-
-nukerom()
-{
-	. "config/coreboot/${target}/target.cfg"
-
-	# Hash the images before removing vendor files
-	# which "./vendor inject" uses for verification
-	rm -f "${romdir}/vendorhashes" || $err "!rm ${romdir}/vendorhashes"
-	touch "${romdir}/vendorhashes" || $err "!touch ${romdir}/vendorhashes"
-	(
-	cd "${romdir}" || $err "!cd romdir ${romdir}, nukerom"
-	sha512sum ./*.rom >> vendorhashes || \
-	    $err "!create vendorhashes, nukerom"
-	) || $err "can't create vendor hashes"
-
-	for romfile in "${romdir}"/*.rom; do
-		[ -f "${romfile}" ] || continue
-		./vendor inject -r "$romfile" -b "$target" -n nuke || \
-		    $err "!vendor inject (nuke) ${romfile}, nukerom"
-	done
-}
-
-insert_copying_files()
-{
-	remkdir "${1}/licenses"
-	l="${1}/licenses"
-	# copy licenses to rom image archive, for completion
-	cp "src/grub/COPYING" "${l}/COPYING.grub" || return 1
-	cp "src/coreboot/default/COPYING" "${l}/COPYING.coreboot" || return 1
-	cp -R "src/coreboot/default/LICENSES" "${l}/LICENSES.coreboot" || \
-	    return 1
-	cp "src/seabios/default/COPYING" "${l}/COPYING.coreboot" || return 1
-	cp "src/seabios/default/COPYING.LESSER" "$l/COPYING.LESSER.seabios" \
-	    || return 1
-	cp -R "src/u-boot/default/Licenses" "${l}/COPYING.u-boot" || return 1
-	printf "Multiple licenses. Check corresponding %s source archive\n" \
-	    "${projectname}" > "${1}/COPYING" || return 1
-	rm -f src/u-boot/*/test/lib/strlcat.c || return 1
-}
-
-mkrom_tarball()
-{
-	archivename="${relname}_${target##*/}"
-	f="release/${version}/roms/${archivename}"
-	mkdir -p "${f%/*}" || $err "mkrom_tarball: !mkdir -p ${f%/*}"
-	(
-	cd "${romdir%"/bin/$target"}" || $err "!cd ${romdir%"/bin/$target"}"
-	mktarball "bin/${target}" "${archivename}.tar.xz"
-	) || $err "can't create rom tarball"
-	mv "${romdir%"/bin/${target}"}/${archivename}.tar.xz"* "${f%/*}" || \
-	    $err "mktar ${f%/*}/${romdir%"/bin/$target"}/$archivename.tar.xz"
-
-	printf "Created ROM archive: %s" "${f%/*}/${archivename}.tar.xz"
-}
-
-insert_version_files()
-{
-	printf "%s\n" "${version}" > "${1}/version" || return 1
-	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
-	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
-}
-
-mktarball()
-{
-	# preserve timestamps for reproducible tarballs
-	tar_implementation=$(tar --version | head -n1) || :
-
-	[ "${2%/*}" = "${2}" ] || \
-		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
-	printf "\nCreating archive: %s\n\n" "$2"
-	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
-		tar --sort=name --owner=root:0 --group=root:0 \
-		    --mtime="UTC 2024-05-04" -c "$1" | xz -T$threads -9e \
-		    > "$2" || $err "mktarball 1, ${1}"
-	else
-		# TODO: reproducible tarballs on non-GNU systems
-		tar -c "$1" | xz -T$threads -9e > "$2" || \
-		    $err "mktarball 2, $1"
-	fi
-	(
-	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
-	sha512sum "${2##*/}" > "${2##*/}.sha512" || \
-	    $err "!sha512sum \"${2##*/}\" > \"${2##*/}.sha512\""
-	) || $err "failed to create tarball checksum"
 }
 
 mkversion()
