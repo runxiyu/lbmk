@@ -174,7 +174,10 @@ check_project()
 
 mktar_release()
 {
-	x_ insert_version_files "$1"
+	printf "%s\n" "${version}" > "${1}/version" || return 1
+	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
+	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
+
 	mktarball "$1" "${1}.tar.xz"
 	x_ rm -Rf "$1"
 }
@@ -206,11 +209,4 @@ mksha512sum()
 	sha512sum ./"${1##*/}" >> "${2}" || \
 	    $err "!sha512sum \"${1}\" > \"${2}\""
 	) || $err "failed to create tarball checksum"
-}
-
-insert_version_files()
-{
-	printf "%s\n" "${version}" > "${1}/version" || return 1
-	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
-	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
 }
