@@ -196,10 +196,15 @@ mktarball()
 		tar -c "$1" | xz -T$threads -9e > "$2" || \
 		    $err "mktarball 2, $1"
 	fi
+	mksha512sum "${2}" "${2##*/}.sha512"
+}
+
+mksha512sum()
+{
 	(
-	[ "${2%/*}" != "${2}" ] && x_ cd "${2%/*}"
-	sha512sum "${2##*/}" > "${2##*/}.sha512" || \
-	    $err "!sha512sum \"${2##*/}\" > \"${2##*/}.sha512\""
+	[ "${1%/*}" != "${1}" ] && x_ cd "${1%/*}"
+	sha512sum ./"${1##*/}" >> "${2}" || \
+	    $err "!sha512sum \"${1}\" > \"${2}\""
 	) || $err "failed to create tarball checksum"
 }
 

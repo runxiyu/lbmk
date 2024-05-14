@@ -472,10 +472,7 @@ moverom()
 	x_ cp "$1" "$2"
 	[ "$lbmk_release" = "y" ] || return 0
 
-	(
-	cd "${2%/*}" || $err "moverom, !cd \"${2%/*}\""
-	sha512sum ./"${2##*/}" >> vendorhashes || $err "!$2 vendorhashes"
-	) || $err "Cannot create checksum for '$2'"
+	mksha512sum "${2}" "vendorhashes"
 	x_ ./vendor inject -r "${2}" -b "$board" -n nuke
 }
 
