@@ -184,21 +184,11 @@ mktar_release()
 
 mktarball()
 {
-	# preserve timestamps for reproducible tarballs
-	tar_implementation=$(tar --version | head -n1) || :
-
 	[ "${2%/*}" = "${2}" ] || \
 		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
 	printf "\nCreating archive: %s\n\n" "$2"
-	if [ "${tar_implementation% *}" = "tar (GNU tar)" ]; then
-		tar --sort=name --owner=root:0 --group=root:0 \
-		    --mtime="UTC 2024-05-04" -c "$1" | xz -T$threads -9e \
-		    > "$2" || $err "mktarball 1, ${1}"
-	else
-		# TODO: reproducible tarballs on non-GNU systems
-		tar -c "$1" | xz -T$threads -9e > "$2" || \
-		    $err "mktarball 2, $1"
-	fi
+	tar -c "$1" | xz -T$threads -9e > "$2" || \
+	    $err "mktarball 2, $1"
 	mksha512sum "${2}" "${2##*/}.sha512"
 }
 
