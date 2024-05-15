@@ -175,7 +175,10 @@ build_release()
 
 	(
 	cd "${srcdir}" || $err "${_xm}: 2 !cd \"${srcdir}\""
-	mkrom_images
+	./build roms all || $err "${_xm}: roms-all"
+	./build roms serprog rp2040 || $err "${_xm}: rp2040"
+	./build roms serprog stm32 || $err "${_xm}: stm32"
+	x_ mv bin ../roms
 	) || $err "can't build rom images"
 
 	rm -Rf "${srcdir}" || $err "!rm -Rf ${srcdir}"
@@ -200,14 +203,6 @@ fetch_trees()
 	find . -name ".git" -exec rm -Rf {} + || $err "$_xm: rm .git"
 	find . -name ".gitmodules" -exec rm -Rf {} + || $err "$_xm: rm .gitmod"
 	x_ rm -Rf tmp .git
-}
-
-mkrom_images()
-{
-	./build roms all || $err "${_xm}: roms-all"
-	./build roms serprog rp2040 || $err "${_xm}: rp2040"
-	./build roms serprog stm32 || $err "${_xm}: stm32"
-	x_ mv bin ../roms
 }
 
 mkversion()
