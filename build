@@ -16,8 +16,7 @@ fi
 . "include/vendor.sh"
 . "include/mrc.sh"
 
-eval "$(setvars "" script_path aur_notice vdir relname src_dirname srcdir \
-    _xm target romdir mode)"
+eval "$(setvars "" script_path aur_notice vdir src_dirname srcdir _xm mode)"
 err="fail"
 
 linkpath="${0}"
@@ -140,7 +139,6 @@ mkrelease()
 	check_project
 
 	vdir="${vdir}/${version}"
-	relname="${projectname}-${version}"
 	[ "${mode}" = "u-boot" ] && relname="u-boot-for-${relname}"
 	src_dirname="${relname}_src"
 	srcdir="${vdir}/${src_dirname}"
@@ -216,14 +214,7 @@ mkrom_images()
 	./build roms all || $err "${_xm}: roms-all"
 	./build roms serprog rp2040 || $err "${_xm}: rp2040"
 	./build roms serprog stm32 || $err "${_xm}: stm32"
-
-	for rombuild in bin/*.tar.xz; do
-		[ -f "${rombuild}" ] || continue
-		tarball="release/$version/roms/${relname}_${rombuild##*/}"
-		mv "$rombuild" "$tarball" || $err "Cannot create $tarball"
-	done
-
-	mv "release/${version}/roms/" ../roms || $err "${_xm}: copy roms/"
+	x_ mv bin ../roms
 }
 
 mkversion()

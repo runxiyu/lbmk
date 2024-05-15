@@ -41,7 +41,8 @@ eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH tmpdir _nogit \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE version \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE _dest board boarddir lbmk_release \
-    CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE threads projectname)"
+    CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE threads projectname \
+    relname)"
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
@@ -169,6 +170,8 @@ check_project()
 		eval "[ -n \"\$$p\" ] || $err \"$p unset\""
 		eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
 	done
+
+	relname="${projectname}-${version}"
 	export LOCALVERSION="-${projectname}-${version%%-*}"
 }
 
@@ -178,7 +181,7 @@ mktar_release()
 	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
 	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
 
-	mktarball "$1" "${1}.tar.xz"
+	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 	x_ rm -Rf "$1"
 }
 
