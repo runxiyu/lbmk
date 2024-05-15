@@ -44,7 +44,7 @@ initcmd()
 	case "${1}" in
 	help) usage ${0} ;;
 	list) items "script" ;;
-	version) mkversion ;;
+	version) printf "%s\n" "$relname" ;;
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
@@ -101,7 +101,7 @@ usage()
 {
 	progname=${0}
 	cat <<- EOF
-	$(mkversion)
+	$relname
 
 	USAGE:	${progname} <OPTION>
 
@@ -204,12 +204,6 @@ fetch_trees()
 	find . -name ".git" -exec rm -Rf {} + || $err "$_xm: rm .git"
 	find . -name ".gitmodules" -exec rm -Rf {} + || $err "$_xm: rm .gitmod"
 	x_ rm -Rf tmp .git
-}
-
-mkversion()
-{
-	printf "revision: %s %s\n" "$projectname" "$version"
-	printf "revision date: %s\n" "$(date -Rud @${versiondate})"
 }
 
 lbmk_exit()
