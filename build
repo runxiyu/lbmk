@@ -78,7 +78,7 @@ git_init()
 {
 	[ -L ".git" ] && $err "Reference .git is a symlink"
 	[ -e ".git" ] && return 0
-	eval "$(setvars "$(date -Rd @${versiondate})" cdate _nogit)"
+	eval "$(setvars "$(date -Rud @${versiondate})" cdate _nogit)"
 
 	git init || $err "${PWD}: cannot initialise Git repository"
 	git add -A . || $err "${PWD}: cannot add files to Git repository"
