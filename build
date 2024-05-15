@@ -185,10 +185,8 @@ fetch_trees()
 	done
 
 	for x in config/*/build.list; do
-		[ -f "${x}" ] || continue
-		xp="${x#*/}"; xp="${xp%/*}"
-		[ -L "${xp}" ] || rm -Rf "src/${xp}/${xp}" || \
-		    $err "!rm -Rf \"src/${xp}/${xp}\""
+		[ -f "$x" ] && xp="${x#*/}" && xp="${xp%/*}"
+		[ ! -f "$x" ] || [ -L "$xp" ] || x_ rm -Rf "src/$xp/$xp"
 	done
 
 	find . -name ".git" -exec rm -Rf {} + || $err "$_xm: rm .git"
