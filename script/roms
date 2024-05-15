@@ -160,9 +160,10 @@ handle_coreboot_target()
 
 	[ -d "bin/${board}" ] || return 0
 	[ "$lbmk_release" = "y" ] || targets="* bin/${board}\n${targets}"
-	[ "$lbmk_release" = "y" ] && \
-		targets="* bin/${relname}_$board.tar.xz\n$targets"
-	[ "$lbmk_release" = "y" ] && mktar_release "bin/$board"; return 0
+	[ "$lbmk_release" = "y" ] || return 0
+
+	targets="* bin/${relname}_$board.tar.xz\n$targets"
+	mktar_release "bin/$board"
 }
 
 configure_target()
