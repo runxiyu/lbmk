@@ -25,7 +25,7 @@ linkname="${linkpath##*/}"
 main()
 {
 	x_ id -u 1>/dev/null 2>/dev/null
-	[ $# -lt 1 ] && $err "Too few arguments. Try: ${0} help"
+	[ $# -lt 1 ] && $err "Check $projectname documentation for help."
 
 	[ "$1" = "dependencies" ] && x_ install_packages $@ && lbmk_exit 0
 
@@ -47,8 +47,6 @@ initcmd()
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
 	case "${1}" in
-	help) usage ${0} ;;
-	list) items "script" ;;
 	version) printf "%s\n" "$relname" ;;
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
@@ -98,33 +96,8 @@ git_init()
 
 excmd()
 {
-	[ -f "${script_path}" ] || $err "Bad command. Run: ${linkpath} help"
+	[ -f "${script_path}" ] || $err "Bad command. Check $projectname docs."
 	shift 1; "$script_path" $@ || $err "excmd: ${script_path} ${@}"
-}
-
-usage()
-{
-	progname=${0}
-	cat <<- EOF
-	$relname
-
-	USAGE:	${progname} <OPTION>
-
-	possible values for 'OPTION':
-	$(items "script")
-
-	Special commands (consult $projectname documentation):
-	./vendor inject
-	./vendor download
-	./update release
-	./build dependencies distroname
-	(replace distroname with a filename from config/dependencies/)
-
-	To know what ${projectname} version you're on, type:
-	${progname} version
-
-	Refer to ${projectname} documentation for more info.
-	EOF
 }
 
 mkrelease()

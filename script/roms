@@ -10,7 +10,6 @@ set -u -e
 
 . "include/option.sh"
 
-serprog_usage="usage: ./build roms serprog <rp2040|stm32> [board]"
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 grub_background="background1280x800.png"
 grubelf="elf/grub/grub.elf"
@@ -33,9 +32,6 @@ main()
 {
 	while [ $# -gt 0 ]; do
 		case ${1} in
-		help)
-			usage
-			exit 0 ;;
 		list)
 			x_ items config/coreboot
 			return 0 ;;
@@ -79,8 +75,8 @@ main()
 
 handle_serprog()
 {
-	[ -z "${1+x}" ] && $err "${serprog_usage}"
-	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "$serprog_usage"
+	[ -z "${1+x}" ] && $err "bad command. Check $projectname docs."
+	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "bad command"
 	if [ "${1}" = "rp2040" ]; then
 		serprog_boards_dir=${pico_sdk_dir}/src/boards/include/boards
 		[ -d "$pico_src_dir" ] || x_ ./update trees -f "pico-serprog"
@@ -474,49 +470,6 @@ moverom()
 
 	mksha512sum "${2}" "vendorhashes"
 	x_ ./vendor inject -r "${2}" -b "$board" -n nuke
-}
-
-usage()
-{
-	cat <<- EOF
-	USAGE:	./build roms targetname
-	To build *all* boards, do this: ./build roms all
-	To list *all* boards, do this: ./build roms list
-	
-	Optional Flags:
-	-d: displaymode
-	-p: payload
-	-k: keyboard layout
-
-	Example commands:
-
-		./build roms x60
-		./build roms x200_8mb x60
-		./build roms x60 -p grub -d corebootfb -k usqwerty
-
-	to see possible values for 'target':
-
-		./build roms list
-
-	Can also build serprog images:
-	${serprog_usage}		
-
-	to see targets of only a given status (stable, unstable,
-	broken, untested and unknown), try e.g.
-
-		./build roms list stable
-		./build roms list unstable untested
-		./build roms list unknown
-		./build roms list broken
-		./build roms list broken stable
-
-	the value is set in target.cfg for each board. if status
-	is unitialised, it defaults to "unknown". only stable/unstable
-	targets are permitted in releases; broken, untested and
-	unknown are not allowed, but are accessible via normal building
-
-	Refer to the ${projectname} documentation for more information.
-	EOF
 }
 
 main $@
