@@ -31,8 +31,6 @@ eval "$(setvars "" ${v} boards _displaymode _payload _keyboard all targets \
 
 main()
 {
-	check_project
-
 	while [ $# -gt 0 ]; do
 		case ${1} in
 		help)

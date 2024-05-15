@@ -70,6 +70,26 @@ expr "X$threads" : "X-\{0,1\}[0123456789][0123456789]*$" \
     1>/dev/null 2>/dev/null || threads=1 # user specified a non-integer
 export LBMK_THREADS="$threads"
 
+x_() {
+	[ $# -lt 1 ] || ${@} || $err "Unhandled non-zero exit: $@"; return 0
+}
+
+read -r projectname < projectname || :
+[ ! -f version ] || read -r version < version || :
+version_="${version}"
+[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
+    version="git-$(git rev-parse HEAD 2>&1)" || version="${version_}"
+[ ! -f versiondate ] || read -r versiondate < versiondate || :
+versiondate_="${versiondate}"
+[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
+    --pretty='%ct' HEAD)" || versiondate="${versiondate_}"
+for p in projectname version versiondate; do
+	eval "[ -n \"\$$p\" ] || $err \"$p unset\""
+	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
+done
+relname="${projectname}-${version}"
+export LOCALVERSION="-${projectname}-${version%%-*}"
+
 items()
 {
 	rval=1
@@ -132,10 +152,6 @@ remkdir()
 	mkdir -p "${1}" || $err "remkdir: !mkdir -p \"${1}\""
 }
 
-x_() {
-	[ $# -lt 1 ] || ${@} || $err "Unhandled non-zero exit: $@"; return 0
-}
-
 check_git()
 {
 	which git 1>/dev/null 2>/dev/null || \
@@ -150,29 +166,6 @@ git_err()
 {
 	printf "You need to set git name/email, like so:\n%s\n\n" "$1" 1>&2
 	$err "Git name/email not configured"
-}
-
-check_project()
-{
-	read -r projectname < projectname || :
-
-	[ ! -f version ] || read -r version < version || :
-	version_="${version}"
-	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
-	    version="git-$(git rev-parse HEAD 2>&1)" || version="${version_}"
-
-	[ ! -f versiondate ] || read -r versiondate < versiondate || :
-	versiondate_="${versiondate}"
-	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
-	    --pretty='%ct' HEAD)" || versiondate="${versiondate_}"
-
-	for p in projectname version versiondate; do
-		eval "[ -n \"\$$p\" ] || $err \"$p unset\""
-		eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
-	done
-
-	relname="${projectname}-${version}"
-	export LOCALVERSION="-${projectname}-${version%%-*}"
 }
 
 mktar_release()

@@ -29,7 +29,7 @@ main()
 
 	[ "$1" = "dependencies" ] && x_ install_packages $@ && lbmk_exit 0
 
-	for cmd in initcmd check_git check_project git_init excmd; do
+	for cmd in initcmd check_git git_init excmd; do
 		eval "${cmd} \$@"
 	done
 	lbmk_exit 0
@@ -38,8 +38,6 @@ main()
 initcmd()
 {
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
-
-	check_project
 
 	case "${1}" in
 	help) usage ${0} ;;
@@ -135,8 +133,6 @@ mkrelease()
 		*) $err "Invalid option" ;;
 		esac
 	done
-
-	check_project
 
 	vdir="${vdir}/${version}"
 	[ "${mode}" = "u-boot" ] && relname="u-boot-for-${relname}"

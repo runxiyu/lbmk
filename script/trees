@@ -37,7 +37,6 @@ main()
 	cfgsdir="config/${project}"
 
 	remkdir "${tmpgit%/*}"
-	check_project
 
 	_cmd="build_projects"
 	[ -f "config/${project}/build.list" ] && _cmd="build_targets"
