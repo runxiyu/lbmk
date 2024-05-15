@@ -29,7 +29,14 @@ main()
 
 	[ "$1" = "dependencies" ] && x_ install_packages $@ && lbmk_exit 0
 
-	for cmd in initcmd check_git git_init excmd; do
+	which git 1>/dev/null 2>/dev/null || \
+	    git_err "git not installed. please install git-scm."
+	git config --global user.name 1>/dev/null 2>/dev/null || \
+	    git_err "git config --global user.name \"John Doe\""
+	git config --global user.email 1>/dev/null 2>/dev/null || \
+	    git_err "git config --global user.email \"john.doe@example.com\""
+
+	for cmd in initcmd git_init excmd; do
 		eval "${cmd} \$@"
 	done
 	lbmk_exit 0

@@ -152,16 +152,6 @@ remkdir()
 	mkdir -p "${1}" || $err "remkdir: !mkdir -p \"${1}\""
 }
 
-check_git()
-{
-	which git 1>/dev/null 2>/dev/null || \
-	    git_err "git not installed. please install git-scm."
-	git config --global user.name 1>/dev/null 2>/dev/null || \
-	    git_err "git config --global user.name \"John Doe\""
-	git config --global user.email 1>/dev/null 2>/dev/null || \
-	    git_err "git config --global user.email \"john.doe@example.com\""
-}
-
 git_err()
 {
 	printf "You need to set git name/email, like so:\n%s\n\n" "$1" 1>&2
