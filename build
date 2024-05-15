@@ -166,16 +166,9 @@ build_release()
 	    $err "build_release $srcdir: couldn't generate changelog"
 
 	(
-	if [ "${mode}" = "u-boot" ]; then
-		cd "${srcdir}/src/" || $err "${_xm}: mktarball \"${srcdir}\""
-		mktarball u-boot "../../${srcdir##*/}.tar.xz" || \
-		    $err "$_xm: mksrc"
-		# make a src archive containing only u-boot
-	else
-		cd "${srcdir%/*}" || $err "${_xm}: mktarball \"${srcdir}\""
-		mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || \
-		    $err "$_xm: mksrc"
-	fi
+	cd "${srcdir%/*}" || $err "${_xm}: mktarball \"${srcdir}\""
+	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || \
+	    $err "$_xm: mksrc"
 	) || $err "can't create src tarball"
 	[ "${mode}" = "src" ] && return 0
 	[ "${mode}" = "u-boot" ] && return 0
