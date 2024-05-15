@@ -200,6 +200,7 @@ fetch_trees()
 		    $err "!rm -Rf \"src/${xp}/${xp}\""
 	done
 
+	rm -f src/u-boot/*/test/lib/strlcat.c || $err "$_xm: rm strlcat"
 	find . -name ".git" -exec rm -Rf {} + || $err "$_xm: rm .git"
 	find . -name ".gitmodules" -exec rm -Rf {} + || $err "$_xm: rm .gitmod"
 	x_ rm -Rf tmp .git
