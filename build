@@ -36,9 +36,9 @@ main()
 	    git_err "git config --global user.name \"John Doe\""
 	git config --global user.email 1>/dev/null 2>/dev/null || \
 	    git_err "git config --global user.email \"john.doe@example.com\""
+	git_init
 
 	initcmd $@
-	git_init
 
 	[ -f "${spath}" ] || $err "Bad command. Check $projectname docs."
 	shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}"
