@@ -38,16 +38,6 @@ main()
 	    git_err "git config --global user.email \"john.doe@example.com\""
 	git_init
 
-	initcmd $@
-
-	[ -f "${spath}" ] || $err "Bad command. Check $projectname docs."
-	shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}"
-
-	xbmk_exit 0
-}
-
-initcmd()
-{
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
 	case "${1}" in
@@ -55,7 +45,9 @@ initcmd()
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
-	*) return 0 ;;
+	*)
+		[ -f "${spath}" ] || $err "Bad command. Check docs."
+		shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 	xbmk_exit 0
