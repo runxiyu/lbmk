@@ -16,7 +16,7 @@ fi
 . "include/vendor.sh"
 . "include/mrc.sh"
 
-eval "$(setvars "" script_path aur_notice vdir src_dirname srcdir _xm mode xp)"
+eval "$(setvars "" aur_notice vdir src_dirname srcdir _xm mode xp)"
 err="fail"
 
 linkpath="${0}"
@@ -51,9 +51,7 @@ initcmd()
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
-	*)
-		script_path="script/${1}"
-		return 0 ;;
+	*) return 0 ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 	xbmk_exit 0
@@ -96,8 +94,9 @@ git_init()
 
 excmd()
 {
-	[ -f "${script_path}" ] || $err "Bad command. Check $projectname docs."
-	shift 1; "$script_path" $@ || $err "excmd: ${script_path} ${@}"
+	spath="script/${1}"
+	[ -f "${spath}" ] || $err "Bad command. Check $projectname docs."
+	shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}"
 }
 
 mkrelease()
