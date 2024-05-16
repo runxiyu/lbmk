@@ -11,12 +11,20 @@ me7updateparser="${PWD}/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="${PWD}/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="${PWD}/src/uefitool/uefiextract"
 nvmutil="util/nvmutil/nvm"
+vendir="vendorfiles"
+appdir="${vendir}/app"
 
-eval "$(setvars "" _b _dl EC_url EC_url_bkup EC_hash DL_hash DL_url DL_url_bkup \
+eval "$(setvars "" _b EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
-    tree mecleaner kbc1126_ec_dump MRC_refcode_cbtree MRC_refcode_gbe new_mac \
-    cbfstoolref release nukemode modifygbe rom archive)"
+    mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl CONFIG_HAVE_MRC \
+    CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_ME_BIN archive EC_url modifygbe \
+    CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 _dest tree \
+    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET rom \
+    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH release DL_url \
+    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
+    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
+    CONFIG_REFCODE_BLOB_FILE)"
 
 vendor_download()
 {

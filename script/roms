@@ -61,14 +61,14 @@ main()
 	fi
 
 	bstr="directories"
-	[ "$lbmk_release" = "y" ] && bstr="tarballs"
+	[ "$xbmk_release" = "y" ] && bstr="tarballs"
 
 	[ -z "${targets}" ] && $err "No ROM images were compiled"
 	printf "\nROM images available in these %s:\n" "$bstr"
 	eval "printf \"${targets}\""
 	printf "^^ ROM images available in these %s.\n\n" "$bstr"
 
-	[ "$lbmk_release" = "y" ] && \
+	[ "$xbmk_release" = "y" ] && \
 		printf "Always run the inject command on release images!\n"
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
@@ -99,7 +99,7 @@ handle_serprog()
 			done
 	fi
 
-	[ "$lbmk_release" = "y" ] && mktar_release "bin/serprog_$1"; return 0
+	[ "$xbmk_release" = "y" ] && mktar_release "bin/serprog_$1"; return 0
 }
 
 build_rp2040_rom()
@@ -144,7 +144,7 @@ handle_coreboot_target()
 
 	configure_target
 	[ "$board" = "$tree" ] && return 0
-	if [ "$lbmk_release" = "y" ] && [ "$release" = "n" ]; then
+	if [ "$xbmk_release" = "y" ] && [ "$release" = "n" ]; then
 		printf "Target '%s' disabled for release.\n" "$board"
 		return 0
 	fi
@@ -153,8 +153,8 @@ handle_coreboot_target()
 	build_target_mainboard
 
 	[ -d "bin/${board}" ] || return 0
-	[ "$lbmk_release" = "y" ] || targets="* bin/${board}\n${targets}"
-	[ "$lbmk_release" = "y" ] || return 0
+	[ "$xbmk_release" = "y" ] || targets="* bin/${board}\n${targets}"
+	[ "$xbmk_release" = "y" ] || return 0
 
 	targets="* bin/${relname}_$board.tar.xz\n$targets"
 	mktar_release "bin/$board"
@@ -466,7 +466,7 @@ moverom()
 
 	x_ mkdir -p "${2%/*}"
 	x_ cp "$1" "$2"
-	[ "$lbmk_release" = "y" ] || return 0
+	[ "$xbmk_release" = "y" ] || return 0
 
 	mksha512sum "${2}" "vendorhashes"
 	x_ ./vendor inject -r "${2}" -b "$board" -n nuke

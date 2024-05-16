@@ -8,7 +8,7 @@
 set -u -e
 
 if [ "./${0##*/}" != "${0}" ] || [ ! -f "build" ] || [ -L "build" ]; then
-	printf "You must run this in the lbmk work directory.\n" 1>&2
+	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1
 fi
 
@@ -27,7 +27,7 @@ main()
 	x_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && $err "Check $projectname documentation for help."
 
-	[ "$1" = "dependencies" ] && x_ install_packages $@ && lbmk_exit 0
+	[ "$1" = "dependencies" ] && x_ install_packages $@ && xbmk_exit 0
 
 	which git 1>/dev/null 2>/dev/null || \
 	    git_err "git not installed. please install git-scm."
@@ -39,7 +39,7 @@ main()
 	for cmd in initcmd git_init excmd; do
 		eval "${cmd} \$@"
 	done
-	lbmk_exit 0
+	xbmk_exit 0
 }
 
 initcmd()
@@ -56,7 +56,7 @@ initcmd()
 		return 0 ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-	lbmk_exit 0
+	xbmk_exit 0
 }
 
 install_packages()
@@ -78,7 +78,7 @@ install_packages()
 }
 
 # release archives contain .gitignore, but not .git.
-# lbmk can be run from lbmk.git, or an archive.
+# xbmk can be run from xbmk.git, or an archive.
 git_init()
 {
 	[ -L ".git" ] && $err "Reference .git is a symlink"
@@ -88,7 +88,7 @@ git_init()
 	git init || $err "${PWD}: cannot initialise Git repository"
 	git add -A . || $err "${PWD}: cannot add files to Git repository"
 	git commit -m "${projectname} ${version}" --date "${cdate}" \
-	    --author="lbmk <lbmk@libreboot.org>" || \
+	    --author="xbmk <xbmk@example.com>" || \
 	    $err "$PWD: can't commit ${projectname}/${version}, date $cdate"
 	git tag -a "${version}" -m "${projectname} ${version}" || \
 	    $err "${PWD}: cannot git-tag ${projectname}/${version}"
@@ -102,7 +102,7 @@ excmd()
 
 mkrelease()
 {
-	export LBMK_RELEASE="y"
+	export XBMK_RELEASE="y"
 
 	vdir="release"
 	while getopts d:m: option; do
@@ -174,9 +174,9 @@ fetch_trees()
 	rm -Rf tmp .git src/u-boot/*/test/lib/strlcat.c || $err "$_xm !rm"
 }
 
-lbmk_exit()
+xbmk_exit()
 {
-	tmp_cleanup || err_ "lbmk_exit: can't rm tmpdir upon exit $1: $tmpdir"
+	tmp_cleanup || err_ "xbmk_exit: can't rm tmpdir upon exit $1: $tmpdir"
 	exit $1
 }
 

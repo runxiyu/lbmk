@@ -7,8 +7,6 @@ export LC_COLLATE=C
 export LC_ALL=C
 
 tmpdir_was_set="y"
-vendir="vendorfiles"
-appdir="${vendir}/app"
 cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
@@ -35,40 +33,34 @@ setvars()
 	done
 	printf "%s\n" "${_setvars% }"
 }
-eval "$(setvars "" CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
-    CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 versiondate \
-    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
-    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_GBE_BIN_PATH tmpdir _nogit \
-    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE version \
-    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE _dest board boarddir lbmk_release \
-    CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE threads projectname \
-    relname)"
+eval "$(setvars "" versiondate tmpdir _nogit version board boarddir \
+    xbmk_release threads projectname relname)"
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
-set | grep LBMK_RELEASE 1>/dev/null 2>/dev/null || lbmk_release="n" || :
-[ -z "$lbmk_release" ] && lbmk_release="$LBMK_RELEASE"
-[ "$lbmk_release" = "n" ] || [ "$lbmk_release" = "y" ] || lbmk_release="n"
-export LBMK_RELEASE="$lbmk_release"
+set | grep XBMK_RELEASE 1>/dev/null 2>/dev/null || xbmk_release="n" || :
+[ -z "$xbmk_release" ] && xbmk_release="$XBMK_RELEASE"
+[ "$xbmk_release" = "n" ] || [ "$xbmk_release" = "y" ] || xbmk_release="n"
+export XBMK_RELEASE="$xbmk_release"
 
 set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
 if [ "${tmpdir_was_set}" = "y" ]; then
-	[ "${TMPDIR%_*}" = "/tmp/lbmk" ] || tmpdir_was_set="n"
+	[ "${TMPDIR%_*}" = "/tmp/xbmk" ] || tmpdir_was_set="n"
 fi
 if [ "${tmpdir_was_set}" = "n" ]; then
 	export TMPDIR="/tmp"
-	tmpdir="$(mktemp -d -t lbmk_XXXXXXXX)"
+	tmpdir="$(mktemp -d -t xbmk_XXXXXXXX)"
 	export TMPDIR="${tmpdir}"
 else
 	export TMPDIR="${TMPDIR}"
 	tmpdir="${TMPDIR}"
 fi
 
-set | grep LBMK_THREADS 1>/dev/null 2>/dev/null && threads="$LBMK_THREADS"
+set | grep XBMK_THREADS 1>/dev/null 2>/dev/null && threads="$XBMK_THREADS"
 [ -z "$threads" ] && threads=1
 expr "X$threads" : "X-\{0,1\}[0123456789][0123456789]*$" \
     1>/dev/null 2>/dev/null || threads=1 # user specified a non-integer
-export LBMK_THREADS="$threads"
+export XBMK_THREADS="$threads"
 
 x_() {
 	[ $# -lt 1 ] || ${@} || $err "Unhandled non-zero exit: $@"; return 0
