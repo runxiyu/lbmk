@@ -26,6 +26,7 @@ main()
 {
 	x_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && $err "Check $projectname documentation for help."
+	spath="script/$1"
 
 	[ "$1" = "dependencies" ] && x_ install_packages $@ && xbmk_exit 0
 
@@ -36,9 +37,12 @@ main()
 	git config --global user.email 1>/dev/null 2>/dev/null || \
 	    git_err "git config --global user.email \"john.doe@example.com\""
 
-	for cmd in initcmd git_init excmd; do
-		eval "${cmd} \$@"
-	done
+	initcmd $@
+	git_init
+
+	[ -f "${spath}" ] || $err "Bad command. Check $projectname docs."
+	shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}"
+
 	xbmk_exit 0
 }
 
@@ -90,13 +94,6 @@ git_init()
 	    $err "$PWD: can't commit ${projectname}/${version}, date $cdate"
 	git tag -a "${version}" -m "${projectname} ${version}" || \
 	    $err "${PWD}: cannot git-tag ${projectname}/${version}"
-}
-
-excmd()
-{
-	spath="script/${1}"
-	[ -f "${spath}" ] || $err "Bad command. Check $projectname docs."
-	shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}"
 }
 
 mkrelease()
