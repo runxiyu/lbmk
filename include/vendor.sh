@@ -46,10 +46,6 @@ vendor_download()
 
 detect_firmware()
 {
-	_cfg_exists="y"
-	check_defconfig "$boarddir" && _cfg_exists="n"
-	[ "${_cfg_exists}" = "n" ] && return 1
-
 	set -- "${boarddir}/config/"*
 	. "${1}" 2>/dev/null
 	. "${boarddir}/target.cfg" 2>/dev/null
