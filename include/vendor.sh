@@ -46,10 +46,8 @@ vendor_download()
 
 detect_firmware()
 {
-	_cfg_exists="n"
-	for _chk_file in "${boarddir}/config/"*; do
-		[ -f "${_chk_file}" ] && _cfg_exists="y" && break
-	done
+	_cfg_exists="y"
+	check_defconfig "$boarddir" && _cfg_exists="n"
 	[ "${_cfg_exists}" = "n" ] && return 1
 
 	set -- "${boarddir}/config/"*
