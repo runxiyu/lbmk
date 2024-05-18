@@ -188,11 +188,8 @@ configure_target()
 	# that doesn't mean GRUB-withSeaBIOS will. For example, the board
 	# might have a graphics card whose vga rom coreboot doesn't execute
 	[ "$payload_grub" != "y" ] && [ "$payload_seabios" != "y" ] && \
-	    [ "${payload_uboot}" != "y" ] && \
-		for configfile in "${targetdir}/config/"*; do
-			[ -e "${configfile}" ] || continue
-			$err "target '${board}' defines no payload"
-		done
+	    [ "${payload_uboot}" != "y" ] && ! check_defconfig "$targetdir" \
+		&& $err "target '$board' defines no payload"
 
 	[ "$payload_uboot" != "n" ] && [ "$payload_uboot" != "y" ] && \
 		payload_uboot="n"
