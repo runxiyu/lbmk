@@ -87,7 +87,7 @@ handle_serprog()
 	x_ mkdir -p "bin/serprog_${1}"
 
 	if [ $# -gt 1 ] && [ "${2}" = "list" ]; then
-		print_serprog_boards ${serprog_boards_dir}
+		list_serprog_boards ${serprog_boards_dir}
 		return 0
 	elif [ $# -gt 1 ]; then
 		build_${1}_rom "${2}"
@@ -123,12 +123,6 @@ build_stm32_rom()
 	x_ mv ${stm32_src_dir}/stm32-vserprog.hex \
 	   bin/serprog_stm32/serprog_${board}.hex
 	printf "output to bin/serprog_stm32/serprog_%s.hex\n" "$board"
-}
-
-print_serprog_boards()
-{
-	printf "Available boards:\n"
-	list_serprog_boards "${1}"
 }
 
 list_serprog_boards()
