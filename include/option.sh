@@ -178,3 +178,12 @@ mksha512sum()
 	    $err "!sha512sum \"${1}\" > \"${2}\""
 	) || $err "failed to create tarball checksum"
 }
+
+rmgit()
+{
+	(
+	cd "$1" || $err "!cd gitrepo $1"
+	find . -name ".git" -exec rm -Rf {} + || $err "!rm .git $1"
+	find . -name ".gitmodules" -exec rm -Rf {} + || $err "!rm .gitmod $1"
+	) || $err "Cannot remove .git/.gitmodules in $1"
+}
