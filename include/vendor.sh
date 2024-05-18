@@ -36,6 +36,8 @@ vendor_download()
 	boarddir="${cbcfgsdir}/${board}"
 	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
 
+	[ -d "$boarddir" ] || $err "Target '$board' not defined."
+
 	check_defconfig "${boarddir}" && exit 0
 	detect_firmware && exit 0
 	scan_config "${_b}" "config/vendor"
