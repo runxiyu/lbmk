@@ -46,10 +46,7 @@ vendor_download()
 detect_firmware()
 {
 	[ -d "$boarddir" ] || $err "Target '$board' not defined."
-	check_defconfig "${boarddir}" && exit 0
-
-	set -- "${boarddir}/config/"*
-	. "${1}" 2>/dev/null
+	. "$(check_defconfig "${boarddir}")" 2>/dev/null || exit 0
 	. "${boarddir}/target.cfg" 2>/dev/null
 
 	[ -z "$tree" ] && $err "detect_firmware $boarddir: tree undefined"

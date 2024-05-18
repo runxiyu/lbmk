@@ -122,7 +122,7 @@ EOF
 check_defconfig()
 {
 	for x in "${1}"/config/*; do
-		[ -f "${x}" ] && return 1
+		[ -f "${x}" ] && printf "%s\n" "$x" && return 1
 	done
 }
 
