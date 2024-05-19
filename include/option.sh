@@ -153,9 +153,9 @@ git_err()
 
 mkrom_tarball()
 {
-	printf "%s\n" "${version}" > "${1}/version" || return 1
-	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
-	printf "%s\n" "${projectname}" > "${1}/projectname" || return 1
+	printf "%s\n" "${version}" > "${1}/version" || $err "$1 !version"
+	printf "%s\n" "${versiondate}" > "${1}/versiondate" || $err "$1 !vdate"
+	printf "%s\n" "${projectname}" > "${1}/projectname" || $err "$1 !pname"
 
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 	x_ rm -Rf "$1"
