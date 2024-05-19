@@ -99,7 +99,7 @@ handle_serprog()
 			done
 	fi
 
-	[ "$xbmk_release" = "y" ] && mktar_release "bin/serprog_$1"; return 0
+	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
 }
 
 build_rp2040_rom()
@@ -148,7 +148,7 @@ handle_coreboot_target()
 
 	[ -d "bin/${board}" ] || return 0
 	[ "$xbmk_release" = "y" ] || targets="* bin/${board}\n${targets}"
-	[ "$xbmk_release" = "y" ] && mktar_release "bin/$board" && \
+	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/$board" && \
 	targets="* bin/${relname}_$board.tar.xz\n$targets"; return 0
 }
 

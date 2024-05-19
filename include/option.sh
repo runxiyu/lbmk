@@ -151,7 +151,7 @@ git_err()
 	$err "Git name/email not configured"
 }
 
-mktar_release()
+mkrom_tarball()
 {
 	printf "%s\n" "${version}" > "${1}/version" || return 1
 	printf "%s\n" "${versiondate}" > "${1}/versiondate" || return 1
