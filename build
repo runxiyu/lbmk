@@ -28,7 +28,7 @@ main()
 	[ $# -lt 1 ] && $err "Check $projectname documentation for help."
 	spath="script/$1"
 
-	[ "$1" = "dependencies" ] && x_ install_packages $@ && xbmk_exit 0
+	[ "$1" = "dependencies" ] && x_ install_packages $@ && return 0
 
 	which git 1>/dev/null 2>/dev/null || \
 	    git_err "git not installed. please install git-scm."
@@ -50,7 +50,6 @@ main()
 		shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-	xbmk_exit 0
 }
 
 install_packages()
@@ -66,9 +65,8 @@ install_packages()
 
 	. "config/dependencies/${2}"
 
-	x_ ${pkg_add} ${pkglist}
-	[ -z "${aur_notice}" ] && return 0
-	printf "You must install AUR packages: %s\n" "$aur_notice" 1>&2
+	x_ $pkg_add $pkglist && [ -n "$aur_notice" ] && \
+	printf "Please install AUR packages: %s\n" "$aur_notice" 1>&2; return 0
 }
 
 git_init()
@@ -123,13 +121,11 @@ build_release()
 	) || $err "can't create release files"
 
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
-	    --abbrev-commit > "${srcdir}/CHANGELOG" || \
-	    $err "build_release $srcdir: couldn't generate changelog"
+	    --abbrev-commit > "${srcdir}/CHANGELOG" || $err "!gitlog $srcdir"
 
 	(
 	cd "${srcdir%/*}" || $err "${_xm}: mktarball \"${srcdir}\""
-	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || \
-	    $err "$_xm: mksrc"
+	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || $err "$_xm: mksrc"
 	) || $err "can't create src tarball"
 	[ "${mode}" = "src" ] && return 0
 
@@ -157,12 +153,6 @@ fetch_trees()
 	rm -Rf tmp .git src/u-boot/*/test/lib/strlcat.c || $err "$_xm !rm"
 }
 
-xbmk_exit()
-{
-	tmp_cleanup || err_ "xbmk_exit: can't rm tmpdir upon exit $1: $tmpdir"
-	exit $1
-}
-
 fail()
 {
 	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "$tmpdir" 1>&2
@@ -176,3 +166,4 @@ tmp_cleanup()
 }
 
 main $@
+tmp_cleanup || err_ "can't rm tmpdir upon non-zero exit: $tmpdir"
