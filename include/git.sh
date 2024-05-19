@@ -93,6 +93,9 @@ git_prep()
 	if [ "$project" != "coreboot" ] || [ $# -gt 2 ]; then
 		[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
 		    update --init --checkout || $err "git_prep $_loc: !submod"
+
+		patch_submodules
+
 		if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && \
 		    [ "$xtree" != "$tree" ]; then
 			(
@@ -112,6 +115,24 @@ git_prep()
 	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
 		x_ ./update project trees -f coreboot "$xtree"; return 0
+}
+
+patch_submodules()
+{
+	moddir="${PWD}/config/submodule/$project"
+	[ -n "$tree" ] && moddir="$moddir/$tree"
+	[ -d "$moddir" ] || return 0
+
+	git -C "$tmpgit" submodule status | awk '{print $2}' > \
+	    "$tmpdir/modules" || $err "$moddir: cannot list submodules"
+
+	while read -r modsrcdir; do
+		modname="${modsrcdir##*/}"
+		modpatchdir="$moddir/$modname/patches"
+		[ -d "$modpatchdir" ] || continue
+
+		git_am_patches "$tmpgit/$modsrcdir" "$modpatchdir"
+	done < "$tmpdir/modules"
 }
 
 git_am_patches()
