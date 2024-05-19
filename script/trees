@@ -230,8 +230,7 @@ check_cmake()
 		    check_makefile "${1}" || \
 		    $err "check_cmake ${1}: can't cmake ${cmakedir}"
 	[ -z "${cmakedir}" ] || check_makefile "${1}" || \
-		$err "check_cmake ${1}: could not generate Makefile"
-	return 0
+		$err "check_cmake ${1}: can't generate Makefile"; return 0
 }
 
 check_autoconf()

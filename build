@@ -151,12 +151,10 @@ fetch_trees()
 	for x in $(items config/git); do
 		./update trees -f "$x" || $err "$_xm: fetch $x"
 	done
-
 	for x in config/*/build.list; do
 		[ -f "$x" ] && xp="${x#*/}" && xp="${xp%/*}"
 		[ ! -f "$x" ] || [ -L "$xp" ] || x_ rm -Rf "src/$xp/$xp"
 	done
-
 	rmgit .
 	rm -Rf tmp .git src/u-boot/*/test/lib/strlcat.c || $err "$_xm !rm"
 }

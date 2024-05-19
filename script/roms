@@ -148,10 +148,8 @@ handle_coreboot_target()
 
 	[ -d "bin/${board}" ] || return 0
 	[ "$xbmk_release" = "y" ] || targets="* bin/${board}\n${targets}"
-	[ "$xbmk_release" = "y" ] || return 0
-
-	targets="* bin/${relname}_$board.tar.xz\n$targets"
-	mktar_release "bin/$board"
+	[ "$xbmk_release" = "y" ] && mktar_release "bin/$board" && \
+	targets="* bin/${relname}_$board.tar.xz\n$targets"; return 0
 }
 
 configure_target()
@@ -179,8 +177,7 @@ configure_target()
 	[ "$payload_seabios_grubonly" = "y" ] && payload_seabios_withgrub="y"
 
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
-	# that doesn't mean GRUB-withSeaBIOS will. For example, the board
-	# might have a graphics card whose vga rom coreboot doesn't execute
+	# that doesn't mean GRUB-with-SeaBIOS will, e.g. VGA ROM execution
 	[ "$payload_grub" != "y" ] && [ "$payload_seabios" != "y" ] && \
 	    [ "${payload_uboot}" != "y" ] && ! check_defconfig "$targetdir" \
 		&& $err "target '$board' defines no payload"
@@ -192,7 +189,6 @@ configure_target()
 
 	# Override all payload directives with cmdline args
 	[ -z "${_payload}" ] && return 0
-	printf "setting payload to: %s\n" "${_payload}"
 	eval "$(setvars "n" payload_grub payload_memtest payload_seabios \
 	    payload_seabios_withgrub payload_uboot payload_grub_withseabios \
 	    payload_seabios_grubonly)"
@@ -235,13 +231,9 @@ build_grub_payload()
 	[ -f "$grubelf" ] && return 0
 	[ -f "src/grub/grub-mkstandalone" ] || x_ ./update trees -b grub
 
-	./src/grub/grub-mkstandalone \
-	    --grub-mkimage="src/grub/grub-mkimage" \
-	    -O i386-coreboot \
-	    -o "elf/grub/grub.elf" \
-	    -d "src/grub/grub-core/" \
-	    --fonts= --themes= --locales=  \
-	    --modules="${grub_modules}" \
+	./src/grub/grub-mkstandalone --grub-mkimage="src/grub/grub-mkimage" \
+	    -O i386-coreboot -o "elf/grub/grub.elf" -d "src/grub/grub-core/" \
+	    --fonts= --themes= --locales=  --modules="${grub_modules}" \
 	    --install-modules="${grub_install_modules}" \
 	    "/boot/grub/grub.cfg=${grubcfgsdir}/config/grub_memdisk.cfg" \
 	    "/boot/grub/grub_default.cfg=${grubcfgsdir}/config/grub.cfg" || \
@@ -255,8 +247,7 @@ build_uboot_payload()
 	ubootelf="${ubdir}/u-boot.elf"
 	[ ! -f "${ubootelf}" ] && [ -f "${ubdir}/u-boot" ] && \
 		ubootelf="${ubdir}/u-boot"
-	[ -f "${ubootelf}" ] && return 0
-	$err "Can't find u-boot build for board, $board";
+	[ -f "${ubootelf}" ] || $err "$board: Can't find u-boot"; return 0
 }
 
 build_target_mainboard()
@@ -281,7 +272,6 @@ build_target_mainboard()
 	done
 }
 
-# Main ROM building function. This calls all other functions below
 build_roms()
 {
 	cbcfg="${1}"
@@ -457,10 +447,8 @@ moverom()
 
 	x_ mkdir -p "${2%/*}"
 	x_ cp "$1" "$2"
-	[ "$xbmk_release" = "y" ] || return 0
-
-	mksha512sum "${2}" "vendorhashes"
-	x_ ./vendor inject -r "${2}" -b "$board" -n nuke
+	[ "$xbmk_release" = "y" ] && mksha512sum "${2}" "vendorhashes" && \
+	x_ ./vendor inject -r "${2}" -b "$board" -n nuke; return 0
 }
 
 main $@
