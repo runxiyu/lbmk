@@ -56,7 +56,9 @@ main()
 		[ "${all}" != "y" ] || boards=$(items config/coreboot) || \
 			$err "Cannot generate list of boards for building"
 		for x in ${boards}; do
-			handle_coreboot_target "$x"
+			[ -d "config/coreboot/$x/config" ] && \
+				handle_coreboot_target "$x" && continue
+			printf "No configs for %s; skipping\n" "$x"
 		done
 	fi
 
@@ -179,8 +181,8 @@ configure_target()
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-with-SeaBIOS will, e.g. VGA ROM execution
 	[ "$payload_grub" != "y" ] && [ "$payload_seabios" != "y" ] && \
-	    [ "${payload_uboot}" != "y" ] && ! check_defconfig "$targetdir" \
-		&& $err "target '$board' defines no payload"
+	    [ "${payload_uboot}" != "y" ] && \
+		$err "target '$board' defines no payload"
 
 	[ "$payload_uboot" != "n" ] && [ "$payload_uboot" != "y" ] && \
 		payload_uboot="n"
