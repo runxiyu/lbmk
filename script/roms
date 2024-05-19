@@ -313,7 +313,7 @@ build_seabios_roms()
 		newrom="${romdir}/seabios_${board}_${initmode}_${displaymode}"
 		[ "${initmode}" = "normal" ] && newrom="${romdir}/seabios" \
 			&& newrom="${newrom}_${board}_${initmode}"
-		x_ moverom "${t}" "${newrom}.rom"
+		x_ copyrom "${t}" "${newrom}.rom"
 	fi
 	x_ rm -f "${t}"
 }
@@ -377,14 +377,14 @@ build_grub_roms()
 		[ "${initmode}" = "normal" ] && \
 			newrom="${romdir}/${payload1}_${board}_" && \
 			newrom="${newrom}${initmode}_${keymap}.rom"
-		x_ moverom "${tmpgrubrom}" "${newrom}"
+		x_ copyrom "${tmpgrubrom}" "${newrom}"
 		if [ "${payload_seabios_grubonly}" = "y" ]; then
 			x_ "$cbfstool" "$tmpgrubrom" add \
 			    -f "config/grub/bootorder" -n bootorder -t raw
-			x_ moverom "$tmpgrubrom" "${newrom%.rom}_grubfirst.rom"
+			x_ copyrom "$tmpgrubrom" "${newrom%.rom}_grubfirst.rom"
 			x_ "$cbfstool" "$tmpgrubrom" add-int -i 0 \
 			    -n etc/show-boot-menu
-			x_ moverom "$tmpgrubrom" "${newrom%.rom}_grubonly.rom"
+			x_ copyrom "$tmpgrubrom" "${newrom%.rom}_grubonly.rom"
 		fi
 		x_ rm -f "${tmpgrubrom}"
 	done
@@ -418,7 +418,7 @@ build_uboot_roms()
 	tmprom=$(mkUbootRom "${cbrom}" "fallback/payload") || \
 	    $err "build_uboot_roms $board: could not create tmprom"
 	newrom="${romdir}/uboot_payload_${board}_${initmode}_${displaymode}.rom"
-	x_ moverom "${tmprom}" "${newrom}"
+	x_ copyrom "${tmprom}" "${newrom}"
 	x_ rm -f "${tmprom}"
 }
 
@@ -441,7 +441,7 @@ mkUbootRom() {
 	printf "%s\n" "${tmprom}"
 }
 
-moverom()
+copyrom()
 {
 	printf "Creating target image: %s\n" "$2"
 

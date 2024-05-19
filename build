@@ -71,8 +71,6 @@ install_packages()
 	printf "You must install AUR packages: %s\n" "$aur_notice" 1>&2
 }
 
-# release archives contain .gitignore, but not .git.
-# xbmk can be run from xbmk.git, or an archive.
 git_init()
 {
 	[ -L ".git" ] && $err "Reference .git is a symlink"
