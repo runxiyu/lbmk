@@ -7,7 +7,8 @@ eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree)"
 fetch_project_trees()
 {
 	_target="${target}"
-	[ -d "src/${project}/${project}" ] || fetch_from_upstream
+	[ ! -d "src/${project}/${project}" ] && x_ mkdir -p "src/${project}" \
+	    && fetch_project_repo "${project}"
 	fetch_config
 	if [ -d "src/${project}/${tree}" ]; then
 		printf "download/%s %s (%s): exists\n" \
@@ -15,14 +16,6 @@ fetch_project_trees()
 		return 0
 	fi
 	prepare_new_tree
-}
-
-fetch_from_upstream()
-{
-	[ -d "src/${project}/${project}" ] && return 0
-
-	x_ mkdir -p "src/${project}"
-	fetch_project_repo "${project}"
 }
 
 fetch_config()
