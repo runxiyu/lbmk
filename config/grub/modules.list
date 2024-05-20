@@ -105,6 +105,7 @@ multiboot2 \
 nativedisk \
 normal \
 ntfs \
+nvme \
 ohci \
 part_bsd \
 part_dfly \
