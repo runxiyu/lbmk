@@ -114,7 +114,7 @@ git_prep()
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
 	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
-		x_ ./update project trees -f coreboot "$xtree"; return 0
+		x_ ./update trees -f coreboot "$xtree"; return 0
 }
 
 patch_submodules()
