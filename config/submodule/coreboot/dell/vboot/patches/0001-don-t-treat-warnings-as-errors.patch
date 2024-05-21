@@ -1,0 +1,35 @@
+From 191089826bbfe710bf40e494d3e1014537e35a31 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Tue, 21 May 2024 23:19:08 +0100
+Subject: [PATCH 1/1] don't treat warnings as errors
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 4cb265b2..4ba8b2da 100644
+--- a/Makefile
++++ b/Makefile
+@@ -114,7 +114,7 @@ endif
+ # Provide default CC and CFLAGS for firmware builds; if you have any -D flags,
+ # please add them after this point (e.g., -DVBOOT_DEBUG).
+ DEBUG_FLAGS := $(if $(filter-out 0,${DEBUG}),-g -Og,-g -Os)
+-WERROR := -Werror
++WERROR := -Wno-error -w
+ FIRMWARE_FLAGS := -nostdinc -ffreestanding -fno-builtin -fno-stack-protector
+ COMMON_FLAGS := -pipe ${WERROR} -Wall -Wstrict-prototypes -Wtype-limits \
+ 	-Wundef -Wmissing-prototypes -Wno-trigraphs -Wredundant-decls -Wshadow \
+@@ -128,7 +128,7 @@ COMMON_FLAGS := -pipe ${WERROR} -Wall -Wstrict-prototypes -Wtype-limits \
+ # returns: $(1) if compiler was successful, empty string otherwise
+ test_ccflag = $(shell \
+ 	printf "$(2)\nvoid _start(void) {}\n" | \
+-	$(CC) -nostdlib -Werror $(1) -xc -c - -o /dev/null \
++	$(CC) -nostdlib -Wno-error -w $(1) -xc -c - -o /dev/null \
+ 	>/dev/null 2>&1 && echo "$(1)")
+ 
+ COMMON_FLAGS += $(call test_ccflag,-Wimplicit-fallthrough)
+-- 
+2.39.2
+
