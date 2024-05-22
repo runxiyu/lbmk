@@ -127,8 +127,7 @@ patch_submodules()
 	    "$tmpdir/modules" || $err "$moddir: cannot list submodules"
 
 	while read -r modsrcdir; do
-		modname="${modsrcdir##*/}"
-		modpatchdir="$moddir/$modname/patches"
+		modpatchdir="$moddir/${modsrcdir##*/}/patches"
 		[ -d "$modpatchdir" ] || continue
 
 		git_am_patches "$tmpgit/$modsrcdir" "$modpatchdir"
