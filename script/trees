@@ -236,7 +236,6 @@ check_cmake()
 check_autoconf()
 {
 	(
-	_cfgopt=""
 	cd "${1}" || $err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh ${autogenargs}
