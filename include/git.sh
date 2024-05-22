@@ -94,15 +94,8 @@ git_prep()
 		prep_submodules "$_loc"
 	fi
 
-	if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && \
-	    [ "$xtree" != "$tree" ] && [ $# -gt 2 ]; then
-		(
-		cd "$tmpgit/util" || $err "prep $1: !cd $tmpgit/util"
-		rm -Rf crossgcc || $err "prep $1: !rm xgcc"
-		ln -s "../../$xtree/util/crossgcc" crossgcc || \
-		    $err "prep $1: can't create xgcc symlink"
-		) || $err "prep $1: can't create xgcc symlink"
-	fi
+	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
+	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
 
 	[ "$xbmk_release" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
 	    && rmgit "$tmpgit"
@@ -127,6 +120,15 @@ prep_submodules()
 	while read -r msrcdir; do
 		git_am_patches "$tmpgit/$msrcdir" "$mdir/${msrcdir##*/}/patches"
 	done < "$tmpdir/modules"
+}
+
+link_crossgcc()
+{
+	(
+	cd "$tmpgit/util" || $err "prep $1: !cd $tmpgit/util"
+	rm -Rf crossgcc || $err "prep $1: !rm xgcc"
+	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
+	) || $err "$1: !xgcc link"
 }
 
 git_am_patches()
