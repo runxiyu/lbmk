@@ -119,16 +119,15 @@ git_prep()
 
 patch_submodules()
 {
-	moddir="${PWD}/config/submodule/$project"
-	[ -n "$tree" ] && moddir="$moddir/$tree"
-	[ -d "$moddir" ] || return 0
+	mdir="${PWD}/config/submodule/$project"
+	[ -n "$tree" ] && mdir="$mdir/$tree"
+	[ -d "$mdir" ] || return 0
 
 	git -C "$tmpgit" submodule status | awk '{print $2}' > \
-	    "$tmpdir/modules" || $err "$moddir: cannot list submodules"
+	    "$tmpdir/modules" || $err "$mdir: cannot list submodules"
 
-	while read -r modsrcdir; do
-		modpatchdir="$moddir/${modsrcdir##*/}/patches"
-		git_am_patches "$tmpgit/$modsrcdir" "$modpatchdir"
+	while read -r msrcdir; do
+		git_am_patches "$tmpgit/$msrcdir" "$mdir/${msrcdir##*/}/patches"
 	done < "$tmpdir/modules"
 }
 
