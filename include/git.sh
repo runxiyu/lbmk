@@ -100,10 +100,7 @@ git_prep()
 	[ "$xbmk_release" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
 	    && rmgit "$tmpgit"
 
-	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
-	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
-	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
-		x_ ./update trees -f coreboot "$xtree"; return 0
+	move_repo "$_loc"
 }
 
 prep_submodules()
@@ -141,4 +138,12 @@ link_crossgcc()
 	rm -Rf crossgcc || $err "prep $1: !rm xgcc"
 	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
 	) || $err "$1: !xgcc link"
+}
+
+move_repo()
+{
+	[ "$1" = "${1%/*}" ] || x_ mkdir -p "${1%/*}"
+	mv "$tmpgit" "$1" || $err "git_prep: !mv $tmpgit $1"
+	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
+		x_ ./update trees -f coreboot "$xtree"; return 0
 }
