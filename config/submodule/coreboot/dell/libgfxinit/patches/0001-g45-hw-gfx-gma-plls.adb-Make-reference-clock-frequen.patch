@@ -23,7 +23,7 @@ index 67242f2..1aee576 100644
  -- GNU General Public License for more details.
  --
  
-+with CB.Config
++with CB.Config;
 +
  with HW.Time;
  with HW.GFX.GMA.Config;
