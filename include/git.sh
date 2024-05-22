@@ -122,15 +122,6 @@ prep_submodules()
 	done < "$tmpdir/modules"
 }
 
-link_crossgcc()
-{
-	(
-	cd "$tmpgit/util" || $err "prep $1: !cd $tmpgit/util"
-	rm -Rf crossgcc || $err "prep $1: !rm xgcc"
-	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
-	) || $err "$1: !xgcc link"
-}
-
 git_am_patches()
 {
 	for _patch in "$2/"*; do
@@ -141,4 +132,13 @@ git_am_patches()
 		[ ! -L "$_patches" ] && [ -d "$_patches" ] && \
 			git_am_patches "$1" "$_patches"; continue
 	done
+}
+
+link_crossgcc()
+{
+	(
+	cd "$tmpgit/util" || $err "prep $1: !cd $tmpgit/util"
+	rm -Rf crossgcc || $err "prep $1: !rm xgcc"
+	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
+	) || $err "$1: !xgcc link"
 }
