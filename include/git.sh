@@ -115,8 +115,8 @@ git_prep()
 
 prep_submodules()
 {
-	[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
-	    update --init --checkout || $err "git_prep $1: !submod"
+	[ -f "$tmpgit/.gitmodules" ] || return 0
+	git -C "$tmpgit" submodule update --init --checkout || $err "$1: !mod"
 
 	mdir="${PWD}/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
