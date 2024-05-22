@@ -121,7 +121,6 @@ patch_submodules()
 {
 	mdir="${PWD}/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
-	[ -d "$mdir" ] || return 0
 
 	git -C "$tmpgit" submodule status | awk '{print $2}' > \
 	    "$tmpdir/modules" || $err "$mdir: cannot list submodules"
