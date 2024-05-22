@@ -128,8 +128,6 @@ patch_submodules()
 
 	while read -r modsrcdir; do
 		modpatchdir="$moddir/${modsrcdir##*/}/patches"
-		[ -d "$modpatchdir" ] || continue
-
 		git_am_patches "$tmpgit/$modsrcdir" "$modpatchdir"
 	done < "$tmpdir/modules"
 }
