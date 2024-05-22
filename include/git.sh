@@ -91,20 +91,17 @@ git_prep()
 	git_am_patches "$tmpgit" "$_patchdir" || $err "!am $_loc $_patchdir"
 
 	if [ "$project" != "coreboot" ] || [ $# -gt 2 ]; then
-		[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
-		    update --init --checkout || $err "git_prep $_loc: !submod"
+		prep_submodules "$_loc"
+	fi
 
-		patch_submodules
-
-		if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && \
-		    [ "$xtree" != "$tree" ]; then
-			(
-			cd "$tmpgit/util" || $err "prep $_loc: !cd $tmpgit/util"
-			rm -Rf crossgcc || $err "prep $_loc: !rm xgcc"
-			ln -s "../../$xtree/util/crossgcc" crossgcc || \
-			    $err "prep $_loc: can't create xgcc symlink"
-			) || $err "prep $_loc: can't create xgcc symlink"
-		fi
+	if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && \
+	    [ "$xtree" != "$tree" ] && [ $# -gt 2 ]; then
+		(
+		cd "$tmpgit/util" || $err "prep $1: !cd $tmpgit/util"
+		rm -Rf crossgcc || $err "prep $1: !rm xgcc"
+		ln -s "../../$xtree/util/crossgcc" crossgcc || \
+		    $err "prep $1: can't create xgcc symlink"
+		) || $err "prep $1: can't create xgcc symlink"
 	fi
 
 	[ "$xbmk_release" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
@@ -114,6 +111,14 @@ git_prep()
 	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
 		x_ ./update trees -f coreboot "$xtree"; return 0
+}
+
+prep_submodules()
+{
+	[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
+	    update --init --checkout || $err "git_prep $1: !submod"
+
+	patch_submodules
 }
 
 patch_submodules()
