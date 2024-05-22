@@ -110,7 +110,6 @@ git_prep()
 	[ "$xbmk_release" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
 	    && rmgit "$tmpgit"
 
-
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
 	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
