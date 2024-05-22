@@ -118,11 +118,6 @@ prep_submodules()
 	[ ! -f "$tmpgit/.gitmodules" ] || git -C "$tmpgit" submodule \
 	    update --init --checkout || $err "git_prep $1: !submod"
 
-	patch_submodules
-}
-
-patch_submodules()
-{
 	mdir="${PWD}/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 
