@@ -215,7 +215,7 @@ run_make_command()
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
 		printf "%s\n" "${version%%-*}" > "$codedir/.coreboot-version"
 
-	make $mode -j$threads $makeargs -C "$codedir" || \
+	make -C "$codedir" $mode -j$threads $makeargs || \
 	    $err "run_make $codedir: !make $mode"
 
 	[ "$mode" != "clean" ] && return 0
