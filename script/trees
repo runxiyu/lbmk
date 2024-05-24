@@ -215,6 +215,9 @@ run_make_command()
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
 		printf "%s\n" "${version%%-*}" > "$codedir/.coreboot-version"
 
+	[ "$project" = "coreboot" ] && \
+		makeargs="$makeargs UPDATED_SUBMODULES=1"
+
 	make -C "$codedir" $mode -j$threads $makeargs || \
 	    $err "run_make $codedir: !make $mode"
 
