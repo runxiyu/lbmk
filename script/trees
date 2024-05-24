@@ -170,7 +170,8 @@ check_cross_compiler()
 		[ -n "${xlang}" ] && export BUILD_LANGUAGES="$xlang"
 
 		[ -d "${cbdir}/util/crossgcc/xgcc/${_xarch}/" ] && continue
-		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$threads
+		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$threads \
+		    UPDATED_SUBMODULES=1
 	done
 }
 
