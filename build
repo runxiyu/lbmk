@@ -75,12 +75,15 @@ git_init()
 	[ -e ".git" ] && return 0
 	eval "$(setvars "$(date -Rud @${versiondate})" cdate _nogit)"
 
-	git init || $err "${PWD}: cannot initialise Git repository"
-	git add -A . || $err "${PWD}: cannot add files to Git repository"
+	git init 1>/dev/null 2>/dev/null || \
+	    $err "${PWD}: cannot initialise Git repository"
+	git add -A . 1>/dev/null 2>/dev/null || \
+	    $err "${PWD}: cannot add files to Git repository"
 	git commit -m "${projectname} ${version}" --date "${cdate}" \
-	    --author="xbmk <xbmk@example.com>" || \
+	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null || \
 	    $err "$PWD: can't commit ${projectname}/${version}, date $cdate"
-	git tag -a "${version}" -m "${projectname} ${version}" || \
+	git tag -a "${version}" -m "${projectname} ${version}" \
+	    1>/dev/null 2>/dev/null || \
 	    $err "${PWD}: cannot git-tag ${projectname}/${version}"
 }
 
