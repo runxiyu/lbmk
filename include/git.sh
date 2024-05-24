@@ -145,6 +145,7 @@ fetch_submodule()
 			[ -z "$mod" ] && continue
 			git clone "$mod" "$tmpgit/$1" || rm -Rf "$tmpgit/$1" \
 			    || $err "!rm $mod $project $cfgdir $1"
+			[ -d "$tmpgit/$1" ] && break
 		done
 		[ -d "$tmpgit/$1" ] || $err "!clone $mod $project $mcfgdir $1"
 	else
