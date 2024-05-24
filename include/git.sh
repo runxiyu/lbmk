@@ -2,7 +2,8 @@
 # SPDX-FileCopyrightText: 2020,2021,2023,2024 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree)"
+eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree \
+    mdir subrev subrepo subrepo_bkup)"
 
 fetch_project_trees()
 {
@@ -106,17 +107,59 @@ git_prep()
 prep_submodules()
 {
 	[ -f "$tmpgit/.gitmodules" ] || return 0
-	git -C "$tmpgit" submodule update --init --checkout || $err "$1: !mod"
 
 	mdir="${PWD}/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 
-	git -C "$tmpgit" submodule status | awk '{print $2}' > \
-	    "$tmpdir/modules" || $err "$mdir: cannot list submodules"
+	if [ -f "$mdir/module.list" ]; then
+		cat "$mdir/module.list" > "$tmpdir/modules" || \
+		    $err "!cp $mdir/module.list $tmpdir/modules"
+	else
+		git -C "$tmpgit" submodule status | awk '{print $2}' > \
+		    "$tmpdir/modules" || $err "$mdir: cannot list submodules"
+	fi
 
 	while read -r msrcdir; do
-		git_am_patches "$tmpgit/$msrcdir" "$mdir/${msrcdir##*/}/patches"
+		fetch_submodule "$msrcdir"
+		patch_submodule "$msrcdir"
 	done < "$tmpdir/modules"
+
+	# some build systems may download more (we want to control it)
+	rm -f "$tmpgit/.gitmodules" || $err "!rm .gitmodules as per: $mdir"
+}
+
+fetch_submodule()
+{
+	mcfgdir="$mdir/${1##*/}"
+	eval "$(setvars "" subrev subrepo subrepo_bkup)"
+
+	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
+	    $err "! . $mcfgdir/module.cfg"
+
+	if [ -n "$subrepo" ] || [ -n "$subrepo_bkup" ]; then
+		[ -n "$subrev" ] || \
+		    $err "$1 as per $mdir: subrev not defined"
+
+		rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
+		for mod in "$subrepo" "$subrepo_bkup"; do
+			[ -z "$mod" ] && continue
+			git clone "$mod" "$tmpgit/$1" || rm -Rf "$tmpgit/$1" \
+			    || $err "!rm $mod $project $cfgdir $1"
+		done
+		[ -d "$tmpgit/$1" ] || $err "!clone $mod $project $mcfgdir $1"
+	else
+		git -C "$tmpgit" submodule update --init --checkout -- "$1" || \
+		    $err "$mdir: !update $1"
+	fi
+}
+
+patch_submodule()
+{
+	[ -z "$subrev" ] || \
+		git -C "$tmpgit/$1" reset --hard "$subrev" || \
+		    $err "$mdir $1: cannot reset git revision"
+
+	git_am_patches "$tmpgit/$1" "$mdir/${1##*/}/patches"
 }
 
 git_am_patches()
