@@ -66,9 +66,9 @@ x_() {
 	[ $# -lt 1 ] || ${@} || $err "Unhandled non-zero exit: $@"; return 0
 }
 
-[ -e ".git" ] || [ -d "version" ] || printf "unknown\n" > version || \
+[ -e ".git" ] || [ -f "version" ] || printf "unknown\n" > version || \
     $err "Cannot generate unknown version file"
-[ -e ".git" ] || [ -d "versiondate" ] || printf "1716415872\n" > versiondate || \
+[ -e ".git" ] || [ -f "versiondate" ] || printf "1716415872\n" > versiondate || \
     $err "Cannot generate unknown versiondate file"
 
 read -r projectname < projectname || :
