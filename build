@@ -30,13 +30,10 @@ main()
 
 	[ "$1" = "dependencies" ] && x_ install_packages $@ && return 0
 
-	which git 1>/dev/null 2>/dev/null || \
-	    git_err "git not installed. please install git-scm."
-	git config --global user.name 1>/dev/null 2>/dev/null || \
-	    git_err "git config --global user.name \"John Doe\""
-	git config --global user.email 1>/dev/null 2>/dev/null || \
-	    git_err "git config --global user.email \"john.doe@example.com\""
-	git_init
+	for g in "which git" "git config --global user.name" \
+	    "git config --global user.email" "git_init"; do
+		eval "$g 1>/dev/null 2>/dev/null || git_err \"$g\""
+	done
 
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
