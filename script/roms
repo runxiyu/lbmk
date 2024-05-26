@@ -60,9 +60,9 @@ main()
 	[ "$xbmk_release" = "y" ] && x="archives (remember the inject command)"
 
 	[ -z "$targets" ] && $err "No ROM images were compiled"
-	printf "\nROM images available in these %s:\n" "$bstr"
+	printf "\nROM images available in these %s:\n" "$x"
 	eval "printf \"$targets\""
-	printf "^^ ROM images available in these %s.\n\n" "$bstr"
+	printf "^^ ROM images available in these %s.\n\n" "$x"
 
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
