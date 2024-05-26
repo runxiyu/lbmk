@@ -1,23 +1,23 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
-# SPDX-FileCopyrightText: 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# SPDX-FileCopyrightText: 2023-2024 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
+# Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
+# Copyright (c) 2023-2024 Leah Rowe <leah@libreboot.org>
 
 set -u -e
 
 . "include/option.sh"
 . "include/git.sh"
 
-eval "$(setvars "" xarch cfgsdir codedir config config_name xlang mode \
-    elfdir listfile project target target_dir targets tree _f target1 \
-    bootstrapargs autoconfargs cmakedir makeargs autogenargs xtree)"
+eval "$(setvars "" xarch cfgsdir cdir config config_name xlang mode makeargs \
+    listfile project target target_dir targets tree _f target1 bootstrapargs \
+    autoconfargs cmakedir elfdir autogenargs xtree)"
 
 main()
 {
 	while getopts f:b:m:u:c:x:s:l:n: option; do
-		_f="${1}"
-		case "${1}" in
+		_f="$1"
+		case "$1" in
 		-b) : ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
@@ -33,13 +33,13 @@ main()
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && $err "project name not specified"
-	elfdir="elf/${project}"
-	cfgsdir="config/${project}"
+	elfdir="elf/$project"
+	cfgsdir="config/$project"
 
 	remkdir "${tmpgit%/*}"
 
 	_cmd="build_projects"
-	[ -f "config/${project}/build.list" ] && _cmd="build_targets"
+	[ -f "config/$project/build.list" ] && _cmd="build_targets"
 	$_cmd $@
 }
 
@@ -52,8 +52,8 @@ build_projects()
 
 	load_project_config "$cfgsdir"
 
-	codedir="src/${project}"
-	[ -d "$codedir" ] || x_ ./update trees -f "$project"
+	cdir="src/${project}"
+	[ -d "$cdir" ] || x_ ./update trees -f "$project"
 
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
@@ -66,15 +66,13 @@ build_targets()
 
 	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
 
-	listfile="${cfgsdir}/build.list"
+	listfile="$cfgsdir/build.list"
 	[ -f "$listfile" ] || $err "list file, $listfile, does not exist"
 
 	# Build for all targets if no argument is given
 	[ $# -gt 0 ] && target1="$1"
-	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && \
-		shift 1
-	targets=$(items "$cfgsdir") || \
-	    $err "Cannot get options for $cfgsdir"
+	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && shift 1
+	targets="$(items "$cfgsdir")" || $err "Can't get options for $cfgsdir"
 	[ $# -gt 0 ] && targets=$@
 
 	[ -z "$mode" ] && x_ mkdir -p "$elfdir"
@@ -84,17 +82,15 @@ build_targets()
 handle_targets()
 {
 	for x in $targets; do
-		target="${x}"
-		printf "Running 'make %s' for project '%s, target '%s''\n" \
-		    "$mode" "$project" "$target"
+		target="$x"
+		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$target"
 		[ "$project" != "coreboot" ] || [ -n "$mode" ] || \
-		    [ "$target1" = "utils" ] || \
-			x_ ./vendor download $target
+		    [ "$target1" = "utils" ] || x_ ./vendor download $target
 		x_ handle_defconfig
 	done
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
-	[ -z "${mode}" ] && printf "Done! Check  %s/\n\n" "$elfdir"; return 0
+	[ -z "$mode" ] && printf "Done! Check  %s/\n\n" "$elfdir"; return 0
 }
 
 handle_defconfig()
@@ -104,13 +100,10 @@ handle_defconfig()
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && \
 		eval "handle_coreboot_utils \"$tree\"; return 0"
 
-	for y in "${target_dir}/config"/*; do
+	for y in "$target_dir/config"/*; do
 		[ -f "$y" ] || continue
 		config="$y"
-		config_name="${config#"${target_dir}/config/"}"
-
-		printf "handle/make/config %s %s: handling config %s\n" \
-		    "$project" "$target" "$config_name"
+		config_name="${config#"$target_dir/config/"}"
 
 		[ -n "$mode" ] || check_config || continue
 		handle_makefile
@@ -120,23 +113,20 @@ handle_defconfig()
 
 handle_src_tree()
 {
-	target_dir="${cfgsdir}/${target}"
+	target_dir="$cfgsdir/$target"
 	[ "$mode" = "fetch" ] && [ ! -f "CHANGELOG" ] && \
 		eval "fetch_project_trees; return 1;"
 
 	load_project_config "$target_dir"
-
-	x_ mkdir -p "${elfdir}/${target}"
+	x_ mkdir -p "$elfdir/$target"
 
 	[ -z "$tree" ] && $err "handle_src_tree $project/$tree: tree unset"
+	cdir="src/$project/$tree"
 
-	codedir="src/${project}/${tree}"
-
-	if [ ! -d "$codedir" ]; then
+	if [ ! -d "$cdir" ]; then
 		if [ "$mode" = "distclean" ] || \
 		    [ "$mode" = "crossgcc-clean" ]; then
-			printf "Directory %s missing; skipping clean\n" \
-			    "$codedir" 1>&2
+			printf "Directory %s missing; skip\n" "$cdir" 1>&2
 			return 1
 		fi
 		x_ ./update trees -f "$project" "$target"
@@ -148,28 +138,27 @@ handle_src_tree()
 
 load_project_config()
 {
-	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs \
-	    xtree tree_depend makeargs)"
+	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
+	    tree_depend makeargs)"
 
-	[ -f "${1}/target.cfg" ] || return 0
-	. "${1}/target.cfg" || \
-	    $err "load_project_config ${1}: cannot load target.cfg"; return 0
+	[ -f "$1/target.cfg" ] || return 0
+	. "$1/target.cfg" || $err "loadp $1: can't load target.cfg"; return 0
 }
 
 check_cross_compiler()
 {
 	for _xarch in $xarch; do
-		cbdir="src/coreboot/${tree}"
+		cbdir="src/coreboot/$tree"
 		[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 		[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
 		x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
 
-		export PATH="${PWD}/${cbdir}/util/crossgcc/xgcc/bin:$PATH"
+		export PATH="$PWD/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 		export CROSS_COMPILE="${xarch% *}-"
-		[ -n "${xlang}" ] && export BUILD_LANGUAGES="$xlang"
+		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
-		[ -d "${cbdir}/util/crossgcc/xgcc/${_xarch}/" ] && continue
+		[ -d "$cbdir/util/crossgcc/xgcc/$_xarch/" ] && continue
 		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$threads \
 		    UPDATED_SUBMODULES=1
 	done
@@ -177,89 +166,78 @@ check_cross_compiler()
 
 check_config()
 {
-	[ -f "$config" ] || $err "check_config: ${project}/${target}: no config"
+	[ -f "$config" ] || $err "check_config $project/$target: no config"
 
-	dest_dir="${elfdir}/${target}/${config_name}"
+	dest_dir="$elfdir/$target/$config_name"
 	# TODO: very hacky check. do it properly (based on build.list)
-	for elftest in "${dest_dir}"/*; do
-		[ -f "$elftest" ] || continue
-		printf "Build already exists, so skipping build\n" 1>&2
-		return 1
+	for elftest in "$dest_dir"/*; do
+		e "$elftest" f && return 1
 	done
 	x_ mkdir -p "$dest_dir"
 }
 
 handle_makefile()
 {
-	x_ make clean -C "$codedir"
-	x_ cp "$config" "${codedir}/.config"
-	[ -n "$mode" ] || make -C "$codedir" silentoldconfig || \
-	    make -C "$codedir" oldconfig || :
+	x_ make clean -C "$cdir" && x_ cp "$config" "$cdir/.config"
+	[ -n "$mode" ] || make -C "$cdir" silentoldconfig || \
+	    make -C "$cdir" oldconfig || :
 
-	run_make_command || $err "handle_makefile $codedir: no makefile!"
+	run_make_command || $err "handle_makefile $cdir: no makefile!"
 
 	_copy=".config"
 	[ "$mode" = "savedefconfig" ] && _copy="defconfig"
-	[ "${mode%config}" = "$mode" ] || x_ cp "$codedir/$_copy" "$config"
+	[ "${mode%config}" = "$mode" ] || x_ cp "$cdir/$_copy" "$config"
 
-	[ -e "${codedir}/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && \
-		x_ git -C "$codedir" clean -fdx; return 0
+	[ -e "$cdir/.git" ] && [ "$project" = "u-boot" ] && \
+	    [ "$mode" = "distclean" ] && x_ git -C "$cdir" clean -fdx; return 0
 }
 
 run_make_command()
 {
-	check_cmake "$codedir"
-	[ -z "$mode" ] && check_autoconf "$codedir"
-	check_makefile "$codedir" || return 1
+	check_cmake "$cdir"
+	[ -z "$mode" ] && check_autoconf "$cdir"
+	check_makefile "$cdir" || return 1
 
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
-		printf "%s\n" "${version%%-*}" > "$codedir/.coreboot-version"
+		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" \
+		    && makeargs="$makeargs UPDATED_SUBMODULES=1"
 
-	[ "$project" = "coreboot" ] && \
-		makeargs="$makeargs UPDATED_SUBMODULES=1"
-
-	make -C "$codedir" $mode -j$threads $makeargs || \
-	    $err "run_make $codedir: !make $mode"
+	make -C "$cdir" $mode -j$threads $makeargs || $err "!mk $cdir $mode"
 
 	[ "$mode" != "clean" ] && return 0
-	make -C "$codedir" distclean 2>/dev/null || :
+	make -C "$cdir" distclean 2>/dev/null || :
 }
 
 check_cmake()
 {
-	[ -z "${cmakedir}" ] || \
-		check_makefile "${1}" || \
-		    cmake -B "${1}" "${1}/${cmakedir}" || \
-		    check_makefile "${1}" || \
-		    $err "check_cmake ${1}: can't cmake ${cmakedir}"
-	[ -z "${cmakedir}" ] || check_makefile "${1}" || \
-		$err "check_cmake ${1}: can't generate Makefile"; return 0
+	[ -z "$cmakedir" ] || check_makefile "$1" || cmake -B "$1" \
+	    "$1/$cmakedir" || check_makefile "$1" || $err "$1: !cmk $cmakedir"
+	[ -z "$cmakedir" ] || check_makefile "$1" || \
+		$err "check_cmake $1: can't generate Makefile"; return 0
 }
 
 check_autoconf()
 {
 	(
-	cd "${1}" || $err "!cd $1"
+	cd "$1" || $err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
-	[ -f "autogen.sh" ] && x_ ./autogen.sh ${autogenargs}
+	[ -f "autogen.sh" ] && x_ ./autogen.sh $autogenargs
 	[ -f "configure" ] && x_ ./configure $autoconfargs; return 0
 	) || $err "can't bootstrap project: $1"
 }
 
 check_makefile()
 {
-	[ -f "${1}/Makefile" ] || [ -f "${1}/makefile" ] || \
-	    [ -f "${1}/GNUmakefile" ] || return 1; return 0
+	[ -f "$1/Makefile" ] || [ -f "$1/makefile" ] || \
+	    [ -f "$1/GNUmakefile" ] || return 1; return 0
 }
 
 copy_elf()
 {
 	while read -r f; do
-		[ ! -f "${codedir}/$f" ] || \
-			x_ cp "${codedir}/${f}" "$dest_dir"
+		[ -f "$cdir/$f" ] && x_ cp "$cdir/$f" "$dest_dir"
 	done < "$listfile"
-	x_ make clean -C "$codedir"
+	x_ make clean -C "$cdir"
 }
 
 main $@

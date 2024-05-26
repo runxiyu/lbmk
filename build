@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2014,2015,2020-2024 Leah Rowe <leah@libreboot.org>
-# SPDX-FileCopyrightText: 2015 Patrick "P. J." McDermott <pj@pehjota.net>
-# SPDX-FileCopyrightText: 2015, 2016 Klemens Nanni <contact@autoboot.org>
-# SPDX-FileCopyrightText: 2022, Caleb La Grange <thonkpeasant@protonmail.com>
+# Copyright (c) 2014-2015,2020-2024 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
+# Copyright (c) 2015-2016 Klemens Nanni <contact@autoboot.org>
+# Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 set -u -e
 
@@ -43,40 +43,34 @@ main()
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
 	*)
-		[ -f "${spath}" ] || $err "Bad command. Check docs."
-		shift 1; "$spath" $@ || $err "excmd: ${spath} ${@}" ;;
+		[ -f "$spath" ] || $err "Bad command. Check docs."
+		shift 1; "$spath" $@ || $err "excmd: $spath $@" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
 
 install_packages()
 {
-	if [ $# -lt 2 ]; then
-		printf "You must specify a distro, namely:\n" 1>&2
-		printf "Look at files under config/dependencies/\n" 1>&2
-		printf "Example: ./build dependencies debian\n" 1>&2
-		$err "install_packages: target not specified"
-	fi
+	[ $# -lt 2 ] && $err "Bad command. Check docs."
+	[ -f "config/dependencies/$2" ] || $err "Unsupported target"
 
-	[ -f "config/dependencies/${2}" ] || $err "Unsupported target"
-
-	. "config/dependencies/${2}"
+	. "config/dependencies/$2"
 
 	x_ $pkg_add $pkglist && [ -n "$aur_notice" ] && \
-	printf "Please install AUR packages: %s\n" "$aur_notice" 1>&2; return 0
+	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
 }
 
 git_init()
 {
 	[ -L ".git" ] && return 1
 	[ -e ".git" ] && return 0
-	eval "$(setvars "$(date -Rud @${versiondate})" cdate _nogit)"
+	eval "$(setvars "$(date -Rud @$versiondate)" cdate _nogit)"
 
 	git init || return 1
 	git add -A . || return 1
-	git commit -m "${projectname} ${version}" --date "${cdate}" \
+	git commit -m "$projectname $version" --date "$cdate" \
 	    --author="xbmk <xbmk@example.com>" || return 1
-	git tag -a "${version}" -m "${projectname} ${version}" || return 1
+	git tag -a "$version" -m "$projectname $version" || return 1
 }
 
 mkrelease()
@@ -85,54 +79,54 @@ mkrelease()
 
 	vdir="release"
 	while getopts d:m: option; do
-		[ -z "${OPTARG}" ] && $err "Empty argument not allowed"
-		case "${option}" in
-		d) vdir="${OPTARG}" ;;
-		m) mode="${OPTARG}" ;;
+		[ -z "$OPTARG" ] && $err "Empty argument not allowed"
+		case "$option" in
+		d) vdir="$OPTARG" ;;
+		m) mode="$OPTARG" ;;
 		*) $err "Invalid option" ;;
 		esac
 	done
 
-	vdir="${vdir}/${version}"
+	vdir="$vdir/$version"
 	src_dirname="${relname}_src"
-	srcdir="${vdir}/${src_dirname}"
+	srcdir="$vdir/$src_dirname"
 
-	[ -e "${vdir}" ] && $err "already exists: \"${vdir}\""
-	mkdir -p "${vdir}" || $err "mkvdir: !mkdir -p \"${vdir}\""
-	git clone . "${srcdir}" || $err "mkdir: !gitclone \"${srcdir}\""
+	[ -e "$vdir" ] && $err "already exists: \"$vdir\""
+	mkdir -p "$vdir" || $err "mkvdir: !mkdir -p \"$vdir\""
+	git clone . "$srcdir" || $err "mkdir: !gitclone \"$srcdir\""
 
 	build_release
 
-	printf "\n\nDONE! Check release files under %s\n" "${vdir}"
+	printf "\n\nDONE! Check release files under %s\n" "$vdir"
 }
 
 build_release()
 {
-	_xm="build_release ${vdir}"
+	_xm="build_release $vdir"
 	(
-	cd "${srcdir}" || $err "${_xm}: !cd \"${srcdir}\""
+	cd "$srcdir" || $err "$_xm: !cd \"$srcdir\""
 	fetch_trees
 	x_ mv src/docs docs
 	) || $err "can't create release files"
 
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
-	    --abbrev-commit > "${srcdir}/CHANGELOG" || $err "!gitlog $srcdir"
+	    --abbrev-commit > "$srcdir/CHANGELOG" || $err "!gitlog $srcdir"
 
 	(
-	cd "${srcdir%/*}" || $err "${_xm}: mktarball \"${srcdir}\""
+	cd "${srcdir%/*}" || $err "$_xm: mktarball \"$srcdir\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || $err "$_xm: mksrc"
 	) || $err "can't create src tarball"
-	[ "${mode}" = "src" ] && return 0
+	[ "$mode" = "src" ] && return 0
 
 	(
-	cd "${srcdir}" || $err "${_xm}: 2 !cd \"${srcdir}\""
-	./build roms all || $err "${_xm}: roms-all"
-	./build roms serprog rp2040 || $err "${_xm}: rp2040"
-	./build roms serprog stm32 || $err "${_xm}: stm32"
+	cd "$srcdir" || $err "$_xm: 2 !cd \"$srcdir\""
+	./build roms all || $err "$_xm: roms-all"
+	./build roms serprog rp2040 || $err "$_xm: rp2040"
+	./build roms serprog stm32 || $err "$_xm: stm32"
 	x_ mv bin ../roms
 	) || $err "can't build rom images"
 
-	rm -Rf "${srcdir}" || $err "!rm -Rf ${srcdir}"
+	rm -Rf "$srcdir" || $err "!rm -Rf $srcdir"
 }
 
 fetch_trees()
@@ -156,8 +150,8 @@ fail()
 
 tmp_cleanup()
 {
-	[ "${tmpdir_was_set}" = "n" ] || return 0
-	rm -Rf "${tmpdir}" || return 1
+	[ "$tmpdir_was_set" = "n" ] || return 0
+	rm -Rf "$tmpdir" || return 1
 }
 
 main $@
