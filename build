@@ -12,7 +12,7 @@ if [ "./${0##*/}" != "${0}" ] || [ ! -f "build" ] || [ -L "build" ]; then
 	exit 1
 fi
 
-. "include/option.sh"
+. "include/lib.sh"
 . "include/vendor.sh"
 . "include/mrc.sh"
 

@@ -6,7 +6,7 @@
 
 set -u -e
 
-. "include/option.sh"
+. "include/lib.sh"
 . "include/git.sh"
 
 eval "$(setvars "" xarch cfgsdir cdir config config_name xlang mode makeargs \

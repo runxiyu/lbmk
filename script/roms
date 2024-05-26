@@ -8,7 +8,7 @@
 
 set -u -e
 
-. "include/option.sh"
+. "include/lib.sh"
 
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 grub_background="background1280x800.png"
