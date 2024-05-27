@@ -356,7 +356,8 @@ build_grub_roms()
 		[ "$initmode" = "normal" ] && newrom="$romdir/${payload1}_" \
 		    && newrom="$newrom${board}_${initmode}_$keymap.rom"
 		x_ cprom "$tmpgrubrom" "$newrom"
-		if [ "$payload_seabios_withgrub" = "y" ]; then
+		if [ "$payload_seabios_withgrub" = "y" ] && \
+		    [ "$payload1" != "grub" ]; then
 			x_ "$cbfstool" "$tmpgrubrom" add \
 			    -f "config/grub/bootorder" -n bootorder -t raw
 			x_ cprom "$tmpgrubrom" "${newrom%.rom}_grubfirst.rom"
