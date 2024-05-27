@@ -150,9 +150,21 @@ configure_target()
 	# Override the above defaults using target.cfg
 	. "$targetdir/target.cfg"
 
-	[ -z "$grub_scan_disk" ] && grub_scan_disk="both"
-	[ "$grub_scan_disk" != "both" ] && [ "$grub_scan_disk" != "ata" ] && \
-	    [ "$grub_scan_disk" != "ahci" ] && grub_scan_disk="both"
+	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
+	_ata=""
+	_ahci=""
+	_nvme=""
+	_grub_scan_disk=""
+	for _disk in $grub_scan_disk; do
+		[ "$_disk" != "nvme" ] && [ "$_disk" != "ahci" ] && \
+		    [ "$_disk" != "ata" ] && _grub_scan_disk="nvme ahci ata" \
+		    && break
+		eval "[ -n \"\$_$_disk\" ] && continue"
+		eval "_$_disk=\"$_disk\""
+		_grub_scan_disk="$_grub_scan_disk $_disk"
+	done
+	[ -z "$_grub_scan_disk" ] && _grub_scan_disk="nvme ahci ata"
+	grub_scan_disk="${_grub_scan_disk# }"
 
 	[ -z "$tree" ] && $err "$board: tree not defined"
 
@@ -333,8 +345,7 @@ build_grub_roms()
 	tmpcfg="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" > "$tmpcfg" || \
 	    $err "set grub_scandisk, $grub_scan_disk, $tmpcfg"
-	[ "$grub_scan_disk" = "both" ] || \
-	    x_ "$cbfstool" "$tmprom" add -f "$tmpcfg" -n scan.cfg -t raw
+	x_ "$cbfstool" "$tmprom" add -f "$tmpcfg" -n scan.cfg -t raw
 	printf "set timeout=%s\n" "$grub_timeout" > "$tmpcfg" || \
 	    $err "set timeout, $grub_timeout, $tmpcfg"
 	[ -z "$grub_timeout" ] || x_ "$cbfstool" "$tmprom" add \
