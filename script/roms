@@ -159,7 +159,11 @@ configure_target()
 		[ "$_disk" != "nvme" ] && [ "$_disk" != "ahci" ] && \
 		    [ "$_disk" != "ata" ] && _grub_scan_disk="nvme ahci ata" \
 		    && break
-		eval "[ -n \"\$_$_disk\" ] && continue"
+
+		[ -n "$_ata" ] && [ "$_disk" = "ata" ] && continue
+		[ -n "$_ahci" ] && [ "$_disk" = "ahci" ] && continue
+		[ -n "$_nvme" ] && [ "$_disk" = "nvme" ] && continue
+
 		eval "_$_disk=\"$_disk\""
 		_grub_scan_disk="$_grub_scan_disk $_disk"
 	done
