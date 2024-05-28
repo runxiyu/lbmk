@@ -26,7 +26,7 @@ v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
 v="$v grub_timeout ubdir board grub_scan_disk uboot_config"
 eval "$(setvars "n" $pv serprog)"
 eval "$(setvars "" $v boards _displaymode _payload _keyboard all targets \
-    serprog_boards_dir)"
+    serprog_boards_dir _scandisk)"
 
 main()
 {
@@ -37,6 +37,7 @@ main()
 		-d) _displaymode="$2" ;;
 		-p) _payload="$2" ;;
 		-k) _keyboard="$2" ;;
+		-s) _scandisk="$2" ;;
 		*)
 			[ "$1" = "all" ] && all="y"
 			boards="$1 $boards"
@@ -150,6 +151,7 @@ configure_target()
 	# Override the above defaults using target.cfg
 	. "$targetdir/target.cfg"
 
+	[ -n "$_scandisk" ] && grub_scan_disk="$_scandisk"
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 	_ata=""
 	_ahci=""
