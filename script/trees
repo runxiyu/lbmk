@@ -200,7 +200,7 @@ run_make_command()
 
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
 		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" \
-		    && makeargs="$makeargs UPDATED_SUBMODULES=1"
+		    && makeargs="$makeargs UPDATED_SUBMODULES=1 CPUS=$threads"
 
 	make -C "$cdir" $mode -j$threads $makeargs || $err "!mk $cdir $mode"
 
