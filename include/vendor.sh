@@ -28,7 +28,6 @@ eval "$(setvars "" _b EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
 
 vendor_download()
 {
-	set +u +e
 	export PATH="$PATH:/sbin"
 
 	[ $# -gt 0 ] || $err "No argument given"
@@ -48,7 +47,9 @@ detect_firmware()
 	[ -d "$boarddir" ] || $err "Target '$board' not defined."
 	check_defconfig "$boarddir" 1>"$tmpdir/vendorcfg.list" && return 0
 	while read -r cbcfgfile; do
+		set +u +e
 		. "$cbcfgfile" 2>/dev/null
+		set -u -e
 	done < "$tmpdir/vendorcfg.list"
 	. "$boarddir/target.cfg" 2>/dev/null
 
@@ -131,6 +132,7 @@ fetch()
 	x_ rm -Rf "${_dl}_extracted"
 	mkdirs "$_dest" "extract_$dl_type" || return 0
 	eval "extract_$dl_type"
+	set -u -e
 
 	[ -f "$_dest" ] && return 0
 	$err "extract_$dl_type (fetch): missing file: '$_dest'"
@@ -167,6 +169,8 @@ extract_intel_me()
 	sdir="$(mktemp -d)"
 	[ -z "$sdir" ] && return 0
 	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
+
+	set +u +e
 	(
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\""
@@ -224,6 +228,7 @@ extract_kbc1126ec()
 
 extract_e6400vga()
 {
+	set +u +e
 	for v in E6400_VGA_offset E6400_VGA_romname; do
 		eval "[ -z \"\$$v\" ] && $err \"e6400vga: $v undefined\""
 	done
