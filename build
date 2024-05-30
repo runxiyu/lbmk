@@ -139,7 +139,6 @@ fetch_trees()
 		[ ! -f "$x" ] || [ -L "$xp" ] || x_ rm -Rf "src/$xp/$xp"
 	done
 	rmgit .
-	rm -Rf tmp .git src/u-boot/*/test/lib/strlcat.c || $err "$_xm !rm"
 }
 
 fail()
