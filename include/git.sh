@@ -46,6 +46,7 @@ prepare_new_tree()
 	cp -R "src/$project/$project" "$tmpgit" || \
 	    $err "prepare_new_tree $project/$tree: can't make tmpclone"
 	git_prep "$PWD/$cfgsdir/$tree/patches" "src/$project/$tree" "update"
+	nuke "$project/$tree" "$project/$tree"
 }
 
 fetch_project_repo()
@@ -61,6 +62,10 @@ fetch_project_repo()
 		x_ ./update trees -f $d
 	done
 	rm -Rf "$tmpgit" || $err "fetch_repo: !rm -Rf $tmpgit"
+
+	for x in config/git/*; do
+		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}"; continue
+	done
 }
 
 clone_project()
@@ -180,4 +185,33 @@ move_repo()
 	mv "$tmpgit" "$1" || $err "git_prep: !mv $tmpgit $1"
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
 		x_ ./update trees -f coreboot "$xtree"; return 0
+}
+
+# can delete from multi- and single-tree projects.
+# called from script/trees when downloading sources.
+nuke()
+{
+	del="n"
+	pjcfgdir="${1%/}"
+	pjsrcdir="${2%/}"
+	pjsrcdir="${pjsrcdir#src/}"
+	[ ! -f "config/$pjcfgdir/nuke.list" ] && return 0
+
+	while read -r nukefile; do
+		rmf="$(realpath "src/$pjsrcdir/$nukefile" 2>/dev/null)" || \
+		    continue
+		[ -L "$rmf" ] && continue # we will delete the actual file
+		[ "${rmf#"$PWD/src/$pjsrcdir"}" = "$rmf" ] && continue
+		[ "${rmf#"$PWD/src/"}" = "$pjsrcdir" ] && continue
+		rmf="${rmf#"$PWD/"}"
+		[ -e "$rmf" ] || continue
+		del="y"
+		rm -Rf "$rmf" || $err "$nuke pjcfgdir: can't rm \"$nukefile\""
+		printf "nuke %s: deleted \"%s\"\n" "$pjcfgdir" "$rmf"
+	done < "config/$pjcfgdir/nuke.list"
+
+	[ "${del}" = "y" ] && return 0
+	printf "nuke %s: no defined files exist in dir, src/%s\n" 1>&2 \
+	    "$pjcfgdir" "$pjsrcdir"
+	printf "(this is not an error)\n" 1>&2
 }
