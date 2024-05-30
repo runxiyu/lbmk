@@ -120,9 +120,6 @@ prep_submodules()
 		fetch_submodule "$msrcdir"
 		patch_submodule "$msrcdir"
 	done < "$tmpdir/modules"
-
-	# some build systems may download more (we want to control it)
-	rm -f "$tmpgit/.gitmodules" || $err "!rm .gitmodules as per: $mdir"
 }
 
 fetch_submodule()
