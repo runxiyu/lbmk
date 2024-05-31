@@ -113,7 +113,6 @@ fetch()
 	[ "${5#/}" = "$5" ] || $err "fetch: absolute path not allowed: '$5'"
 	_dest="${5##*../}"
 	_dl="$vendir/cache/$dlsum"
-	dl_fail="n"
 
 	x_ mkdir -p "${_dl%/*}"
 
