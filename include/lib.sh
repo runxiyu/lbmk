@@ -11,10 +11,8 @@ cbdir="src/coreboot/default"
 cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
 cbfstool="cbutils/default/cbfstool"
-grubcfgsdir="config/grub"
-layoutdir="/boot/grub/layouts"
-. "$grubcfgsdir/modules.list"
 tmpgit="$PWD/tmp/gitclone"
+grubdata="config/data/grub"
 err="err_"
 
 err_()

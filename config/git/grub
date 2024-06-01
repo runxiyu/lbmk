@@ -1,14 +1,6 @@
 {grub}{
-	rev: 8719cc2040368d43ab2de0b6e1b850b2c9cfc5b7
-	loc: grub
+	rev: HEAD
+	loc: grub/grub
 	url: git://git.savannah.gnu.org/grub.git
 	bkup_url: https://codeberg.org/libreboot/grub
-	depend: gnulib
-}
-
-{gnulib}{
-	rev: 9f48fb992a3d7e96610c4ce8be969cff2d61a01b
-	loc: grub/gnulib
-	url: git://git.sv.gnu.org/gnulib
-	bkup_url: https://codeberg.org/libreboot/gnulib
 }

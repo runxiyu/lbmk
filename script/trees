@@ -178,9 +178,12 @@ check_config()
 
 handle_makefile()
 {
-	x_ make clean -C "$cdir" && x_ cp "$config" "$cdir/.config"
-	[ -n "$mode" ] || make -C "$cdir" silentoldconfig || \
-	    make -C "$cdir" oldconfig || :
+	[ "$project" = "grub" ] && [ "${mode%config}" != "$mode" ] && return 0
+
+	check_makefile "$cdir" && x_ make clean -C "$cdir"
+	x_ cp "$config" "$cdir/.config"
+	[ -n "$mode" ] || [ "$project" = "grub" ] || make -C "$cdir" \
+	    silentoldconfig || make -C "$cdir" oldconfig || :
 
 	run_make_command || $err "handle_makefile $cdir: no makefile!"
 
@@ -203,6 +206,8 @@ run_make_command()
 		    && makeargs="$makeargs UPDATED_SUBMODULES=1 CPUS=$threads"
 
 	make -C "$cdir" $mode -j$threads $makeargs || $err "!mk $cdir $mode"
+
+	[ "$project" = "grub" ] && [ -z "$mode" ] && mkpayload_grub
 
 	[ "$mode" != "clean" ] && return 0
 	make -C "$cdir" distclean 2>/dev/null || :
@@ -230,6 +235,25 @@ check_makefile()
 {
 	[ -f "$1/Makefile" ] || [ -f "$1/makefile" ] || \
 	    [ -f "$1/GNUmakefile" ] || return 1; return 0
+}
+
+mkpayload_grub()
+{
+	[ -f "$grubdata/module/$tree" ] || $err "$tree: grub modules missing"
+	x_ rm -f "$cdir/grub.elf"
+
+	eval "$(setvars "" grub_modules grub_install_modules)"
+
+	. "$grubdata/module/$tree" || $err "$tree: !source grub modules"
+
+	[ -z "$grub_install_modules" ] && $err "$tree: install modules unset"
+	[ -z "$grub_modules" ] && $err "$tree: modules unset"
+
+	"${cdir}/grub-mkstandalone" --grub-mkimage="${cdir}/grub-mkimage" \
+	    -O i386-coreboot -o "${cdir}/grub.elf" -d "${cdir}/grub-core/" \
+	    --fonts= --themes= --locales=  --modules="$grub_modules" \
+	    --install-modules="$grub_install_modules" \
+	    "/boot/grub/grub.cfg=${cdir}/.config" || $err "$tree: !mkgrub"
 }
 
 copy_elf()

@@ -9,7 +9,6 @@ usbserial_pl2303 \
 usbserial_usbdebug \
 video_colors \
 "
-
 # Modules (and always loaded)
 grub_modules=" \
 acpi \

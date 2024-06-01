@@ -12,7 +12,6 @@ set -u -e
 
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 grub_background="background1280x800.png"
-grubelf="elf/grub/grub.elf"
 cfgsdir="config/coreboot"
 picosrc="src/pico-serprog"
 picosdk="src/pico-sdk"
@@ -23,7 +22,7 @@ stm32src="src/stm32-vserprog"
 pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
 pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
-v="$v grub_timeout ubdir board grub_scan_disk uboot_config"
+v="$v grub_timeout ubdir board grub_scan_disk uboot_config grubtree grubelf"
 eval "$(setvars "n" $pv serprog)"
 eval "$(setvars "" $v boards _displaymode _payload _keyboard all targets \
     serprog_boards_dir _scandisk)"
@@ -172,6 +171,9 @@ configure_target()
 	[ -z "$_grub_scan_disk" ] && _grub_scan_disk="nvme ahci ata"
 	grub_scan_disk="${_grub_scan_disk# }"
 
+	[ -n "$grubtree" ] || grubtree="default"
+	grubelf="elf/grub/$grubtree/payload/grub.elf"
+
 	[ -z "$tree" ] && $err "$board: tree not defined"
 
 	[ "$payload_memtest" != "y" ] && payload_memtest="n"
@@ -225,24 +227,14 @@ build_payloads()
 
 build_grub_payload()
 {
-	x_ mkdir -p elf/grub
-
-	for keymapfile in config/grub/keymap/*.gkb; do
+	for keymapfile in "$grubdata/keymap/"*.gkb; do
 		[ -f "$keymapfile" ] && keymaps="$keymaps $keymapfile"
 	done
-	[ -z "$_keyboard" ] || [ -f "$grubcfgsdir/keymap/$_keyboard.gkb" ] || \
+	[ -z "$_keyboard" ] || [ -f "$grubdata/keymap/$_keyboard.gkb" ] || \
 		$err "build_grub_payload: $_keyboard layout not defined"
-	[ -n "$_keyboard" ] && keymaps="$grubcfgsdir/keymap/$_keyboard.gkb"
-	[ -f "$grubelf" ] && return 0
-	[ -f "src/grub/grub-mkstandalone" ] || x_ ./update trees -b grub
+	[ -n "$_keyboard" ] && keymaps="$grubdata/keymap/$_keyboard.gkb"
 
-	./src/grub/grub-mkstandalone --grub-mkimage="src/grub/grub-mkimage" \
-	    -O i386-coreboot -o "elf/grub/grub.elf" -d "src/grub/grub-core/" \
-	    --fonts= --themes= --locales=  --modules="$grub_modules" \
-	    --install-modules="$grub_install_modules" \
-	    "/boot/grub/grub.cfg=$grubcfgsdir/config/grub_memdisk.cfg" \
-	    "/boot/grub/grub_default.cfg=$grubcfgsdir/config/grub.cfg" || \
-	    $err "could not generate grub.elf"
+	[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree; return 0
 }
 
 build_uboot_payload()
@@ -343,7 +335,7 @@ build_grub_roms()
 	# we only need insert background.png once, for each coreboot config:
 	if [ "$displaymode" = "vesafb" ] || \
 	    [ "$displaymode" = "corebootfb" ]; then
-		backgroundfile="config/grub/background/$grub_background"
+		backgroundfile="$grubdata/background/$grub_background"
 		"$cbfstool" "$tmprom" add -f "$backgroundfile" -n \
 		    background.png -t raw || $err "!bg, $backgroundfile"
 	fi
@@ -376,7 +368,7 @@ build_grub_roms()
 		if [ "$payload_seabios_withgrub" = "y" ] && \
 		    [ "$payload1" != "grub" ]; then
 			x_ "$cbfstool" "$tmpgrubrom" add \
-			    -f "config/grub/bootorder" -n bootorder -t raw
+			    -f "$grubdata/bootorder" -n bootorder -t raw
 			x_ cprom "$tmpgrubrom" "${newrom%.rom}_grubfirst.rom"
 			if [ "$payload_seabios_grubonly" = "y" ]; then
 				x_ "$cbfstool" "$tmpgrubrom" add-int -i 0 \

@@ -103,17 +103,17 @@ git_prep()
 
 prep_submodules()
 {
-	[ -f "$tmpgit/.gitmodules" ] || return 0
-
 	mdir="$PWD/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 
 	if [ -f "$mdir/module.list" ]; then
 		cat "$mdir/module.list" > "$tmpdir/modules" || \
 		    $err "!cp $mdir/module.list $tmpdir/modules"
-	else
+	elif [ -f "$tmpgit/.gitmodules" ]; then
 		git -C "$tmpgit" submodule status | awk '{print $2}' > \
 		    "$tmpdir/modules" || $err "$mdir: cannot list submodules"
+	else
+		return 0
 	fi
 
 	while read -r msrcdir; do
