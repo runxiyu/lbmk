@@ -32,7 +32,7 @@ setvars()
 	printf "%s\n" "${_setvars% }"
 }
 eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
-    versiondate threads projectname)"
+    versiondate threads projectname projectsite)"
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
@@ -70,6 +70,7 @@ x_() {
     $err "Cannot generate unknown versiondate file"
 
 read -r projectname < projectname || :
+read -r projectsite < projectsite || :
 [ ! -f version ] || read -r version < version || :
 version_="$version"
 [ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
@@ -78,7 +79,7 @@ version_="$version"
 versiondate_="$versiondate"
 [ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
-for p in projectname version versiondate; do
+for p in projectname version versiondate projectsite; do
 	eval "[ -n \"\$$p\" ] || $err \"$p unset\""
 	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
 done

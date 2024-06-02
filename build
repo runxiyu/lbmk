@@ -38,7 +38,7 @@ main()
 	done
 
 	case "${1}" in
-	version) printf "%s\n" "$relname" ;;
+	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
