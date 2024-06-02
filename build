@@ -25,7 +25,7 @@ linkname="${linkpath##*/}"
 main()
 {
 	x_ id -u 1>/dev/null 2>/dev/null
-	[ $# -lt 1 ] && $err "Check $projectname documentation for help."
+	[ $# -lt 1 ] && badcmd
 	spath="script/$1"
 
 	[ "$1" = "dependencies" ] && x_ install_packages $@ && return 0
@@ -43,7 +43,7 @@ main()
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
 	*)
-		[ -f "$spath" ] || $err "Bad command. Check docs."
+		[ -f "$spath" ] || badcmd
 		shift 1; "$spath" $@ || $err "excmd: $spath $@" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
@@ -51,8 +51,8 @@ main()
 
 install_packages()
 {
-	[ $# -lt 2 ] && $err "Bad command. Check docs."
-	[ -f "config/dependencies/$2" ] || $err "Unsupported target"
+	[ $# -lt 2 ] && badcmd "fewer than two arguments"
+	[ -f "config/dependencies/$2" ] || badcmd "unsupported target"
 
 	. "config/dependencies/$2"
 
@@ -79,11 +79,11 @@ mkrelease()
 
 	vdir="release"
 	while getopts d:m: option; do
-		[ -z "$OPTARG" ] && $err "Empty argument not allowed"
+		[ -z "$OPTARG" ] && badcmd "empty argument not allowed"
 		case "$option" in
 		d) vdir="$OPTARG" ;;
 		m) mode="$OPTARG" ;;
-		*) $err "Invalid option" ;;
+		*) badcmd "invalid option '-$option'" ;;
 		esac
 	done
 

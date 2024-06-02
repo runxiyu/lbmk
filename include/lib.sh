@@ -15,6 +15,15 @@ tmpgit="$PWD/tmp/gitclone"
 grubdata="config/data/grub"
 err="err_"
 
+badcmd()
+{
+	errmsg="no context given"
+	[ $# -gt 0 ] && errmsg="$1"
+
+	dstr="Check $projectname docs via $projectsite"
+	[ -d "docs" ] && dstr="$dstr (local docs available via docs/)"
+	$err "Bad command ($errmsg). $dstr"
+}
 err_()
 {
 	printf "ERROR %s: %s\n" "$0" "$1" 1>&2

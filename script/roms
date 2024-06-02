@@ -69,7 +69,7 @@ main()
 
 handle_serprog()
 {
-	[ -z "${1+x}" ] && $err "bad command. Check $projectname docs."
+	[ -z "${1+x}" ] && badcmd
 	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "bad command"
 	if [ "$1" = "rp2040" ]; then
 		serprog_boards_dir="$picosdk/src/boards/include/boards"
