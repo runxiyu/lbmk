@@ -20,7 +20,7 @@ badcmd()
 	errmsg="no context given"
 	[ $# -gt 0 ] && errmsg="$1"
 
-	dstr="Check $projectname docs via $projectsite"
+	dstr="See $projectname build system docs: ${projectsite}docs/maintain/"
 	[ -d "docs" ] && dstr="$dstr (local docs available via docs/)"
 	$err "Bad command ($errmsg). $dstr"
 }
