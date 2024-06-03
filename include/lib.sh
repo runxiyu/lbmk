@@ -17,12 +17,12 @@ err="err_"
 
 badcmd()
 {
-	errmsg="no context given"
-	[ $# -gt 0 ] && errmsg="$1"
+	errmsg="Bad command"
+	[ $# -gt 0 ] && errmsg="Bad command ($1)"
 
 	dstr="See $projectname build system docs: ${projectsite}docs/maintain/"
 	[ -d "docs" ] && dstr="$dstr (local docs available via docs/)"
-	$err "Bad command ($errmsg). $dstr"
+	$err "$errmsg. $dstr"
 }
 err_()
 {
