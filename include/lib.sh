@@ -43,14 +43,16 @@ setvars()
 eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
     versiondate threads projectname projectsite)"
 
+
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
-set | grep XBMK_RELEASE 1>/dev/null 2>/dev/null || xbmk_release="n" || :
+
+[ -z "${XBMK_RELEASE+x}" ] && xbmk_release="n"
 [ -z "$xbmk_release" ] && xbmk_release="$XBMK_RELEASE"
 [ "$xbmk_release" = "n" ] || [ "$xbmk_release" = "y" ] || xbmk_release="n"
 export XBMK_RELEASE="$xbmk_release"
 
-set | grep TMPDIR 1>/dev/null 2>/dev/null || tmpdir_was_set="n"
+[ -z "${TMPDIR+x}" ] && tmpdir_was_set="n"
 if [ "$tmpdir_was_set" = "y" ]; then
 	[ "${TMPDIR%_*}" = "/tmp/xbmk" ] || tmpdir_was_set="n"
 fi
@@ -63,7 +65,7 @@ else
 	tmpdir="$TMPDIR"
 fi
 
-set | grep XBMK_THREADS 1>/dev/null 2>/dev/null && threads="$XBMK_THREADS"
+[ -z "${XBMK_THREADS+x}" ] || threads="$XBMK_THREADS"
 [ -z "$threads" ] && threads=1
 expr "X$threads" : "X-\{0,1\}[0123456789][0123456789]*$" \
     1>/dev/null 2>/dev/null || threads=1 # user specified a non-integer
