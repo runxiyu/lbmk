@@ -40,9 +40,26 @@ setvars()
 	done
 	printf "%s\n" "${_setvars% }"
 }
-eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
-    versiondate threads projectname projectsite)"
 
+eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
+    versiondate threads projectname projectsite aur_notice)"
+
+read -r projectname < projectname || :
+read -r projectsite < projectsite || :
+
+install_packages()
+{
+	[ $# -lt 2 ] && badcmd "fewer than two arguments"
+	[ -f "config/dependencies/$2" ] || badcmd "unsupported target"
+
+	. "config/dependencies/$2" || $err "! . config/dependencies/$2"
+
+	$pkg_add $pkglist || $err "Cannot install packages"
+
+	[ -n "$aur_notice" ] && \
+	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
+}
+[ $# -gt 0 ] && [ "$1" = "dependencies" ] && install_packages $@ && return 0
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
@@ -80,8 +97,6 @@ x_() {
 [ -e ".git" ] || [ -f "versiondate" ] || printf "1716415872\n" > versiondate || \
     $err "Cannot generate unknown versiondate file"
 
-read -r projectname < projectname || :
-read -r projectsite < projectsite || :
 [ ! -f version ] || read -r version < version || :
 version_="$version"
 [ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \

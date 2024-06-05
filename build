@@ -16,7 +16,7 @@ fi
 . "include/vendor.sh"
 . "include/mrc.sh"
 
-eval "$(setvars "" aur_notice vdir src_dirname srcdir _xm mode xp)"
+eval "$(setvars "" vdir src_dirname srcdir _xm mode xp)"
 err="fail"
 
 linkpath="${0}"
@@ -27,8 +27,6 @@ main()
 	x_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && badcmd
 	spath="script/$1"
-
-	[ "$1" = "dependencies" ] && x_ install_packages $@ && return 0
 
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
@@ -47,17 +45,6 @@ main()
 		shift 1; "$spath" $@ || $err "excmd: $spath $@" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-}
-
-install_packages()
-{
-	[ $# -lt 2 ] && badcmd "fewer than two arguments"
-	[ -f "config/dependencies/$2" ] || badcmd "unsupported target"
-
-	. "config/dependencies/$2"
-
-	x_ $pkg_add $pkglist && [ -n "$aur_notice" ] && \
-	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
 }
 
 git_init()
