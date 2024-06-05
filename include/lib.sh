@@ -61,6 +61,7 @@ install_packages()
 }
 [ $# -gt 0 ] && [ "$1" = "dependencies" ] && install_packages $@ && return 0
 
+id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"

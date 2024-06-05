@@ -24,7 +24,6 @@ linkname="${linkpath##*/}"
 
 main()
 {
-	x_ id -u 1>/dev/null 2>/dev/null
 	[ $# -lt 1 ] && badcmd
 	spath="script/$1"
 
