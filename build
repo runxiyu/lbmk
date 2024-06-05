@@ -28,8 +28,6 @@ main()
 	[ $# -lt 1 ] && badcmd
 	spath="script/$1"
 
-	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
-
 	for g in "which git" "git config --global user.name" \
 	    "git config --global user.email" "git_init"; do
 		eval "$g 1>/dev/null 2>/dev/null || git_err \"$g\""
