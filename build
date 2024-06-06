@@ -117,10 +117,7 @@ fetch_trees()
 {
 	for x in $(items config/git); do
 		./update trees -f "$x" || $err "$_xm: fetch $x"
-	done
-	for x in config/*/build.list; do
-		[ -f "$x" ] && xp="${x#*/}" && xp="${xp%/*}"
-		[ ! -f "$x" ] || [ -L "$xp" ] || x_ rm -Rf "src/$xp/$xp"
+		singletree "$x" || x_ rm -Rf "src/$x/$x"
 	done
 	rmgit .
 }

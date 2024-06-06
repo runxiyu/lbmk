@@ -228,3 +228,13 @@ e()
 	eval "$estr"
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
+
+# return 0 if project is single-tree, otherwise 1
+# e.g. coreboot is multi-tree, so 1
+singletree()
+{
+	for pdir in "config/${1}/"*/target.cfg; do
+		[ ! -e "$pdir" ] && continue
+		[ -f "$pdir" ] && return 1
+	done
+}
