@@ -88,7 +88,7 @@ git_prep()
 	git -C "$tmpgit" reset --hard $rev || $err "git -C $_loc: !reset $rev"
 	git_am_patches "$tmpgit" "$_patchdir" || $err "!am $_loc $_patchdir"
 
-	if [ "$project" != "coreboot" ] || [ $# -gt 2 ]; then
+	if singletree "$project" || [ $# -gt 2 ]; then
 		prep_submodules "$_loc"
 	fi
 
