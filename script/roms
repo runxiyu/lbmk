@@ -215,7 +215,7 @@ build_payloads()
 	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
 
 	mt86bin="elf/memtest86plus/memtest.bin"
-	[ "$payload_memtest" != "y" ] || [ -f "src/$mt86bin" ] || \
+	[ "$payload_memtest" != "y" ] || [ -f "$mt86bin" ] || \
 		x_ ./update trees -b memtest86plus
 
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
@@ -283,7 +283,7 @@ build_roms()
 	x_ cp "$_cbrom" "$cbrom"
 
 	[ "$payload_memtest" != "y" ] || x_ "$cbfstool" "$cbrom" add-payload \
-	    -f "src/$mt86bin" -n img/memtest -c lzma
+	    -f "$mt86bin" -n img/memtest -c lzma
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
 	[ "$payload_grub" != "y" ] || x_ build_grub_roms "$cbrom" "grub"
 	[ "$payload_uboot" = "y" ] || return 0
