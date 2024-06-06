@@ -11,7 +11,7 @@ set -u -e
 
 eval "$(setvars "" xarch cfgsdir cdir config config_name xlang mode makeargs \
     listfile project target target_dir targets tree _f target1 bootstrapargs \
-    autoconfargs cmakedir elfdir autogenargs xtree)"
+    autoconfargs cmakedir elfdir autogenargs xtree datadir)"
 
 main()
 {
@@ -34,6 +34,7 @@ main()
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && $err "project name not specified"
 	elfdir="elf/$project"
+	datadir="config/data/$project"
 	cfgsdir="config/$project"
 
 	remkdir "${tmpgit%/*}"
@@ -66,7 +67,7 @@ build_targets()
 
 	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
 
-	listfile="$cfgsdir/build.list"
+	listfile="$datadir/build.list"
 	[ -f "$listfile" ] || $err "list file, $listfile, does not exist"
 
 	# Build for all targets if no argument is given

@@ -122,7 +122,6 @@ items()
 	for x in "$1/"*; do
 		# -e used because this is for files *or* directories
 		[ -e "$x" ] || continue
-		[ "${x##*/}" = "build.list" ] && continue
 		printf "%s\n" "${x##*/}" 2>/dev/null
 		rval=0
 	done
