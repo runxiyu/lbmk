@@ -214,7 +214,7 @@ build_payloads()
 
 	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
 
-	mt86bin="memtest86plus/build64/memtest.bin"
+	mt86bin="elf/memtest86plus/memtest.bin"
 	[ "$payload_memtest" != "y" ] || [ -f "src/$mt86bin" ] || \
 		x_ ./update trees -b memtest86plus
 
