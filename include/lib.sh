@@ -42,7 +42,7 @@ setvars()
 }
 
 eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
-    versiondate threads projectname projectsite aur_notice)"
+    versiondate threads projectname projectsite aur_notice cfgsdir datadir)"
 
 read -r projectname < projectname || :
 read -r projectsite < projectsite || :

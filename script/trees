@@ -9,9 +9,9 @@ set -u -e
 . "include/lib.sh"
 . "include/git.sh"
 
-eval "$(setvars "" xarch cfgsdir cdir config config_name xlang mode makeargs \
+eval "$(setvars "" xarch cdir config config_name xlang mode makeargs \
     listfile project target target_dir targets tree _f target1 bootstrapargs \
-    autoconfargs cmakedir elfdir autogenargs xtree datadir)"
+    autoconfargs cmakedir elfdir autogenargs xtree)"
 
 main()
 {
