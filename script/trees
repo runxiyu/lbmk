@@ -179,7 +179,7 @@ check_coreboot_utils()
 
 		utilmode=""
 		[ -z "$mode" ] || utilmode="clean"
-		x_ make -C "$utilsrcdir" $utilmode
+		x_ make -C "$utilsrcdir" $utilmode -j$threads
 		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
 			x_ mkdir -p "$utilelfdir" && \
 			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
