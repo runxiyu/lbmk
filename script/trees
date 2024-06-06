@@ -36,6 +36,7 @@ main()
 	elfdir="elf/$project"
 	datadir="config/data/$project"
 	cfgsdir="config/$project"
+	listfile="$datadir/build.list" # needed on multi, optional on single
 
 	remkdir "${tmpgit%/*}"
 
@@ -52,12 +53,18 @@ build_projects()
 		eval "fetch_project_repo; return 0;"
 
 	load_project_config "$cfgsdir"
+	[ -f "$listfile" ] || listfile="" # optional on single-tree
+
+	dest_dir="$elfdir"
 
 	cdir="src/${project}"
 	[ -d "$cdir" ] || x_ ./update trees -f "$project"
 
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
+
+	[ -n "$mode" ] || x_ mkdir -p "$elfdir"
+	[ -n "$mode" ] || copy_elf; return 0
 }
 
 build_targets()
@@ -66,8 +73,6 @@ build_targets()
 		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 
 	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
-
-	listfile="$datadir/build.list"
 	[ -f "$listfile" ] || $err "list file, $listfile, does not exist"
 
 	# Build for all targets if no argument is given
@@ -259,6 +264,8 @@ mkpayload_grub()
 
 copy_elf()
 {
+	[ -z "$listfile" ] && return 0
+
 	while read -r f; do
 		[ -f "$cdir/$f" ] && x_ cp "$cdir/$f" "$dest_dir"
 	done < "$listfile"
