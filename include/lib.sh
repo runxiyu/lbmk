@@ -154,22 +154,6 @@ check_defconfig()
 	done
 }
 
-handle_coreboot_utils()
-{
-	for util in cbfstool ifdtool; do
-		utilelfdir="elf/$util/$1"
-		utilsrcdir="src/coreboot/$1/util/$util"
-
-		utilmode=""
-		[ -z "$mode" ] || utilmode="clean"
-		x_ make -C "$utilsrcdir" $utilmode
-		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
-			x_ mkdir -p "$utilelfdir" && \
-			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
-		[ -z "$mode" ] || x_ rm -Rf "$utilelfdir"
-	done
-}
-
 remkdir()
 {
 	rm -Rf "$1" || $err "remkdir: !rm -Rf \"$1\""
