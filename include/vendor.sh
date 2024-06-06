@@ -56,7 +56,7 @@ detect_firmware()
 
 	[ -z "$tree" ] && $err "detect_firmware $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"
-	cbfstool="cbutils/$tree/cbfstool"
+	cbfstool="elf/cbfstool/$tree/cbfstool"
 
 	mecleaner="$PWD/$cbdir/util/me_cleaner/me_cleaner.py"
 	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
@@ -80,7 +80,7 @@ build_dependencies_download()
 	[ ! -d "${kbc1126_ec_dump%/*}" ] || [ -f "$kbc1126_ec_dump" ] || x_ \
 	    make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
-		cbfstoolref="cbutils/$MRC_refcode_cbtree/cbfstool"
+		cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool"
 	[ -z "$cbfstoolref" ] || [ -f "$cbfstoolref" ] || \
 	    x_ ./update trees -b coreboot utils $MRC_refcode_cbtree
 	[ -f "$cbfstool" ] && [ -f "$ifdtool" ] && return 0
@@ -337,8 +337,8 @@ detect_board()
 build_dependencies_inject()
 {
 	cbdir="src/coreboot/$tree"
-	cbfstool="cbutils/$tree/cbfstool"
-	ifdtool="cbutils/$tree/ifdtool"
+	cbfstool="elf/cbfstool/$tree/cbfstool"
+	ifdtool="elf/ifdtool/$tree/ifdtool"
 	[ -d "$cbdir" ] || x_ ./update trees -f coreboot $tree
 	if [ ! -f "$cbfstool" ] || [ ! -f "$ifdtool" ]; then
 		x_ ./update trees -b coreboot utils $tree

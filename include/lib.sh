@@ -8,8 +8,8 @@ export LC_ALL=C
 
 tmpdir_was_set="y"
 cbdir="src/coreboot/default"
-ifdtool="cbutils/default/ifdtool"
-cbfstool="cbutils/default/cbfstool"
+ifdtool="elf/ifdtool/default/ifdtool"
+cbfstool="elf/cbfstool/default/cbfstool"
 tmpgit="$PWD/tmp/gitclone"
 grubdata="config/data/grub"
 err="err_"
@@ -157,11 +157,16 @@ check_defconfig()
 handle_coreboot_utils()
 {
 	for util in cbfstool ifdtool; do
-		x_ make -C "src/coreboot/$1/util/$util"
-		[ -z "$mode" ] && [ ! -f "cbutils/$1/$util" ] && \
-			x_ mkdir -p "cbutils/$1" && \
-			x_ cp "src/coreboot/$1/util/$util/$util" "cbutils/$1"
-		[ -z "$mode" ] || x_ rm -Rf "cbutils/$1"
+		utilelfdir="elf/$util/$1"
+		utilsrcdir="src/coreboot/$1/util/$util"
+
+		utilmode=""
+		[ -z "$mode" ] || utilmode="clean"
+		x_ make -C "$utilsrcdir" $utilmode
+		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
+			x_ mkdir -p "$utilelfdir" && \
+			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
+		[ -z "$mode" ] || x_ rm -Rf "$utilelfdir"
 	done
 }
 

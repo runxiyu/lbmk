@@ -209,7 +209,7 @@ build_payloads()
 	romdir="bin/$board"
 	cbdir="src/coreboot/$board"
 	[ "$board" = "$tree" ] || cbdir="src/coreboot/$tree"
-	cbfstool="cbutils/$tree/cbfstool"
+	cbfstool="elf/cbfstool/$tree/cbfstool"
 	cbrom="$cbdir/build/coreboot.rom"
 
 	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
