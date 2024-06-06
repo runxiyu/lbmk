@@ -13,6 +13,7 @@ uefiextract="$PWD/src/uefitool/uefiextract"
 nvmutil="util/nvmutil/nvm"
 vendir="vendorfiles"
 appdir="$vendir/app"
+cbcfgsdir="config/coreboot"
 
 eval "$(setvars "" _b EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \

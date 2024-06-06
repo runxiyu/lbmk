@@ -8,7 +8,6 @@ export LC_ALL=C
 
 tmpdir_was_set="y"
 cbdir="src/coreboot/default"
-cbcfgsdir="config/coreboot"
 ifdtool="cbutils/default/ifdtool"
 cbfstool="cbutils/default/cbfstool"
 tmpgit="$PWD/tmp/gitclone"
