@@ -9,6 +9,7 @@ set -u -e
 . "include/lib.sh"
 . "include/git.sh"
 
+cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$threads"
 eval "$(setvars "" xarch cdir config config_name xlang mode makeargs \
     listfile project target target_dir targets tree _f target1 bootstrapargs \
     autoconfargs cmakedir elfdir autogenargs xtree)"
@@ -166,8 +167,7 @@ check_cross_compiler()
 		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
 		[ -d "$cbdir/util/crossgcc/xgcc/$_xarch/" ] && continue
-		x_ make -C "$cbdir" crossgcc-${_xarch%-*} CPUS=$threads \
-		    UPDATED_SUBMODULES=1
+		x_ make -C "$cbdir" crossgcc-${_xarch%-*} $cbmakeargs
 	done
 }
 
@@ -179,7 +179,7 @@ check_coreboot_utils()
 
 		utilmode=""
 		[ -z "$mode" ] || utilmode="clean"
-		x_ make -C "$utilsrcdir" $utilmode -j$threads
+		x_ make -C "$utilsrcdir" $utilmode -j$threads $cbmakeargs
 		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
 			x_ mkdir -p "$utilelfdir" && \
 			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
@@ -232,7 +232,7 @@ run_make_command()
 
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
 		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" \
-		    && makeargs="$makeargs UPDATED_SUBMODULES=1 CPUS=$threads"
+		    && makeargs="$makeargs $cbmakeargs"
 
 	make -C "$cdir" $mode -j$threads $makeargs || $err "!mk $cdir $mode"
 
