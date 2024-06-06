@@ -4,12 +4,4 @@
 	url: https://codeberg.org/libreboot/pico-serprog
 	bkup_url: https://git.disroot.org/libreboot/pico-serprog
 	depend: pico-sdk
-	depend: rpi-pico-tinyusb
-}
-
-{rpi-pico-tinyusb}{
-	rev: 86c416d4c0fb38432460b3e11b08b9de76941bf5
-	loc: pico-sdk/lib/tinyusb
-	url: https://codeberg.org/libreboot/tinyusb
-	bkup_url: https://github.com/hathach/tinyusb.git
 }
