@@ -220,8 +220,8 @@ e()
 # e.g. coreboot is multi-tree, so 1
 singletree()
 {
-	for pdir in "config/${1}/"*/target.cfg; do
-		[ ! -e "$pdir" ] && continue
-		[ -f "$pdir" ] && return 1
+	for targetfile in "config/${1}/"*/target.cfg; do
+		[ ! -e "$targetfile" ] && continue
+		[ -f "$targetfile" ] && return 1
 	done
 }
