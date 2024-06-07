@@ -125,18 +125,17 @@ fetch_submodule()
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
-	if [ -n "$subrepo" ] || [ -n "$subrepo_bkup" ]; then
-		[ -n "$subrev" ] || $err "$1, $mdir: subrev not defined"
+	[ -n "$subrepo" ] || [ -n "$subrepo_bkup" ] || return 0
+	[ -n "$subrev" ] || $err "$1, $mdir: subrev not defined"
 
-		rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
-		for mod in "$subrepo" "$subrepo_bkup"; do
-			[ -z "$mod" ] && continue
-			git clone "$mod" "$tmpgit/$1" || rm -Rf "$tmpgit/$1" \
-			    || $err "!rm $mod $project $cfgdir $1"
-			[ -d "$tmpgit/$1" ] && break
-		done
-		[ -d "$tmpgit/$1" ] || $err "!clone $mod $project $mcfgdir $1"
-	fi
+	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
+	for mod in "$subrepo" "$subrepo_bkup"; do
+		[ -z "$mod" ] && continue
+		git clone "$mod" "$tmpgit/$1" || rm -Rf "$tmpgit/$1" \
+		    || $err "!rm $mod $project $cfgdir $1"
+		[ -d "$tmpgit/$1" ] && break
+	done
+	[ -d "$tmpgit/$1" ] || $err "!clone $mod $project $mcfgdir $1"
 }
 
 patch_submodule()
