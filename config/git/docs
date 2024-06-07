@@ -3,28 +3,4 @@
 	loc: docs
 	url: https://codeberg.org/vimuser/untitled
 	bkup_url: https://notabug.org/untitled/untitled
-	depend: mdfiles
-	depend: untitledwww
-}
-
-{mdfiles}{
-	rev: 20fd775c855428ecff647a42823746863fd57efe
-	loc: docs/www/html
-	url: https://codeberg.org/libreboot/lbwww
-	bkup_url: https://git.disroot.org/libreboot/lbwww
-	depend: imgfiles
-}
-
-{imgfiles}{
-	rev: 625bb7535d388a235bec47a8ce822cda10b53692
-	loc: docs/www/html/site/img
-	url: https://codeberg.org/libreboot/lbwww-img
-	bkup_url: https://git.disroot.org/libreboot/lbwww-img
-}
-
-{untitledwww}{
-	rev: d8e2043c1512eb1171c274559ce82e8093ef393f
-	loc: docs/www/untitled
-	url: https://codeberg.org/vimuser/untitled-website
-	bkup_url: https://notabug.org/untitled/untitled-website
 }
