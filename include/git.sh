@@ -43,9 +43,8 @@ prepare_new_tree()
 {
 	printf "Creating %s tree %s (%s)\n" "$project" "$tree" "$_target"
 
-	cp -R "src/$project/$project" "$tmpgit" || \
-	    $err "prepare_new_tree $project/$tree: can't make tmpclone"
-	git_prep "$PWD/$cfgsdir/$tree/patches" "src/$project/$tree" "update"
+	git_prep "src/$project/$project" "src/$project/$project" \
+	    "$PWD/$cfgsdir/$tree/patches" "src/$project/$tree" "update"
 	nuke "$project/$tree" "$project/$tree"
 }
 
@@ -78,22 +77,18 @@ clone_project()
 	e "$loc" d && return 0
 
 	remkdir "${tmpgit%/*}"
-
-	git clone $url "$tmpgit" || git clone $bkup_url "$tmpgit" \
-	    || $err "clone_project: could not download $project"
-	git_prep "$PWD/config/$project/patches" "$loc"
+	git_prep "$url" "$bkup_url" "$PWD/config/$project/patches" "$loc"
 }
 
 git_prep()
 {
-	_patchdir="$1"
-	_loc="$2"
+	_patchdir="$3" # $1 and $2 are gitrepo and gitrepo_backup
+	_loc="$4"
 
 	[ -z "${rev+x}" ] && $err "git_prep $_loc: rev not set"
-	git -C "$tmpgit" reset --hard $rev || $err "git -C $_loc: !reset $rev"
-	git_am_patches "$tmpgit" "$_patchdir" || $err "!am $_loc $_patchdir"
 
-	if singletree "$project" || [ $# -gt 2 ]; then
+	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
+	if singletree "$project" || [ $# -gt 4 ]; then
 		prep_submodules "$_loc"
 	fi
 
@@ -124,23 +119,24 @@ fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
 	eval "$(setvars "" subrev subrepo subrepo_bkup)"
-
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
 	[ -z "$subrepo" ] && [ -z "$subrepo_bkup" ] && return 0
-
 	for mvar in subrepo subrepo_bkup subrev; do
 		eval "[ -n \"\$$mvar\" ] || $err \"$1, $mdir: $mvar unset\""
 	done
 
 	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
-	git clone $subrepo "$tmpgit/$1" || git clone $subrepo_bkup \
-	    "$tmpgit/$1" || $err "clone_project: could not download $project"
-	git -C "$tmpgit/$1" reset --hard "$subrev" || \
-	    $err "$mdir $1: cannot reset git revision"
+	tmpclone "$subrepo" "$subrepo_bkup" "$tmpdir/$1" "$subrev" \
+	    "$mdir/${1##*/}/patches"
+}
 
-	git_am_patches "$tmpgit/$1" "$mdir/${1##*/}/patches"
+tmpclone()
+{
+	git clone $1 "$3" || git clone $2 "$3" || $err "!clone $1 $2 $3 $4 $5"
+	git -C "$3" reset --hard "$4" || $err "!reset $1 $2 $3 $4 $5"
+	git_am_patches "$3" "$5"
 }
 
 git_am_patches()
