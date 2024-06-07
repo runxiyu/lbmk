@@ -46,6 +46,8 @@ main()
 	$_cmd $@
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
+
+	[ -f "$listfile" ] || return 0
 	[ -z "$mode" ] && printf "\n\nDone! Check  %s/\n\n" "$elfdir"; return 0
 }
 
@@ -68,6 +70,7 @@ build_projects()
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
 
+	[ -f "$listfile" ] || return 0
 	[ -n "$mode" ] || x_ mkdir -p "$elfdir"
 	[ -n "$mode" ] || copy_elf; return 0
 }
