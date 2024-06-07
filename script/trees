@@ -290,7 +290,7 @@ mkpayload_grub()
 
 copy_elf()
 {
-	[ -z "$listfile" ] && return 0
+	[ -f "$listfile" ] || return 0
 
 	while read -r f; do
 		[ -f "$cdir/$f" ] && x_ cp "$cdir/$f" "$dest_dir"
