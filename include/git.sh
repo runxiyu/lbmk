@@ -117,7 +117,6 @@ prep_submodules()
 
 	while read -r msrcdir; do
 		fetch_submodule "$msrcdir"
-		patch_submodule "$msrcdir"
 	done < "$tmpdir/modules"
 }
 
@@ -129,22 +128,16 @@ fetch_submodule()
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
-	[ -n "$subrepo" ] || [ -n "$subrepo_bkup" ] || return 0
-	[ -n "$subrev" ] || $err "$1, $mdir: subrev not defined"
+	[ -z "$subrepo" ] && [ -z "$subrepo_bkup" ] && return 0
+
+	for mvar in subrepo subrepo_bkup subrev; do
+		eval "[ -n \"\$$mvar\" ] || $err \"$1, $mdir: $mvar unset\""
+	done
 
 	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
-	for mod in "$subrepo" "$subrepo_bkup"; do
-		[ -z "$mod" ] && continue
-		git clone "$mod" "$tmpgit/$1" || rm -Rf "$tmpgit/$1" \
-		    || $err "!rm $mod $project $cfgdir $1"
-		[ -d "$tmpgit/$1" ] && break
-	done
-	[ -d "$tmpgit/$1" ] || $err "!clone $mod $project $mcfgdir $1"
-}
-
-patch_submodule()
-{
-	[ -z "$subrev" ] || git -C "$tmpgit/$1" reset --hard "$subrev" || \
+	git clone $subrepo "$tmpgit/$1" || git clone $subrepo_bkup \
+	    "$tmpgit/$1" || $err "clone_project: could not download $project"
+	git -C "$tmpgit/$1" reset --hard "$subrev" || \
 	    $err "$mdir $1: cannot reset git revision"
 
 	git_am_patches "$tmpgit/$1" "$mdir/${1##*/}/patches"
