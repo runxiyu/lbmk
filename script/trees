@@ -60,7 +60,7 @@ build_projects()
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
 
 	dest_dir="$elfdir"
-	elfcheck || return 0
+	[ ! -f "$listfile" ] || elfcheck || return 0
 
 	cdir="src/${project}"
 	[ -d "$cdir" ] || x_ ./update trees -f "$project"
