@@ -57,11 +57,10 @@ fetch_project_repo()
 	[ -z "${loc+x}" ] && $err "fetch_project_repo $project: loc not set"
 	[ -z "${url+x}" ] && $err "fetch_project_repo $project: url not set"
 
-	clone_project
 	[ -z "$depend" ] || for d in $depend ; do
 		x_ ./update trees -f $d
 	done
-	rm -Rf "$tmpgit" || $err "fetch_repo: !rm -Rf $tmpgit"
+	clone_project
 
 	for x in config/git/*; do
 		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}"; continue
@@ -73,6 +72,8 @@ clone_project()
 	loc="${loc#src/}"
 	loc="src/$loc"
 	e "$loc" d && return 0
+
+	remkdir "${tmpgit%/*}"
 
 	git clone $url "$tmpgit" || git clone $bkup_url "$tmpgit" \
 	    || $err "clone_project: could not download $project"
@@ -107,7 +108,6 @@ prep_submodules()
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 
 	[ -f "$mdir/module.list" ] || return 0
-
 	cat "$mdir/module.list" > "$tmpdir/modules" || \
 	    $err "!cp $mdir/module.list $tmpdir/modules"
 
