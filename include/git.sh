@@ -58,6 +58,8 @@ fetch_project_repo()
 	[ -z "${url+x}" ] && $err "fetch_project_repo $project: url not set"
 
 	[ -z "$depend" ] || for d in $depend ; do
+		printf "'%s' needs dependency '%s'; grabbing '%s' now\n" \
+		    "$project" "$d" "$d"
 		x_ ./update trees -f $d
 	done
 	clone_project
@@ -71,6 +73,8 @@ clone_project()
 {
 	loc="${loc#src/}"
 	loc="src/$loc"
+
+	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 	e "$loc" d && return 0
 
 	remkdir "${tmpgit%/*}"
