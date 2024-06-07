@@ -291,6 +291,7 @@ mkpayload_grub()
 
 copy_elf()
 {
+	[ -n "$listfile" ] || return 0
 	[ -f "$listfile" ] || return 0
 
 	while read -r f; do
