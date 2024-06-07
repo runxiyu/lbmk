@@ -106,13 +106,9 @@ prep_submodules()
 	mdir="$PWD/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 
-	[ -f "$mdir/module.list" ] || return 0
-	cat "$mdir/module.list" > "$tmpdir/modules" || \
-	    $err "!cp $mdir/module.list $tmpdir/modules"
-
-	while read -r msrcdir; do
+	[ -f "$mdir/module.list" ] && while read -r msrcdir; do
 		fetch_submodule "$msrcdir"
-	done < "$tmpdir/modules"
+	done < "$mdir/module.list"; return 0
 }
 
 fetch_submodule()
@@ -128,6 +124,7 @@ fetch_submodule()
 	done
 
 	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
+
 	tmpclone "$subrepo" "$subrepo_bkup" "$tmpdir/$1" "$subrev" \
 	    "$mdir/${1##*/}/patches"
 }
