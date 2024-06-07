@@ -106,12 +106,10 @@ prep_submodules()
 	mdir="$PWD/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 
-	if [ -f "$mdir/module.list" ]; then
-		cat "$mdir/module.list" > "$tmpdir/modules" || \
-		    $err "!cp $mdir/module.list $tmpdir/modules"
-	else
-		return 0
-	fi
+	[ -f "$mdir/module.list" ] || return 0
+
+	cat "$mdir/module.list" > "$tmpdir/modules" || \
+	    $err "!cp $mdir/module.list $tmpdir/modules"
 
 	while read -r msrcdir; do
 		fetch_submodule "$msrcdir"
