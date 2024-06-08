@@ -210,7 +210,7 @@ e()
 	[ $# -gt 1 ] && es_t="$2"
 	es2="already exists"
 	estr="[ -$es_t \"\$1\" ] || return 1"
-	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="not found"
+	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
 
 	eval "$estr"
 	printf "%s %s\n" "$1" "$es2" 1>&2
