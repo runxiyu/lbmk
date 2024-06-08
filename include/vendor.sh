@@ -133,7 +133,7 @@ mkdirs()
 	remkdir "$appdir"
 	extract_archive "$_dl" "$appdir" || \
 	    [ "$2" = "extract_e6400vga" ] || \
-	    $err "mkdirs $1 $2: !extract"
+	    $err "mkdirs $1 $2: !extract"; return 0
 }
 
 extract_intel_me()
