@@ -124,7 +124,6 @@ fetch_submodule()
 	done
 
 	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
-
 	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subrev" \
 	    "$mdir/${1##*/}/patches"
 }
