@@ -3,7 +3,7 @@
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree \
-    mdir subrev subrepo subrepo_bkup)"
+    mdir subhash subrepo subrepo_bkup subfile subfile_bkup)"
 
 fetch_project_trees()
 {
@@ -114,18 +114,31 @@ prep_submodules()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
-	eval "$(setvars "" subrev subrepo subrepo_bkup)"
+	eval "$(setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup)"
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
-	[ -z "$subrepo" ] && [ -z "$subrepo_bkup" ] && return 0
-	for mvar in subrepo subrepo_bkup subrev; do
+	st=""
+	for _st in repo file; do
+		_seval="if [ -n \"\$sub$_st\" ] || [ -n \"\$sub${_st}_bkup\" ]"
+		eval "$_seval; then st=\"\$st \$_st\"; fi"
+	done
+	st="${st# }"
+	[ "$st" = "repo file" ] && $err "$mdir: repo/file both defined"
+
+	[ -z "$st" ] && return 0 # subrepo/subfile not defined
+
+	for mvar in "sub${st}" "sub${st}_bkup" "subhash"; do
 		eval "[ -n \"\$$mvar\" ] || $err \"$1, $mdir: $mvar unset\""
 	done
 
-	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
-	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subrev" \
-	    "$mdir/${1##*/}/patches"
+	if [ "$st" = "repo" ]; then
+		rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
+		tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
+		    "$mdir/${1##*/}/patches"
+	else
+		download "$subfile" "$subfile_bkup" "$tmpgit/$1" "$subhash"
+	fi
 }
 
 tmpclone()
