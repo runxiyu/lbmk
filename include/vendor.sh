@@ -3,7 +3,6 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2024 Leah Rowe <leah@libreboot.org>
 
-_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 _7ztest="a"
 
 e6400_unpack="$PWD/src/bios_extract/dell_inspiron_1100_unpacker.py"
@@ -115,20 +114,7 @@ fetch()
 	_dest="${5##*../}"
 	_dl="$vendir/cache/$dlsum"
 
-	x_ mkdir -p "${_dl%/*}"
-
-	dl_fail="y"
-	vendor_checksum "$dlsum" "$_dl" || dl_fail="n"
-	for url in "$dl" "$dl_bkup"; do
-		[ "$dl_fail" = "n" ] && break
-		[ -z "$url" ] && continue
-		x_ rm -f "$_dl"
-		curl --location --retry 3 -A "$_ua" "$url" -o "$_dl" || \
-		    wget --tries 3 -U "$_ua" "$url" -O "$_dl" || continue
-		vendor_checksum "$dlsum" "$_dl" || dl_fail="n"
-	done
-	[ "$dl_fail" = "y" ] && \
-		$err "fetch $dlsum: matched file unavailable"
+	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
 	x_ rm -Rf "${_dl}_extracted"
 	mkdirs "$_dest" "extract_$dl_type" || return 0
@@ -137,13 +123,6 @@ fetch()
 
 	[ -f "$_dest" ] && return 0
 	$err "extract_$dl_type (fetch): missing file: '$_dest'"
-}
-
-vendor_checksum()
-{
-	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
-	printf "Bad checksum for file: %s\n" "$2" 1>&2
-	rm -f "$2" || :
 }
 
 mkdirs()

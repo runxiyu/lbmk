@@ -6,6 +6,8 @@
 export LC_COLLATE=C
 export LC_ALL=C
 
+_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+
 tmpdir_was_set="y"
 cbdir="src/coreboot/default"
 ifdtool="elf/ifdtool/default/ifdtool"
@@ -224,4 +226,28 @@ singletree()
 		[ ! -e "$targetfile" ] && continue
 		[ -f "$targetfile" ] && return 1
 	done
+}
+
+download()
+{
+	dl_fail="y" # 1 url, 2 url backup, 3 destination, 4 checksum
+	vendor_checksum "$4" "$3" || dl_fail="n"
+	[ "$dl_fail" = "n" ] && e "$3" f && return 0
+	x_ mkdir -p "${3%/*}"
+	for url in "$1" "$2"; do
+		[ "$dl_fail" = "n" ] && break
+		[ -z "$1" ] && continue
+		x_ rm -f "$3"
+		curl --location --retry 3 -A "$_ua" "$1" -o "$3" || \
+		    wget --tries 3 -U "$_ua" "$1" -O "$3" || continue
+		vendor_checksum "$4" "$3" || dl_fail="n"
+	done
+	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: file missing"; return 0
+}
+
+vendor_checksum()
+{
+	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
+	printf "Bad checksum for file: %s\n" "$2" 1>&2
+	rm -f "$2" || :
 }
