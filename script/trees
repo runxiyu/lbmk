@@ -39,6 +39,8 @@ main()
 	cfgsdir="config/$project"
 	listfile="$datadir/build.list" # needed on multi, optional on single
 
+	remkdir "${tmpgit%/*}"
+
 	_cmd="build_projects"
 	singletree "$project" || _cmd="build_targets"
 	$_cmd $@
