@@ -232,15 +232,14 @@ download()
 	dl_fail="y" # 1 url, 2 url backup, 3 destination, 4 checksum
 	vendor_checksum "$4" "$3" || dl_fail="n"
 	[ "$dl_fail" = "n" ] && e "$3" f && return 0
-	x_ mkdir -p "${3%/*}"
-	for url in "$1" "$2"; do
+	x_ mkdir -p "${3%/*}" && for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
 		x_ rm -f "$3"
 		curl --location --retry 3 -A "$_ua" "$url" -o "$3" || \
 		    wget --tries 3 -U "$_ua" "$url" -O "$3" || continue
 		vendor_checksum "$4" "$3" || dl_fail="n"
-	done
+	done;
 	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: file missing"; return 0
 }
 
