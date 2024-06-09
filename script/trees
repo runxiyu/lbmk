@@ -286,7 +286,9 @@ mkpayload_grub()
 	    -O i386-coreboot -o "${cdir}/grub.elf" -d "${cdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
-	    "/boot/grub/grub.cfg=${cdir}/.config" || $err "$tree: !mkgrub"
+	    "/boot/grub/grub_default.cfg=${cdir}/.config" \
+	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" || \
+	    $err "$tree: cannot build grub.elf"
 }
 
 copy_elf()
