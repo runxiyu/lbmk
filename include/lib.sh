@@ -223,8 +223,7 @@ e()
 singletree()
 {
 	for targetfile in "config/${1}/"*/target.cfg; do
-		[ ! -e "$targetfile" ] && continue
-		[ -f "$targetfile" ] && return 1
+		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1
 	done
 }
 
