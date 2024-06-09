@@ -180,9 +180,7 @@ move_repo()
 # called from script/trees when downloading sources.
 nuke()
 {
-	e "config/${1%/}/nuke.list" f missing && return 0
-
-	while read -r nukefile; do
+	e "config/${1%/}/nuke.list" f missing || while read -r nukefile; do
 		rmf="${2%/}/$nukefile" && [ -L "$rmf" ] && continue
 		e "$rmf" e missing || rm -Rf "$rmf" || $err "!rm $rmf, ${2%/}"
 	done < "config/${1%/}/nuke.list"; return 0
