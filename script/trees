@@ -34,6 +34,9 @@ main()
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && $err "project name not specified"
+
+	[ -f "config/git/$project" ] || $err "project '$project' not defined"
+
 	elfdir="elf/$project"
 	datadir="config/data/$project"
 	cfgsdir="config/$project"
