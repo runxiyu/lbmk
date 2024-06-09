@@ -163,8 +163,7 @@ git_am_patches()
 link_crossgcc()
 {
 	(
-	cd "$tmpgit/util" || $err "prep $1: !cd $tmpgit/util"
-	rm -Rf crossgcc || $err "prep $1: !rm xgcc"
+	x_ cd "$tmpgit/util" && x_ rm -Rf crossgcc
 	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
 	) || $err "$1: !xgcc link"
 }
