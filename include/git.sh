@@ -66,7 +66,8 @@ fetch_project_repo()
 	clone_project
 
 	for x in config/git/*; do
-		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}"; continue
+		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null; \
+		    continue
 	done
 }
 
