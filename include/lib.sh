@@ -70,7 +70,8 @@ if [ "$tmpdir_was_set" = "y" ]; then
 	[ "${TMPDIR%_*}" = "/tmp/xbmk" ] || tmpdir_was_set="n"
 fi
 if [ "$tmpdir_was_set" = "n" ]; then
-	[ -f "lock" ] && $err "The 'lock' file exists. Is a build running?"
+	[ -f "lock" ] && \
+	    $err "$PWD/lock exists. If a build isn't going, delete and re-run."
 	export TMPDIR="/tmp"
 	tmpdir="$(mktemp -d -t xbmk_XXXXXXXX)"
 	export TMPDIR="$tmpdir"
