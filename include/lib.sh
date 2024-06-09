@@ -230,7 +230,7 @@ singletree()
 download()
 {
 	dl_fail="y" # 1 url, 2 url backup, 3 destination, 4 checksum
-	vendor_checksum "$4" "$3" || dl_fail="n"
+	vendor_checksum "$4" "$3" 2>/dev/null || dl_fail="n"
 	[ "$dl_fail" = "n" ] && e "$3" f && return 0
 	x_ mkdir -p "${3%/*}" && for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
