@@ -124,7 +124,8 @@ fetch_trees()
 
 fail()
 {
-	tmp_cleanup || printf "WARNING: can't rm tmpdir: %s\n" "$tmpdir" 1>&2
+	tmp_cleanup || printf "WARNING: can't rm tmp files: %s\n" "$tmpdir" \
+	    1>&2
 	err_ "${1}"
 }
 
@@ -132,6 +133,7 @@ tmp_cleanup()
 {
 	[ "$tmpdir_was_set" = "n" ] || return 0
 	rm -Rf "$tmpdir" || return 1
+	rm -f lock || return 1
 }
 
 main $@

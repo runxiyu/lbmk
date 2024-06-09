@@ -65,26 +65,27 @@ install_packages()
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
-# if "y": a coreboot target won't be built if target.cfg says release="n"
-# (this is used to exclude certain build targets from releases)
-
-[ -z "${XBMK_RELEASE+x}" ] && xbmk_release="n"
-[ -z "$xbmk_release" ] && xbmk_release="$XBMK_RELEASE"
-[ "$xbmk_release" = "n" ] || [ "$xbmk_release" = "y" ] || xbmk_release="n"
-export XBMK_RELEASE="$xbmk_release"
-
 [ -z "${TMPDIR+x}" ] && tmpdir_was_set="n"
 if [ "$tmpdir_was_set" = "y" ]; then
 	[ "${TMPDIR%_*}" = "/tmp/xbmk" ] || tmpdir_was_set="n"
 fi
 if [ "$tmpdir_was_set" = "n" ]; then
+	[ -f "lock" ] && $err "The 'lock' file exists. Is a build running?"
 	export TMPDIR="/tmp"
 	tmpdir="$(mktemp -d -t xbmk_XXXXXXXX)"
 	export TMPDIR="$tmpdir"
+	touch lock || $err "cannot create 'lock' file"
 else
 	export TMPDIR="$TMPDIR"
 	tmpdir="$TMPDIR"
 fi
+
+# if "y": a coreboot target won't be built if target.cfg says release="n"
+# (this is used to exclude certain build targets from releases)
+[ -z "${XBMK_RELEASE+x}" ] && xbmk_release="n"
+[ -z "$xbmk_release" ] && xbmk_release="$XBMK_RELEASE"
+[ "$xbmk_release" = "n" ] || [ "$xbmk_release" = "y" ] || xbmk_release="n"
+export XBMK_RELEASE="$xbmk_release"
 
 [ -z "${XBMK_THREADS+x}" ] || threads="$XBMK_THREADS"
 [ -z "$threads" ] && threads=1
