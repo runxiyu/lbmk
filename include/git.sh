@@ -56,6 +56,8 @@ fetch_project_repo()
 	[ -z "${loc+x}" ] && $err "fetch_project_repo $project: loc not set"
 	[ -z "${url+x}" ] && $err "fetch_project_repo $project: url not set"
 
+	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
+		x_ ./update trees -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
 		printf "'%s' needs dependency '%s'; grabbing '%s' now\n" \
 		    "$project" "$d" "$d"
@@ -172,8 +174,6 @@ move_repo()
 {
 	[ "$1" = "${1%/*}" ] || x_ mkdir -p "${1%/*}"
 	mv "$tmpgit" "$1" || $err "git_prep: !mv $tmpgit $1"
-	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
-		x_ ./update trees -f coreboot "$xtree"; return 0
 }
 
 # can delete from multi- and single-tree projects.
