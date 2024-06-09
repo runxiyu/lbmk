@@ -152,10 +152,9 @@ configure_target()
 
 	[ -n "$_scandisk" ] && grub_scan_disk="$_scandisk"
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
-	_ata=""
-	_ahci=""
-	_nvme=""
-	_grub_scan_disk=""
+
+	eval "$(setvars "" _ata _ahci _nvme _grub_scan_disk)"
+
 	for _disk in $grub_scan_disk; do
 		[ "$_disk" != "nvme" ] && [ "$_disk" != "ahci" ] && \
 		    [ "$_disk" != "ata" ] && _grub_scan_disk="nvme ahci ata" \

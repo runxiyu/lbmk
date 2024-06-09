@@ -131,8 +131,7 @@ mkdirs()
 
 	mkdir -p "${1%/*}" || $err "mkdirs: !mkdir -p ${1%/*}"
 	remkdir "$appdir"
-	extract_archive "$_dl" "$appdir" || \
-	    [ "$2" = "extract_e6400vga" ] || \
+	extract_archive "$_dl" "$appdir" || [ "$2" = "extract_e6400vga" ] || \
 	    $err "mkdirs $1 $2: !extract"; return 0
 }
 
