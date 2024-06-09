@@ -240,7 +240,7 @@ download()
 		    wget --tries 3 -U "$_ua" "$url" -O "$3" || continue
 		vendor_checksum "$4" "$3" || dl_fail="n"
 	done;
-	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: file missing"; return 0
+	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"; return 0
 }
 
 vendor_checksum()
