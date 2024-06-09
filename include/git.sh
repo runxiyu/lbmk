@@ -181,27 +181,10 @@ move_repo()
 # called from script/trees when downloading sources.
 nuke()
 {
-	del="n"
-	pjcfgdir="${1%/}"
-	pjsrcdir="${2%/}"
-	pjsrcdir="${pjsrcdir#src/}"
-	[ ! -f "config/$pjcfgdir/nuke.list" ] && return 0
+	e "config/${1%/}/nuke.list" f missing && return 0
 
 	while read -r nukefile; do
-		rmf="$(realpath "src/$pjsrcdir/$nukefile" 2>/dev/null)" || \
-		    continue
-		[ -L "$rmf" ] && continue # we will delete the actual file
-		[ "${rmf#"$PWD/src/$pjsrcdir"}" = "$rmf" ] && continue
-		[ "${rmf#"$PWD/src/"}" = "$pjsrcdir" ] && continue
-		rmf="${rmf#"$PWD/"}"
-		[ -e "$rmf" ] || continue
-		del="y"
-		rm -Rf "$rmf" || $err "$nuke pjcfgdir: can't rm \"$nukefile\""
-		printf "nuke %s: deleted \"%s\"\n" "$pjcfgdir" "$rmf"
-	done < "config/$pjcfgdir/nuke.list"
-
-	[ "${del}" = "y" ] && return 0
-	printf "nuke %s: no defined files exist in dir, src/%s\n" 1>&2 \
-	    "$pjcfgdir" "$pjsrcdir"
-	printf "(this is not an error)\n" 1>&2
+		rmf="${2%/}/$nukefile" && [ -L "$rmf" ] && continue
+		e "$rmf" e missing || rm -Rf "$rmf" || $err "!rm $rmf, ${2%/}"
+	done < "config/${1%/}/nuke.list"; return 0
 }
