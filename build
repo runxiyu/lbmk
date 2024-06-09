@@ -78,6 +78,7 @@ mkrelease()
 	[ -e "$vdir" ] && $err "already exists: \"$vdir\""
 	mkdir -p "$vdir" || $err "mkvdir: !mkdir -p \"$vdir\""
 	git clone . "$srcdir" || $err "mkdir: !gitclone \"$srcdir\""
+	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
 
 	build_release
 
@@ -95,12 +96,15 @@ build_release()
 
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$srcdir/CHANGELOG" || $err "!gitlog $srcdir"
+	rm -f "$srcdir/lock" || $err "can't remove lock file in $srcdir"
 
 	(
 	cd "${srcdir%/*}" || $err "$_xm: mktarball \"$srcdir\""
 	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || $err "$_xm: mksrc"
 	) || $err "can't create src tarball"
 	[ "$mode" = "src" ] && return 0
+
+	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
 
 	(
 	cd "$srcdir" || $err "$_xm: 2 !cd \"$srcdir\""
