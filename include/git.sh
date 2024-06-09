@@ -181,7 +181,7 @@ move_repo()
 nuke()
 {
 	e "config/${1%/}/nuke.list" f missing || while read -r nukefile; do
-		rmf="${2%/}/$nukefile" && [ -L "$rmf" ] && continue
+		rmf="src/${2%/}/$nukefile" && [ -L "$rmf" ] && continue
 		e "$rmf" e missing || rm -Rf "$rmf" || $err "!rm $rmf, ${2%/}"
 	done < "config/${1%/}/nuke.list"; return 0
 }
