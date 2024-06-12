@@ -1,0 +1,30 @@
+From c8929f5fb43b6e9b491ae00885be507d01b2a896 Mon Sep 17 00:00:00 2001
+From: Mate Kukri <kukri.mate@gmail.com>
+Date: Tue, 11 Jun 2024 20:26:16 +0100
+Subject: [PATCH] mb/dell/optiplex_9020: Fix integrated video port list
+
+- Physical DP ports are DP2/DP3 (HDMI2/HDMI3 for DP++)
+- VGA port is Analog
+- DP1 is not connected
+
+Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
+Change-Id: I8ed79167d5445d607acbee491c3382ff2585583f
+---
+
+diff --git a/src/mainboard/dell/optiplex_9020/gma-mainboard.ads b/src/mainboard/dell/optiplex_9020/gma-mainboard.ads
+index 173f2f1..7d95061 100644
+--- a/src/mainboard/dell/optiplex_9020/gma-mainboard.ads
++++ b/src/mainboard/dell/optiplex_9020/gma-mainboard.ads
+@@ -9,9 +9,10 @@
+ private package GMA.Mainboard is
+ 
+    ports : constant Port_List :=
+-     (DP1,
+-      DP2,
++     (DP2,
+       DP3,
++      HDMI2,
++      HDMI3,
+       Analog,
+       others => Disabled);
+ 
