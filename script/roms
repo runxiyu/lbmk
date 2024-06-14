@@ -36,7 +36,7 @@ main()
 		elif [ "$1" = "serprog" ]; then
 			shift 1; handle_serprog $@; return 0
 		elif [ "$1" = "list" ]; then
-			x_ items config/coreboot; return 0
+			x_ ls -1 config/coreboot; return 0
 		else
 			[ "$1" = "all" ] && shift && continue
 			boards="$1 $boards"
@@ -44,7 +44,7 @@ main()
 		fi
 	done
 
-	[ -n "$boards" ] || boards="$(items config/coreboot)" || \
+	[ -n "$boards" ] || boards="$(ls -1 config/coreboot)" || \
 		$err "Cannot generate list of boards for building"
 	for x in $boards; do
 		[ -d "config/coreboot/$x/config" ] && \

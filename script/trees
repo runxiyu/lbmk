@@ -87,7 +87,7 @@ build_targets()
 	# Build for all targets if no argument is given
 	[ $# -gt 0 ] && target1="$1"
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && shift 1
-	targets="$(items "$cfgsdir")" || $err "Can't get options for $cfgsdir"
+	targets="$(ls -1 "$cfgsdir")" || $err "Can't get options for $cfgsdir"
 	[ $# -gt 0 ] && targets=$@
 
 	handle_targets

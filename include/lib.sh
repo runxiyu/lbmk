@@ -118,19 +118,6 @@ done
 relname="$projectname-$version"
 export LOCALVERSION="-$projectname-${version%%-*}"
 
-items()
-{
-	rval=1
-	e "$1" d not && return 1
-	for x in "$1/"*; do
-		# -e used because this is for files *or* directories
-		[ -e "$x" ] || continue
-		printf "%s\n" "${x##*/}" 2>/dev/null
-		rval=0
-	done
-	return $rval
-}
-
 scan_config()
 {
 	awkstr=" /\{.*$1.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"

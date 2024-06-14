@@ -119,7 +119,7 @@ build_release()
 
 fetch_trees()
 {
-	for x in $(items config/git); do
+	for x in $(ls -1 config/git); do
 		./update trees -f "$x" || $err "$_xm: fetch $x"
 		singletree "$x" || x_ rm -Rf "src/$x/$x"
 	done

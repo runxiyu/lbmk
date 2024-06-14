@@ -241,7 +241,7 @@ vendor_inject()
 	set +u +e
 
 	[ $# -lt 1 ] && $err "No options specified."
-	[ "$1" = "listboards" ] && eval "items config/coreboot || :; exit 0"
+	[ "$1" = "listboards" ] && eval "ls -1 config/coreboot || :; exit 0"
 
 	archive="$1"
 
