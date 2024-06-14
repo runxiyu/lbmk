@@ -21,22 +21,16 @@ stm32src="src/stm32-vserprog"
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
 pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
-v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
+v="romdir cbrom initmode displaymode cbcfg targetdir tree release"
 v="$v grub_timeout ubdir board grub_scan_disk uboot_config grubtree grubelf"
 eval "$(setvars "n" $pv)"
-eval "$(setvars "" $v boards opt_k targets serprog_boards_dir)"
+eval "$(setvars "" $v boards targets serprog_boards_dir)"
 
 main()
 {
 	while [ $# -gt 0 ]; do
 		[ "$1" = "list" ] && eval "x_ ls -1 config/coreboot; return 0"
 		[ "$1" = "serprog" ] && eval "shift 1; mkserprog $@; return 0"
-
-		if [ "$1" = "-k" ]; then
-			[ $# -lt 2 ] && $err "$1: option not specified"
-			opt_k="$2"; continue
-		fi
-
 		[ "$1" = "all" ] && shift && continue
 		boards="$1 $boards"; shift 1
 	done
@@ -169,21 +163,10 @@ build_payloads()
 
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
 	if [ "$payload_grub" = "y" ] || [ "$payload_seabios_withgrub" = "y" ] \
-	    || [ "$payload_seabios_grubonly" = "y" ]; then build_grub_payload
+	    || [ "$payload_seabios_grubonly" = "y" ]; then
+		[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree
 	fi
 	[ "$payload_uboot" = "y" ] && build_uboot_payload; return 0
-}
-
-build_grub_payload()
-{
-	for keymapfile in "$grubdata/keymap/"*.gkb; do
-		[ -f "$keymapfile" ] && keymaps="$keymaps $keymapfile"
-	done
-	[ -z "$opt_k" ] || [ -f "$grubdata/keymap/${opt_k}.gkb" ] || \
-		$err "build_grub_payload: ${opt_k} layout not defined"
-	[ -n "$opt_k" ] && keymaps="$grubdata/keymap/$opt_k.gkb"
-
-	[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree; return 0
 }
 
 build_uboot_payload()
@@ -256,7 +239,7 @@ build_seabios_roms()
 	x_ rm -f "$t"
 }
 
-# Make separate ROM images with GRUB payload, for each supported keymap
+# Make separate ROM images with GRUB payload
 build_grub_roms()
 {
 	tmprom="$1"
@@ -298,35 +281,21 @@ build_grub_roms()
 	    -f "$tmpcfg" -n timeout.cfg -t raw
 	x_ rm -f "$tmpcfg"
 
-	for keymapfile in $keymaps; do
-		[ -f "$keymapfile" ] || continue
-		keymap="${keymapfile##*/}"
-		keymap="${keymap%.gkb}"
-
-		tmpgrubrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
-		x_ cp "$tmprom" "$tmpgrubrom"
-		x_ "$cbfstool" "$tmpgrubrom" add -f "$keymapfile" \
-		    -n keymap.gkb -t raw
-
-		newrom="$romdir/${payload1}_${board}_${initmode}_"
-		newrom="$newrom${displaymode}_$keymap.rom"
-		[ "$initmode" = "normal" ] && newrom="$romdir/${payload1}_" \
-		    && newrom="$newrom${board}_${initmode}_$keymap.rom"
-		x_ cprom "$tmpgrubrom" "$newrom"
-		if [ "$payload_seabios_withgrub" = "y" ] && \
-		    [ "$payload1" != "grub" ]; then
-			x_ "$cbfstool" "$tmpgrubrom" add \
-			    -f "$grubdata/bootorder" -n bootorder -t raw
-			x_ cprom "$tmpgrubrom" "${newrom%.rom}_grubfirst.rom"
-			if [ "$payload_seabios_grubonly" = "y" ]; then
-				x_ "$cbfstool" "$tmpgrubrom" add-int -i 0 \
-				    -n etc/show-boot-menu
-				x_ cprom "$tmpgrubrom" \
-				    "${newrom%.rom}_grubonly.rom"
-			fi
+	newrom="$romdir/${payload1}_${board}_${initmode}_$displaymode.rom"
+	[ "$initmode" = "normal" ] && newrom="$romdir/${payload1}_" \
+	    && newrom="$newrom${board}_$initmode.rom"
+	x_ cprom "$tmprom" "$newrom"
+	if [ "$payload_seabios_withgrub" = "y" ] && \
+	    [ "$payload1" != "grub" ]; then
+		x_ "$cbfstool" "$tmprom" add \
+		    -f "$grubdata/bootorder" -n bootorder -t raw
+		x_ cprom "$tmprom" "${newrom%.rom}_grubfirst.rom"
+		if [ "$payload_seabios_grubonly" = "y" ]; then
+			x_ "$cbfstool" "$tmprom" add-int -i 0 \
+			    -n etc/show-boot-menu
+			x_ cprom "$tmprom" "${newrom%.rom}_grubonly.rom"
 		fi
-		x_ rm -f "$tmpgrubrom"
-	done
+	fi
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
