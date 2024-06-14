@@ -23,38 +23,33 @@ pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
 pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree keymaps release"
 v="$v grub_timeout ubdir board grub_scan_disk uboot_config grubtree grubelf"
-eval "$(setvars "n" $pv serprog)"
-eval "$(setvars "" $v boards _displaymode _payload _keyboard all targets \
-    serprog_boards_dir _scandisk)"
+eval "$(setvars "n" $pv)"
+eval "$(setvars "" $v boards opt_d opt_p opt_k targets serprog_boards_dir opt_s)"
 
 main()
 {
 	while [ $# -gt 0 ]; do
-		case "$1" in
-		list) x_ items config/coreboot; return 0 ;;
-		serprog) serprog="y"; shift 1; break ;;
-		-d) _displaymode="$2" ;;
-		-p) _payload="$2" ;;
-		-k) _keyboard="$2" ;;
-		-s) _scandisk="$2" ;;
-		*)
-			[ "$1" = "all" ] && all="y"
+		if [ "$1" = "-d" ] || [ "$1" = "-p" ] || [ "$1" = "-k" ] || \
+		    [ "$1" = "-s" ]; then
+			[ $# -lt 2 ] && $err "$1: option not specified"
+			eval "opt_$1=\"$2\""; shift 2
+		elif [ "$1" = "serprog" ]; then
+			shift 1; handle_serprog $@; return 0
+		elif [ "$1" = "list" ]; then
+			x_ items config/coreboot; return 0
+		else
+			[ "$1" = "all" ] && shift && continue
 			boards="$1 $boards"
-			shift && continue ;;
-		esac
-		shift 2
+			shift && continue
+		fi
 	done
 
-	if [ "$serprog" = "y" ]; then
-		handle_serprog $@; return 0
-	else
-		[ "$all" != "y" ] || boards="$(items config/coreboot)" || \
-			$err "Cannot generate list of boards for building"
-		for x in $boards; do
-			[ -d "config/coreboot/$x/config" ] && \
-				handle_coreboot_target "$x"; continue
-		done
-	fi
+	[ -n "$boards" ] || boards="$(items config/coreboot)" || \
+		$err "Cannot generate list of boards for building"
+	for x in $boards; do
+		[ -d "config/coreboot/$x/config" ] && \
+			handle_coreboot_target "$x"; continue
+	done
 
 	x="directories"
 	[ "$xbmk_release" = "y" ] && x="archives (remember the inject command)"
@@ -150,7 +145,7 @@ configure_target()
 	# Override the above defaults using target.cfg
 	. "$targetdir/target.cfg"
 
-	[ -n "$_scandisk" ] && grub_scan_disk="$_scandisk"
+	[ -n "$opt_s" ] && grub_scan_disk="$opt_s"
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
 	eval "$(setvars "" _ata _ahci _nvme _grub_scan_disk)"
@@ -196,11 +191,11 @@ configure_target()
 		uboot_config="default"
 
 	# Override all payload directives with cmdline args
-	[ -z "$_payload" ] && return 0
+	[ -z "$opt_p" ] && return 0
 	eval "$(setvars "n" payload_grub payload_memtest payload_seabios \
 	    payload_seabios_withgrub payload_uboot payload_grub_withseabios \
 	    payload_seabios_grubonly)"
-	eval "payload_$_payload=y"
+	eval "payload_$opt_p=y"
 }
 
 build_payloads()
@@ -229,9 +224,9 @@ build_grub_payload()
 	for keymapfile in "$grubdata/keymap/"*.gkb; do
 		[ -f "$keymapfile" ] && keymaps="$keymaps $keymapfile"
 	done
-	[ -z "$_keyboard" ] || [ -f "$grubdata/keymap/$_keyboard.gkb" ] || \
-		$err "build_grub_payload: $_keyboard layout not defined"
-	[ -n "$_keyboard" ] && keymaps="$grubdata/keymap/$_keyboard.gkb"
+	[ -z "$opt_k" ] || [ -f "$grubdata/keymap/${opt_k}.gkb" ] || \
+		$err "build_grub_payload: ${opt_k} layout not defined"
+	[ -n "$opt_k" ] && keymaps="$grubdata/keymap/$opt_k.gkb"
 
 	[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree; return 0
 }
@@ -255,7 +250,7 @@ build_target_mainboard()
 		hmode="vesafb"
 		[ "$initmode" = "vgarom" ] || hmode="corebootfb"
 		modes="$hmode txtmode"
-		[ -z "$_displaymode" ] || modes="$_displaymode"
+		[ -z "$opt_d" ] || modes="$opt_d"
 		for y in $modes; do
 			displaymode="$y"
 			[ "$initmode" = "normal" ] && \
@@ -341,7 +336,7 @@ build_grub_roms()
 
 	tmpcfg="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" > "$tmpcfg" || \
-	    $err "set grub_scandisk, $grub_scan_disk, $tmpcfg"
+	    $err "set grubopt_s, $grub_scan_disk, $tmpcfg"
 	x_ "$cbfstool" "$tmprom" add -f "$tmpcfg" -n scan.cfg -t raw
 	printf "set timeout=%s\n" "$grub_timeout" > "$tmpcfg" || \
 	    $err "set timeout, $grub_timeout, $tmpcfg"
