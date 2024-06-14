@@ -45,12 +45,11 @@ main()
 		$err "Cannot generate list of boards for building"
 	for x in $boards; do
 		[ -d "config/coreboot/$x/config" ] && \
-			handle_coreboot_target "$x"; continue
+			handle_coreboot_target "$x" && targets="$targets, $x"
 	done
 
 	[ -z "$targets" ] && $err "No ROM images were compiled"
-	eval "printf \"\\n\\n$targets\\n\\n\"n"
-
+	printf "Check these ROM directories in bins/: %s\n" "${targets#, }"
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
 
@@ -116,17 +115,8 @@ handle_coreboot_target()
 	grub_background="background1280x800.png"
 	board="$1"
 
-	configure_target
-	[ "$board" = "$tree" ] && return 0
-	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 0
-
-	build_payloads
-	build_target_mainboard
-
-	[ -d "bin/$board" ] || return 0
-	[ "$xbmk_release" = "y" ] || targets="* Check: bin/$board\n$targets"
-	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/$board" && \
-	    targets="* Check: bin/${relname}_$board.tar.xz\n$targets"; return 0
+	configure_target && build_payloads && build_target_mainboard && \
+	    [ ! -d "bin/$board" ] && return 0; return 1
 }
 
 configure_target()
@@ -162,7 +152,10 @@ configure_target()
 	[ "$payload_uboot" != "n" ] && [ "$payload_uboot" != "y" ] && \
 		payload_uboot="n"
 	[ "$payload_uboot" = "y" ] && [ -z "$uboot_config" ] && \
-		uboot_config="default"; return 0
+		uboot_config="default"
+
+	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
+	[ "$board" = "$tree" ] && return 1; return 0
 }
 
 build_payloads()
