@@ -146,23 +146,6 @@ configure_target()
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
-	eval "$(setvars "" _ata _ahci _nvme _grub_scan_disk)"
-
-	for _disk in $grub_scan_disk; do
-		[ "$_disk" != "nvme" ] && [ "$_disk" != "ahci" ] && \
-		    [ "$_disk" != "ata" ] && _grub_scan_disk="nvme ahci ata" \
-		    && break
-
-		[ -n "$_ata" ] && [ "$_disk" = "ata" ] && continue
-		[ -n "$_ahci" ] && [ "$_disk" = "ahci" ] && continue
-		[ -n "$_nvme" ] && [ "$_disk" = "nvme" ] && continue
-
-		eval "_$_disk=\"$_disk\""
-		_grub_scan_disk="$_grub_scan_disk $_disk"
-	done
-	[ -z "$_grub_scan_disk" ] && _grub_scan_disk="nvme ahci ata"
-	grub_scan_disk="${_grub_scan_disk# }"
-
 	[ -n "$grubtree" ] || grubtree="default"
 	grubelf="elf/grub/$grubtree/payload/grub.elf"
 
