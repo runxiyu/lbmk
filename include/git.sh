@@ -52,8 +52,7 @@ fetch_project_repo()
 	eval "$(setvars "" xtree tree_depend)"
 
 	scan_config "$project" "config/git"
-	[ -z "${loc+x}" ] && $err "fetch_project_repo $project: loc not set"
-	[ -z "${url+x}" ] && $err "fetch_project_repo $project: url not set"
+	chkvars loc url
 
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
 		x_ ./update trees -f coreboot "$xtree"
@@ -87,7 +86,7 @@ git_prep()
 	_patchdir="$3" # $1 and $2 are gitrepo and gitrepo_backup
 	_loc="$4"
 
-	[ -z "${rev+x}" ] && $err "git_prep $_loc: rev not set"
+	chkvars rev
 
 	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
@@ -130,9 +129,7 @@ fetch_submodule()
 
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
 
-	for mvar in "sub${st}" "sub${st}_bkup" "subhash"; do
-		eval "[ -n \"\$$mvar\" ] || $err \"$1, $mdir: $mvar unset\""
-	done
+	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
 	if [ "$st" = "repo" ]; then
 		rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"

@@ -131,7 +131,7 @@ handle_src_tree()
 	load_project_config "$target_dir"
 	x_ mkdir -p "$elfdir/$target"
 
-	[ -z "$tree" ] && $err "handle_src_tree $project/$tree: tree unset"
+	chkvars tree
 	cdir="src/$project/$tree"
 
 	if [ ! -d "$cdir" ]; then
@@ -279,8 +279,7 @@ mkpayload_grub()
 
 	. "$grubdata/module/$tree" || $err "$tree: !source grub modules"
 
-	[ -z "$grub_install_modules" ] && $err "$tree: install modules unset"
-	[ -z "$grub_modules" ] && $err "$tree: modules unset"
+	chkvars "grub_install_modules" "grub_modules"
 
 	"${cdir}/grub-mkstandalone" --grub-mkimage="${cdir}/grub-mkimage" \
 	    -O i386-coreboot -o "${cdir}/grub.elf" -d "${cdir}/grub-core/" \

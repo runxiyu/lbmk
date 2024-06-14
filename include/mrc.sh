@@ -8,9 +8,7 @@ eval "$(setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL)"
 
 extract_mrc()
 {
-	[ -z "$MRC_board" ] && $err "extract_mrc $MRC_hash: MRC_board not set"
-	[ -z "$CONFIG_MRC_FILE" ] && $err "$MRC_hash: CONFIG_MRC_FILE unset"
-
+	chkvars "MRC_board" "CONFIG_MRC_FILE"
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
 
 	(
@@ -49,7 +47,7 @@ extract_refcode()
 	# cbfstool changed the attributes scheme for stage files,
 	# incompatible with older versions before coreboot 4.14,
 	# so we need coreboot 4.13 cbfstool for certain refcode files
-	[ -n "$cbfstoolref" ] || $err "$board: MRC_refcode_cbtree not set"
+	chkvars cbfstoolref
 	mkdir -p "${_refdest%/*}" || $err "ref: !mkdir -p ${_refdest%/*}"
 
 	"$cbfstoolref" "$appdir/bios.bin" extract \

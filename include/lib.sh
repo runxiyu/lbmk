@@ -41,6 +41,12 @@ setvars()
 	done
 	printf "%s\n" "${_setvars% }"
 }
+chkvars()
+{
+	for var in $@; do
+		eval "[ -n "\${$var+x}" ] || \$err \"$var unset\""
+	done
+}
 
 eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
     versiondate threads projectname projectsite aur_notice cfgsdir datadir)"
@@ -112,7 +118,7 @@ versiondate_="$versiondate"
 [ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 for p in projectname version versiondate projectsite; do
-	eval "[ -n \"\$$p\" ] || $err \"$p unset\""
+	chkvars "$p"
 	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
 done
 relname="$projectname-$version"
