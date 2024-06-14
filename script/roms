@@ -29,18 +29,16 @@ eval "$(setvars "" $v boards opt_k targets serprog_boards_dir)"
 main()
 {
 	while [ $# -gt 0 ]; do
+		[ "$1" = "list" ] && eval "x_ ls -1 config/coreboot; return 0"
+		[ "$1" = "serprog" ] && eval "shift 1; mkserprog $@; return 0"
+
 		if [ "$1" = "-k" ]; then
 			[ $# -lt 2 ] && $err "$1: option not specified"
-			opt_k="$2"
-		elif [ "$1" = "serprog" ]; then
-			shift 1; handle_serprog $@; return 0
-		elif [ "$1" = "list" ]; then
-			x_ ls -1 config/coreboot; return 0
-		else
-			[ "$1" = "all" ] && shift && continue
-			boards="$1 $boards"
-			shift && continue
+			opt_k="$2"; continue
 		fi
+
+		[ "$1" = "all" ] && shift && continue
+		boards="$1 $boards"; shift 1
 	done
 
 	[ -n "$boards" ] || boards="$(ls -1 config/coreboot)" || \
@@ -50,18 +48,13 @@ main()
 			handle_coreboot_target "$x"; continue
 	done
 
-	x="directories"
-	[ "$xbmk_release" = "y" ] && x="archives (remember the inject command)"
-
 	[ -z "$targets" ] && $err "No ROM images were compiled"
-	printf "\nROM images available in these %s:\n" "$x"
-	eval "printf \"$targets\""
-	printf "^^ ROM images available in these %s.\n\n" "$x"
+	eval "printf \"\\n\\n$targets\\n\\n\"n"
 
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
 
-handle_serprog()
+mkserprog()
 {
 	[ -z "${1+x}" ] && badcmd
 	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "bad command"
@@ -131,9 +124,9 @@ handle_coreboot_target()
 	build_target_mainboard
 
 	[ -d "bin/$board" ] || return 0
-	[ "$xbmk_release" = "y" ] || targets="* bin/$board\n$targets"
+	[ "$xbmk_release" = "y" ] || targets="* Check: bin/$board\n$targets"
 	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/$board" && \
-	    targets="* bin/${relname}_$board.tar.xz\n$targets"; return 0
+	    targets="* Check: bin/${relname}_$board.tar.xz\n$targets"; return 0
 }
 
 configure_target()
