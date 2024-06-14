@@ -44,12 +44,13 @@ main()
 	[ -n "$boards" ] || boards="$(ls -1 config/coreboot)" || \
 		$err "Cannot generate list of boards for building"
 	for x in $boards; do
-		[ -d "config/coreboot/$x/config" ] && \
-			handle_coreboot_target "$x" && targets="$targets, $x"
+		[ -d "config/coreboot/$x/config" ] && configure_target "$x" \
+		    && build_payloads && build_board && [ -d "bin/$board" ] \
+		    && targets="$targets, $x"; continue
 	done
 
 	[ -z "$targets" ] && $err "No ROM images were compiled"
-	printf "Check these ROM directories in bins/: %s\n" "${targets#, }"
+	printf "Check these ROM directories in bin/: %s\n" "${targets#, }"
 	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
 }
 
@@ -109,18 +110,12 @@ list_serprog_boards()
 	basename -a -s .h "$1/"*.h || $err "$1: can't list boards"
 }
 
-handle_coreboot_target()
+configure_target()
 {
 	eval "$(setvars "n" $pv) $(setvars "" $v)"
 	grub_background="background1280x800.png"
 	board="$1"
 
-	configure_target && build_payloads && build_target_mainboard && \
-	    [ ! -d "bin/$board" ] && return 0; return 1
-}
-
-configure_target()
-{
 	targetdir="$cfgsdir/$board"
 	[ -f "$targetdir/target.cfg" ] || $err "$board: target.cfg missing"
 
@@ -201,7 +196,7 @@ build_uboot_payload()
 	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"; return 0
 }
 
-build_target_mainboard()
+build_board()
 {
 	x_ rm -Rf "$romdir"
 
