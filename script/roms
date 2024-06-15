@@ -213,7 +213,7 @@ build_roms()
 
 	[ "$payload_memtest" != "y" ] || cbfs "$cbrom" "$mt86bin" img/memtest
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
-	[ "$payload_grub" != "y" ] || x_ build_grub_roms "$cbrom" "grub"
+	[ "$payload_grub" != "y" ] || build_grub_roms "$cbrom" "grub"
 	[ "$payload_uboot" = "y" ] || return 0
 	x_ cp "$_cbrom" "$cbrom"
 	build_uboot_roms
@@ -224,7 +224,7 @@ build_seabios_roms()
 	if [ "$payload_seabios_withgrub" = "y" ]; then
 		t="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 		x_ cp "$cbrom" "$t"
-		x_ build_grub_roms "$t" "seabios_withgrub"
+		build_grub_roms "$t" "seabios_withgrub"
 	else
 		t="$(mkSeabiosRom "$cbrom" "fallback/payload")" || \
 		    $err "build_seabios_roms: cannot build tmprom"
