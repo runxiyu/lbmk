@@ -27,13 +27,14 @@ else
 	gfxpayload=keep
 	terminal_output --append gfxterm
 
-	if [ -f (cbfsdisk)/background.png ]; then
-		insmod png
-		background_image (cbfsdisk)/background.png
-	elif [ -f (cbfsdisk)/background.jpg ]; then
-		insmod jpeg
-		background_image (cbfsdisk)/background.jpg
-	fi
+	for dt in cbfsdisk memdisk; do
+		for it in png jpg; do
+			if [ -f (${dt})/background.${it} ]; then
+				insmod ${it}
+				background_image (${dt})/background.${it}
+			fi
+		done
+	done
 fi
 
 # Keep CTRL pressed to enable default serial terminal (COM1 or the like)

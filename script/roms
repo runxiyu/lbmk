@@ -11,7 +11,6 @@ set -u -e
 . "include/lib.sh"
 
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
-grub_background="background1280x800.png"
 cfgsdir="config/coreboot"
 picosrc="src/pico-serprog"
 picosdk="src/pico-sdk"
@@ -107,7 +106,6 @@ list_serprog_boards()
 configure_target()
 {
 	eval "$(setvars "n" $pv) $(setvars "" $v)"
-	grub_background="background1280x800.png"
 	board="$1"
 
 	targetdir="$cfgsdir/$board"
@@ -260,13 +258,6 @@ build_grub_roms()
 
 	# we only need insert grub.elf once, for each coreboot config:
 	cbfs "$tmprom" "$grubelf" "$grub_cbfs"
-
-	# we only need insert background.png once, for each coreboot config:
-	if [ "$displaymode" = "vesafb" ] || \
-	    [ "$displaymode" = "corebootfb" ]; then
-		cbfs "$tmprom" "$grubdata/background/$grub_background" \
-		    background.png raw
-	fi
 
 	tmpcfg="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" > "$tmpcfg" || \
