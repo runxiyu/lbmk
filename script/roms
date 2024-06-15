@@ -29,7 +29,7 @@ main()
 {
 	while [ $# -gt 0 ]; do
 		[ "$1" = "list" ] && eval "x_ ls -1 config/coreboot; return 0"
-		[ "$1" = "serprog" ] && eval "shift 1; mkserprog $@; return 0"
+		[ "$1" = "serprog" ] && shift && eval "mkserprog $@; return 0"
 		[ "$1" = "all" ] && shift && continue
 		boards="$1 $boards"; shift 1
 	done
