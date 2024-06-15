@@ -60,13 +60,11 @@ mkserprog()
 	fi
 	x_ mkdir -p "bin/serprog_$1"
 
-	if [ $# -gt 1 ] && [ "$2" = "list" ]; then
-		list_serprog_boards "$serprog_boards_dir"
-		return 0
-	elif [ $# -gt 1 ]; then
-		build_${1}_rom "$2"
+	if [ $# -gt 1 ]; then
+		[ "$2" = "list" ] && serlist "$serprog_boards_dir" && return 0
+		[ "$2" = "list" ] || build_${1}_rom "$2"
 	else
-		list_serprog_boards "$serprog_boards_dir" | \
+		serlist "$serprog_boards_dir" | \
 			while read -r board; do
 				build_${1}_rom "$board"
 			done
@@ -94,7 +92,7 @@ build_stm32_rom()
 	printf "output to bin/serprog_stm32/serprog_%s.hex\n" "$1"
 }
 
-list_serprog_boards()
+serlist()
 {
 	basename -a -s .h "$1/"*.h || $err "$1: can't list boards"
 }
