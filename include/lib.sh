@@ -245,3 +245,10 @@ vendor_checksum()
 	printf "Bad checksum for file: %s\n" "$2" 1>&2
 	rm -f "$2" || :
 }
+
+cbfs()
+{
+	ccmd="add-payload" && [ $# -gt 3 ] && ccmd="add"
+	lzma="-c lzma" && [ $# -gt 3 ] && lzma="-t raw"
+	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
+}

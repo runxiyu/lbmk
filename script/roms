@@ -213,8 +213,7 @@ build_roms()
 	cbrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	x_ cp "$_cbrom" "$cbrom"
 
-	[ "$payload_memtest" != "y" ] || x_ "$cbfstool" "$cbrom" add-payload \
-	    -f "$mt86bin" -n img/memtest -c lzma
+	[ "$payload_memtest" != "y" ] || cbfs "$cbrom" "$mt86bin" img/memtest
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
 	[ "$payload_grub" != "y" ] || x_ build_grub_roms "$cbrom" "grub"
 	[ "$payload_uboot" = "y" ] || return 0
@@ -260,25 +259,22 @@ build_grub_roms()
 	fi
 
 	# we only need insert grub.elf once, for each coreboot config:
-	x_ "$cbfstool" "$tmprom" add-payload -f "$grubelf" \
-	    -n "$grub_cbfs" -c lzma
+	cbfs "$tmprom" "$grubelf" "$grub_cbfs"
 
 	# we only need insert background.png once, for each coreboot config:
 	if [ "$displaymode" = "vesafb" ] || \
 	    [ "$displaymode" = "corebootfb" ]; then
-		backgroundfile="$grubdata/background/$grub_background"
-		"$cbfstool" "$tmprom" add -f "$backgroundfile" -n \
-		    background.png -t raw || $err "!bg, $backgroundfile"
+		cbfs "$tmprom" "$grubdata/background/$grub_background" \
+		    background.png raw
 	fi
 
 	tmpcfg="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" > "$tmpcfg" || \
 	    $err "set grub_scan_disk, $grub_scan_disk, $tmpcfg"
-	x_ "$cbfstool" "$tmprom" add -f "$tmpcfg" -n scan.cfg -t raw
+	cbfs "$tmprom" "$tmpcfg" scan.cfg raw
 	printf "set timeout=%s\n" "$grub_timeout" > "$tmpcfg" || \
 	    $err "set timeout, $grub_timeout, $tmpcfg"
-	[ -z "$grub_timeout" ] || x_ "$cbfstool" "$tmprom" add \
-	    -f "$tmpcfg" -n timeout.cfg -t raw
+	[ -z "$grub_timeout" ] || cbfs "$tmprom" "$tmpcfg" timeout.cfg raw
 	x_ rm -f "$tmpcfg"
 
 	newrom="$romdir/${payload1}_${board}_${initmode}_$displaymode.rom"
@@ -287,8 +283,7 @@ build_grub_roms()
 	x_ cprom "$tmprom" "$newrom"
 	if [ "$payload_seabios_withgrub" = "y" ] && \
 	    [ "$payload1" != "grub" ]; then
-		x_ "$cbfstool" "$tmprom" add \
-		    -f "$grubdata/bootorder" -n bootorder -t raw
+		cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 		x_ cprom "$tmprom" "${newrom%.rom}_grubfirst.rom"
 		if [ "$payload_seabios_grubonly" = "y" ]; then
 			x_ "$cbfstool" "$tmprom" add-int -i 0 \
@@ -307,15 +302,14 @@ mkSeabiosRom() {
 	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 
 	x_ cp "$_cbrom" "$tmprom"
-	x_ "$cbfstool" "$tmprom" add-payload -f "$_seabioself" \
-	    -n "$_seabios_cbfs_path" -c lzma
+	cbfs "$tmprom" "$_seabioself" "$_seabios_cbfs_path"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	z="2"; [ "$initmode" = "vgarom" ] && z="0"
 	x_ "$cbfstool" "$tmprom" add-int -i $z -n etc/pci-optionrom-exec
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
-	[ "$initmode" != "libgfxinit" ] || x_ "$cbfstool" "$tmprom" add -f \
-	    "$seavgabiosrom" -n vgaroms/seavgabios.bin -t raw
+	[ "$initmode" != "libgfxinit" ] || cbfs "$tmprom" "$seavgabiosrom" \
+	    vgaroms/seavgabios.bin raw
 
 	printf "%s\n" "$tmprom"
 }
@@ -342,8 +336,7 @@ mkUbootRom() {
 	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 
 	x_ cp "$_cbrom" "$tmprom"
-	x_ "$cbfstool" "$tmprom" add-payload -f "$_ubootelf" \
-	    -n "$_uboot_cbfs_path" -c lzma
+	cbfs "$tmprom" "$_ubootelf" "$_uboot_cbfs_path"
 
 	printf "%s\n" "$tmprom"
 }
