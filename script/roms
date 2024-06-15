@@ -127,8 +127,8 @@ configure_target()
 	[ "$payload_grub_withseabios" = "y" ] && eval "$(setvars "y" \
 	    payload_grub payload_seabios payload_seabios_withgrub)"
 	[ "$payload_seabios_withgrub" = "y" ] && payload_seabios="y"
-	[ "$payload_seabios_grubonly" = "y" ] && payload_seabios="y"
-	[ "$payload_seabios_grubonly" = "y" ] && payload_seabios_withgrub="y"
+	[ "$payload_seabios_grubonly" = "y" ] && \
+		eval "$(setvars "y" payload_seabios payload_seabios_withgrub)"
 
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-with-SeaBIOS will, e.g. VGA ROM execution
