@@ -20,8 +20,8 @@ stm32src="src/stm32-vserprog"
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
 pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
-v="romdir cbrom initmode displaymode cbcfg targetdir tree release"
-v="$v grub_timeout ubdir board grub_scan_disk uboot_config grubtree grubelf"
+v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
+v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf"
 eval "$(setvars "n" $pv)"
 eval "$(setvars "" $v boards targets serprog_boards_dir)"
 
@@ -170,9 +170,8 @@ build_uboot_payload()
 {
 	x_ ./update trees -b u-boot $board
 	ubdir="elf/u-boot/$board/$uboot_config"
-	ubootelf="$ubdir/u-boot.elf"
-	[ ! -f "$ubootelf" ] && [ -f "$ubdir/u-boot" ] && \
-		ubootelf="$ubdir/u-boot"
+	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
+	    ubootelf="$ubdir/u-boot"
 	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"; return 0
 }
 
@@ -318,15 +317,10 @@ mkUbootRom() {
 	_cbrom="$1"
 	_uboot_cbfs_path="$2"
 
-	_ubdir="elf/u-boot/$board/$uboot_config"
-	_ubootelf="$_ubdir/u-boot.elf"
-	[ -f "$_ubootelf" ] || _ubootelf="$_ubdir/u-boot"
-	[ -f "$_ubootelf" ] || $err "mkUbootRom: $board: cant find u-boot"
-
 	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 
 	x_ cp "$_cbrom" "$tmprom"
-	cbfs "$tmprom" "$_ubootelf" "$_uboot_cbfs_path"
+	cbfs "$tmprom" "$ubootelf" "$_uboot_cbfs_path"
 
 	printf "%s\n" "$tmprom"
 }
