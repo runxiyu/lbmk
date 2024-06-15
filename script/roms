@@ -124,9 +124,8 @@ configure_target()
 	[ "$payload_memtest" != "y" ] && payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
 
-	[ "$payload_grub_withseabios" = "y" ] && payload_grub="y"
-	[ "$payload_grub_withseabios" = "y" ] && \
-		eval "$(setvars "y" payload_seabios payload_seabios_withgrub)"
+	[ "$payload_grub_withseabios" = "y" ] && eval "$(setvars "y" \
+	    payload_grub payload_seabios payload_seabios_withgrub)"
 	[ "$payload_seabios_withgrub" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios_grubonly" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios_grubonly" = "y" ] && payload_seabios_withgrub="y"
