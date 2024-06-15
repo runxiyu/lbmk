@@ -293,7 +293,6 @@ mkpayload_grub()
 
 copy_elf()
 {
-	[ -n "$listfile" ] || return 0
 	[ -f "$listfile" ] || return 0
 
 	x_ mkdir -p "$dest_dir"
