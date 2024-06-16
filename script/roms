@@ -302,14 +302,9 @@ build_uboot_roms()
 
 # make a rom in /tmp/ and then print the path of that ROM
 mkUbootRom() {
-	_cbrom="$1"
-	_uboot_cbfs_path="$2"
-
-	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
-
-	x_ cp "$_cbrom" "$tmprom"
-	cbfs "$tmprom" "$ubootelf" "$_uboot_cbfs_path"
-
+	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)" # 1=cbrom, 2=cbfs path
+	x_ cp "$1" "$tmprom"
+	cbfs "$tmprom" "$ubootelf" "$2"
 	printf "%s\n" "$tmprom"
 }
 
