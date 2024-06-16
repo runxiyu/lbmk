@@ -219,7 +219,7 @@ build_seabios_roms()
 		newrom="$romdir/seabios_${board}_${initmode}_$displaymode"
 		[ "$initmode" = "normal" ] && newrom="$romdir/seabios" \
 			&& newrom="${newrom}_${board}_$initmode"
-		x_ cprom cp "$t" "$newrom.rom"
+		cprom cp "$t" "$newrom.rom"
 	fi
 	x_ rm -f "$t"
 }
@@ -256,15 +256,15 @@ build_grub_roms()
 	newrom="$romdir/${payload1}_${board}_${initmode}_$displaymode.rom"
 	[ "$initmode" = "normal" ] && newrom="$romdir/${payload1}_" \
 	    && newrom="$newrom${board}_$initmode.rom"
-	x_ cprom cp "$tmprom" "$newrom"
+	cprom cp "$tmprom" "$newrom"
 	if [ "$payload_seabios_withgrub" = "y" ] && \
 	    [ "$payload1" != "grub" ]; then
 		cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-		x_ cprom cp "$tmprom" "${newrom%.rom}_grubfirst.rom"
+		cprom cp "$tmprom" "${newrom%.rom}_grubfirst.rom"
 		if [ "$payload_seabios_grubonly" = "y" ]; then
 			x_ "$cbfstool" "$tmprom" add-int -i 0 \
 			    -n etc/show-boot-menu
-			x_ cprom cp "$tmprom" "${newrom%.rom}_grubonly.rom"
+			cprom cp "$tmprom" "${newrom%.rom}_grubonly.rom"
 		fi
 	fi
 }
@@ -293,7 +293,7 @@ build_uboot_roms()
 	newrom="$romdir/uboot_payload_${board}_${initmode}_$displaymode.rom"
 	x_ cp "$cbrom" "$tmprom"
 	cbfs "$tmprom" "$ubootelf" "fallback/payload"
-	x_ cprom mv "$tmprom" "$newrom"
+	cprom mv "$tmprom" "$newrom"
 }
 
 cprom()
