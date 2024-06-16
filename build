@@ -19,9 +19,6 @@ fi
 eval "$(setvars "" vdir src_dirname srcdir _xm mode xp)"
 err="fail"
 
-linkpath="${0}"
-linkname="${linkpath##*/}"
-
 main()
 {
 	[ $# -lt 1 ] && badcmd
