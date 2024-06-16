@@ -132,8 +132,7 @@ configure_target()
 
 	[ "$payload_uboot" != "n" ] && [ "$payload_uboot" != "y" ] && \
 		payload_uboot="n"
-	[ "$payload_uboot" = "y" ] && [ -z "$uboot_config" ] && \
-		uboot_config="default"
+	[ -n "$uboot_config" ] || uboot_config="default"
 
 	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
 	[ "$board" = "$tree" ] && return 1; return 0
