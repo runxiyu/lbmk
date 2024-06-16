@@ -290,19 +290,12 @@ mkSeabiosRom() {
 
 build_uboot_roms()
 {
-	tmprom="$(mkUbootRom "$cbrom" "fallback/payload")" || \
-	    $err "build_uboot_roms $board: could not create tmprom"
+	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	newrom="$romdir/uboot_payload_${board}_${initmode}_$displaymode.rom"
+	x_ cp "$cbrom" "$tmprom"
+	cbfs "$tmprom" "$ubootelf" "fallback/payload"
 	x_ cprom "$tmprom" "$newrom"
 	x_ rm -f "$tmprom"
-}
-
-# make a rom in /tmp/ and then print the path of that ROM
-mkUbootRom() {
-	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)" # 1=cbrom, 2=cbfs path
-	x_ cp "$1" "$tmprom"
-	cbfs "$tmprom" "$ubootelf" "$2"
-	printf "%s\n" "$tmprom"
 }
 
 cprom()
