@@ -184,16 +184,13 @@ build_board()
 			    [ "$displaymode" != "txtmode" ] && continue
 			cbcfg="$targetdir/config/${initmode}_$displaymode"
 			[ "$initmode" = "normal" ] && cbcfg="${cbcfg%_*}"
-			build_roms "$cbcfg"; x_ rm -f "$cbrom"
+			e "$cbcfg" f not || build_roms; x_ rm -f "$cbrom"
 		done
 	done
 }
 
 build_roms()
 {
-	cbcfg="$1"
-	e "$cbcfg" f not && return 0
-
 	x_ ./update trees -b coreboot $board
 
 	_cbrom="elf/coreboot_nopayload_DO_NOT_FLASH"
