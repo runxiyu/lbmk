@@ -250,14 +250,13 @@ build_grub_roms()
 	# we only need insert grub.elf once, for each coreboot config:
 	cbfs "$tmprom" "$grubelf" "$grub_cbfs"
 
-	tmpcfg="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
+	tmpcfg="$tmpdir/tmpcfg"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" > "$tmpcfg" || \
 	    $err "set grub_scan_disk, $grub_scan_disk, $tmpcfg"
 	cbfs "$tmprom" "$tmpcfg" scan.cfg raw
 	printf "set timeout=%s\n" "$grub_timeout" > "$tmpcfg" || \
 	    $err "set timeout, $grub_timeout, $tmpcfg"
 	[ -z "$grub_timeout" ] || cbfs "$tmprom" "$tmpcfg" timeout.cfg raw
-	x_ rm -f "$tmpcfg"
 
 	newrom="$romdir/${payload1}_${board}_${initmode}_$displaymode.rom"
 	[ "$initmode" = "normal" ] && newrom="$romdir/${payload1}_" \
