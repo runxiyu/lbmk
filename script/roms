@@ -293,8 +293,7 @@ build_uboot_roms()
 	newrom="$romdir/uboot_payload_${board}_${initmode}_$displaymode.rom"
 	x_ cp "$cbrom" "$tmprom"
 	cbfs "$tmprom" "$ubootelf" "fallback/payload"
-	x_ cprom cp "$tmprom" "$newrom"
-	x_ rm -f "$tmprom"
+	x_ cprom mv "$tmprom" "$newrom"
 }
 
 cprom()
