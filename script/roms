@@ -193,8 +193,7 @@ build_roms()
 {
 	x_ ./update trees -b coreboot $board
 
-	_cbrom="elf/coreboot_nopayload_DO_NOT_FLASH"
-	_cbrom="$_cbrom/$board/${initmode}_$displaymode"
+	_cbrom="$cbelfdir/$board/${initmode}_$displaymode"
 	[ "$initmode" = "normal" ] && _cbrom="${_cbrom%"_$displaymode"}"
 	_cbrom="$_cbrom/coreboot.rom"
 	cbrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"

@@ -78,8 +78,7 @@ build_projects()
 
 build_targets()
 {
-	[ "$elfdir" = "elf/coreboot" ] && \
-		elfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
+	[ "$elfdir" = "elf/coreboot" ] && elfdir="$cbelfdir"
 
 	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
 	[ -f "$listfile" ] || $err "list file, $listfile, does not exist"

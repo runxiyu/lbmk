@@ -10,6 +10,7 @@ _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 tmpdir_was_set="y"
 cbdir="src/coreboot/default"
+cbelfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 ifdtool="elf/ifdtool/default/ifdtool"
 cbfstool="elf/cbfstool/default/cbfstool"
 tmpgit="$PWD/tmp/gitclone"
