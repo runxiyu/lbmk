@@ -272,14 +272,11 @@ build_grub_roms()
 
 # make a rom in /tmp/ and then print the path of that ROM
 mkSeabiosRom() {
-	_cbrom="$1" # rom to insert seabios in. will not be touched
-		# (a tmpfile will be made instead)
-	_seabios_cbfs_path="$2" # e.g. fallback/payload
+	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)" # 1=cbrom, 2=cbfs path
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
-	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 
-	x_ cp "$_cbrom" "$tmprom"
-	cbfs "$tmprom" "$_seabioself" "$_seabios_cbfs_path"
+	x_ cp "$1" "$tmprom"
+	cbfs "$tmprom" "$_seabioself" "$2"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	z="2"; [ "$initmode" = "vgarom" ] && z="0"
