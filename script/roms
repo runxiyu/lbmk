@@ -21,7 +21,7 @@ stm32src="src/stm32-vserprog"
 pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
 pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
-v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf"
+v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval "$(setvars "n" $pv)"
 eval "$(setvars "" $v boards targets serprog_boards_dir)"
 
@@ -237,16 +237,15 @@ build_grub_roms()
 	grub_cbfs="fallback/payload"
 	if [ "$payload1" = "grub" ] && [ "$payload_grub_withseabios" = "y" ]
 	then
-		_tmpmvrom="$(mkSeabiosRom "$tmprom" "seabios.elf")" || \
+		tmpmv="$(mkSeabiosRom "$tmprom" "seabios.elf")" || \
 		    $err "build_grub_roms 1 $board: can't build tmprom"
-		x_ mv "$_tmpmvrom" "$tmprom"
 	elif [ "$payload1" != "grub" ] && [ "$payload_seabios_withgrub" = "y" ]
 	then
 		grub_cbfs="img/grub2"
-		_tmpmvrom="$(mkSeabiosRom "$tmprom" fallback/payload)" || \
+		tmpmv="$(mkSeabiosRom "$tmprom" fallback/payload)" || \
 		    $err "build_grub_roms 2 $board: can't build tmprom"
-		x_ mv "$_tmpmvrom" "$tmprom"
 	fi
+	[ -n "$tmpmv" ] && [ -f "$tmpmv" ] && x_ mv "$tmpmv" "$tmprom"
 
 	# we only need insert grub.elf once, for each coreboot config:
 	cbfs "$tmprom" "$grubelf" "$grub_cbfs"
