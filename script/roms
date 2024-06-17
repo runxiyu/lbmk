@@ -43,9 +43,10 @@ main()
 		    && targets="$targets, $x"; continue
 	done
 
-	[ -z "$targets" ] && $err "No ROM images were compiled"
+#	[ -z "$targets" ] && $err "No ROM images were compiled"
 	printf "Check these ROM directories in bin/: %s\n" "${targets#, }"
-	printf "DO NOT flash images from elf/ - please use bin/ instead.\n"
+	printf "DO NOT flash images from elf/ - use bin/ instead. ALSO:\n"
+	printf "%s\n" "$kbnotice"
 }
 
 mkserprog()

@@ -261,7 +261,8 @@ vendor_inject()
 	inject_vendorfiles
 	[ "$nukemode" = "nuke" ] && return 0
 	printf "Friendly reminder (this is *not* an error message):\n"
-	printf "Please ensure that the files were inserted correctly.\n"
+	printf "Please ensure that the files were inserted correctly. ALSO:\n"
+	printf "%s\n" "$kbnotice"
 }
 
 check_board()

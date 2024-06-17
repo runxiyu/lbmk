@@ -7,6 +7,8 @@ export LC_COLLATE=C
 export LC_ALL=C
 
 _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+kbnotice="Insert a .gkb file from config/data/grub/keymap/ as keymap.gkb \
+if you want a custom keymap in GRUB; use cbfstool from elf/cbfstool."
 
 tmpdir_was_set="y"
 cbdir="src/coreboot/default"
