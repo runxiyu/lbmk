@@ -173,8 +173,8 @@ build_board()
 {
 	x_ rm -Rf "$romdir"
 
-	for x in "normal" "vgarom" "libgfxinit"; do
-		initmode="$x"
+	for it in "normal" "vgarom" "libgfxinit"; do
+		initmode="$it"
 		hmode="vesafb"
 		[ "$initmode" = "vgarom" ] || hmode="corebootfb"
 		modes="$hmode txtmode"
