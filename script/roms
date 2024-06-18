@@ -26,7 +26,7 @@ pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
 v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval "$(setvars "n" $pv)"
-eval "$(setvars "" $v boards targets serprogdir)"
+eval "$(setvars "" $v boards targets serprogdir ser)"
 
 main()
 {
@@ -64,15 +64,13 @@ mkserprog()
 	fi
 	x_ mkdir -p "bin/serprog_$1"
 
-	if [ $# -gt 1 ]; then
-		[ "$2" = "list" ] && serlist "$serprogdir" && return 0
-		[ "$2" = "list" ] || mkserprogfw "$1" "$2"
-	else
-		serlist "$serprogdir" | \
-			while read -r board; do
-				mkserprogfw "$1" "$board" 
-			done
-	fi
+	[ $# -gt 1 ] && [ "$2" = "list" ] && serlist "$serprogdir" && return 0
+	ser="$1" && shift
+
+	targets="$@" && [ -z "$targets" ] && targets="$(serlist "$serprogdir")"
+	for board in $targets; do
+		mkserprogfw "$ser" "$board"
+	done
 
 	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
 }
