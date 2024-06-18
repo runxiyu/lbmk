@@ -138,16 +138,15 @@ build_payloads()
 	cbrom="$cbdir/build/coreboot.rom"
 
 	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
-
 	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus
-
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
+
 	if [ "$payload_grub" = "y" ] || [ "$payload_seabios_withgrub" = "y" ] \
 	    || [ "$payload_seabios_grubonly" = "y" ]; then
 		[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree
 	fi
-	[ "$payload_uboot" = "y" ] || return 0
 
+	[ "$payload_uboot" = "y" ] || return 0
 	x_ ./update trees -b u-boot $board
 	ubdir="elf/u-boot/$board/$uboot_config"
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
