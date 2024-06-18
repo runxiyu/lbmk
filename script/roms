@@ -122,8 +122,7 @@ configure_target()
 	[ "$payload_grub" != "y" ] && [ "$payload_seabios" != "y" ] && \
 	    [ "$payload_uboot" != "y" ] && $err "'$board' defines no payload"
 
-	[ "$payload_uboot" != "n" ] && [ "$payload_uboot" != "y" ] && \
-		payload_uboot="n"
+	[ "$payload_uboot" = "y" ] || payload_uboot="n"
 	[ -n "$uboot_config" ] || uboot_config="default"
 
 	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
