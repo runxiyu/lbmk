@@ -64,34 +64,33 @@ mkserprog()
 
 	if [ $# -gt 1 ]; then
 		[ "$2" = "list" ] && serlist "$serprog_boards_dir" && return 0
-		[ "$2" = "list" ] || build_${1}_rom "$2"
+		[ "$2" = "list" ] || mkserprogfw "$1" "$2"
 	else
 		serlist "$serprog_boards_dir" | \
 			while read -r board; do
-				build_${1}_rom "$board"
+				mkserprogfw "$1" "$board" 
 			done
 	fi
 
 	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
 }
 
-build_rp2040_rom()
+mkserprogfw()
 {
-	x_ cmake -DPICO_BOARD="$1" -DPICO_SDK_PATH="$picosdk" \
-	    -B "$picosrc/build" "$picosrc"
-	x_ cmake --build "$picosrc/build"
-	x_ mv "$picosrc/build/pico_serprog.uf2" \
-	   "bin/serprog_rp2040/serprog_$1.uf2"
-	printf "output to bin/serprog_rp2040/serprog_%s.uf2\n" "$1"
-}
-
-build_stm32_rom()
-{
-	x_ make -C "$stm32src" libopencm3-just-make BOARD=$1
-	x_ make -C "$stm32src" BOARD=$1
-	x_ mv "$stm32src/stm32-vserprog.hex" \
-	   "bin/serprog_stm32/serprog_$1.hex"
-	printf "output to bin/serprog_stm32/serprog_%s.hex\n" "$1"
+	if [ "$1" = "rp2040" ]; then
+		x_ cmake -DPICO_BOARD="$2" -DPICO_SDK_PATH="$picosdk" \
+		    -B "$picosrc/build" "$picosrc"
+		x_ cmake --build "$picosrc/build"
+		x_ mv "$picosrc/build/pico_serprog.uf2" \
+		   "bin/serprog_rp2040/serprog_$2.uf2"
+		printf "output to bin/serprog_rp2040/serprog_%s.uf2\n" "$2"
+	else
+		x_ make -C "$stm32src" libopencm3-just-make BOARD=$2
+		x_ make -C "$stm32src" BOARD=$2
+		x_ mv "$stm32src/stm32-vserprog.hex" \
+		   "bin/serprog_stm32/serprog_$2.hex"
+		printf "output to bin/serprog_stm32/serprog_%s.hex\n" "$2"
+	fi
 }
 
 serlist()
