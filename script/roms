@@ -13,8 +13,10 @@ set -u -e
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 cfgsdir="config/coreboot"
 rp2040src="src/pico-serprog"
+rp2040x="$rp2040src/build/pico_serprog.uf2"
 picosdk="src/pico-sdk"
 stm32src="src/stm32-vserprog"
+stm32x="$stm32src/stm32-vserprog.hex"
 tmpcfg="$tmpdir/tmpcfg"
 
 # Disable all payloads by default.
@@ -81,14 +83,11 @@ mkserprogfw()
 		x_ cmake -DPICO_BOARD="$2" -DPICO_SDK_PATH="$picosdk" \
 		    -B "$rp2040src/build" "$rp2040src"
 		x_ cmake --build "$rp2040src/build"
-		x_ mv "$rp2040src/build/pico_serprog.uf2" \
-		   "bin/serprog_rp2040/serprog_$2.uf2"
 	else
 		x_ make -C "$stm32src" libopencm3-just-make BOARD=$2
 		x_ make -C "$stm32src" BOARD=$2
-		x_ mv "$stm32src/stm32-vserprog.hex" \
-		   "bin/serprog_stm32/serprog_$2.hex"
 	fi
+	eval "x_ mv \"\$${1}x\" \"bin/serprog_$1/serprog_$2.\${${1}x##*.}\""
 	printf "Look in bin/serprog_%s/ for images\n" "$1"
 }
 
