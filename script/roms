@@ -26,7 +26,7 @@ pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub mt86bin"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
 v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval "$(setvars "n" $pv)"
-eval "$(setvars "" $v boards targets serprog_boards_dir)"
+eval "$(setvars "" $v boards targets serprogdir)"
 
 main()
 {
@@ -56,19 +56,19 @@ mkserprog()
 	[ -z "${1+x}" ] && badcmd
 	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "bad command"
 	if [ "$1" = "rp2040" ]; then
-		serprog_boards_dir="$picosdk/src/boards/include/boards"
+		serprogdir="$picosdk/src/boards/include/boards"
 		[ -d "$rp2040src" ] || x_ ./update trees -f "pico-serprog"
 	elif [ "$1" = "stm32" ]; then
-		serprog_boards_dir="$stm32src/boards"
+		serprogdir="$stm32src/boards"
 		[ -d "$stm32src" ] || x_ ./update trees -f "stm32-vserprog"
 	fi
 	x_ mkdir -p "bin/serprog_$1"
 
 	if [ $# -gt 1 ]; then
-		[ "$2" = "list" ] && serlist "$serprog_boards_dir" && return 0
+		[ "$2" = "list" ] && serlist "$serprogdir" && return 0
 		[ "$2" = "list" ] || mkserprogfw "$1" "$2"
 	else
-		serlist "$serprog_boards_dir" | \
+		serlist "$serprogdir" | \
 			while read -r board; do
 				mkserprogfw "$1" "$board" 
 			done
