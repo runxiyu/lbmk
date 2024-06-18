@@ -148,11 +148,8 @@ build_payloads()
 	    || [ "$payload_seabios_grubonly" = "y" ]; then
 		[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree
 	fi
-	[ "$payload_uboot" = "y" ] && build_uboot_payload; return 0
-}
+	[ "$payload_uboot" = "y" ] || return 0
 
-build_uboot_payload()
-{
 	x_ ./update trees -b u-boot $board
 	ubdir="elf/u-boot/$board/$uboot_config"
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
