@@ -83,14 +83,13 @@ mkserprogfw()
 		x_ cmake --build "$picosrc/build"
 		x_ mv "$picosrc/build/pico_serprog.uf2" \
 		   "bin/serprog_rp2040/serprog_$2.uf2"
-		printf "output to bin/serprog_rp2040/serprog_%s.uf2\n" "$2"
 	else
 		x_ make -C "$stm32src" libopencm3-just-make BOARD=$2
 		x_ make -C "$stm32src" BOARD=$2
 		x_ mv "$stm32src/stm32-vserprog.hex" \
 		   "bin/serprog_stm32/serprog_$2.hex"
-		printf "output to bin/serprog_stm32/serprog_%s.hex\n" "$2"
 	fi
+	printf "Look in bin/serprog_%s/ for images\n" "$1"
 }
 
 serlist()
