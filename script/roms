@@ -55,13 +55,9 @@ mkserprog()
 {
 	[ -z "${1+x}" ] && badcmd
 	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "bad command"
-	if [ "$1" = "rp2040" ]; then
-		serprogdir="$picosdk/src/boards/include/boards"
-		[ -d "$rp2040src" ] || x_ ./update trees -f "pico-serprog"
-	elif [ "$1" = "stm32" ]; then
-		serprogdir="$stm32src/boards"
-		[ -d "$stm32src" ] || x_ ./update trees -f "stm32-vserprog"
-	fi
+	[ "$1" = "rp2040" ] && serprogdir="$picosdk/src/boards/include/boards"
+	[ "$1" = "stm32" ] && serprogdir="$stm32src/boards"
+	eval "[ -d \"\$${1}src\" ] || x_ ./update trees -f \"\${${1}src##*/}\""
 	x_ mkdir -p "bin/serprog_$1"
 
 	[ $# -gt 1 ] && [ "$2" = "list" ] && serlist "$serprogdir" && return 0
