@@ -15,8 +15,10 @@ cfgsdir="config/coreboot"
 rp2040src="src/pico-serprog"
 rp2040x="$rp2040src/build/pico_serprog.uf2"
 picosdk="src/pico-sdk"
+rp2040dir="$picosdk/src/boards/include/boards"
 stm32src="src/stm32-vserprog"
 stm32x="$stm32src/stm32-vserprog.hex"
+stm32dir="$stm32src/boards"
 
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
@@ -25,53 +27,47 @@ pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
 v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval "$(setvars "n" $pv)"
-eval "$(setvars "" $v boards targets serprogdir ser)"
+eval "$(setvars "" $v boards targets serdir ser)"
 
 main()
 {
 	while [ $# -gt 0 ]; do
-		[ "$1" = "list" ] && eval "x_ ls -1 config/coreboot; return 0"
-		[ "$1" = "serprog" ] && shift && eval "mkserprog $@; return 0"
+		if [ "$1" = "serprog" ]; then
+			[ $# -lt 2 ] && badcmd "serprog type not set"
+			[ "$2" != "rp2040" ] && [ "$2" != "stm32" ] && badcmd
+			eval "x_ ./update trees -f \"\${${2}src##*/}\""
+			ser="$2" && shift 2 && continue
+		fi
+		[ "$1$ser" = "list" ] && x_ ls -1 config/coreboot && return
 		[ "$1" = "all" ] && shift && continue
 		boards="$1 $boards"; shift 1
 	done
 
-	[ -n "$boards" ] || boards="$(ls -1 config/coreboot)" || \
-		$err "Cannot generate list of boards for building"
+	[ -n "$boards" ] || [ -n "$ser" ] || boards="$(ls -1 \
+	    config/coreboot)" || $err "can't list coreboot boards"
+
+	[ -n "$ser" ] && \
+	    eval "serlist \"\$${ser}dir\" > \"\$tmpdir/ser\" || $err \"!ser\""
+	[ -n "$ser" ] && [ -z "$boards" ] && boards="$(cat "$tmpdir/ser")"
+
 	for x in $boards; do
-		[ -d "config/coreboot/$x/config" ] && configure_target "$x" \
-		    && build_board && [ -d "bin/$board" ] \
-		    && targets="$targets, $x"; continue
+		[ -n "$ser" ] && mkserprogfw "$ser" "$x"
+		[ -z "$ser" ] && [ -d "config/coreboot/$x/config" ] && \
+		    configure_target "$x" && build_board && \
+		    [ -d "bin/$board" ] && targets="$targets, $x"; continue
 	done
 
-	[ -z "$targets" ] && $err "No ROM images were compiled"
-	printf "Check these ROM directories in bin/: %s\n" "${targets#, }"
+	[ -n "$ser" ] && [ "$xbmk_release" = "y" ] && \
+	    mkrom_tarball "bin/serprog_$ser" && return 0
+
+	[ -z "$ser" ] && [ -z "$targets" ] && $err "No images were compiled"
 	printf "DO NOT flash images from elf/ - use bin/ instead. ALSO:\n"
 	printf "%s\n" "$kbnotice"
 }
 
-mkserprog()
-{
-	[ -z "${1+x}" ] && badcmd
-	[ "$1" != "rp2040" ] && [ "$1" != "stm32" ] && $err "bad command"
-	[ "$1" = "rp2040" ] && serprogdir="$picosdk/src/boards/include/boards"
-	[ "$1" = "stm32" ] && serprogdir="$stm32src/boards"
-	eval "[ -d \"\$${1}src\" ] || x_ ./update trees -f \"\${${1}src##*/}\""
-	x_ mkdir -p "bin/serprog_$1"
-
-	[ $# -gt 1 ] && [ "$2" = "list" ] && serlist "$serprogdir" && return 0
-	ser="$1" && shift
-
-	targets="$@" && [ -z "$targets" ] && targets="$(serlist "$serprogdir")"
-	for board in $targets; do
-		mkserprogfw "$ser" "$board"
-	done
-
-	[ "$xbmk_release" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
-}
-
 mkserprogfw()
 {
+	x_ mkdir -p "bin/serprog_$1"
 	if [ "$1" = "rp2040" ]; then
 		x_ cmake -DPICO_BOARD="$2" -DPICO_SDK_PATH="$picosdk" \
 		    -B "$rp2040src/build" "$rp2040src"
