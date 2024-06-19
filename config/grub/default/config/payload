@@ -53,7 +53,7 @@ set default="0"
 if [ -f (cbfsdisk)/timeout.cfg ]; then
 	source (cbfsdisk)/timeout.cfg
 else	
-	set timeout=5
+	set timeout=8
 fi
 set grub_scan_disk="ahci ata"
 if [ -f (cbfsdisk)/scan.cfg ]; then
