@@ -232,7 +232,7 @@ build_grub_roms()
 	[ "$payload1" = "grub" ] && return 0
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	cprom cp "$tmprom" "${newrom%.rom}_grubfirst.rom"
-	[ "$payload_seabios_grubonly" = "y" ] && return 0
+	[ "$payload_seabios_grubonly" = "y" ] || return 0
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/show-boot-menu
 	cprom cp "$tmprom" "${newrom%.rom}_grubonly.rom"
 }
