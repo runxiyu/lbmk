@@ -115,22 +115,19 @@ prep_submodules()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
-	eval "$(setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup)"
+	eval $(setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st)
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
-	st=""
-	for _st in repo file; do
-		eval "[ -n \"\$sub$_st\$sub${_st}_bkup\" ] && st=\"\$st \$_st\""
+	for xt in repo file; do
+		eval "[ -n \"\$sub$xt\$sub${xt}_bkup\" ] && st=\"\$st \$xt\""
 	done
-	st="${st# }"
-	[ "$st" = "repo file" ] && $err "$mdir: repo/file both defined"
+	st="${st# }" && [ "$st" = "repo file" ] && $err "$mdir: repo+file"
 
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
-
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
-	[ "$st" != "repo" ] && download "$subfile" "$subfile_bkup" \
+	[ "$st" = "file" ] && download "$subfile" "$subfile_bkup" \
 	    "$tmpgit/$1" "$subhash" && return 0
 	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
 	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
