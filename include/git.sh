@@ -121,8 +121,7 @@ fetch_submodule()
 
 	st=""
 	for _st in repo file; do
-		_seval="if [ -n \"\$sub$_st\" ] || [ -n \"\$sub${_st}_bkup\" ]"
-		eval "$_seval; then st=\"\$st \$_st\"; fi"
+		eval "[ -n \"\$sub$_st\$sub${_st}_bkup\" ] && st=\"\$st \$_st\""
 	done
 	st="${st# }"
 	[ "$st" = "repo file" ] && $err "$mdir: repo/file both defined"
