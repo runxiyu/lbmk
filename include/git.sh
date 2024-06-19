@@ -130,13 +130,11 @@ fetch_submodule()
 
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
-	if [ "$st" = "repo" ]; then
-		rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
-		tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
-		    "$mdir/${1##*/}/patches"
-	else
-		download "$subfile" "$subfile_bkup" "$tmpgit/$1" "$subhash"
-	fi
+	[ "$st" != "repo" ] && download "$subfile" "$subfile_bkup" \
+	    "$tmpgit/$1" "$subhash" && return 0
+	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
+	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
+	    "$mdir/${1##*/}/patches"
 }
 
 tmpclone()
