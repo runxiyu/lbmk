@@ -57,15 +57,13 @@ fetch_project_repo()
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
 		x_ ./update trees -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
-		printf "'%s' needs dependency '%s'; grabbing '%s' now\n" \
-		    "$project" "$d" "$d"
+		printf "'%s' needs '%s'; grabbing '%s'\n" "$project" "$d" "$d"
 		x_ ./update trees -f $d
 	done
 	clone_project
 
 	for x in config/git/*; do
-		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null; \
-		    continue
+		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null
 	done
 }
 

@@ -36,10 +36,7 @@ vendor_download()
 	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
 
 	detect_firmware && exit 0
-	scan_config "$_b" "config/vendor"
-
-	build_dependencies_download
-	download_vendorfiles
+	scan_config "$_b" "config/vendor" && bootstrap && getfiles
 }
 
 detect_firmware()
@@ -68,7 +65,7 @@ detect_firmware()
 	printf "Vendor files not needed for: %s\n" "$board" 1>&2
 }
 
-build_dependencies_download()
+bootstrap()
 {
 	[ -d "$cbdir" ] || x_ ./update trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
@@ -86,7 +83,7 @@ build_dependencies_download()
 	x_ ./update trees -b coreboot utils $tree
 }
 
-download_vendorfiles()
+getfiles()
 {
 	[ -z "$CONFIG_HAVE_ME_BIN" ] || fetch intel_me "$DL_url" \
 	    "$DL_url_bkup" "$DL_hash" "$CONFIG_ME_BIN_PATH"

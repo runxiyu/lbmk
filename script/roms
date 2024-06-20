@@ -166,9 +166,8 @@ build_roms()
 	    cbfs "$cbrom" "elf/memtest86plus/memtest.bin" img/memtest
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
 	[ "$payload_grub" != "y" ] || build_grub_roms "$cbrom" "grub"
-	[ "$payload_uboot" = "y" ] || return 0
-	x_ cp "$_cbrom" "$cbrom"
-	build_uboot_roms
+	[ "$payload_uboot" = "y" ] && x_ cp "$_cbrom" "$cbrom" && \
+	    build_uboot_roms; return 0
 }
 
 build_seabios_roms()

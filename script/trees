@@ -229,8 +229,7 @@ handle_makefile()
 
 run_make_command()
 {
-	check_cmake "$cdir"
-	[ -z "$mode" ] && check_autoconf "$cdir"
+	check_cmake "$cdir" && [ -z "$mode" ] && check_autoconf "$cdir"
 	check_makefile "$cdir" || return 1
 
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \

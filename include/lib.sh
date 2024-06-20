@@ -181,8 +181,7 @@ mktarball()
 	[ "${2%/*}" = "$2" ] || \
 		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
 	printf "\nCreating archive: %s\n\n" "$2"
-	tar -c "$1" | xz -T$threads -9e > "$2" || \
-	    $err "mktarball 2, $1"
+	tar -c "$1" | xz -T$threads -9e > "$2" || $err "mktarball 2, $1"
 	mksha512sum "$2" "${2##*/}.sha512"
 }
 
@@ -190,8 +189,7 @@ mksha512sum()
 {
 	(
 	[ "${1%/*}" != "$1" ] && x_ cd "${1%/*}"
-	sha512sum ./"${1##*/}" >> "$2" || \
-	    $err "!sha512sum \"$1\" > \"$2\""
+	sha512sum ./"${1##*/}" >> "$2" || $err "!sha512sum \"$1\" > \"$2\""
 	) || $err "failed to create tarball checksum"
 }
 
