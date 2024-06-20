@@ -179,7 +179,7 @@ build_roms()
 	cbrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 	x_ cp "$_cbrom" "$cbrom"
 
-	[ "$payload_memtest" != "y" ] || cbfs "$cbrom"
+	[ "$payload_memtest" != "y" ] || cbfs "$cbrom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
 	[ "$payload_grub" != "y" ] || build_grub_roms "$cbrom" "grub"
