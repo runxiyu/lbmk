@@ -32,10 +32,9 @@ vendor_download()
 
 	[ $# -gt 0 ] || $err "No argument given"
 	board="$1"
-	boarddir="$cbcfgsdir/$board"
 	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
-
-	getcfg && scan_config "$_b" "config/vendor" && bootstrap && getfiles
+	boarddir="$cbcfgsdir/$board" && getcfg && scan_config "$_b" \
+	    "config/vendor" && bootstrap && getfiles; return 0
 }
 
 getcfg()
