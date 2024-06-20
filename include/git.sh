@@ -118,8 +118,10 @@ fetch_submodule()
 	    $err "! . $mcfgdir/module.cfg"
 
 	for xt in repo file; do
-		eval "[ -n \"\$sub$xt\$sub${xt}_bkup\" ] && st=\"\$st \$xt\""
+		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
+		eval "$_seval; then st=\"\$st \$xt\"; fi"
 	done
+
 	st="${st# }" && [ "$st" = "repo file" ] && $err "$mdir: repo+file"
 
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
