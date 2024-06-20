@@ -35,14 +35,13 @@ vendor_download()
 	boarddir="$cbcfgsdir/$board"
 	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
 
-	detect_firmware && exit 0
-	scan_config "$_b" "config/vendor" && bootstrap && getfiles
+	getcfg && scancfg "$_b" "config/vendor" && bootstrap && getfiles
 }
 
-detect_firmware()
+getcfg()
 {
 	[ -d "$boarddir" ] || $err "Target '$board' not defined."
-	check_defconfig "$boarddir" 1>"$tmpdir/vendorcfg.list" && return 0
+	check_defconfig "$boarddir" 1>"$tmpdir/vendorcfg.list" && return 1
 	while read -r cbcfgfile; do
 		set +u +e
 		. "$cbcfgfile" 2>/dev/null
@@ -50,7 +49,7 @@ detect_firmware()
 	done < "$tmpdir/vendorcfg.list"
 	. "$boarddir/target.cfg" 2>/dev/null
 
-	[ -z "$tree" ] && $err "detect_firmware $boarddir: tree undefined"
+	[ -z "$tree" ] && $err "getcfg $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 
@@ -60,9 +59,9 @@ detect_firmware()
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
-		eval "[ -z \"\${$c}\" ] || return 1"
+		eval "[ -z \"\${$c}\" ] || return 0"
 	done
-	printf "Vendor files not needed for: %s\n" "$board" 1>&2
+	printf "Vendor files not needed for: %s\n" "$board" 1>&2 && return 1
 }
 
 bootstrap()
