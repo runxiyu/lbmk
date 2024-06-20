@@ -35,7 +35,7 @@ vendor_download()
 	boarddir="$cbcfgsdir/$board"
 	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
 
-	getcfg && scancfg "$_b" "config/vendor" && bootstrap && getfiles
+	getcfg && scan_config "$_b" "config/vendor" && bootstrap && getfiles
 }
 
 getcfg()
