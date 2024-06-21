@@ -58,8 +58,10 @@ build_projects()
 {
 	[ $# -gt 0 ] && x_ ./update trees $_f $@
 
-	[ "$mode" = "fetch" ] && [ ! -f "CHANGELOG" ] && \
-		eval "fetch_project_repo; return 0;"
+	if [ "$mode" = "fetch" ]; then
+		[ -f "CHANGELOG" ] && return 0
+		fetch_project_repo; return 0
+	fi
 
 	load_project_config "$cfgsdir"
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
@@ -124,8 +126,10 @@ handle_defconfig()
 handle_src_tree()
 {
 	target_dir="$cfgsdir/$target"
-	[ "$mode" = "fetch" ] && [ ! -f "CHANGELOG" ] && \
-		eval "fetch_project_trees; return 1;"
+	if [ "$mode" = "fetch" ]; then
+		[ -f "CHANGELOG" ] && return 1
+		fetch_project_trees; return 1
+	fi
 
 	load_project_config "$target_dir"
 	x_ mkdir -p "$elfdir/$target"
