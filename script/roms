@@ -22,10 +22,9 @@ stm32dir="$stm32src/boards"
 
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
-pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
-pv="$pv payload_seabios_withgrub payload_grub"
+pv="payload_uboot payload_seabios payload_memtest t payload_grub"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
-v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
+v="$v board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval `setvars "n" $pv`
 eval `setvars "" $v boards targets serdir ser`
 
@@ -97,30 +96,24 @@ configure_target()
 	# Override the above defaults using target.cfg
 	eval `setcfg "$targetdir/target.cfg"`
 
+	[ -z "$tree" ] && $err "$board: tree not defined"
+	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
+	[ "$board" = "$tree" ] && return 1
+
+	[ -n "$uboot_config" ] || uboot_config="default"
+	[ "$payload_uboot" = "y" ] || payload_seabios="y"
+	[ "$payload_grub" = "y" ] && payload_seabios="y"
+	[ "$payload_seabios" = "y" ] && [ -n "$payload_uboot" = "y" ] && \
+	    $err "$board: U-Boot and SeaBIOS/GRUB are both enabled."
+
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
 	[ -n "$grubtree" ] || grubtree="default"
 	grubelf="elf/grub/$grubtree/payload/grub.elf"
 
-	[ -z "$tree" ] && $err "$board: tree not defined"
-
-	[ "$payload_memtest" != "y" ] && payload_memtest="n"
+	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
-
-	[ "$payload_grub_withseabios" = "y" ] && eval `setvars "y" \
-	    payload_grub payload_seabios payload_seabios_withgrub`
-	[ "$payload_seabios_withgrub" = "y" ] && payload_seabios="y"
-
-	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
-	# that doesn't mean GRUB-with-SeaBIOS will, e.g. VGA ROM execution
-	[ "$payload_grub" != "y" ] && [ "$payload_seabios" != "y" ] && \
-	    [ "$payload_uboot" != "y" ] && $err "'$board' defines no payload"
-
-	[ "$payload_uboot" = "y" ] || payload_uboot="n"
-	[ -n "$uboot_config" ] || uboot_config="default"
-
-	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
-	[ "$board" = "$tree" ] && return 1; return 0
+	[ "$payload_uboot" = "y" ] && payload_memtest="n"; return 0
 }
 
 build_payloads()
@@ -134,11 +127,7 @@ build_payloads()
 	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
 	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
-
-	if [ "$payload_grub" = "y" ] || [ "$payload_seabios_withgrub" = "y" ]
-	then
-		[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree
-	fi
+	[ "$payload_grub" = "y" ] && x_ ./update trees -b grub $grubtree
 
 	[ "$payload_uboot" = "y" ] || return 0
 	x_ ./update trees -b u-boot $board
@@ -181,19 +170,18 @@ build_roms()
 	[ "$payload_memtest" != "y" ] || cbfs "$cbrom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
-	[ "$payload_grub" != "y" ] || build_grub_roms "$cbrom" "grub"
 	[ "$payload_uboot" = "y" ] && x_ cp "$_cbrom" "$cbrom" && \
 	    build_uboot_roms; return 0
 }
 
 build_seabios_roms()
 {
-	if [ "$payload_seabios_withgrub" = "y" ]; then
+	if [ "$payload_grub" = "y" ]; then # SeaBIOS with GRUB
 		t="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
 		x_ cp "$cbrom" "$t"
-		build_grub_roms "$t" "seabios_withgrub"
-	else
-		t="$(mkSeabiosRom "$cbrom" "fallback/payload")" || \
+		build_seagrub_roms "$t" "seabios_withgrub"
+	else # SeaBIOS only
+		t="$(mkSeabiosRom "$cbrom")" || \
 		    $err "build_seabios_roms: cannot build tmprom"
 		newrom="$romdir/seabios_${board}_${initmode}_$displaymode"
 		[ "$initmode" = "normal" ] && newrom="$romdir/seabios" \
@@ -203,40 +191,25 @@ build_seabios_roms()
 	x_ rm -f "$t"
 }
 
-# Make separate ROM images with GRUB payload
-build_grub_roms()
+build_seagrub_roms()
 {
-	tmprom="$1"
-	payload1="$2" # allow values: grub, seabios, seabios_withgrub
-
-	grub_cbfs="fallback/payload"
-	if [ "$payload1" = "grub" ] && [ "$payload_grub_withseabios" = "y" ]
-	then
-		tmpmv="$(mkSeabiosRom "$tmprom" "seabios.elf")" || \
-		    $err "build_grub_roms 1 $board: can't build tmprom"
-	elif [ "$payload1" != "grub" ] && [ "$payload_seabios_withgrub" = "y" ]
-	then
-		grub_cbfs="img/grub2"
-		tmpmv="$(mkSeabiosRom "$tmprom" fallback/payload)" || \
-		    $err "build_grub_roms 2 $board: can't build tmprom"
-	fi
-	[ -n "$tmpmv" ] && [ -f "$tmpmv" ] && x_ mv "$tmpmv" "$tmprom"
+	tmpmv="$(mkSeabiosRom "$1")" || $err "$board: !mk grub tmprom"
+	x_ mv "$tmpmv" "$1"
 
 	# we only need insert grub.elf once, for each coreboot config:
-	cbfs "$tmprom" "$grubelf" "$grub_cbfs"
+	cbfs "$1" "$grubelf" "img/grub2"
 
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$tmpdir/tmpcfg" || $err "set grub_scan_disk, $grub_scan_disk"
-	cbfs "$tmprom" "$tmpdir/tmpcfg" scan.cfg raw
+	cbfs "$1" "$tmpdir/tmpcfg" scan.cfg raw
 
-	newrom="$romdir/${payload1}_${board}_${initmode}_$displaymode.rom"
-	[ "$initmode" = "normal" ] && newrom="$romdir/${payload1}_" \
+	newrom="$romdir/seabios_withgrub_${board}_${initmode}_$displaymode.rom"
+	[ "$initmode" = "normal" ] && newrom="$romdir/seabios_withgrub_" \
 	    && newrom="$newrom${board}_$initmode.rom"
-	cprom cp "$tmprom" "$newrom"
+	cprom cp "$1" "$newrom"
 
-	[ "$payload1" = "grub" ] && return 0
-	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-	cprom cp "$tmprom" "${newrom%.rom}_grubfirst.rom"
+	cbfs "$1" "$grubdata/bootorder" bootorder raw # SeaGRUB
+	cprom cp "$1" "${newrom%.rom}_grubfirst.rom"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
@@ -245,7 +218,7 @@ mkSeabiosRom() {
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 
 	x_ cp "$1" "$tmprom"
-	cbfs "$tmprom" "$_seabioself" "$2"
+	cbfs "$tmprom" "$_seabioself" "fallback/payload"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	z="2"; [ "$initmode" = "vgarom" ] && z="0"
