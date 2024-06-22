@@ -23,7 +23,7 @@ stm32dir="$stm32src/boards"
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
-pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub"
+pv="$pv payload_seabios_withgrub payload_grub"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
 v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval `setvars "n" $pv`
@@ -110,8 +110,6 @@ configure_target()
 	[ "$payload_grub_withseabios" = "y" ] && eval `setvars "y" \
 	    payload_grub payload_seabios payload_seabios_withgrub`
 	[ "$payload_seabios_withgrub" = "y" ] && payload_seabios="y"
-	[ "$payload_seabios_grubonly" = "y" ] && \
-		eval `setvars "y" payload_seabios payload_seabios_withgrub`
 
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-with-SeaBIOS will, e.g. VGA ROM execution
@@ -137,8 +135,8 @@ build_payloads()
 	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus
 	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
 
-	if [ "$payload_grub" = "y" ] || [ "$payload_seabios_withgrub" = "y" ] \
-	    || [ "$payload_seabios_grubonly" = "y" ]; then
+	if [ "$payload_grub" = "y" ] || [ "$payload_seabios_withgrub" = "y" ]
+	then
 		[ -f "$grubelf" ] || x_ ./update trees -b grub $grubtree
 	fi
 
@@ -239,9 +237,6 @@ build_grub_roms()
 	[ "$payload1" = "grub" ] && return 0
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	cprom cp "$tmprom" "${newrom%.rom}_grubfirst.rom"
-	[ "$payload_seabios_grubonly" = "y" ] || return 0
-	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/show-boot-menu
-	cprom cp "$tmprom" "${newrom%.rom}_grubonly.rom"
 }
 
 # make a rom in /tmp/ and then print the path of that ROM
