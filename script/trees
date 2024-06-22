@@ -28,7 +28,7 @@ main()
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
-		*) badcmd "invalid option '-$option'" ;;
+		*) $err "invalid option '-$option'" ;;
 		esac
 		shift; project="${OPTARG#src/}"; shift
 	done

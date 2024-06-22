@@ -21,7 +21,7 @@ err="fail"
 
 main()
 {
-	[ $# -lt 1 ] && badcmd
+	[ $# -lt 1 ] && $err "bad command"
 	spath="script/$1"
 
 	for g in "which git" "git config --global user.name" \
@@ -35,7 +35,7 @@ main()
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
 	*)
-		[ -f "$spath" ] || badcmd
+		[ -f "$spath" ] || $err "bad command"
 		shift 1; "$spath" $@ || $err "excmd: $spath $@" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
@@ -60,11 +60,11 @@ mkrelease()
 
 	vdir="release"
 	while getopts d:m: option; do
-		[ -z "$OPTARG" ] && badcmd "empty argument not allowed"
+		[ -z "$OPTARG" ] && $err "empty argument not allowed"
 		case "$option" in
 		d) vdir="$OPTARG" ;;
 		m) mode="$OPTARG" ;;
-		*) badcmd "invalid option '-$option'" ;;
+		*) $err "invalid option '-$option'" ;;
 		esac
 	done
 

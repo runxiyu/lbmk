@@ -33,8 +33,9 @@ main()
 {
 	while [ $# -gt 0 ]; do
 		if [ "$1" = "serprog" ]; then
-			[ $# -lt 2 ] && badcmd "serprog type not set"
-			[ "$2" != "rp2040" ] && [ "$2" != "stm32" ] && badcmd
+			[ $# -lt 2 ] && $err "serprog type not set"
+			[ "$2" != "rp2040" ] && [ "$2" != "stm32" ] && \
+			    $err "invalid serprog type"
 			eval "x_ ./update trees -f \"\${${2}src##*/}\""
 			ser="$2" && shift 2 && continue
 		fi

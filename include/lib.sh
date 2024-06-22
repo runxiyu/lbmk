@@ -19,15 +19,6 @@ tmpgit="$PWD/tmp/gitclone"
 grubdata="config/data/grub"
 err="err_"
 
-badcmd()
-{
-	errmsg="Bad command"
-	[ $# -gt 0 ] && errmsg="Bad command ($1)"
-
-	dstr="See $projectname build system docs: ${projectsite}docs/maintain/"
-	[ -d "docs" ] && dstr="$dstr (local docs available via docs/)"
-	$err "$errmsg. $dstr"
-}
 err_()
 {
 	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
@@ -59,7 +50,7 @@ read -r projectsite < projectsite || :
 
 install_packages()
 {
-	[ $# -lt 2 ] && badcmd "fewer than two arguments"
+	[ $# -lt 2 ] && $err "fewer than two arguments"
 	eval `setcfg "config/dependencies/$2"`
 
 	$pkg_add $pkglist || $err "Cannot install packages"
