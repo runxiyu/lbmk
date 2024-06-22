@@ -1,6 +1,0 @@
-{grub}{
-	rev: HEAD
-	loc: grub/grub
-	url: git://git.savannah.gnu.org/grub.git
-	bkup_url: https://codeberg.org/libreboot/grub
-}

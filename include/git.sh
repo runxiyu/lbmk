@@ -31,10 +31,8 @@ fetch_config()
 
 load_target_config()
 {
-	[ -f "$cfgsdir/$1/target.cfg" ] || $err "$1: target.cfg missing"
 	[ -f "$cfgsdir/$1/seen" ] && $err "$_xm cfg: infinite loop in trees"
-
-	. "$cfgsdir/$1/target.cfg" || $err "load_target_config !$cfgsdir/$1"
+	eval `setcfg "$cfgsdir/$1/target.cfg"`
 	touch "$cfgsdir/$1/seen" || $err "load_config $cfgsdir/$1: !mk seen"
 }
 
@@ -50,9 +48,9 @@ prepare_new_tree()
 fetch_project_repo()
 {
 	eval "$(setvars "" xtree tree_depend)"
+	eval `setcfg "config/git/$project/pkg.cfg"`
 
-	scan_config "$project" "config/git"
-	chkvars loc url
+	chkvars url
 
 	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
 		x_ ./update trees -f coreboot "$xtree"
@@ -63,14 +61,14 @@ fetch_project_repo()
 	clone_project
 
 	for x in config/git/*; do
-		[ -f "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null
-	done
+		[ -d "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null
+	done; return 0
 }
 
 clone_project()
 {
-	loc="${loc#src/}"
-	loc="src/$loc"
+	loc="src/$project"
+	singletree "$project" || loc="src/$project/$project"
 
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 	e "$loc" d && return 0

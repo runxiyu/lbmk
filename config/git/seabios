@@ -1,6 +1,0 @@
-{seabios}{
-	rev: HEAD
-	loc: seabios/seabios
-	url: https://review.coreboot.org/seabios
-	bkup_url: https://github.com/coreboot/seabios
-}

@@ -1,6 +1,0 @@
-{coreboot}{
-	rev: HEAD
-	loc: coreboot/coreboot
-	url: https://review.coreboot.org/coreboot
-	bkup_url: https://github.com/coreboot/coreboot.git
-}

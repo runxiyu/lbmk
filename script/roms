@@ -91,10 +91,9 @@ configure_target()
 	board="$1"
 
 	targetdir="$cfgsdir/$board"
-	[ -f "$targetdir/target.cfg" ] || $err "$board: target.cfg missing"
 
 	# Override the above defaults using target.cfg
-	. "$targetdir/target.cfg"
+	eval `setcfg "$targetdir/target.cfg"`
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 

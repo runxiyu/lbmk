@@ -35,7 +35,7 @@ main()
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && $err "project name not specified"
 
-	[ -f "config/git/$project" ] || $err "project '$project' not defined"
+	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
 
 	elfdir="elf/$project"
 	datadir="config/data/$project"
@@ -154,9 +154,7 @@ load_project_config()
 {
 	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs)"
-
-	[ -f "$1/target.cfg" ] || return 0
-	. "$1/target.cfg" || $err "loadp $1: can't load target.cfg"; return 0
+	eval `setcfg "$1/target.cfg" 0`; return 0
 }
 
 check_cross_compiler()
@@ -274,14 +272,11 @@ check_makefile()
 
 mkpayload_grub()
 {
-	[ -f "$grubdata/module/$tree" ] || $err "$tree: grub modules missing"
-	x_ rm -f "$cdir/grub.elf"
-
 	eval "$(setvars "" grub_modules grub_install_modules)"
-
-	. "$grubdata/module/$tree" || $err "$tree: !source grub modules"
-
+	eval `setcfg "$grubdata/module/$tree"`
 	chkvars "grub_install_modules" "grub_modules"
+
+	x_ rm -f "$cdir/grub.elf"
 
 	"${cdir}/grub-mkstandalone" --grub-mkimage="${cdir}/grub-mkimage" \
 	    -O i386-coreboot -o "${cdir}/grub.elf" -d "${cdir}/grub-core/" \
@@ -290,7 +285,7 @@ mkpayload_grub()
 	    "/boot/grub/grub_default.cfg=${cdir}/.config" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" \
 	    "/background.png=$grubdata/background/background1280x800.png" || \
-	    $err "$tree: cannot build grub.elf"
+	    $err "$tree: cannot build grub.elf"; return 0
 }
 
 copy_elf()

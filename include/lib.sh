@@ -60,9 +60,7 @@ read -r projectsite < projectsite || :
 install_packages()
 {
 	[ $# -lt 2 ] && badcmd "fewer than two arguments"
-	[ -f "config/dependencies/$2" ] || badcmd "unsupported target"
-
-	. "config/dependencies/$2" || $err "! . config/dependencies/$2"
+	eval `setcfg "config/dependencies/$2"`
 
 	$pkg_add $pkglist || $err "Cannot install packages"
 
@@ -126,25 +124,6 @@ for p in projectname version versiondate projectsite; do
 done
 relname="$projectname-$version"
 export LOCALVERSION="-$projectname-${version%%-*}"
-
-scan_config()
-{
-	awkstr=" /\{.*$1.*}{/ {flag=1;next} /\}/{flag=0} flag { print }"
-	confdir="$2"
-	revfile="$(mktemp -t sources.XXXXXXXXXX)"
-	cat "$confdir/"* > "$revfile" || $err "$confdir: can't cat files"
-	while read -r line ; do
-		set $line 1>/dev/null 2>/dev/null || :
-		if [ "${1%:}" = "depend" ]; then
-			depend="$depend $2"
-		else
-			eval "${1%:}=\"$2\""
-		fi
-	done << EOF
-	$(eval "awk '$awkstr' \"$revfile\"")
-EOF
-	rm -f "$revfile" || $err "scan_config: Cannot remove tmpfile"
-}
 
 check_defconfig()
 {
@@ -252,4 +231,15 @@ cbfs()
 	ccmd="add-payload" && [ $# -gt 3 ] && ccmd="add"
 	lzma="-c lzma" && [ $# -gt 3 ] && lzma="-t raw"
 	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
+}
+
+setcfg()
+{
+	if [ $# -gt 1 ]; then
+		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
+	else
+		printf "e \"%s\" f missing && %s \"Missing config\";\n" "$1" \
+		    "$err"
+	fi
+	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
 }

@@ -14,7 +14,7 @@ vendir="vendorfiles"
 appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
 
-eval "$(setvars "" _b EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
+eval "$(setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname CONFIG_HAVE_MRC SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
@@ -24,29 +24,27 @@ eval "$(setvars "" _b EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 release DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE)"
+    CONFIG_REFCODE_BLOB_FILE vcfg)"
 
 vendor_download()
 {
 	export PATH="$PATH:/sbin"
 
 	[ $# -gt 0 ] || $err "No argument given"
-	board="$1"
-	_b="${board%%_*mb}" # shorthand (no duplication per rom size)
-	boarddir="$cbcfgsdir/$board" && getcfg && scan_config "$_b" \
-	    "config/vendor" && bootstrap && getfiles; return 0
+	board="$1"; boarddir="$cbcfgsdir/$board"
+	getcfg && bootstrap && getfiles; return 0
 }
 
 getcfg()
 {
-	[ -d "$boarddir" ] || $err "Target '$board' not defined."
+	eval `setcfg "$boarddir/target.cfg"`
+
+	[ -z "$vcfg" ] && printf "%s: vcfg unset\n" "$board" 1>&2 && return 1
+
 	check_defconfig "$boarddir" 1>"$tmpdir/vendorcfg.list" && return 1
 	while read -r cbcfgfile; do
-		set +u +e
-		. "$cbcfgfile" 2>/dev/null
-		set -u -e
+		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
 	done < "$tmpdir/vendorcfg.list"
-	. "$boarddir/target.cfg" 2>/dev/null
 
 	[ -z "$tree" ] && $err "getcfg $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"
@@ -58,9 +56,10 @@ getcfg()
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
-		eval "[ -z \"\${$c}\" ] || return 0"
+		eval "[ -z \"\${$c}\" ] && continue"
+		eval `setcfg "config/vendor/$vcfg/pkg.cfg"`; return 0
 	done
-	printf "Vendor files not needed for: %s\n" "$board" 1>&2 && return 1
+	printf "Vendor files not needed for: %s\n" "$board" 1>&2; return 1
 }
 
 bootstrap()
@@ -274,10 +273,7 @@ check_board()
 	fi
 
 	boarddir="$cbcfgsdir/$board"
-	[ -d "$boarddir" ] || $err "check_board: board $board missing"
-	[ -f "$boarddir/target.cfg" ] || \
-		$err "check_board $board: target.cfg missing"
-	. "$boarddir/target.cfg" 2>/dev/null
+	eval `setcfg "$boarddir/target.cfg"`
 	[ -z "$tree" ] && $err "check_board $board: tree undefined"; return 0
 }
 
