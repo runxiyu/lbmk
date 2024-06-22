@@ -26,8 +26,8 @@ pv="payload_uboot payload_grub_withseabios payload_seabios payload_memtest t"
 pv="$pv payload_seabios_withgrub payload_seabios_grubonly payload_grub"
 v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
 v="$v grub_timeout board grub_scan_disk uboot_config grubtree grubelf tmpmv"
-eval "$(setvars "n" $pv)"
-eval "$(setvars "" $v boards targets serdir ser)"
+eval `setvars "n" $pv`
+eval `setvars "" $v boards targets serdir ser`
 
 main()
 {
@@ -88,7 +88,8 @@ serlist()
 
 configure_target()
 {
-	eval "$(setvars "n" $pv) $(setvars "" $v)"
+	eval `setvars "n" $pv`
+	eval `setvars "" $v`
 	board="$1"
 
 	targetdir="$cfgsdir/$board"
@@ -106,11 +107,11 @@ configure_target()
 	[ "$payload_memtest" != "y" ] && payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
 
-	[ "$payload_grub_withseabios" = "y" ] && eval "$(setvars "y" \
-	    payload_grub payload_seabios payload_seabios_withgrub)"
+	[ "$payload_grub_withseabios" = "y" ] && eval `setvars "y" \
+	    payload_grub payload_seabios payload_seabios_withgrub`
 	[ "$payload_seabios_withgrub" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios_grubonly" = "y" ] && \
-		eval "$(setvars "y" payload_seabios payload_seabios_withgrub)"
+		eval `setvars "y" payload_seabios payload_seabios_withgrub`
 
 	# The reverse logic must not be applied. If SeaBIOS-with-GRUB works,
 	# that doesn't mean GRUB-with-SeaBIOS will, e.g. VGA ROM execution

@@ -10,9 +10,9 @@ set -u -e
 . "include/git.sh"
 
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$threads"
-eval "$(setvars "" xarch cdir config config_name xlang mode makeargs \
+eval `setvars "" xarch cdir config config_name xlang mode makeargs \
     listfile project target target_dir targets tree _f target1 bootstrapargs \
-    autoconfargs cmakedir elfdir autogenargs xtree)"
+    autoconfargs cmakedir elfdir autogenargs xtree`
 
 main()
 {
@@ -152,8 +152,8 @@ handle_src_tree()
 
 load_project_config()
 {
-	eval "$(setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
-	    tree_depend makeargs)"
+	eval `setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
+	    tree_depend makeargs`
 	eval `setcfg "$1/target.cfg" 0`; return 0
 }
 
@@ -272,7 +272,7 @@ check_makefile()
 
 mkpayload_grub()
 {
-	eval "$(setvars "" grub_modules grub_install_modules)"
+	eval `setvars "" grub_modules grub_install_modules`
 	eval `setcfg "$grubdata/module/$tree"`
 	chkvars "grub_install_modules" "grub_modules"
 

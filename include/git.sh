@@ -2,8 +2,8 @@
 # Copyright (c) 2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval "$(setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree \
-    mdir subhash subrepo subrepo_bkup subfile subfile_bkup)"
+eval `setvars "" _target rev _xm loc url bkup_url depend tree_depend xtree \
+    mdir subhash subrepo subrepo_bkup subfile subfile_bkup`
 
 fetch_project_trees()
 {
@@ -17,9 +17,9 @@ fetch_project_trees()
 fetch_config()
 {
 	rm -f "$cfgsdir/"*/seen || $err "fetch_config $cfgsdir: !rm seen"
-	eval "$(setvars "" xtree tree_depend)"
+	eval `setvars "" xtree tree_depend`
 	while true; do
-		eval "$(setvars "" rev tree)"
+		eval `setvars "" rev tree`
 		_xm="fetch_config $project/$_target"
 		load_target_config "$_target"
 		[ "$_target" = "$tree" ] && break
@@ -47,7 +47,7 @@ prepare_new_tree()
 
 fetch_project_repo()
 {
-	eval "$(setvars "" xtree tree_depend)"
+	eval `setvars "" xtree tree_depend`
 	eval `setcfg "config/git/$project/pkg.cfg"`
 
 	chkvars url
@@ -111,7 +111,7 @@ prep_submodules()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
-	eval $(setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st)
+	eval `setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st`
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 

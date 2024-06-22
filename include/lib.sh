@@ -42,8 +42,8 @@ chkvars()
 	done
 }
 
-eval "$(setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
-    versiondate threads projectname projectsite aur_notice cfgsdir datadir)"
+eval `setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
+    versiondate threads projectname projectsite aur_notice cfgsdir datadir`
 
 read -r projectname < projectname || :
 read -r projectsite < projectsite || :

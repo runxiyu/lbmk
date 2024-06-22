@@ -14,7 +14,7 @@ vendir="vendorfiles"
 appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
 
-eval "$(setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
+eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname CONFIG_HAVE_MRC SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
@@ -24,7 +24,7 @@ eval "$(setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 release DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE vcfg)"
+    CONFIG_REFCODE_BLOB_FILE`
 
 vendor_download()
 {
@@ -390,7 +390,7 @@ inject()
 {
 	[ $# -lt 3 ] && $err "$@, $rom: usage: inject name path type (offset)"
 
-	eval "$(setvars "" cbfsname _dest _t _offset)"
+	eval `setvars "" cbfsname _dest _t _offset`
 	cbfsname="$1"
 	_dest="${2##*../}"
 	_t="$3"
