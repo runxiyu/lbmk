@@ -10,6 +10,8 @@ set -u -e
 
 . "include/lib.sh"
 
+tmprom="$tmpdir/rom"
+
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 cfgsdir="config/coreboot"
 rp2040src="src/pico-serprog"
@@ -23,7 +25,7 @@ stm32dir="$stm32src/boards"
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_uboot payload_seabios payload_memtest t payload_grub"
-v="romdir cbrom initmode displaymode cbcfg targetdir tree release ubootelf"
+v="romdir initmode displaymode cbcfg targetdir tree release ubootelf"
 v="$v board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval `setvars "n" $pv`
 eval `setvars "" $v boards targets serdir ser`
@@ -53,7 +55,7 @@ main()
 	for x in $boards; do
 		[ -n "$ser" ] && mkserprogfw "$ser" "$x"
 		[ -z "$ser" ] && [ -d "config/coreboot/$x/config" ] && \
-		    configure_target "$x" && build_payloads && build_board && \
+		    configure_target "$x" && build_board && \
 		    [ -d "bin/$board" ] && targets="$targets, $x"; continue
 	done
 
@@ -61,23 +63,18 @@ main()
 	    mkrom_tarball "bin/serprog_$ser" && return 0
 
 	[ -z "$ser" ] && [ -z "$targets" ] && $err "No images were compiled"
-	printf "DO NOT flash images from elf/ - use bin/ instead. ALSO:\n"
-	printf "%s\n" "$kbnotice"
+	printf "DO NOT flash from elf/ - use bin/ - ALSO:\n%s\n" "$kbnotice"
 }
 
 mkserprogfw()
 {
 	x_ mkdir -p "bin/serprog_$1"
-	if [ "$1" = "rp2040" ]; then
-		x_ cmake -DPICO_BOARD="$2" -DPICO_SDK_PATH="$picosdk" \
-		    -B "$rp2040src/build" "$rp2040src"
-		x_ cmake --build "$rp2040src/build"
-	else
-		x_ make -C "$stm32src" libopencm3-just-make BOARD=$2
-		x_ make -C "$stm32src" BOARD=$2
-	fi
+	[ "$1" = "rp2040" ] && x_ cmake -DPICO_BOARD="$2" \
+	    -DPICO_SDK_PATH="$picosdk" -B "$rp2040src/build" "$rp2040src" && \
+	    x_ cmake --build "$rp2040src/build"
+	[ "$1" = "stm32" ] && x_ make -C "$stm32src" libopencm3-just-make \
+	    BOARD=$2 && x_ make -C "$stm32src" BOARD=$2
 	eval "x_ mv \"\$${1}x\" \"bin/serprog_$1/serprog_$2.\${${1}x##*.}\""
-	printf "Look in bin/serprog_%s/ for images\n" "$1"
 }
 
 serlist()
@@ -89,9 +86,8 @@ configure_target()
 {
 	eval `setvars "n" $pv`
 	eval `setvars "" $v`
-	board="$1"
 
-	targetdir="$cfgsdir/$board"
+	board="$1"; targetdir="$cfgsdir/$board"; romdir="bin/$board"
 
 	# Override the above defaults using target.cfg
 	eval `setcfg "$targetdir/target.cfg"`
@@ -99,6 +95,10 @@ configure_target()
 	[ -z "$tree" ] && $err "$board: tree not defined"
 	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
 	[ "$board" = "$tree" ] && return 1
+
+	cbdir="src/coreboot/$tree"
+	cbfstool="elf/cbfstool/$tree/cbfstool"
+	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
 
 	[ -n "$uboot_config" ] || uboot_config="default"
 	[ "$payload_uboot" = "y" ] || payload_seabios="y"
@@ -112,29 +112,7 @@ configure_target()
 	grubelf="elf/grub/$grubtree/payload/grub.elf"
 
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
-	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
-	[ "$payload_uboot" = "y" ] && payload_memtest="n"; return 0
-}
-
-build_payloads()
-{
-	romdir="bin/$board"
-	cbdir="src/coreboot/$board"
-	[ "$board" = "$tree" ] || cbdir="src/coreboot/$tree"
-	cbfstool="elf/cbfstool/$tree/cbfstool"
-	cbrom="$cbdir/build/coreboot.rom"
-
-	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
-	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus
-	[ "$payload_seabios" = "y" ] && x_ ./update trees -b seabios
-	[ "$payload_grub" = "y" ] && x_ ./update trees -b grub $grubtree
-
-	[ "$payload_uboot" = "y" ] || return 0
-	x_ ./update trees -b u-boot $board
-	ubdir="elf/u-boot/$board/$uboot_config"
-	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
-	    ubootelf="$ubdir/u-boot"
-	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"; return 0
+	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"; return 0
 }
 
 build_board()
@@ -142,17 +120,15 @@ build_board()
 	x_ rm -Rf "$romdir"
 
 	for it in "normal" "vgarom" "libgfxinit"; do
-		initmode="$it"
-		hmode="vesafb"
+		initmode="$it"; hmode="vesafb"
 		[ "$initmode" = "vgarom" ] || hmode="corebootfb"
 		modes="$hmode txtmode"
-		for y in $modes; do
-			displaymode="$y"
-			[ "$initmode" = "normal" ] && \
+		for dt in $modes; do
+			displaymode="$dt"; [ "$initmode" = "normal" ] && \
 			    [ "$displaymode" != "txtmode" ] && continue
 			cbcfg="$targetdir/config/${initmode}_$displaymode"
 			[ "$initmode" = "normal" ] && cbcfg="${cbcfg%_*}"
-			e "$cbcfg" f not || build_roms; x_ rm -f "$cbrom"
+			e "$cbcfg" f not || build_roms; x_ rm -f "$tmprom"
 		done
 	done
 }
@@ -161,92 +137,63 @@ build_roms()
 {
 	x_ ./update trees -b coreboot $board
 
-	_cbrom="$cbelfdir/$board/${initmode}_$displaymode"
-	[ "$initmode" = "normal" ] && _cbrom="${_cbrom%"_$displaymode"}"
-	_cbrom="$_cbrom/coreboot.rom"
-	cbrom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
-	x_ cp "$_cbrom" "$cbrom"
+	cbuild="$cbelfdir/$board/${initmode}_$displaymode"
+	[ "$initmode" = "normal" ] && cbuild="${cbuild%"_$displaymode"}"
+	x_ cp "$cbuild/coreboot.rom" "$tmprom"
 
-	[ "$payload_memtest" != "y" ] || cbfs "$cbrom" \
-	    "elf/memtest86plus/memtest.bin" img/memtest
 	[ "$payload_seabios" = "y" ] && build_seabios_roms
-	[ "$payload_uboot" = "y" ] && x_ cp "$_cbrom" "$cbrom" && \
-	    build_uboot_roms; return 0
+	[ "$payload_uboot" = "y" ] || return 0
+
+	x_ ./update trees -b u-boot $board
+	ubdir="elf/u-boot/$board/$uboot_config"
+	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
+	    ubootelf="$ubdir/u-boot"
+	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"
+
+	cbfs "$tmprom" "$ubootelf" "fallback/payload"
+	cprom "$romdir/uboot_payload_${board}_${initmode}_$displaymode.rom"
 }
 
 build_seabios_roms()
 {
-	if [ "$payload_grub" = "y" ]; then # SeaBIOS with GRUB
-		t="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
-		x_ cp "$cbrom" "$t"
-		build_seagrub_roms "$t" "seabios_withgrub"
-	else # SeaBIOS only
-		t="$(mkSeabiosRom "$cbrom")" || \
-		    $err "build_seabios_roms: cannot build tmprom"
-		newrom="$romdir/seabios_${board}_${initmode}_$displaymode"
-		[ "$initmode" = "normal" ] && newrom="$romdir/seabios" \
-			&& newrom="${newrom}_${board}_$initmode"
-		cprom cp "$t" "$newrom.rom"
-	fi
-	x_ rm -f "$t"
-}
-
-build_seagrub_roms()
-{
-	tmpmv="$(mkSeabiosRom "$1")" || $err "$board: !mk grub tmprom"
-	x_ mv "$tmpmv" "$1"
-
-	# we only need insert grub.elf once, for each coreboot config:
-	cbfs "$1" "$grubelf" "img/grub2"
-
-	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$tmpdir/tmpcfg" || $err "set grub_scan_disk, $grub_scan_disk"
-	cbfs "$1" "$tmpdir/tmpcfg" scan.cfg raw
-
-	newrom="$romdir/seabios_withgrub_${board}_${initmode}_$displaymode.rom"
-	[ "$initmode" = "normal" ] && newrom="$romdir/seabios_withgrub_" \
-	    && newrom="$newrom${board}_$initmode.rom"
-	cprom cp "$1" "$newrom"
-
-	cbfs "$1" "$grubdata/bootorder" bootorder raw # SeaGRUB
-	cprom cp "$1" "${newrom%.rom}_grubfirst.rom"
-}
-
-# make a rom in /tmp/ and then print the path of that ROM
-mkSeabiosRom() {
-	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)" # 1=cbrom, 2=cbfs path
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
+	x_ ./update trees -b seabios
 
-	x_ cp "$1" "$tmprom"
+	pstr="seabios" && [ "$payload_grub" = "y" ] && pstr="seabios_withgrub"
+	newrom="$romdir/${pstr}_${board}_$initmode.rom"
+	[ "$initmode" = "normal" ] || newrom="${newrom%.rom}_$displaymode.rom"
+
 	cbfs "$tmprom" "$_seabioself" "fallback/payload"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	z="2"; [ "$initmode" = "vgarom" ] && z="0"
 	x_ "$cbfstool" "$tmprom" add-int -i $z -n etc/pci-optionrom-exec
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
-	[ "$initmode" != "libgfxinit" ] || cbfs "$tmprom" "$seavgabiosrom" \
+	[ "$initmode" = "libgfxinit" ] && cbfs "$tmprom" "$seavgabiosrom" \
 	    vgaroms/seavgabios.bin raw
 
-	printf "%s\n" "$tmprom"
-}
+	if [ "$payload_grub" = "y" ]; then
+		x_ ./update trees -b grub $grubtree
+		cbfs "$tmprom" "$grubelf" "img/grub2"
+		printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
+		    > "$tmpdir/tmpcfg" || $err "$board: !insert scandisk"
+		cbfs "$tmprom" "$tmpdir/tmpcfg" scan.cfg raw
+	fi
 
-build_uboot_roms()
-{
-	tmprom="$(mktemp -t coreboot_rom.XXXXXXXXXX)"
-	newrom="$romdir/uboot_payload_${board}_${initmode}_$displaymode.rom"
-	x_ cp "$cbrom" "$tmprom"
-	cbfs "$tmprom" "$ubootelf" "fallback/payload"
-	cprom mv "$tmprom" "$newrom"
+	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus && \
+	    cbfs "$tmprom" "elf/memtest86plus/memtest.bin" img/memtest
+
+	cprom "$newrom" && [ "$payload_grub" = "y" ] && \
+	    cbfs "$tmprom" "$grubdata/bootorder" bootorder raw && \
+	    cprom "${newrom%.rom}_grubfirst.rom"; return 0
 }
 
 cprom()
 {
-	printf "Creating target image: %s\n" "$3"
-
-	x_ mkdir -p "${3%/*}"
-	x_ $1 "$2" "$3"
-	[ "$xbmk_release" = "y" ] && mksha512sum "$3" "vendorhashes" && \
-	    x_ ./vendor inject -r "$3" -b "$board" -n nuke; return 0
+	printf "Creating target image: %s\n" "$1"
+	x_ mkdir -p "${1%/*}"; x_ cp "$tmprom" "$1"
+	[ "$xbmk_release" = "y" ] && mksha512sum "$1" "vendorhashes" && \
+	    x_ ./vendor inject -r "$1" -b "$board" -n nuke; return 0
 }
 
 main $@
