@@ -170,7 +170,6 @@ check_cross_compiler()
 		export CROSS_COMPILE="${xarch% *}-"
 		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
-		[ -d "$cbdir/util/crossgcc/xgcc/$_xarch/" ] && continue
 		x_ make -C "$cbdir" crossgcc-${_xarch%-*} $cbmakeargs
 	done
 }
