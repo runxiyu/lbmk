@@ -48,6 +48,29 @@ eval `setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
 read -r projectname < projectname || :
 read -r projectsite < projectsite || :
 
+setcfg()
+{
+	if [ $# -gt 1 ]; then
+		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
+	else
+		printf "e \"%s\" f missing && %s \"Missing config\";\n" "$1" \
+		    "$err"
+	fi
+	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
+}
+
+e()
+{
+	es_t="e"
+	[ $# -gt 1 ] && es_t="$2"
+	es2="already exists"
+	estr="[ -$es_t \"\$1\" ] || return 1"
+	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
+
+	eval "$estr"
+	printf "%s %s\n" "$1" "$es2" 1>&2
+}
+
 install_packages()
 {
 	[ $# -lt 2 ] && $err "fewer than two arguments"
@@ -58,7 +81,7 @@ install_packages()
 	[ -n "$aur_notice" ] && \
 	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
 }
-[ $# -gt 0 ] && [ "$1" = "dependencies" ] && install_packages $@ && return 0
+[ $# -gt 0 ] && [ "$1" = "dependencies" ] && install_packages $@ && exit 0
 
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
@@ -172,18 +195,6 @@ rmgit()
 	) || $err "Cannot remove .git/.gitmodules in $1"
 }
 
-e()
-{
-	es_t="e"
-	[ $# -gt 1 ] && es_t="$2"
-	es2="already exists"
-	estr="[ -$es_t \"\$1\" ] || return 1"
-	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
-
-	eval "$estr"
-	printf "%s %s\n" "$1" "$es2" 1>&2
-}
-
 # return 0 if project is single-tree, otherwise 1
 # e.g. coreboot is multi-tree, so 1
 singletree()
@@ -222,15 +233,4 @@ cbfs()
 	ccmd="add-payload" && [ $# -gt 3 ] && ccmd="add"
 	lzma="-c lzma" && [ $# -gt 3 ] && lzma="-t raw"
 	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
-}
-
-setcfg()
-{
-	if [ $# -gt 1 ]; then
-		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	else
-		printf "e \"%s\" f missing && %s \"Missing config\";\n" "$1" \
-		    "$err"
-	fi
-	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
 }
