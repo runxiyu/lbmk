@@ -91,6 +91,7 @@ configure_target()
 
 	# Override the above defaults using target.cfg
 	eval `setcfg "$targetdir/target.cfg"`
+	x_ ./update trees -b coreboot $board
 
 	[ -z "$tree" ] && $err "$board: tree not defined"
 	[ "$xbmk_release" = "y" ] && [ "$release" = "n" ] && return 1
@@ -135,8 +136,6 @@ build_board()
 
 build_roms()
 {
-	x_ ./update trees -b coreboot $board
-
 	cbuild="$cbelfdir/$board/${initmode}_$displaymode"
 	[ "$initmode" = "normal" ] && cbuild="${cbuild%"_$displaymode"}"
 	x_ cp "$cbuild/coreboot.rom" "$tmprom"
