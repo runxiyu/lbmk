@@ -184,7 +184,6 @@ add_seabios_payload()
 
 cprom()
 {
-	printf "Creating target image: %s\n" "$1"
 	x_ mkdir -p "${1%/*}"; x_ cp "$tmprom" "$1"
 	[ "$xbmk_release" = "y" ] && mksha512sum "$1" "vendorhashes" && \
 	    x_ ./vendor inject -r "$1" -b "$board" -n nuke; return 0
