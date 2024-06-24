@@ -92,7 +92,7 @@ git_prep()
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
 	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
 
-	[ "$xbmk_release" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
+	[ "$XBMK_RELEASE" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
 	    && rmgit "$tmpgit"
 
 	move_repo "$_loc"

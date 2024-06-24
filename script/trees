@@ -9,7 +9,7 @@ set -u -e
 . "include/lib.sh"
 . "include/git.sh"
 
-cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$threads"
+cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir config config_name xlang mode makeargs \
     listfile project target target_dir targets tree _f target1 bootstrapargs \
     autoconfargs cmakedir elfdir autogenargs xtree`
@@ -185,7 +185,7 @@ check_coreboot_utils()
 
 		utilmode=""
 		[ -z "$mode" ] || utilmode="clean"
-		x_ make -C "$utilsrcdir" $utilmode -j$threads $cbmakeargs
+		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $cbmakeargs
 		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
 			x_ mkdir -p "$utilelfdir" && \
 			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
@@ -240,7 +240,7 @@ run_make_command()
 		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" \
 		    && makeargs="$makeargs $cbmakeargs"
 
-	make -C "$cdir" $mode -j$threads $makeargs || $err "!mk $cdir $mode"
+	make -C "$cdir" $mode -j$XBMK_THREADS $makeargs || $err "$cdir mk$mode"
 
 	[ "$project" = "grub" ] && [ -z "$mode" ] && mkpayload_grub
 

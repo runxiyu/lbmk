@@ -42,8 +42,8 @@ chkvars()
 	done
 }
 
-eval `setvars "" xbmk_release tmpdir _nogit version board boarddir relname \
-    versiondate threads projectname projectsite aur_notice cfgsdir datadir`
+eval `setvars "" tmpdir _nogit board boarddir relname versiondate projectsite \
+    projectname aur_notice cfgsdir datadir version`
 
 read -r projectname < projectname || :
 read -r projectsite < projectsite || :
@@ -104,16 +104,12 @@ fi
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
-[ -z "${XBMK_RELEASE+x}" ] && xbmk_release="n"
-[ -z "$xbmk_release" ] && xbmk_release="$XBMK_RELEASE"
-[ "$xbmk_release" = "n" ] || [ "$xbmk_release" = "y" ] || xbmk_release="n"
-export XBMK_RELEASE="$xbmk_release"
+[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
+[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
 
-[ -z "${XBMK_THREADS+x}" ] || threads="$XBMK_THREADS"
-[ -z "$threads" ] && threads=1
-expr "X$threads" : "X-\{0,1\}[0123456789][0123456789]*$" \
-    1>/dev/null 2>/dev/null || threads=1 # user specified a non-integer
-export XBMK_THREADS="$threads"
+[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
+expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
+    1>/dev/null 2>/dev/null || export XBMK_THREADS=1 # user gave a non-integer
 
 x_() {
 	[ $# -lt 1 ] || $@ || $err "Unhandled non-zero exit: $@"; return 0
@@ -174,7 +170,7 @@ mktarball()
 	[ "${2%/*}" = "$2" ] || \
 		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
 	printf "\nCreating archive: %s\n\n" "$2"
-	tar -c "$1" | xz -T$threads -9e > "$2" || $err "mktarball 2, $1"
+	tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball 2, $1"
 	mksha512sum "$2" "${2##*/}.sha512"
 }
 
