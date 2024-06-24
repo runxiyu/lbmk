@@ -25,7 +25,7 @@ stm32dir="$stm32src/boards"
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
 pv="payload_uboot payload_seabios payload_memtest t payload_grub"
-v="romdir initmode displaymode cbcfg targetdir tree release ubootelf"
+v="romdir initmode displaymode targetdir tree release ubootelf"
 v="$v board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval `setvars "n" $pv`
 eval `setvars "" $v boards targets serdir ser`
@@ -121,18 +121,12 @@ build_roms()
 {
 	x_ rm -Rf "$romdir"
 
-	for it in "normal" "vgarom" "libgfxinit"; do
-		initmode="$it"; hmode="vesafb"
-		[ "$initmode" = "vgarom" ] || hmode="corebootfb"
-		modes="$hmode txtmode"
-		for dt in $modes; do
-			displaymode="$dt"; [ "$initmode" = "normal" ] && \
-			    [ "$displaymode" != "txtmode" ] && continue
-			cbcfg="$targetdir/config/${initmode}_$displaymode"
-			[ "$initmode" = "normal" ] && cbcfg="${cbcfg%_*}"
-			e "$cbcfg" f not || add_payloads; x_ rm -f "$tmprom"
-		done
-	done
+	for cbcfg in "$targetdir/config/"*; do
+		[ -f "$cbcfg" ] || continue; cn="${cbcfg##*/}"; dt="${cn#*_}" \
+		    && [ "$dt" = "$cn" ] && dt="txtmode"; displaymode="$dt"
+		initmode="${cn%%_*}"; chkvars initmode displaymode
+		e "$cbcfg" f not || add_payloads
+	done; x_ rm -f "$tmprom"
 }
 
 add_payloads()
