@@ -63,6 +63,7 @@ main()
 	    mkrom_tarball "bin/serprog_$ser" && return 0
 
 	[ -z "$ser" ] && [ -z "$targets" ] && $err "No images were compiled"
+	[ -z "$ser" ] && printf "ROMs built in bin/ for: %s\n" "${targets#, }"
 	printf "DO NOT flash from elf/ - use bin/ - ALSO:\n%s\n" "$kbnotice"
 }
 
