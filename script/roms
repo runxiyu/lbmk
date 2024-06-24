@@ -139,10 +139,9 @@ add_payloads()
 	[ "$payload_uboot" = "y" ] || return 0
 
 	# add u-boot payload
-	x_ ./update trees -b u-boot $board
-	ubdir="elf/u-boot/$board/$uboot_config"
-	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
-	    ubootelf="$ubdir/u-boot"
+	ubdir="elf/u-boot/$board/$uboot_config"; ubootelf="$ubdir/u-boot.elf" \
+	    && [ ! -f "$ubootelf" ] && ubootelf="$ubdir/u-boot"
+	[ -f "$ubootelf" ] || x_ ./update trees -b u-boot $board
 	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"
 
 	cbfs "$tmprom" "$ubootelf" "fallback/payload"
