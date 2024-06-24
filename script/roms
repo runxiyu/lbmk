@@ -55,7 +55,7 @@ main()
 	for x in $boards; do
 		[ -n "$ser" ] && mkserprogfw "$ser" "$x"
 		[ -z "$ser" ] && [ -d "config/coreboot/$x/config" ] && \
-		    configure_target "$x" && build_board && \
+		    configure_target "$x" && build_roms && \
 		    [ -d "bin/$board" ] && targets="$targets, $x"; continue
 	done
 
@@ -116,7 +116,7 @@ configure_target()
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"; return 0
 }
 
-build_board()
+build_roms()
 {
 	x_ rm -Rf "$romdir"
 
@@ -129,20 +129,21 @@ build_board()
 			    [ "$displaymode" != "txtmode" ] && continue
 			cbcfg="$targetdir/config/${initmode}_$displaymode"
 			[ "$initmode" = "normal" ] && cbcfg="${cbcfg%_*}"
-			e "$cbcfg" f not || build_roms; x_ rm -f "$tmprom"
+			e "$cbcfg" f not || add_payloads; x_ rm -f "$tmprom"
 		done
 	done
 }
 
-build_roms()
+add_payloads()
 {
 	cbuild="$cbelfdir/$board/${initmode}_$displaymode"
 	[ "$initmode" = "normal" ] && cbuild="${cbuild%"_$displaymode"}"
 	x_ cp "$cbuild/coreboot.rom" "$tmprom"
 
-	[ "$payload_seabios" = "y" ] && build_seabios_roms
+	[ "$payload_seabios" = "y" ] && add_seabios_payload
 	[ "$payload_uboot" = "y" ] || return 0
 
+	# add u-boot payload
 	x_ ./update trees -b u-boot $board
 	ubdir="elf/u-boot/$board/$uboot_config"
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
@@ -153,7 +154,7 @@ build_roms()
 	cprom "$romdir/uboot_payload_${board}_${initmode}_$displaymode.rom"
 }
 
-build_seabios_roms()
+add_seabios_payload()
 {
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 	x_ ./update trees -b seabios
