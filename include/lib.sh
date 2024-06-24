@@ -27,13 +27,10 @@ err_()
 
 setvars()
 {
-	_setvars=""
-	[ $# -lt 2 ] && $err "setvars: too few arguments"
-	val="$1" && shift 1
-	for var in $@; do
+	_setvars="" && [ $# -lt 2 ] && $err "setvars: too few arguments"
+	val="$1" && shift 1 && for var in $@; do
 		_setvars="$var=\"$val\"; $_setvars"
-	done
-	printf "%s\n" "${_setvars% }"
+	done; printf "%s\n" "${_setvars% }"
 }
 chkvars()
 {
