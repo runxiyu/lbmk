@@ -64,6 +64,7 @@ main()
 
 	[ -z "$ser" ] && [ -z "$targets" ] && $err "No images were compiled"
 	[ -z "$ser" ] && printf "ROMs built in bin/ for: %s\n" "${targets#, }"
+	[ -n "$ser" ] && printf "ROMs (serprog) built in bin/%s/\n" "$ser"
 	printf "Please flash from bin/, NOT elf/ - ALSO:\n%s\n" "$kbnotice"
 }
 
