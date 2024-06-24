@@ -45,8 +45,9 @@ chkvars()
 eval `setvars "" tmpdir _nogit board boarddir relname versiondate projectsite \
     projectname aur_notice cfgsdir datadir version`
 
-read -r projectname < projectname || :
-read -r projectsite < projectsite || :
+for fv in projectname projectsite version versiondate; do
+	eval "[ ! -f "$fv" ] || read -r $fv < \"$fv\" || :"
+done
 
 setcfg()
 {
@@ -120,11 +121,9 @@ x_() {
 [ -e ".git" ] || [ -f "versiondate" ] || printf "1716415872\n" > versiondate || \
     $err "Cannot generate unknown versiondate file"
 
-[ ! -f version ] || read -r version < version || :
 version_="$version"
 [ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
     version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
-[ ! -f versiondate ] || read -r versiondate < versiondate || :
 versiondate_="$versiondate"
 [ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
