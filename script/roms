@@ -24,7 +24,7 @@ stm32dir="$stm32src/boards"
 
 # Disable all payloads by default.
 # target.cfg files have to specifically enable [a] payload(s)
-pv="payload_uboot payload_seabios payload_memtest t payload_grub"
+pv="payload_uboot payload_seabios payload_memtest payload_grub"
 v="romdir initmode displaymode targetdir tree release ubootelf"
 v="$v board grub_scan_disk uboot_config grubtree grubelf tmpmv"
 eval `setvars "n" $pv`
