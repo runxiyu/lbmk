@@ -93,11 +93,12 @@ configure_target()
 
 	# Override the above defaults using target.cfg
 	eval `setcfg "$targetdir/target.cfg"`
-	x_ ./update trees -b coreboot $board
 
 	[ -z "$tree" ] && $err "$board: tree not defined"
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ "$board" = "$tree" ] && return 1
+
+	x_ ./update trees -b coreboot $board
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
