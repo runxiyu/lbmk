@@ -11,7 +11,7 @@ kbnotice="Insert a .gkb file from config/data/grub/keymap/ as keymap.gkb \
 if you want a custom keymap in GRUB; use cbfstool from elf/cbfstool."
 
 cbdir="src/coreboot/default"
-cbelfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
+cbelfdir="elf/.coreboot_nopayload_DO_NOT_FLASH"
 ifdtool="elf/ifdtool/default/ifdtool"
 cbfstool="elf/cbfstool/default/cbfstool"
 tmpgit="$PWD/tmp/gitclone"
