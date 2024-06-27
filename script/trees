@@ -46,8 +46,7 @@ main()
 
 	remkdir "${tmpgit%/*}"
 
-	_cmd="build_project"
-	singletree "$project" || _cmd="build_targets"
+	_cmd="build_targets" && singletree "$project" && _cmd="build_project"
 	$_cmd $@
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
