@@ -12,7 +12,7 @@ set -u -e
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir config config_name xlang mode makeargs \
     elfdir project target target_dir targets tree _f target1 bootstrapargs \
-    autoconfargs cmakedir listfile autogenargs xtree btype`
+    autoconfargs cmakedir listfile autogenargs xtree btype mkhelper`
 
 main()
 {
@@ -152,7 +152,7 @@ handle_src_tree()
 load_project_config()
 {
 	eval `setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
-	    tree_depend makeargs btype`
+	    tree_depend makeargs btype mkhelper`
 	[ -f "$1/target.cfg" ] || btype="auto"
 
 	# target.cfg optional on single-tree so return if missing.
@@ -246,7 +246,8 @@ run_make_command()
 
 	make -C "$cdir" $mode -j$XBMK_THREADS $makeargs || $err "$cdir mk$mode"
 
-	[ "$project" = "grub" ] && [ -z "$mode" ] && mkpayload_grub
+	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || \
+	    $err "$cdir: helper command failed: $mkhelper" # eg mkpayload_grub
 
 	[ "$mode" != "clean" ] && return 0
 	make -C "$cdir" distclean 2>/dev/null || :
