@@ -31,7 +31,7 @@ main()
 		-n) mode="nconfig" ;;
 		*) $err "invalid option '-$option'" ;;
 		esac
-		shift; project="${OPTARG#src/}"; shift
+		project="${OPTARG#src/}"; shift 2
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && $err "project name not specified"
@@ -57,8 +57,6 @@ main()
 
 build_projects()
 {
-	[ $# -gt 0 ] && x_ ./update trees $_f $@
-
 	if [ "$mode" = "fetch" ]; then
 		[ -f "CHANGELOG" ] && return 0
 		fetch_project_repo; return 0
