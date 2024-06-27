@@ -132,7 +132,7 @@ fail()
 tmp_cleanup()
 {
 	[ "$xbmk_parent" = "y" ] || return 0
-	rm -Rf "$TMPDIR" || return 1
+	[ "$TMPDIR" = "/tmp" ] || rm -Rf "$TMPDIR" || return 1
 	rm -f lock || return 1
 }
 
