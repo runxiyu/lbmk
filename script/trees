@@ -63,7 +63,7 @@ build_projects()
 		fetch_project_repo; return 0
 	fi
 
-	load_project_config "$cfgsdir" || return 0
+	load_project_config "$cfgsdir" 0 || return 0
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
 
 	dest_dir="$elfdir"
@@ -155,7 +155,12 @@ load_project_config()
 	eval `setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs btype`
 	[ -f "$1/target.cfg" ] || btype="auto"
-	eval `setcfg "$1/target.cfg" 0`
+
+	# target.cfg optional on single-tree so return if missing.
+	# target.cfg mandatory on multi-tree so err if missing.
+	_setcfgarg="" && [ $# -gt 1 ] && _setcfgarg="$2"
+	eval `setcfg "$1/target.cfg" $_setcfgarg`
+
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || \
 	    return 1; return 0
 }
