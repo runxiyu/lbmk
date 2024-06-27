@@ -125,16 +125,16 @@ fetch_trees()
 
 fail()
 {
-	tmp_cleanup || printf "WARNING: can't rm tmpfiles: %s\n" "$tmpdir" 1>&2
+	tmp_cleanup || printf "WARNING: can't rm tmpfiles: %s\n" "$TMPDIR" 1>&2
 	err_ "${1}"
 }
 
 tmp_cleanup()
 {
-	[ "$tmpdir_was_set" = "n" ] || return 0
-	rm -Rf "$tmpdir" || return 1
+	[ "$xbmk_parent" = "y" ] || return 0
+	rm -Rf "$TMPDIR" || return 1
 	rm -f lock || return 1
 }
 
 main $@
-tmp_cleanup || err_ "can't rm tmpdir upon non-zero exit: $tmpdir"
+tmp_cleanup || err_ "can't rm TMPDIR upon non-zero exit: $TMPDIR"

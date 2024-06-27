@@ -10,7 +10,7 @@ set -u -e
 
 . "include/lib.sh"
 
-tmprom="$tmpdir/rom"
+tmprom="$TMPDIR/rom"
 
 seavgabiosrom="elf/seabios/default/libgfxinit/vgabios.bin"
 cfgsdir="config/coreboot"
@@ -49,8 +49,8 @@ main()
 	    config/coreboot)" || $err "can't list coreboot boards"
 
 	[ -n "$ser" ] && \
-	    eval "serlist \"\$${ser}dir\" > \"\$tmpdir/ser\" || $err \"!ser\""
-	[ -n "$ser" ] && [ -z "$boards" ] && boards="$(cat "$tmpdir/ser")"
+	    eval "serlist \"\$${ser}dir\" > \"\$TMPDIR/ser\" || $err \"!ser\""
+	[ -n "$ser" ] && [ -z "$boards" ] && boards="$(cat "$TMPDIR/ser")"
 
 	for x in $boards; do
 		[ -n "$ser" ] && mkserprogfw "$ser" "$x"
@@ -173,8 +173,8 @@ add_seabios_payload()
 		x_ ./update trees -b grub $grubtree
 		cbfs "$tmprom" "$grubelf" "img/grub2"
 		printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-		    > "$tmpdir/tmpcfg" || $err "$board: !insert scandisk"
-		cbfs "$tmprom" "$tmpdir/tmpcfg" scan.cfg raw
+		    > "$TMPDIR/tmpcfg" || $err "$board: !insert scandisk"
+		cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
 	fi
 
 	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus && \

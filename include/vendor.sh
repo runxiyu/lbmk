@@ -41,10 +41,10 @@ getcfg()
 
 	[ -z "$vcfg" ] && printf "%s: vcfg unset\n" "$board" 1>&2 && return 1
 
-	check_defconfig "$boarddir" 1>"$tmpdir/vendorcfg.list" && return 1
+	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
 	while read -r cbcfgfile; do
 		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
-	done < "$tmpdir/vendorcfg.list"
+	done < "$TMPDIR/vendorcfg.list"
 
 	[ -z "$tree" ] && $err "getcfg $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"

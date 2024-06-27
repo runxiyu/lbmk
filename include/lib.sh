@@ -10,7 +10,6 @@ _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 kbnotice="Insert a .gkb file from config/data/grub/keymap/ as keymap.gkb \
 if you want a custom keymap in GRUB; use cbfstool from elf/cbfstool."
 
-tmpdir_was_set="y"
 cbdir="src/coreboot/default"
 cbelfdir="elf/coreboot_nopayload_DO_NOT_FLASH"
 ifdtool="elf/ifdtool/default/ifdtool"
@@ -39,8 +38,8 @@ chkvars()
 	done
 }
 
-eval `setvars "" tmpdir _nogit board boarddir relname versiondate projectsite \
-    projectname aur_notice cfgsdir datadir version`
+eval `setvars "" _nogit board boarddir relname versiondate projectsite \
+    projectname aur_notice cfgsdir datadir version xbmk_parent`
 
 for fv in projectname projectsite version versiondate; do
 	eval "[ ! -f "$fv" ] || read -r $fv < \"$fv\" || :"
@@ -82,19 +81,15 @@ install_packages()
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
-[ -z "${TMPDIR+x}" ] && tmpdir_was_set="n"
-if [ "$tmpdir_was_set" = "y" ]; then
-	[ "${TMPDIR%_*}" = "/tmp/xbmk" ] || tmpdir_was_set="n"
-fi
-if [ "$tmpdir_was_set" = "n" ]; then
+[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || unset TMPDIR
+[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR"
+
+if [ -z "${TMPDIR+x}" ]; then
 	[ -f "lock" ] && $err "$PWD/lock exists. Is a build running?"
 	export TMPDIR="/tmp"
-	tmpdir="$(mktemp -d -t xbmk_XXXXXXXX)"
-	export TMPDIR="$tmpdir"
+	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	touch lock || $err "cannot create 'lock' file"
-else
-	export TMPDIR="$TMPDIR"
-	tmpdir="$TMPDIR"
+	xbmk_parent="y"
 fi
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
