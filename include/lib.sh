@@ -136,12 +136,6 @@ remkdir()
 	mkdir -p "$1" || $err "remkdir: !mkdir -p \"$1\""
 }
 
-git_err()
-{
-	printf "You need to set git name/email, like so:\n%s\n\n" "$1" 1>&2
-	$err "Git name/email not configured"
-}
-
 mkrom_tarball()
 {
 	printf "%s\n" "$version" > "$1/version" || $err "$1 !version"
