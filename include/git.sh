@@ -52,8 +52,7 @@ fetch_project_repo()
 
 	chkvars url
 
-	[ -n "$xtree" ] && [ ! -d "src/coreboot/$xtree" ] && \
-		x_ ./update trees -f coreboot "$xtree"
+	[ -n "$xtree" ] && x_ ./update trees -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
 		printf "'%s' needs '%s'; grabbing '%s'\n" "$project" "$d" "$d"
 		x_ ./update trees -f $d
