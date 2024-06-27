@@ -31,6 +31,7 @@ main()
 		-n) mode="nconfig" ;;
 		*) $err "invalid option '-$option'" ;;
 		esac
+		[ -n "${OPTARG+x}" ] || $err "OPTARG not set"
 		project="${OPTARG#src/}"; shift 2
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
