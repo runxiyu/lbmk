@@ -101,7 +101,6 @@ configure_target()
 
 	x_ ./update trees -b coreboot $board
 
-	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
 
