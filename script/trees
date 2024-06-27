@@ -154,6 +154,7 @@ load_project_config()
 {
 	eval `setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs btype`
+	[ -f "$1/target.cfg" ] || btype="auto"
 	eval `setcfg "$1/target.cfg" 0`
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || \
 	    return 1; return 0
