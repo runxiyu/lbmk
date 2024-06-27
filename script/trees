@@ -46,7 +46,7 @@ main()
 
 	remkdir "${tmpgit%/*}"
 
-	_cmd="build_projects"
+	_cmd="build_project"
 	singletree "$project" || _cmd="build_targets"
 	$_cmd $@
 
@@ -56,7 +56,7 @@ main()
 	[ -z "$mode" ] && printf "\n\nOK! Check %s/\n\n" "$elfdir"; return 0
 }
 
-build_projects()
+build_project()
 {
 	if [ "$mode" = "fetch" ]; then
 		[ -f "CHANGELOG" ] && return 0
