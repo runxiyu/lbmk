@@ -49,12 +49,9 @@ chkvars projectname projectsite
 
 setcfg()
 {
-	if [ $# -gt 1 ]; then
-		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	else
-		printf "e \"%s\" f missing && %s \"Missing config\";\n" "$1" \
-		    "$err"
-	fi
+	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
+	[ $# -gt 1 ] || \
+		printf "e \"%s\" f not && %s \"Missing config\";\n" "$1" "$err"
 	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
 }
 
