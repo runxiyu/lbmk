@@ -24,7 +24,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 release DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE`
+    CONFIG_REFCODE_BLOB_FILE cbdir`
 
 vendor_download()
 {
