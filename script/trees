@@ -19,7 +19,7 @@ main()
 	while getopts f:b:m:u:c:x:s:l:n: option; do
 		_f="$1"
 		case "$1" in
-		-b) : ;;
+		-b) mode="" ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
 		-c) mode="distclean" ;;
