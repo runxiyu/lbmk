@@ -56,8 +56,7 @@ setcfg()
 
 e()
 {
-	es_t="e"
-	[ $# -gt 1 ] && es_t="$2"
+	es_t="e" && [ $# -gt 1 ] && es_t="$2"
 	es2="already exists"
 	estr="[ -$es_t \"\$1\" ] || return 1"
 	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
