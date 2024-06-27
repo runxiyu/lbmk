@@ -183,9 +183,8 @@ rmgit()
 singletree()
 {
 	for targetfile in "config/${1}/"*/target.cfg; do
-		[ -e "$targetfile" ] || continue
-		[ -f "$targetfile" ] && return 1
-	done
+		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1
+	done; return 0
 }
 
 download()
