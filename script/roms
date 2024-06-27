@@ -56,7 +56,8 @@ main()
 		[ -n "$ser" ] && mkserprogfw "$ser" "$x"
 		[ -z "$ser" ] && [ -d "config/coreboot/$x/config" ] && \
 		    configure_target "$x" && build_roms && \
-		    [ -d "bin/$board" ] && targets="$targets, $x"; continue
+		    [ -d "bin/$board" ] && targets="$targets, $x" && \
+		    [ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/$x"
 	done
 
 	[ -n "$ser" ] && [ "$XBMK_RELEASE" = "y" ] && \
