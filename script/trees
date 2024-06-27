@@ -11,8 +11,8 @@ set -u -e
 
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir config config_name xlang mode makeargs \
-    listfile project target target_dir targets tree _f target1 bootstrapargs \
-    autoconfargs cmakedir elfdir autogenargs xtree`
+    elfdir project target target_dir targets tree _f target1 bootstrapargs \
+    autoconfargs cmakedir listfile autogenargs xtree btype`
 
 main()
 {
@@ -63,7 +63,7 @@ build_projects()
 		fetch_project_repo; return 0
 	fi
 
-	load_project_config "$cfgsdir"
+	load_project_config "$cfgsdir" || return 0
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
 
 	dest_dir="$elfdir"
@@ -131,7 +131,7 @@ handle_src_tree()
 		fetch_project_trees; return 1
 	fi
 
-	load_project_config "$target_dir"
+	load_project_config "$target_dir" || return 1
 	x_ mkdir -p "$elfdir/$target"
 
 	chkvars tree
@@ -153,8 +153,10 @@ handle_src_tree()
 load_project_config()
 {
 	eval `setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
-	    tree_depend makeargs`
-	eval `setcfg "$1/target.cfg" 0`; return 0
+	    tree_depend makeargs btype`
+	eval `setcfg "$1/target.cfg" 0`
+	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || \
+	    return 1; return 0
 }
 
 check_cross_compiler()
@@ -213,11 +215,9 @@ elfcheck()
 
 handle_makefile()
 {
-	[ "$project" = "grub" ] && [ "${mode%config}" != "$mode" ] && return 0
-
 	check_makefile "$cdir" && x_ make clean -C "$cdir"
 	x_ cp "$config" "$cdir/.config"
-	[ -n "$mode" ] || [ "$project" = "grub" ] || make -C "$cdir" \
+	[ -n "$mode" ] || [ -n "$btype" ] || make -C "$cdir" \
 	    silentoldconfig || make -C "$cdir" oldconfig || :
 
 	run_make_command || $err "handle_makefile $cdir: no makefile!"
