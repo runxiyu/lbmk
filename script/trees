@@ -207,9 +207,8 @@ elfcheck()
 {
 	# TODO: very hacky check. do it properly (based on build.list)
 	for elftest in "$dest_dir"/*; do
-		[ -e "$elftest" ] || continue
-		e "$elftest" f && return 1
-	done
+		[ -e "$elftest" ] && e "$elftest" f && return 1
+	done; return 0
 }
 
 handle_makefile()
