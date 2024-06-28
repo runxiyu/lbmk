@@ -24,22 +24,18 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 release DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE cbdir`
+    CONFIG_REFCODE_BLOB_FILE cbdir boarddir`
 
 vendor_download()
 {
 	export PATH="$PATH:/sbin"
 
 	[ $# -gt 0 ] || $err "No argument given"
-	board="$1"; boarddir="$cbcfgsdir/$board"
-	getcfg && bootstrap && getfiles; return 0
+	board="$1" && readcfg && getcfg && bootstrap && getfiles; return 0
 }
 
 getcfg()
 {
-	eval `setcfg "$boarddir/target.cfg"`
-	chkvars vcfg tree
-
 	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
 	while read -r cbcfgfile; do
 		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
@@ -269,10 +265,7 @@ check_board()
 		release="y"
 		board="$(detect_board "$archive")"
 	fi
-
-	boarddir="$cbcfgsdir/$board"
-	eval `setcfg "$boarddir/target.cfg"`
-	[ -z "$tree" ] && $err "check_board $board: tree undefined"; return 0
+	readcfg
 }
 
 check_release()
@@ -300,6 +293,13 @@ detect_board()
 		$err "detect_board $filename: could not detect board type"
 	esac
 	printf "%s\n" "$board"
+}
+
+readcfg()
+{
+	boarddir="$cbcfgsdir/$board"
+	eval `setcfg "$boarddir/target.cfg"`
+	chkvars vcfg tree
 }
 
 build_dependencies_inject()

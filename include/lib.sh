@@ -37,7 +37,7 @@ chkvars()
 	done
 }
 
-eval `setvars "" _nogit board boarddir relname versiondate projectsite \
+eval `setvars "" _nogit board relname versiondate projectsite \
     projectname aur_notice cfgsdir datadir version xbmk_parent`
 
 for fv in projectname projectsite version versiondate; do
