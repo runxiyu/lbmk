@@ -23,7 +23,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 cbdir DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE vrelease`
+    CONFIG_REFCODE_BLOB_FILE vrelease verify`
 
 vendor_download()
 {
@@ -313,7 +313,8 @@ patch_release_roms()
 	cd "tmp/romdir/bin/"* || $err "patch roms: !cd tmp/romdir/bin/*"
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
-	[ "$nukemode" = "nuke" ] || sha512sum --status -c vendorhashes || \
+	[ "$verify" != "y" ] || [ "$nukemode" = "nuke" ] || \
+	    sha512sum --status -c vendorhashes || \
 	    sha1sum --status -c vendorhashes || sha512sum --status -c \
 	    blobhashes || sha1sum --status -c blobhashes || \
 	    $err "patch_release_roms: ROMs did not match expected hashes"
@@ -357,6 +358,7 @@ patch_rom()
 inject()
 {
 	[ $# -lt 3 ] && $err "$@, $rom: usage: inject name path type (offset)"
+	[ "$2" = "/dev/null" ] && return 0; verify="y"
 
 	eval `setvars "" cbfsname _dest _t _offset`
 	cbfsname="$1"; _dest="${2##*../}"; _t="$3"
