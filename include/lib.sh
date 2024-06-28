@@ -103,8 +103,8 @@ x_() {
 
 [ -e ".git" ] || [ -f "version" ] || printf "unknown\n" > version || \
     $err "Cannot generate unknown version file"
-[ -e ".git" ] || [ -f "versiondate" ] || printf "1716415872\n" > versiondate || \
-    $err "Cannot generate unknown versiondate file"
+[ -e ".git" ] || [ -f "versiondate" ] || printf "1716415872\n" > versiondate \
+    || $err "Cannot generate unknown versiondate file"
 
 version_="$version"
 [ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
