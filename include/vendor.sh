@@ -90,10 +90,7 @@ getfiles()
 
 fetch()
 {
-	dl_type="$1"
-	dl="$2"
-	dl_bkup="$3"
-	dlsum="$4"
+	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"
 	[ "$5" = "/dev/null" ] && return 0
 	[ "${5# }" = "$5" ] || $err "fetch: space not allowed in _dest: '$5'"
 	[ "${5#/}" = "$5" ] || $err "fetch: absolute path not allowed: '$5'"
