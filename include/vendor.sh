@@ -302,9 +302,7 @@ build_dependencies_inject()
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 	x_ ./update trees -f coreboot $tree
-	if [ ! -f "$cbfstool" ] || [ ! -f "$ifdtool" ]; then
-		x_ ./update trees -b coreboot utils $tree
-	fi
+	x_ ./update trees -b coreboot utils $tree
 	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
 }
