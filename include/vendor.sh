@@ -60,10 +60,9 @@ bootstrap()
 {
 	[ -d "$cbdir" ] || x_ ./update trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
-		[ -d "src/$d" ] && continue
 		x_ ./update trees -f "$d"
 	done
-	[ -f "$uefiextract" ] || x_ ./update trees -b uefitool
+	x_ ./update trees -b uefitool
 	[ ! -d "${kbc1126_ec_dump%/*}" ] || [ -f "$kbc1126_ec_dump" ] || x_ \
 	    make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
