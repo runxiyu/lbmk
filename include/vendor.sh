@@ -9,7 +9,6 @@ e6400_unpack="$PWD/src/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$PWD/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$PWD/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$PWD/elf/uefitool/uefiextract"
-nvmutil="util/nvmutil/nvm"
 vendir="vendorfiles"
 appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
@@ -18,13 +17,13 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname CONFIG_HAVE_MRC SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
-    CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_ME_BIN archive EC_url modifygbe rom \
+    CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_ME_BIN archive EC_url boarddir rom \
     CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE _dest tree CONFIG_GBE_BIN_PATH \
     CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 cbdir DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE vrelease boarddir`
+    CONFIG_REFCODE_BLOB_FILE vrelease`
 
 vendor_download()
 {
@@ -232,8 +231,7 @@ vendor_inject()
 		n) nukemode="$OPTARG" ;;
 		r) rom="$OPTARG" ;;
 		b) board="$OPTARG" ;;
-		m) modifygbe="true"
-		   new_mac="$OPTARG" ;;
+		m) new_mac="$OPTARG"; chkvars new_mac ;;
 		*) : ;;
 		esac
 	done
@@ -302,7 +300,6 @@ build_dependencies_inject()
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 	x_ ./update trees -b coreboot utils $tree
-	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
 }
 
@@ -329,7 +326,7 @@ patch_release_roms()
 	    $err "patch_release_roms: ROMs did not match expected hashes"
 	) || $err "can't verify vendor hashes"
 
-	[ "$modifygbe" = "true" ] && \
+	[ -n "$new_mac" ] && \
 		for x in "$_tmpdir"/bin/*/*.rom ; do
 			[ -f "$x" ] && modify_gbe "$x"
 		done
@@ -361,7 +358,7 @@ patch_rom()
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
-	[ "$modifygbe" = "true" ] && ! [ "$vrelease" = "y" ] && \
+	[ -n "$new_mac" ] && ! [ "$vrelease" = "y" ] && \
 		inject "IFD" "$CONFIG_GBE_BIN_PATH" "GbE"
 
 	printf "ROM image successfully patched: %s\n" "$1"
@@ -426,6 +423,6 @@ modify_gbe()
 	x_ make -C util/nvmutil
 
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$TMPDIR/gbe"
-	x_ "$nvmutil" "$TMPDIR/gbe" setmac "$new_mac"
+	x_ "util/nvmutil/nvm" "$TMPDIR/gbe" setmac $new_mac
 	x_ "$ifdtool" -i GbE:"$TMPDIR/gbe" "$1" -O "$1"
 }
