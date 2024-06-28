@@ -420,19 +420,12 @@ inject()
 
 modify_gbe()
 {
-	printf "changing mac address in gbe to $new_mac\n"
-	[ -z "$CONFIG_GBE_BIN_PATH" ] && \
-		err "modify_gbe: $board: CONFIG_GBE_BIN_PATH not set"
+	chkvars CONFIG_GBE_BIN_PATH
 
-	_gbe_location=${CONFIG_GBE_BIN_PATH##*../}
-	[ -f "$_gbe_location" ] || \
-		err "modify_gbe: $_gbe_location points to missing file"
+	e "${CONFIG_GBE_BIN_PATH##*../}" f n && $err "missing gbe file"
 	x_ make -C util/nvmutil
 
-	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
-	x_ cp "$_gbe_location" "$_gbe_tmp"
-	x_ "$nvmutil" "$_gbe_tmp" setmac "$new_mac"
-	x_ "${ifdtool}" -i GbE:"$_gbe_tmp" "$1" -O "$1"
-
-	x_ rm -f "$_gbe_tmp"
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$TMPDIR/gbe"
+	x_ "$nvmutil" "$TMPDIR/gbe" setmac "$new_mac"
+	x_ "$ifdtool" -i GbE:"$TMPDIR/gbe" "$1" -O "$1"
 }
