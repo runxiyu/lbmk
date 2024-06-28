@@ -92,8 +92,7 @@ fetch()
 	[ "$5" = "/dev/null" ] && return 0
 	[ "${5# }" = "$5" ] || $err "fetch: space not allowed in _dest: '$5'"
 	[ "${5#/}" = "$5" ] || $err "fetch: absolute path not allowed: '$5'"
-	_dest="${5##*../}"
-	_dl="$vendir/cache/$dlsum"
+	_dest="${5##*../}"; _dl="$vendir/cache/$dlsum"
 
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
@@ -102,8 +101,7 @@ fetch()
 	eval "extract_$dl_type"
 	set -u -e
 
-	[ -f "$_dest" ] && return 0
-	$err "extract_$dl_type (fetch): missing file: '$_dest'"
+	e "$_dest" f missing && $err "!extract_$dl_type"; return 0
 }
 
 mkdirs()
