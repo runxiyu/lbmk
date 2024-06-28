@@ -309,7 +309,7 @@ build_dependencies_inject()
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
-	[ -d "$cbdir" ] || x_ ./update trees -f coreboot $tree
+	x_ ./update trees -f coreboot $tree
 	if [ ! -f "$cbfstool" ] || [ ! -f "$ifdtool" ]; then
 		x_ ./update trees -b coreboot utils $tree
 	fi
