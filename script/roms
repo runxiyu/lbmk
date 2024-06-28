@@ -40,7 +40,7 @@ main()
 			eval "x_ ./update trees -f \"\${${2}src##*/}\""
 			ser="$2" && shift 2 && continue
 		fi
-		[ "$1$ser" = "list" ] && x_ ls -1 config/coreboot && return
+		[ "$1$ser" = "list" ] && x_ ls -1 config/coreboot && return 0
 		[ "$1" = "all" ] && shift && continue
 		boards="$1 $boards"; shift 1
 	done
