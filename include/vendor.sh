@@ -234,7 +234,7 @@ vendor_inject()
 		esac
 	done
 
-	check_board
+	check_board || return 0
 	build_dependencies_inject
 	[ "$vrelease" != "y" ] && patch_rom "$rom"
 	[ "$vrelease" = "y" ] && patch_release_roms
@@ -253,7 +253,8 @@ check_board()
 		[ -n "${board+x}" ] || board="$(detect_board "$rom")"
 	else
 		vrelease="y"; board="$(detect_board "$archive")"
-	fi; readcfg
+	fi
+	readcfg || return 1; return 0
 }
 
 check_release()
@@ -285,6 +286,10 @@ detect_board()
 
 readcfg()
 {
+	if [ "$board" = "serprog_rp2040" ] || \
+	    [ "$board" = "serprog_stm32" ]; then
+		return 1
+	fi
 	boarddir="$cbcfgsdir/$board"
 	eval `setcfg "$boarddir/target.cfg"`
 	chkvars vcfg tree
