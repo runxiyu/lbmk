@@ -331,7 +331,7 @@ patch_release_roms()
 
 	[ "$modifygbe" = "true" ] && \
 		for x in "$_tmpdir"/bin/*/*.rom ; do
-			modify_gbe "$x"
+			[ -f "$x" ] && modify_gbe "$x"
 		done
 
 	[ -d "bin/release" ] || x_ mkdir -p bin/release
@@ -418,4 +418,24 @@ inject()
 			    $err "inject $rom: can't remove $cbfsname"
 		fi
 	fi
+}
+
+modify_gbe()
+{
+	printf "changing mac address in gbe to $new_mac\n"
+	[ -z "$CONFIG_GBE_BIN_PATH" ] && \
+		err "modify_gbe: $board: CONFIG_GBE_BIN_PATH not set"
+
+	rom="$1"
+	_gbe_location=${CONFIG_GBE_BIN_PATH##*../}
+	[ -f "$_gbe_location" ] || \
+		err "modify_gbe: $_gbe_location points to missing file"
+	x_ make -C util/nvmutil
+
+	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
+	x_ cp "$_gbe_location" "$_gbe_tmp"
+	x_ "$nvmutil" "$_gbe_tmp" setmac "$new_mac"
+	x_ "${ifdtool}" -i GbE:"$_gbe_tmp" "$rom" -O "$rom"
+
+	x_ rm -f "$_gbe_tmp"
 }
