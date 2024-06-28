@@ -2,8 +2,8 @@
 # Copyright (c) 2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval `setvars "" _target rev loc url bkup_url depend tree_depend xtree \
-    mdir subhash subrepo subrepo_bkup subfile subfile_bkup`
+eval `setvars "" _target rev loc url bkup_url depend tree_depend xtree mdir \
+    subhash subrepo subrepo_bkup subfile subfile_bkup`
 
 fetch_project_trees()
 {

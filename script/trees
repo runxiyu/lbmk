@@ -10,9 +10,9 @@ set -u -e
 . "include/git.sh"
 
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
-eval `setvars "" xarch cdir config config_name xlang mode makeargs \
-    elfdir project target target_dir targets tree _f target1 bootstrapargs \
-    autoconfargs cmakedir listfile autogenargs xtree btype mkhelper`
+eval `setvars "" xarch cdir config cmakedir xlang mode makeargs elfdir xtree \
+    project target target_dir targets tree _f target1 bootstrapargs mkhelper \
+    autoconfargs config_name listfile autogenargs btype`
 
 main()
 {
