@@ -38,15 +38,13 @@ vendor_download()
 getcfg()
 {
 	eval `setcfg "$boarddir/target.cfg"`
-
-	[ -z "$vcfg" ] && printf "%s: vcfg unset\n" "$board" 1>&2 && return 1
+	chkvars vcfg tree
 
 	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
 	while read -r cbcfgfile; do
 		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
 	done < "$TMPDIR/vendorcfg.list"
 
-	[ -z "$tree" ] && $err "getcfg $boarddir: tree undefined"
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 
