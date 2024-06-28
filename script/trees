@@ -69,7 +69,7 @@ build_project()
 	[ ! -f "$listfile" ] || elfcheck || return 0
 
 	cdir="src/${project}"
-	[ -d "$cdir" ] || x_ ./update trees -f "$project"
+	x_ ./update trees -f "$project"
 
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0

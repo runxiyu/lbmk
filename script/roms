@@ -102,7 +102,7 @@ configure_target()
 	x_ ./update trees -b coreboot $board
 
 	cbfstool="elf/cbfstool/$tree/cbfstool"
-	[ -f "$cbfstool" ] || x_ ./update trees -b coreboot utils $tree
+	x_ ./update trees -b coreboot utils $tree
 
 	[ -n "$uboot_config" ] || uboot_config="default"
 	[ "$payload_uboot" = "y" ] || payload_seabios="y"
@@ -143,7 +143,7 @@ add_payloads()
 	# add u-boot payload
 	ubdir="elf/u-boot/$board/$uboot_config"; ubootelf="$ubdir/u-boot.elf" \
 	    && [ ! -f "$ubootelf" ] && ubootelf="$ubdir/u-boot"
-	[ -f "$ubootelf" ] || x_ ./update trees -b u-boot $board
+	x_ ./update trees -b u-boot $board
 	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"
 
 	cbfs "$tmprom" "$ubootelf" "fallback/payload"

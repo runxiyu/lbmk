@@ -58,7 +58,7 @@ getcfg()
 
 bootstrap()
 {
-	[ -d "$cbdir" ] || x_ ./update trees -f coreboot ${cbdir##*/}
+	x_ ./update trees -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
 		x_ ./update trees -f "$d"
 	done
