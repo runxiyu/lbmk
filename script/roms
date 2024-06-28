@@ -41,7 +41,7 @@ main()
 			ser="$2" && shift 2 && continue
 		fi
 		[ "$1$ser" = "list" ] && x_ ls -1 config/coreboot && return 0
-		[ "$1" = "all" ] && shift && continue
+		[ "$1" = "all" ] && shift 1 && continue
 		boards="$1 $boards"; shift 1
 	done
 
