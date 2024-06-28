@@ -347,8 +347,7 @@ patch_rom()
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
-	[ -n "$new_mac" ] && ! [ "$vrelease" = "y" ] && \
-		inject "IFD" "$CONFIG_GBE_BIN_PATH" "GbE"
+	[ -n "$new_mac" ] && [ "$vrelease" != "y" ] && modify_gbe "$rom"
 
 	printf "ROM image successfully patched: %s\n" "$1"
 }
@@ -367,14 +366,6 @@ inject()
 	[ ! -f "$_dest" ] && [ "$nukemode" != "nuke" ] && \
 		$err "inject_$dl_type: file missing, $_dest"
 
-	if [ "$_t" = "GbE" ]; then
-		x_ mkdir -p tmp
-		cp "$_dest" "tmp/gbe.bin" || \
-		    $err "inject: !cp \"$_dest\" \"tmp/gbe.bin\""
-		_dest="tmp/gbe.bin"
-		"$nvmutil" "$_dest" setmac "$new_mac" || \
-		    $err "inject $_dest: can't change mac address"
-	fi
 	if [ "$cbfsname" = "IFD" ]; then
 		if [ "$nukemode" != "nuke" ]; then
 			"$ifdtool" -i $_t:$_dest "$rom" -O "$rom" || \
