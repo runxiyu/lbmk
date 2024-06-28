@@ -34,7 +34,7 @@ chkvars()
 {
 	for var in $@; do
 		eval "[ -n "\${$var+x}" ] || \$err \"$var unset\""
-	done
+	done; return 0
 }
 
 eval `setvars "" _nogit board relname versiondate projectsite \
