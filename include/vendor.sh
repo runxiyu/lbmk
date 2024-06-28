@@ -343,8 +343,6 @@ patch_release_roms()
 
 patch_rom()
 {
-	rom="$1"
-
 	. "$(check_defconfig "$boarddir")" 2>/dev/null || exit 0
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
@@ -366,7 +364,7 @@ patch_rom()
 	[ "$modifygbe" = "true" ] && ! [ "$vrelease" = "y" ] && \
 		inject "IFD" "$CONFIG_GBE_BIN_PATH" "GbE"
 
-	printf "ROM image successfully patched: %s\n" "$rom"
+	printf "ROM image successfully patched: %s\n" "$1"
 }
 
 inject()
@@ -426,7 +424,6 @@ modify_gbe()
 	[ -z "$CONFIG_GBE_BIN_PATH" ] && \
 		err "modify_gbe: $board: CONFIG_GBE_BIN_PATH not set"
 
-	rom="$1"
 	_gbe_location=${CONFIG_GBE_BIN_PATH##*../}
 	[ -f "$_gbe_location" ] || \
 		err "modify_gbe: $_gbe_location points to missing file"
@@ -435,7 +432,7 @@ modify_gbe()
 	_gbe_tmp=$(mktemp -t gbeXXXX.bin)
 	x_ cp "$_gbe_location" "$_gbe_tmp"
 	x_ "$nvmutil" "$_gbe_tmp" setmac "$new_mac"
-	x_ "${ifdtool}" -i GbE:"$_gbe_tmp" "$rom" -O "$rom"
+	x_ "${ifdtool}" -i GbE:"$_gbe_tmp" "$1" -O "$1"
 
 	x_ rm -f "$_gbe_tmp"
 }
