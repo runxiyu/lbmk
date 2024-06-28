@@ -252,8 +252,7 @@ vendor_inject()
 
 check_board()
 {
-	failcheck="n"
-	check_release "$archive" || failcheck="y"
+	failcheck="y" && check_release "$archive" && failcheck="n"
 	if [ "$failcheck" = "y" ]; then
 		[ -f "$rom" ] || $err "check_board \"$rom\": invalid path"
 		[ -z "${rom+x}" ] && $err "check_board: no rom specified"
@@ -261,8 +260,7 @@ check_board()
 	else
 		vrelease="y"
 		board="$(detect_board "$archive")"
-	fi
-	readcfg
+	fi; readcfg
 }
 
 check_release()
