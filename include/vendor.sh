@@ -69,7 +69,6 @@ bootstrap()
 	[ -n "$MRC_refcode_cbtree" ] && \
 		cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
 		x_ ./update trees -b coreboot utils $MRC_refcode_cbtree
-	[ -f "$cbfstool" ] && [ -f "$ifdtool" ] && return 0
 	x_ ./update trees -b coreboot utils $tree
 }
 
