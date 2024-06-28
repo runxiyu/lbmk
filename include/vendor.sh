@@ -21,10 +21,10 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_ME_BIN archive EC_url modifygbe rom \
     CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE _dest tree CONFIG_GBE_BIN_PATH \
     CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
-    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 release DL_url \
+    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 cbdir DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE cbdir boarddir`
+    CONFIG_REFCODE_BLOB_FILE vrelease boarddir`
 
 vendor_download()
 {
@@ -246,7 +246,9 @@ vendor_inject()
 
 	check_board
 	build_dependencies_inject
-	inject_vendorfiles
+	[ "$vrelease" != "y" ] && patch_rom "$rom"
+	[ "$vrelease" = "y" ] && patch_release_roms
+
 	[ "$nukemode" = "nuke" ] && return 0
 	printf "Friendly reminder (this is *not* an error message):\n"
 	printf "Please ensure that the files were inserted correctly. ALSO:\n"
@@ -262,7 +264,7 @@ check_board()
 		[ -z "${rom+x}" ] && $err "check_board: no rom specified"
 		[ -n "${board+x}" ] || board="$(detect_board "$rom")"
 	else
-		release="y"
+		vrelease="y"
 		board="$(detect_board "$archive")"
 	fi
 	readcfg
@@ -313,12 +315,6 @@ build_dependencies_inject()
 	fi
 	[ -z "$new_mac" ] || [ -f "$nvmutil" ] || x_ make -C util/nvmutil
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
-}
-
-inject_vendorfiles()
-{
-	[ "$release" != "y" ] && eval "patch_rom \"$rom\"; return 0"
-	patch_release_roms
 }
 
 patch_release_roms()
@@ -378,7 +374,7 @@ patch_rom()
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
-	[ "$modifygbe" = "true" ] && ! [ "$release" = "y" ] && \
+	[ "$modifygbe" = "true" ] && ! [ "$vrelease" = "y" ] && \
 		inject "IFD" "$CONFIG_GBE_BIN_PATH" "GbE"
 
 	printf "ROM image successfully patched: %s\n" "$rom"
