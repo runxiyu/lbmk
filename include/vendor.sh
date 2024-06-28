@@ -243,8 +243,7 @@ vendor_inject()
 
 	[ "$nukemode" = "nuke" ] && return 0
 	printf "Friendly reminder (this is *not* an error message):\n"
-	printf "Please ensure that the files were inserted correctly. ALSO:\n"
-	printf "%s\n" "$kbnotice"
+	printf "Make sure the files were inserted. ALSO:\n%s\n" "$kbnotice"
 }
 
 check_board()
@@ -255,8 +254,7 @@ check_board()
 		[ -z "${rom+x}" ] && $err "check_board: no rom specified"
 		[ -n "${board+x}" ] || board="$(detect_board "$rom")"
 	else
-		vrelease="y"
-		board="$(detect_board "$archive")"
+		vrelease="y"; board="$(detect_board "$archive")"
 	fi; readcfg
 }
 
@@ -305,19 +303,16 @@ build_dependencies_inject()
 
 patch_release_roms()
 {
-	_tmpdir="tmp/romdir"
-	remkdir "$_tmpdir"
-	tar -xf "$archive" -C "$_tmpdir" || \
-	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"$_tmpdir\""
+	remkdir "tmp/romdir"
+	tar -xf "$archive" -C "tmp/romdir" || \
+	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"tmp/romdir\""
 
-	for x in "$_tmpdir"/bin/*/*.rom ; do
-		printf "patching rom: %s\n" "$x"
+	for x in "tmp/romdir/bin/"*/*.rom ; do
 		patch_rom "$x"
 	done
 
 	(
-	cd "$_tmpdir/bin/"* || \
-	    $err "patch_release_roms: !cd $_tmpdir/bin/*"
+	cd "tmp/romdir/bin/"* || $err "patch roms: !cd tmp/romdir/bin/*"
 
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	[ "$nukemode" = "nuke" ] || sha512sum --status -c vendorhashes || \
@@ -326,16 +321,12 @@ patch_release_roms()
 	    $err "patch_release_roms: ROMs did not match expected hashes"
 	) || $err "can't verify vendor hashes"
 
-	[ -n "$new_mac" ] && \
-		for x in "$_tmpdir"/bin/*/*.rom ; do
-			[ -f "$x" ] && modify_gbe "$x"
-		done
+	[ -n "$new_mac" ] && for x in "tmp/romdir/bin/"*/*.rom ; do
+		[ -f "$x" ] && modify_gbe "$x"
+	done
 
-	[ -d "bin/release" ] || x_ mkdir -p bin/release
-	x_ mv "$_tmpdir"/bin/* bin/release/
-	x_ rm -Rf "$_tmpdir"
-
-	printf "Success! Your ROMs are in bin/release\n"
+	x_ mkdir -p bin/release
+	mv tmp/romdir/bin/* bin/release/ || $err "$board: !mv release roms"
 }
 
 patch_rom()
@@ -369,18 +360,14 @@ inject()
 	[ $# -lt 3 ] && $err "$@, $rom: usage: inject name path type (offset)"
 
 	eval `setvars "" cbfsname _dest _t _offset`
-	cbfsname="$1"
-	_dest="${2##*../}"
-	_t="$3"
+	cbfsname="$1"; _dest="${2##*../}"; _t="$3"
+
 	[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
 	    $err "inject $@, $rom: offset passed, but empty (not defined)"
 
 	[ -z "$_dest" ] && $err "inject $@, $rom: empty destination path"
 	[ ! -f "$_dest" ] && [ "$nukemode" != "nuke" ] && \
 		$err "inject_$dl_type: file missing, $_dest"
-
-	[ "$nukemode" = "nuke" ] || \
-		printf "Inserting %s/%s into: %s\n" "$cbfsname" "$_t" "$rom"
 
 	if [ "$_t" = "GbE" ]; then
 		x_ mkdir -p tmp
