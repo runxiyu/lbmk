@@ -329,6 +329,8 @@ patch_release_roms()
 
 patch_rom()
 {
+	rom="$1"
+
 	. "$(check_defconfig "$boarddir")" 2>/dev/null || exit 0
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
@@ -349,7 +351,7 @@ patch_rom()
 		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
 	[ -n "$new_mac" ] && [ "$vrelease" != "y" ] && modify_gbe "$rom"
 
-	printf "ROM image successfully patched: %s\n" "$1"
+	printf "ROM image successfully patched: %s\n" "$rom"
 }
 
 inject()
@@ -362,33 +364,24 @@ inject()
 	[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
 	    $err "inject $@, $rom: offset passed, but empty (not defined)"
 
-	[ -z "$_dest" ] && $err "inject $@, $rom: empty destination path"
-	[ ! -f "$_dest" ] && [ "$nukemode" != "nuke" ] && \
-		$err "inject_$dl_type: file missing, $_dest"
+	e "$_dest" f n && [ "$nukemode" != "nuke" ] && $err "!inject $dl_type"
 
 	if [ "$cbfsname" = "IFD" ]; then
-		if [ "$nukemode" != "nuke" ]; then
-			"$ifdtool" -i $_t:$_dest "$rom" -O "$rom" || \
-			    $err "inject: can't insert $_t ($dest) into $rom"
-		else
-			"$ifdtool" --nuke $_t "$rom" -O "$rom" || \
-			    $err "inject $rom: can't nuke $_t in IFD"
-		fi
-	else
-		if [ "$nukemode" != "nuke" ]; then
-			if [ "$_t" = "stage" ]; then # broadwell refcode
-				"$cbfstool" "$rom" add-stage -f "$_dest" \
-				    -n "$cbfsname" -t stage -c lzma
-			else
-				"$cbfstool" "$rom" add -f "$_dest" \
-				    -n "$cbfsname" -t $_t $_offset || \
-				    $err "$rom: can't insert $_t file $_dest"
-			fi
-		else
-			"$cbfstool" "$rom" remove -n "$cbfsname" || \
-			    $err "inject $rom: can't remove $cbfsname"
-		fi
+		[ "$nukemode" = "nuke" ] || "$ifdtool" -i $_t:$_dest "$rom" \
+		    -O "$rom" || $err "failed: inject '$_t' '$_dest' on '$rom'"
+		[ "$nukemode" != "nuke" ] || "$ifdtool" --nuke $_t "$rom" \
+		    -O "$rom" || $err "inject $rom: can't nuke $_t in IFD"
+		return 0
 	fi
+	if [ "$nukemode" = "nuke" ]; then
+		"$cbfstool" "$rom" remove -n "$cbfsname" || \
+		    $err "inject $rom: can't remove $cbfsname"
+		return 0
+	fi
+	[ "$_t" != "stage" ] || "$cbfstool" "$rom" add-stage -f \
+	    "$_dest" -n "$cbfsname" -t stage -c lzma || $err "$rom: !add ref"
+	[ "$_t" = "stage" ] || "$cbfstool" "$rom" add -f "$_dest" \
+	    -n "$cbfsname" -t $_t $_offset || $err "$rom !add $_t ($_dest)"
 }
 
 modify_gbe()
