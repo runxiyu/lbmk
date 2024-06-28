@@ -41,8 +41,7 @@ eval `setvars "" _nogit board relname versiondate projectsite \
 
 for fv in projectname projectsite version versiondate; do
 	eval "[ ! -f "$fv" ] || read -r $fv < \"$fv\" || :"
-done
-chkvars projectname projectsite
+done; chkvars projectname projectsite
 
 setcfg()
 {
