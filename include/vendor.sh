@@ -128,6 +128,7 @@ extract_intel_me()
 	e "$_me" f && return 0
 
 	sdir="$(mktemp -d)"
+	[ -z "$sdir" ] && return 0
 	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
 
 	set +u +e
