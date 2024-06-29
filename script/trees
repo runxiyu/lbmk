@@ -196,7 +196,7 @@ check_coreboot_utils()
 			x_ mkdir -p "$utilelfdir" && \
 			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
 		[ -z "$mode" ] || x_ rm -Rf "$utilelfdir"
-	done
+	done; return 0
 }
 
 check_config()
