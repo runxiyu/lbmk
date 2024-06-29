@@ -150,8 +150,7 @@ extract_archive()
 
 extract_kbc1126ec()
 {
-	[ ! -f "$kbc1126_ec_dump" ] && \
-		$err "extract_kbc1126ec $cbdir: kbc1126_ec_dump missing"
+	e "$kbc1126_ec_dump" f missing && $err "$cbdir: kbc1126 util missing"
 	(
 	x_ cd "$appdir/"
 	mv Rompaq/68*.BIN ec.bin || :
