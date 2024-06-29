@@ -353,13 +353,10 @@ inject()
 		[ "$nukemode" = "nuke" ] || "$ifdtool" -i $_t:$_dest "$rom" \
 		    -O "$rom" || $err "failed: inject '$_t' '$_dest' on '$rom'"
 		[ "$nukemode" != "nuke" ] || "$ifdtool" --nuke $_t "$rom" \
-		    -O "$rom" || $err "inject $rom: can't nuke $_t in IFD"
-		return 0
-	fi
-	if [ "$nukemode" = "nuke" ]; then
+		    -O "$rom" || $err "$rom: can't nuke $_t in IFD"; return 0
+	elif [ "$nukemode" = "nuke" ]; then
 		"$cbfstool" "$rom" remove -n "$cbfsname" || \
-		    $err "inject $rom: can't remove $cbfsname"
-		return 0
+		    $err "inject $rom: can't remove $cbfsname"; return 0
 	fi
 	[ "$_t" != "stage" ] || "$cbfstool" "$rom" add-stage -f \
 	    "$_dest" -n "$cbfsname" -t stage -c lzma || $err "$rom: !add ref"
