@@ -278,6 +278,7 @@ readcfg()
 	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
+
 	x_ ./update trees -b coreboot utils $tree
 }
 
