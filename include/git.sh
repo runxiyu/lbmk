@@ -7,8 +7,6 @@ eval `setvars "" rev loc url bkup_url depend tree_depend xtree mdir subhash \
 
 fetch_targets()
 {
-	[ ! -d "src/$project/$project" ] && x_ mkdir -p "src/$project" \
-	    && fetch_project "$project"
 	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
 		x_ ./update trees -f "$project" "$tree_depend"
 	e "src/$project/$tree" d || prepare_new_tree; return 0

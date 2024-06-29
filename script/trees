@@ -142,6 +142,9 @@ handle_src_tree()
 
 load_project_config()
 {
+	[ "$cmd" = "build_targets" ] && [ ! -d "src/$project/$project" ] && \
+	    x_ mkdir -p "src/$project" && fetch_project "$project"
+
 	eval `setvars "" xarch xlang bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs btype mkhelper`
 	[ -f "$1/target.cfg" ] || btype="auto"
