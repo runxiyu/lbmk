@@ -77,9 +77,8 @@ getfiles()
 
 fetch()
 {
-	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"
-	[ "$5" = "/dev/null" ] && return 0
-	_dest="${5##*../}"; _dl="$vendir/cache/$dlsum"
+	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"; _dest="${5##*../}"
+	[ "$5" = "/dev/null" ] && return 0; _dl="$vendir/cache/$dlsum"
 
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
