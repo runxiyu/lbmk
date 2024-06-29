@@ -173,9 +173,7 @@ extract_kbc1126ec()
 extract_e6400vga()
 {
 	set +u +e
-	for v in E6400_VGA_offset E6400_VGA_romname; do
-		eval "[ -z \"\$$v\" ] && $err \"e6400vga: $v undefined\""
-	done
+	chkvars E6400_VGA_offset E6400_VGA_romname
 	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
 	(
 	x_ cd "$appdir"
