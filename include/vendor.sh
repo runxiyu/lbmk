@@ -230,7 +230,8 @@ vendor_inject()
 	done
 
 	check_board || return 0
-	build_dependencies_inject
+	cfgutils
+	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board
 	[ "$vrelease" != "y" ] && patch_rom "$rom"
 	[ "$vrelease" = "y" ] && patch_release_roms
 
@@ -288,12 +289,6 @@ readcfg()
 	boarddir="$cbcfgsdir/$board"
 	eval `setcfg "$boarddir/target.cfg"`
 	chkvars vcfg tree
-}
-
-build_dependencies_inject()
-{
-	cfgutils
-	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
 }
 
 cfgutils()
