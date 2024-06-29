@@ -40,11 +40,7 @@ getcfg()
 		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
 	done < "$TMPDIR/vendorcfg.list"
 
-	cbdir="src/coreboot/$tree"
-	cbfstool="elf/cbfstool/$tree/cbfstool"
-
-	mecleaner="$PWD/$cbdir/util/me_cleaner/me_cleaner.py"
-	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
+	cfgutils
 
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
@@ -67,7 +63,6 @@ bootstrap()
 	[ -n "$MRC_refcode_cbtree" ] && \
 		cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
 		x_ ./update trees -b coreboot utils $MRC_refcode_cbtree
-	x_ ./update trees -b coreboot utils $tree
 }
 
 getfiles()
@@ -297,11 +292,19 @@ readcfg()
 
 build_dependencies_inject()
 {
+	cfgutils
+	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
+}
+
+cfgutils()
+{
 	cbdir="src/coreboot/$tree"
+	cbfstool="elf/cbfstool/$tree/cbfstool"
+	mecleaner="$PWD/$cbdir/util/me_cleaner/me_cleaner.py"
+	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 	x_ ./update trees -b coreboot utils $tree
-	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board; return 0
 }
 
 patch_release_roms()
