@@ -3,8 +3,6 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2024 Leah Rowe <leah@libreboot.org>
 
-_7ztest="a"
-
 e6400_unpack="$PWD/src/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$PWD/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$PWD/src/biosutilities/Dell_PFS_Extract.py"
@@ -23,7 +21,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 cbdir DL_url \
     CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE vrelease verify`
+    CONFIG_REFCODE_BLOB_FILE vrelease verify _7ztest`
 
 vendor_download()
 {
