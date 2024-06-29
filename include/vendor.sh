@@ -335,18 +335,16 @@ patch_rom()
 	    "mrc" "0xfffa0000"
 	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && inject "fallback/refcode" \
 	    "$CONFIG_REFCODE_BLOB_FILE" "stage"
-	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && inject "IFD" "$CONFIG_ME_BIN_PATH" \
-	    "me"
-	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && inject "ecfw1.bin" \
-	    "$CONFIG_KBC1126_FW1" "raw" "$CONFIG_KBC1126_FW1_OFFSET" && \
-		inject "ecfw2.bin" "$CONFIG_KBC1126_FW2" "raw" \
-		    "$CONFIG_KBC1126_FW2_OFFSET"
+	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && inject IFD "$CONFIG_ME_BIN_PATH" me
+	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && inject ecfw1.bin \
+	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && inject \
+	    ecfw2.bin "$CONFIG_KBC1126_FW2" raw "$CONFIG_KBC1126_FW2_OFFSET"
 	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
 		inject "pci$CONFIG_VGA_BIOS_ID.rom" \
 		    "$CONFIG_VGA_BIOS_FILE" "optionrom"
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
-		inject "sch5545_ecfw.bin" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
+		inject sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
 	[ -n "$new_mac" ] && [ "$vrelease" != "y" ] && modify_gbe "$rom"
 
 	printf "ROM image successfully patched: %s\n" "$rom"
