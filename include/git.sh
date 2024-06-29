@@ -5,7 +5,7 @@
 eval `setvars "" _target rev loc url bkup_url depend tree_depend xtree mdir \
     subhash subrepo subrepo_bkup subfile subfile_bkup`
 
-fetch_project_trees()
+fetch_targets()
 {
 	_target="$target"
 	[ ! -d "src/$project/$project" ] && x_ mkdir -p "src/$project" \

@@ -127,7 +127,7 @@ handle_src_tree()
 	target_dir="$cfgsdir/$target"
 	if [ "$mode" = "fetch" ]; then
 		[ -f "CHANGELOG" ] && return 1
-		fetch_project_trees; return 1
+		fetch_targets; return 1
 	fi
 
 	load_project_config "$target_dir" || return 1
