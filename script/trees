@@ -281,7 +281,6 @@ mkpayload_grub()
 {
 	eval `setvars "" grub_modules grub_install_modules`
 	eval `setcfg "$grubdata/module/$tree"`
-	chkvars "grub_install_modules" "grub_modules"
 
 	x_ rm -f "$cdir/grub.elf"
 
