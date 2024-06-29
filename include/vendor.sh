@@ -178,7 +178,6 @@ extract_e6400vga()
 	x_ cd "$appdir"
 	[ -f "bios.bin" ] || $err "extract_e6400vga: can't extract bios.bin"
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
-	e "$E6400_VGA_romname" f missing && $err "can't extract e6400 vga rom"
 	) || $err "can't extract e6400 vga rom"
 	cp "$appdir/$E6400_VGA_romname" "$_dest" || \
 	    $err "extract_e6400vga $board: can't copy vga rom to $_dest"
