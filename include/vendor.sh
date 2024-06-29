@@ -53,8 +53,7 @@ bootstrap()
 	for d in uefitool biosutilities bios_extract; do
 		x_ ./update trees -b "$d"
 	done
-	[ ! -d "${kbc1126_ec_dump%/*}" ] || [ -f "$kbc1126_ec_dump" ] || x_ \
-	    make -C "$cbdir/util/kbc1126"
+	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
 	    x_ ./update trees -b coreboot utils $MRC_refcode_cbtree; return 0
