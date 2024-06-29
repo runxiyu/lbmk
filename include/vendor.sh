@@ -40,8 +40,6 @@ getcfg()
 		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
 	done < "$TMPDIR/vendorcfg.list"
 
-	cfgutils
-
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
@@ -230,7 +228,6 @@ vendor_inject()
 	done
 
 	check_board || return 0
-	cfgutils
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board
 	[ "$vrelease" != "y" ] && patch_rom "$rom"
 	[ "$vrelease" = "y" ] && patch_release_roms
@@ -289,10 +286,7 @@ readcfg()
 	boarddir="$cbcfgsdir/$board"
 	eval `setcfg "$boarddir/target.cfg"`
 	chkvars vcfg tree
-}
 
-cfgutils()
-{
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	mecleaner="$PWD/$cbdir/util/me_cleaner/me_cleaner.py"
