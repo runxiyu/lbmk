@@ -30,10 +30,10 @@ vendor_download()
 	export PATH="$PATH:/sbin"
 
 	[ $# -gt 0 ] || $err "No argument given"
-	board="$1" && readcfg && getcfg && bootstrap && getfiles; return 0
+	board="$1" && readcfg && readkconfig && bootstrap && getfiles; return 0
 }
 
-getcfg()
+readkconfig()
 {
 	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
 	while read -r cbcfgfile; do
