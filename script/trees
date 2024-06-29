@@ -12,7 +12,7 @@ set -u -e
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir config cmakedir xlang mode makeargs elfdir xtree \
     project target target_dir targets tree _f target1 bootstrapargs mkhelper \
-    autoconfargs config_name listfile autogenargs btype _cmd`
+    autoconfargs config_name listfile autogenargs btype cmd`
 
 main()
 {
@@ -46,8 +46,8 @@ main()
 
 	remkdir "${tmpgit%/*}"
 
-	_cmd="build_targets" && singletree "$project" && _cmd="build_project"
-	$_cmd $@
+	cmd="build_targets" && singletree "$project" && cmd="build_project"
+	$cmd $@
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
 
@@ -57,7 +57,7 @@ main()
 
 build_project()
 {
-	load_project_config "$cfgsdir" 0 || return 0
+	load_project_config "$cfgsdir" || return 0
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
 
 	dest_dir="$elfdir"
@@ -142,21 +142,29 @@ handle_src_tree()
 
 load_project_config()
 {
-	eval `setvars "" xarch xlang tree bootstrapargs autoconfargs xtree \
+	eval `setvars "" xarch xlang bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs btype mkhelper`
 	[ -f "$1/target.cfg" ] || btype="auto"
 
-	# target.cfg optional on single-tree so return if missing.
-	# target.cfg mandatory on multi-tree so err if missing.
-	_setcfgarg="" && [ $# -gt 1 ] && _setcfgarg="$2"
-	if [ -f "$1/target.cfg" ] || [ -z "$_setcfgarg" ]; then
-		eval `setcfg "$1/target.cfg" $_setcfgarg`
-	fi
+	_tcfg="$1/target.cfg"
+	while [ -f "$_tcfg" ] || [ "$cmd" = "build_targets" ]; do
+		# target.cfg optional on single-tree so return if missing.
+		# target.cfg mandatory on multi-tree so err if missing.
+		eval `setvars "" rev tree`
+
+		printf "Loading %s config: %s\n" "$project" "$_tcfg"
+		eval `setcfg "$_tcfg"`
+		[ "$cmd" = "build_project" ] && break
+		[ "$mode" = "fetch" ] || break
+
+		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
+		    && break; _tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
+	done
 
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
 
 	[ "$mode" = "fetch" ] || return 0
-	[ -f "CHANGELOG" ] && return 1; fetch_${_cmd#build_}; return 1
+	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
 }
 
 check_cross_compiler()

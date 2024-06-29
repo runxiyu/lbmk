@@ -2,42 +2,21 @@
 # Copyright (c) 2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval `setvars "" _target rev loc url bkup_url depend tree_depend xtree mdir \
-    subhash subrepo subrepo_bkup subfile subfile_bkup`
+eval `setvars "" rev loc url bkup_url depend tree_depend xtree mdir subhash \
+    subrepo subrepo_bkup subfile subfile_bkup`
 
 fetch_targets()
 {
-	_target="$target"
 	[ ! -d "src/$project/$project" ] && x_ mkdir -p "src/$project" \
 	    && fetch_project "$project"
-	fetch_config
-	e "src/$project/$tree" d || prepare_new_tree; return 0
-}
-
-fetch_config()
-{
-	rm -f "$cfgsdir/"*/seen || $err "fetch_config $cfgsdir: !rm seen"
-	eval `setvars "" xtree tree_depend`
-	while true; do
-		eval `setvars "" rev tree`
-		load_target_config "$_target"
-		[ "$_target" = "$tree" ] && break
-		_target="$tree"
-	done
 	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
-		x_ ./update trees -f "$project" "$tree_depend"; return 0
-}
-
-load_target_config()
-{
-	[ -f "$cfgsdir/$1/seen" ] && $err "$project/$_target: tree loop"
-	eval `setcfg "$cfgsdir/$1/target.cfg"`
-	touch "$cfgsdir/$1/seen" || $err "load_config $cfgsdir/$1: !mk seen"
+		x_ ./update trees -f "$project" "$tree_depend"
+	e "src/$project/$tree" d || prepare_new_tree; return 0
 }
 
 prepare_new_tree()
 {
-	printf "Creating %s tree %s (%s)\n" "$project" "$tree" "$_target"
+	printf "Creating %s tree %s\n" "$project" "$tree"
 
 	git_prep "src/$project/$project" "src/$project/$project" \
 	    "$PWD/$cfgsdir/$tree/patches" "src/$project/$tree" "update"
