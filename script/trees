@@ -190,8 +190,7 @@ check_coreboot_utils()
 		utilelfdir="elf/$util/$1"
 		utilsrcdir="src/coreboot/$1/util/$util"
 
-		utilmode=""
-		[ -z "$mode" ] || utilmode="clean"
+		utilmode="" && [ -n "$mode" ] && utilmode="clean"
 		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $cbmakeargs
 		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
 			x_ mkdir -p "$utilelfdir" && \
