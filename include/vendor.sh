@@ -154,7 +154,7 @@ extract_kbc1126ec()
 	(
 	x_ cd "$appdir/"
 	mv Rompaq/68*.BIN ec.bin || :
-	if [ ! -f ec.bin ]; then
+	if [ ! -f "ec.bin" ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
 		    unar -D 68*.CAB Rom.bin || $err "can't extract Rom.bin"
 		x_ mv Rom.bin ec.bin
