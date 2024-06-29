@@ -59,7 +59,7 @@ build_project()
 {
 	if [ "$mode" = "fetch" ]; then
 		[ -f "CHANGELOG" ] && return 0
-		fetch_project_repo; return 0
+		fetch_project; return 0
 	fi
 
 	load_project_config "$cfgsdir" 0 || return 0

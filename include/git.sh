@@ -9,7 +9,7 @@ fetch_project_trees()
 {
 	_target="$target"
 	[ ! -d "src/$project/$project" ] && x_ mkdir -p "src/$project" \
-	    && fetch_project_repo "$project"
+	    && fetch_project "$project"
 	fetch_config
 	e "src/$project/$tree" d || prepare_new_tree; return 0
 }
@@ -44,7 +44,7 @@ prepare_new_tree()
 	nuke "$project/$tree" "$project/$tree"
 }
 
-fetch_project_repo()
+fetch_project()
 {
 	eval `setvars "" xtree tree_depend`
 	eval `setcfg "config/git/$project/pkg.cfg"`
