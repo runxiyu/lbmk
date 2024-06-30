@@ -57,7 +57,7 @@ main()
 
 build_project()
 {
-	load_project_config "$cfgsdir" || return 0
+	load_target_config "$cfgsdir" || return 0
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
 
 	dest_dir="$elfdir"
@@ -121,7 +121,7 @@ handle_src_tree()
 {
 	target_dir="$cfgsdir/$target"
 
-	load_project_config "$target_dir" || return 1
+	load_target_config "$target_dir" || return 1
 	x_ mkdir -p "$elfdir/$target"
 
 	chkvars tree
@@ -140,7 +140,7 @@ handle_src_tree()
 	[ -z "$mode" ] && check_cross_compiler; return 0
 }
 
-load_project_config()
+load_target_config()
 {
 	[ "$cmd" = "build_targets" ] && [ ! -d "src/$project/$project" ] && \
 	    x_ mkdir -p "src/$project" && fetch_project "$project"
