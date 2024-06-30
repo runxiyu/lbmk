@@ -112,12 +112,10 @@ git_am_patches()
 {
 	for _patch in "$2/"*; do
 		[ -L "$_patch" ] || [ ! -f "$_patch" ] || git -C "$1" am \
-		    "$_patch" || $err "$1 $2: !git am $_patch"; continue
-	done
-	for _patches in "$2/"*; do
-		[ ! -L "$_patches" ] && [ -d "$_patches" ] && \
-			git_am_patches "$1" "$_patches"; continue
-	done
+		    "$_patch" || $err "$1 $2: !git am $_patch"
+		[ -L "$_patch" ] || [ ! -d "$_patch" ] || \
+		    git_am_patches "$1" "$_patch"; continue
+	done; return 0
 }
 
 link_crossgcc()
