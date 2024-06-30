@@ -232,8 +232,7 @@ handle_makefile()
 
 	run_make_command || $err "handle_makefile $cdir: no makefile!"
 
-	_copy=".config"
-	[ "$mode" = "savedefconfig" ] && _copy="defconfig"
+	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
 	[ "${mode%config}" = "$mode" ] || x_ cp "$cdir/$_copy" "$config"
 
 	[ -e "$cdir/.git" ] && [ "$project" = "u-boot" ] && \
