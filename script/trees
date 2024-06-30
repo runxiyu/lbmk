@@ -10,9 +10,9 @@ set -u -e
 . "include/git.sh"
 
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
-eval `setvars "" xarch cdir config cmakedir xlang mode makeargs elfdir xtree \
-    project target target_dir targets tree _f target1 bootstrapargs mkhelper \
-    autoconfargs config_name listfile autogenargs btype cmd`
+eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
+    project target target_dir targets xtree _f target1 bootstrapargs mkhelper \
+    autoconfargs config_name listfile autogenargs btype tree`
 
 main()
 {
@@ -108,8 +108,8 @@ handle_defconfig()
 
 	for y in "$target_dir/config"/*; do
 		[ -f "$y" ] || continue
-		config="$y"
-		config_name="${config#"$target_dir/config/"}"
+		defconfig="$y"
+		config_name="${defconfig#"$target_dir/config/"}"
 
 		[ -n "$mode" ] || check_config || continue
 		handle_makefile
@@ -205,7 +205,7 @@ check_coreboot_utils()
 
 check_config()
 {
-	[ -f "$config" ] || $err "check_config $project/$target: no config"
+	[ -f "$defconfig" ] || $err "check_config $project/$target: no config"
 
 	dest_dir="$elfdir/$target/$config_name"
 	elfcheck || return 1 # skip build if a previous one exists
@@ -224,14 +224,14 @@ elfcheck()
 handle_makefile()
 {
 	check_makefile "$cdir" && x_ make clean -C "$cdir"
-	x_ cp "$config" "$cdir/.config"
+	x_ cp "$defconfig" "$cdir/.config"
 	[ -n "$mode" ] || [ -n "$btype" ] || make -C "$cdir" \
 	    silentoldconfig || make -C "$cdir" oldconfig || :
 
 	run_make_command || $err "handle_makefile $cdir: no makefile!"
 
 	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
-	[ "${mode%config}" = "$mode" ] || x_ cp "$cdir/$_copy" "$config"
+	[ "${mode%config}" = "$mode" ] || x_ cp "$cdir/$_copy" "$defconfig"
 
 	[ -e "$cdir/.git" ] && [ "$project" = "u-boot" ] && \
 	    [ "$mode" = "distclean" ] && x_ git -C "$cdir" clean -fdx; return 0
