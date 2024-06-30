@@ -12,7 +12,7 @@ set -u -e
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f target1 bootstrapargs mkhelper \
-    autoconfargs config_name listfile autogenargs btype tree`
+    autoconfargs listfile autogenargs btype tree`
 
 main()
 {
@@ -109,7 +109,6 @@ handle_defconfig()
 	for y in "$target_dir/config"/*; do
 		[ -f "$y" ] || continue
 		defconfig="$y"
-		config_name="${defconfig#"$target_dir/config/"}"
 
 		[ -n "$mode" ] || check_config || continue
 		handle_makefile
@@ -207,7 +206,7 @@ check_config()
 {
 	[ -f "$defconfig" ] || $err "check_config $project/$target: no config"
 
-	dest_dir="$elfdir/$target/$config_name"
+	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
 	elfcheck || return 1 # skip build if a previous one exists
 
 	x_ mkdir -p "$dest_dir"
