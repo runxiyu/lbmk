@@ -12,7 +12,7 @@ set -u -e
 cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f target1 bootstrapargs mkhelper \
-    autoconfargs listfile autogenargs btype tree`
+    autoconfargs listfile autogenargs btype tree rev tree_depend`
 
 main()
 {
