@@ -145,6 +145,7 @@ load_target_config()
 	eval `setvars "" xarch xlang bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs btype mkhelper`
 	[ -f "$1/target.cfg" ] || btype="auto"
+	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
 	_tcfg="$1/target.cfg"
 	while [ -f "$_tcfg" ] || [ "$cmd" = "build_targets" ]; do
