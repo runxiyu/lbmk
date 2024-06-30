@@ -120,7 +120,7 @@ handle_src_tree()
 {
 	target_dir="$cfgsdir/$target"
 
-	fetch_project "$project"
+	[ -f "CHANGELOG" ] || fetch_project "$project"
 	load_target_config "$target_dir" || return 1
 	x_ mkdir -p "$elfdir/$target"
 
