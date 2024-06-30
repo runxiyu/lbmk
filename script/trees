@@ -110,7 +110,7 @@ handle_defconfig()
 		[ -f "$y" ] || continue
 		defconfig="$y"
 
-		[ -n "$mode" ] || check_config || continue
+		[ -n "$mode" ] || check_defconfig || continue
 		handle_makefile
 		[ -n "$mode" ] || copy_elf
 	done
@@ -202,9 +202,9 @@ check_coreboot_utils()
 	done; return 0
 }
 
-check_config()
+check_defconfig()
 {
-	[ -f "$defconfig" ] || $err "check_config $project/$target: no config"
+	[ -f "$defconfig" ] || $err "$project/$target: missing defconfig"
 
 	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
 	elfcheck || return 1 # skip build if a previous one exists
