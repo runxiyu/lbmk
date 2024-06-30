@@ -249,9 +249,7 @@ run_make_command()
 		    && makeargs="$makeargs $cbmakeargs"
 
 	make -C "$cdir" $mode -j$XBMK_THREADS $makeargs || $err "$cdir mk$mode"
-
-	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || \
-	    $err "$cdir: helper command failed: $mkhelper" # eg mkpayload_grub
+	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
 
 	[ "$mode" != "clean" ] && return 0
 	make -C "$cdir" distclean 2>/dev/null || :
