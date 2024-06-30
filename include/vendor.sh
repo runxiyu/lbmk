@@ -83,21 +83,17 @@ fetch()
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
 	x_ rm -Rf "${_dl}_extracted"
-	mkdirs "$_dest" "extract_$dl_type" || return 0
+	e "$_dest" f && return 0
+
+	mkdir -p "${_dest%/*}" || $err "mkdirs: !mkdir -p ${_dest%/*}"
+	remkdir "$appdir"
+	extract_archive "$_dl" "$appdir" || [ "$dl_type" = "e6400vga" ] || \
+	    $err "mkdirs $_dest $dl_type: !extract"
+
 	eval "extract_$dl_type"
 	set -u -e
 
 	e "$_dest" f missing && $err "!extract_$dl_type"; return 0
-}
-
-mkdirs()
-{
-	e "$1" f && return 1
-
-	mkdir -p "${1%/*}" || $err "mkdirs: !mkdir -p ${1%/*}"
-	remkdir "$appdir"
-	extract_archive "$_dl" "$appdir" || [ "$2" = "extract_e6400vga" ] || \
-	    $err "mkdirs $1 $2: !extract"; return 0
 }
 
 extract_intel_me()
