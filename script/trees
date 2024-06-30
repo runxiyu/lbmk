@@ -113,7 +113,7 @@ handle_defconfig()
 		[ -n "$mode" ] || check_defconfig || continue
 		handle_makefile
 		[ -n "$mode" ] || copy_elf
-	done
+	done; return 0
 }
 
 handle_src_tree()
