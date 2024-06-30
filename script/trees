@@ -151,8 +151,6 @@ load_target_config()
 
 	_tcfg="$1/target.cfg"
 	while [ -f "$_tcfg" ] || [ "$cmd" = "build_targets" ]; do
-		# target.cfg optional on single-tree so return if missing.
-		# target.cfg mandatory on multi-tree so err if missing.
 		eval `setvars "" rev tree`
 
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
