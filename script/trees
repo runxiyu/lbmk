@@ -297,8 +297,7 @@ copy_elf()
 {
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir" && while read -r f; do
 		[ -f "$cdir/$f" ] && x_ cp "$cdir/$f" "$dest_dir"
-	done < "$listfile"
-	x_ make clean -C "$cdir"
+	done < "$listfile"; x_ make clean -C "$cdir"
 }
 
 main $@
