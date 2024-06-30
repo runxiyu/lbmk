@@ -110,11 +110,10 @@ tmpclone()
 
 git_am_patches()
 {
-	for _patch in "$2/"*; do
-		[ -L "$_patch" ] || [ ! -f "$_patch" ] || git -C "$1" am \
-		    "$_patch" || $err "$1 $2: !git am $_patch"
-		[ -L "$_patch" ] || [ ! -d "$_patch" ] || \
-		    git_am_patches "$1" "$_patch"; continue
+	for p in "$2/"*; do
+		[ -L "$p" ] && continue; [ -e "$p" ] || continue
+		[ -d "$p" ] && git_am_patches "$1" "$p" && continue
+		[ ! -f "$p" ] || git -C "$1" am "$p" || $err "$1 $2: !am $p"
 	done; return 0
 }
 
