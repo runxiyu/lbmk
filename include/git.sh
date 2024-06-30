@@ -11,9 +11,10 @@ fetch_targets()
 		x_ ./update trees -f "$project" "$tree_depend"
 	e "src/$project/$tree" d && return 0
 
+
 	printf "Creating %s tree %s\n" "$project" "$tree"
-	git_prep "src/$project/$project" "src/$project/$project" \
-	    "$PWD/$cfgsdir/$tree/patches" "src/$project/$tree" "update"
+	git_prep "$loc" "$loc" "$PWD/$cfgsdir/$tree/patches" \
+	    "${loc%/*}/$tree" u
 	nuke "$project/$tree" "$project/$tree"
 }
 
