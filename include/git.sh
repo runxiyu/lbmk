@@ -37,8 +37,7 @@ fetch_project()
 
 clone_project()
 {
-	loc="src/$project"
-	singletree "$project" || loc="src/$project/$project"
+	loc="src/$project/$project" && singletree "$project" && loc="${loc%/*}"
 
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 	e "$loc" d && return 0
