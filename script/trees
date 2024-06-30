@@ -31,11 +31,15 @@ main()
 		-n) mode="nconfig" ;;
 		*) $err "invalid option '-$option'" ;;
 		esac
-		[ -n "${OPTARG+x}" ] || $err "OPTARG not set"
+		[ -z "${OPTARG+x}" ] && shift 1 && break
 		project="${OPTARG#src/}"; shift 2
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
-	[ -z "$project" ] && $err "project name not specified"
+	[ -z "$project" ] && for p in $(ls -1 config/git); do
+		./update trees $_f "$p" || $err "!./update trees $_f $p"
+		[ "$XBMK_RELEASE" != "y" ] || singletree "$p" || \
+		    x_ rm Rf "src/$p/$p"; continue
+	done && return 0
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
 

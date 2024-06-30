@@ -92,7 +92,8 @@ build_release()
 {
 	(
 	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
-	fetch_trees
+	./update trees -f
+	rmgit .
 	x_ mv src/docs docs
 	) || $err "can't create release files"
 
@@ -117,15 +118,6 @@ build_release()
 	) || $err "can't build rom images"
 
 	rm -Rf "$srcdir" || $err "!rm -Rf $srcdir"
-}
-
-fetch_trees()
-{
-	for x in $(ls -1 config/git); do
-		./update trees -f "$x" || $err "$vdir: fetch $x"
-		singletree "$x" || x_ rm -Rf "src/$x/$x"
-	done
-	rmgit .
 }
 
 fail()
