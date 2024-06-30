@@ -248,8 +248,7 @@ run_make_command()
 	make -C "$cdir" $mode -j$XBMK_THREADS $makeargs || $err "$cdir mk$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
 
-	[ "$mode" != "clean" ] && return 0
-	make -C "$cdir" distclean 2>/dev/null || :
+	[ "$mode" = "clean" ] && make -C "$cdir" distclean || :; return 0
 }
 
 check_cmake()
