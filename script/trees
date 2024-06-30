@@ -127,14 +127,10 @@ handle_src_tree()
 	chkvars tree
 	cdir="src/$project/$tree"
 
-	if [ ! -d "$cdir" ]; then
-		if [ "$mode" = "distclean" ] || \
-		    [ "$mode" = "crossgcc-clean" ]; then
-			printf "Dir '%s' missing; skip clean\n" "$cdir" 1>&2
-			return 1
-		fi
-		x_ ./update trees -f "$project" "$target"
+	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
+		[ -d "$cdir" ] || return 1
 	fi
+	x_ ./update trees -f "$project" "$target"
 
 	[ "$target1" = "utils" ] && [ "$project" = "coreboot" ] && return 0
 	[ -z "$mode" ] && check_cross_compiler; return 0
