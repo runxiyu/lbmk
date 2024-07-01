@@ -38,7 +38,7 @@ main()
 	[ -z "$project" ] && for p in $(ls -1 config/git); do
 		./update trees $_f "$p" || $err "!./update trees $_f $p"
 		[ "$XBMK_RELEASE" != "y" ] || singletree "$p" || \
-		    x_ rm Rf "src/$p/$p"; continue
+		    x_ rm -Rf "src/$p/$p"; continue
 	done && return 0
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
