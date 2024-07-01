@@ -107,7 +107,7 @@ configure_target()
 	[ -n "$uboot_config" ] || uboot_config="default"
 	[ "$payload_uboot" = "y" ] || payload_seabios="y"
 	[ "$payload_grub" = "y" ] && payload_seabios="y"
-	[ "$payload_seabios" = "y" ] && [ -n "$payload_uboot" = "y" ] && \
+	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "y" ] && \
 	    $err "$board: U-Boot and SeaBIOS/GRUB are both enabled."
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
