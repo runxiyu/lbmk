@@ -9,7 +9,6 @@ set -u -e
 . "include/lib.sh"
 . "include/git.sh"
 
-cbmakeargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f target1 bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend`
@@ -180,9 +179,9 @@ check_cross_compiler()
 		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
 		# sometimes buildgcc fails for like no reason. try twice.
-		make -C "$cbdir" crossgcc-${_xarch%-*} $cbmakeargs || \
-		    make -C "$cbdir" crossgcc-${_xarch%-*} $cbmakeargs || \
-		    $err "!mkxgcc $project/$xtree '${_xarch%-*}' '$cbmakeargs'"
+		make -C "$cbdir" crossgcc-${_xarch%-*} $makeargs || \
+		    make -C "$cbdir" crossgcc-${_xarch%-*} $makeargs || \
+		    $err "!mkxgcc $project/$xtree '${_xarch%-*}' '$makeargs'"
 	done; return 0
 }
 
@@ -193,7 +192,7 @@ check_coreboot_utils()
 		utilsrcdir="src/coreboot/$1/util/$util"
 
 		utilmode="" && [ -n "$mode" ] && utilmode="clean"
-		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $cbmakeargs
+		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
 		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
 			x_ mkdir -p "$utilelfdir" && \
 			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
@@ -241,8 +240,7 @@ run_make_command()
 	check_makefile "$cdir" || return 1
 
 	[ "$project" = "coreboot" ] && [ -z "$mode" ] && x_ \
-		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" \
-		    && makeargs="$makeargs $cbmakeargs"
+		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version"
 
 	make -C "$cdir" $mode -j$XBMK_THREADS $makeargs || $err "$cdir mk$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
