@@ -60,7 +60,7 @@ main()
 
 build_project()
 {
-	load_target_config "$cfgsdir" || return 0
+	configure_project "$cfgsdir" || return 0
 	[ -f "$listfile" ] || listfile="" # optional on single-tree
 
 	dest_dir="$elfdir"
@@ -124,7 +124,7 @@ handle_src_tree()
 	target_dir="$cfgsdir/$target"
 
 	[ -f "CHANGELOG" ] || fetch_project "$project"
-	load_target_config "$target_dir" || return 1
+	configure_project "$target_dir" || return 1
 	x_ mkdir -p "$elfdir/$target"
 
 	chkvars tree
@@ -139,7 +139,7 @@ handle_src_tree()
 	[ -z "$mode" ] && check_cross_compiler; return 0
 }
 
-load_target_config()
+configure_project()
 {
 	eval `setvars "" xarch xlang bootstrapargs autoconfargs xtree \
 	    tree_depend makeargs btype mkhelper build_depend`
