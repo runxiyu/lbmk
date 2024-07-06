@@ -16,7 +16,7 @@ fi
 . "include/vendor.sh"
 . "include/mrc.sh"
 
-eval `setvars "" vdir src_dirname srcdir mode xp`
+eval `setvars "" vdir src_dirname srcdir mode xp ser`
 err="fail"
 
 main()
@@ -34,6 +34,12 @@ main()
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
+	roms)
+		if [ $# -gt 1 ] && [ "$2" = "serprog" ]; then
+			x_ ./update trees -b stm32-vserprog
+			x_ ./update trees -b pico-serprog; return 0
+		fi; shift 1
+		x_ ./update trees -b coreboot $@ ;;
 	*)
 		[ -f "$spath" ] || $err "bad command"
 		shift 1; "$spath" $@ || $err "excmd: $spath $@" ;;
@@ -111,9 +117,9 @@ build_release()
 
 	(
 	cd "$srcdir" || $err "$vdir: 2 !cd \"$srcdir\""
-	./build roms all || $err "$vdir: roms-all"
-	./build roms serprog rp2040 || $err "$vdir: rp2040"
-	./build roms serprog stm32 || $err "$vdir: stm32"
+	./update trees -b coreboot || $err "$vdir: roms-all"
+	./update trees -b pico-serprog || $err "$vdir: rp2040"
+	./update trees -b stm32-vserprog || $err "$vdir: stm32"
 	x_ mv bin ../roms
 	) || $err "can't build rom images"
 
