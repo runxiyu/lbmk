@@ -140,8 +140,6 @@ add_payloads()
 	[ "$payload_seabios" = "y" ] && add_seabios_payload
 	[ "$payload_uboot" = "y" ] || return 0
 
-	# add u-boot payload
-	x_ ./update trees -b u-boot $board
 	ubdir="elf/u-boot/$board/$uboot_config"; ubootelf="$ubdir/u-boot.elf" \
 	    && [ ! -f "$ubootelf" ] && ubootelf="$ubdir/u-boot"
 	[ -f "$ubootelf" ] || $err "$board: Can't find u-boot"
@@ -153,7 +151,6 @@ add_payloads()
 add_seabios_payload()
 {
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
-	x_ ./update trees -b seabios
 
 	pstr="seabios" && [ "$payload_grub" = "y" ] && pstr="seabios_withgrub"
 	newrom="$romdir/${pstr}_${board}_$initmode.rom"
@@ -169,14 +166,13 @@ add_seabios_payload()
 	    vgaroms/seavgabios.bin raw
 
 	if [ "$payload_grub" = "y" ]; then
-		x_ ./update trees -b grub $grubtree
 		cbfs "$tmprom" "$grubelf" "img/grub2"
 		printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 		    > "$TMPDIR/tmpcfg" || $err "$board: !insert scandisk"
 		cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
 	fi
 
-	[ "$payload_memtest" = "y" ] && x_ ./update trees -b memtest86plus && \
+	[ "$payload_memtest" = "y" ] && \
 	    cbfs "$tmprom" "elf/memtest86plus/memtest.bin" img/memtest
 
 	cprom "$newrom" && [ "$payload_grub" = "y" ] && \
