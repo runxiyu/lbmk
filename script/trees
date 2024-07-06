@@ -11,7 +11,7 @@ set -u -e
 
 eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f target1 bootstrapargs mkhelper \
-    autoconfargs listfile autogenargs btype tree rev tree_depend`
+    autoconfargs listfile autogenargs btype tree rev tree_depend build_depend`
 
 main()
 {
@@ -142,7 +142,7 @@ handle_src_tree()
 load_target_config()
 {
 	eval `setvars "" xarch xlang bootstrapargs autoconfargs xtree \
-	    tree_depend makeargs btype mkhelper`
+	    tree_depend makeargs btype mkhelper build_depend`
 	[ -f "$1/target.cfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
@@ -160,6 +160,14 @@ load_target_config()
 	done
 
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
+
+	[ -z "$mode" ] && for bd in $build_depend; do
+		bd_project="${bd%%/*}"; bd_tree="${bd##*/}"
+		[ -z "$bd_project" ] && $err "$project/$tree: bad bd: '$bd'"
+		[ "${bd##*/}" = "$bd" ] && bd_tree=""
+		[ -z "$bd_project" ] || ./update trees -b $bd_project \
+		    $bd_tree || $err "$project/$tree: !bd $bd"; continue
+	done
 
 	[ "$mode" = "fetch" ] || return 0
 	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
