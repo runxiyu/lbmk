@@ -117,6 +117,6 @@ add_uboot()
 
 mkcoreboottar()
 {
-	[ "$target" = "$tree" ] && return 0
-	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/$target"; return 0
+	[ "$target" = "$tree" ] && return 0; [ "$XBMK_RELEASE" = "y" ] && \
+	    [ "$release" != "n" ] && mkrom_tarball "bin/$target"; return 0
 }
