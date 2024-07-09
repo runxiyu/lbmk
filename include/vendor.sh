@@ -56,7 +56,7 @@ bootstrap()
 	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
-	    x_ ./update trees -b coreboot utils $MRC_refcode_cbtree; return 0
+	    x_ ./update trees -d coreboot $MRC_refcode_cbtree; return 0
 }
 
 getfiles()
@@ -275,7 +275,7 @@ readcfg()
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 
-	x_ ./update trees -b coreboot utils $tree
+	x_ ./update trees -d coreboot $tree
 }
 
 patch_release_roms()

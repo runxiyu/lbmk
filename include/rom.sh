@@ -8,6 +8,7 @@
 
 mkserprog()
 {
+	[ "$_f" = "-d" ] && return 0 # dry run
 	basename -as .h "$serdir/"*.h > "$TMPDIR/ser" || $err "!mk $1 $TMPDIR"
 
 	while read -r sertarget; do
@@ -25,6 +26,7 @@ mkserprog()
 
 mkpayload_grub()
 {
+	[ "$_f" = "-d" ] && return 0 # dry run
 	eval `setvars "" grub_modules grub_install_modules`
 	eval `setcfg "$grubdata/module/$tree"`
 
@@ -40,8 +42,35 @@ mkpayload_grub()
 	    $err "$tree: cannot build grub.elf"; return 0
 }
 
+check_coreboot_utils()
+{
+	for util in cbfstool ifdtool; do
+		utilelfdir="elf/$util/$1"
+		utilsrcdir="src/coreboot/$1/util/$util"
+
+		utilmode="" && [ -n "$mode" ] && utilmode="clean"
+		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
+		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
+			x_ mkdir -p "$utilelfdir" && \
+			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
+		[ -z "$mode" ] || x_ rm -Rf "$utilelfdir"; continue
+	done; return 0
+}
+
+mkvendorfiles()
+{
+	if [ "$_f" = "-d" ]; then
+		check_coreboot_utils "$tree"
+	elif [ "$_f" = "-b" ]; then
+		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version"
+	fi
+	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
+	    x_ ./vendor download $target; return 0
+}
+
 mkcorebootbin()
 {
+	[ "$_f" = "-d" ] && return 0 # dry run
 	[ "$target" = "$tree" ] && return 0
 
 	tmprom="$cdir/build/coreboot.rom"
@@ -64,7 +93,7 @@ mkcorebootbin()
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
 
-	x_ ./update trees -b coreboot utils $tree
+	x_ ./update trees -d coreboot $tree
 
 	[ "$payload_seabios" = "y" ] && pname="seabios" && add_seabios
 	[ "$payload_uboot" = "y" ] && pname="uboot" && add_uboot
@@ -117,6 +146,7 @@ add_uboot()
 
 mkcoreboottar()
 {
+	[ "$_f" = "-d" ] && return 0 # dry run
 	[ "$target" = "$tree" ] && return 0; [ "$XBMK_RELEASE" = "y" ] && \
 	    [ "$release" != "n" ] && mkrom_tarball "bin/$target"; return 0
 }
