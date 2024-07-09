@@ -42,6 +42,18 @@ mkpayload_grub()
 	    $err "$tree: cannot build grub.elf"; return 0
 }
 
+mkvendorfiles()
+{
+	if [ "$_f" = "-d" ]; then
+		check_coreboot_utils "$tree"
+	elif [ "$_f" = "-b" ]; then
+		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" || \
+		    $err "!mk $cdir .coreboot-version"
+	fi
+	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
+	    x_ ./vendor download $target; return 0
+}
+
 check_coreboot_utils()
 {
 	for util in cbfstool ifdtool; do
@@ -55,17 +67,6 @@ check_coreboot_utils()
 			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
 		[ -z "$mode" ] || x_ rm -Rf "$utilelfdir"; continue
 	done; return 0
-}
-
-mkvendorfiles()
-{
-	if [ "$_f" = "-d" ]; then
-		check_coreboot_utils "$tree"
-	elif [ "$_f" = "-b" ]; then
-		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version"
-	fi
-	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
-	    x_ ./vendor download $target; return 0
 }
 
 mkcorebootbin()
