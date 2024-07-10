@@ -12,7 +12,7 @@ fetch_targets()
 	e "src/$project/$tree" d && return 0
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
-	git_prep "$loc" "$loc" "$PWD/$cfgsdir/$tree/patches" \
+	git_prep "$loc" "$loc" "$PWD/$configdir/$tree/patches" \
 	    "${loc%/*}/$tree" u; nuke "$project/$tree" "$project/$tree"
 }
 

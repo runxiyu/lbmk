@@ -29,13 +29,13 @@ mkpayload_grub()
 	eval `setvars "" grub_modules grub_install_modules`
 	$dry eval `setcfg "$grubdata/module/$tree"`
 
-	$dry x_ rm -f "$cdir/grub.elf"
+	$dry x_ rm -f "$srcdir/grub.elf"
 
-	$dry "${cdir}/grub-mkstandalone" --grub-mkimage="${cdir}/grub-mkimage" \
-	    -O i386-coreboot -o "${cdir}/grub.elf" -d "${cdir}/grub-core/" \
+	$dry "$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
+	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
-	    "/boot/grub/grub_default.cfg=${cdir}/.config" \
+	    "/boot/grub/grub_default.cfg=${srcdir}/.config" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" \
 	    "/background.png=$grubdata/background/background1280x800.png" || \
 	    $err "$tree: cannot build grub.elf"; return 0
@@ -44,8 +44,8 @@ mkpayload_grub()
 mkvendorfiles()
 {
 	check_coreboot_utils "$tree"
-	printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" || \
-	    $err "!mk $cdir .coreboot-version"
+	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
+	    $err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
 	    x_ ./vendor download $target; return 0
 }
@@ -71,7 +71,7 @@ mkcorebootbin()
 {
 	[ "$target" = "$tree" ] && return 0
 
-	tmprom="$cdir/build/coreboot.rom"
+	tmprom="$srcdir/build/coreboot.rom"
 	initmode="${defconfig##*/}"; displaymode="${initmode##*_}"
 	initmode="${initmode%%_*}"
 	[ -n "$displaymode" ] && displaymode="_$displaymode"

@@ -9,10 +9,10 @@ set -u -e
 . "include/lib.sh"
 . "include/git.sh"
 
-eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
+eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    premake postmake mkhelpercfg dry`
+    defconfig postmake mkhelpercfg dry dest_dir`
 
 main()
 {
@@ -44,36 +44,27 @@ main()
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
 
-	elfdir="elf/$project"
-	datadir="config/data/$project"
-	cfgsdir="config/$project"
-	listfile="$datadir/build.list" # needed on multi, optional on single
+	for d in "elf" "config/data" "config" "src"; do
+		eval "${d#*/}dir=\"$d/$project\""
+	done; dest_dir="$elfdir"
+	listfile="$datadir/build.list"
 	[ -f "$listfile" ] || listfile="" # optional on all projects
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
+	e "$mkhelpercfg" f missing && mkhelpercfg="$TMPDIR/mkhelper.cfg" && \
+	    x_ touch "$mkhelpercfg"
 
 	targets="$@"
-	remkdir "${tmpgit%/*}"
-}
-
-handle_project()
-{
 	cmd="build_targets $targets" && singletree "$project" && \
-	    cmd="build_project"; $cmd
+	    cmd="build_project"
 
-	[ -f "$listfile" ] || return 0
-	[ -z "$mode" ] && $dry printf "\n\nOK! Check %s/\n\n" "$elfdir"; :
+	remkdir "${tmpgit%/*}"
 }
 
 build_project()
 {
-	configure_project "$cfgsdir" || return 0
-
-	dest_dir="$elfdir"
-	[ ! -f "$listfile" ] || elfcheck || return 0
-
-	cdir="src/${project}"
-	x_ ./update trees -f "$project"
+	configure_project "$configdir" || return 0
+	[ ! -f "$listfile" ] || $dry elfcheck || return 0
 
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
@@ -83,10 +74,8 @@ build_project()
 
 build_targets()
 {
-	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
-
-	[ $# -gt 0 ] || \
-	    targets="$(ls -1 "$cfgsdir")" || $err "$cfgsdir: Canot get options"
+	[ -d "$configdir" ] || $err "directory, $configdir, does not exist"
+	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || $err "!o $configdir"
 
 	for x in $targets; do
 		[ "$x" = "list" ] && x_ ls -1 "config/$project" && \
@@ -101,7 +90,19 @@ build_targets()
 
 handle_defconfig()
 {
-	handle_src_tree "$target" || return 0
+	target_dir="$configdir/$target"
+
+	[ -f "CHANGELOG" ] || fetch_project "$project"
+	configure_project "$target_dir" || return 0
+	x_ mkdir -p "$elfdir/$target"
+
+	chkvars tree
+	srcdir="src/$project/$tree"
+
+	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
+		[ -d "$srcdir" ] || return 0
+	fi
+	[ -z "$mode" ] && $dry check_cross_compiler
 
 	for y in "$target_dir/config"/*; do
 		[ "$_f" = "-d" ] || [ -f "$y" ] || continue
@@ -111,25 +112,6 @@ handle_defconfig()
 		handle_makefile
 		[ -n "$mode" ] || $dry copy_elf
 	done; return 0
-}
-
-handle_src_tree()
-{
-	target_dir="$cfgsdir/$target"
-
-	[ -f "CHANGELOG" ] || fetch_project "$project"
-	configure_project "$target_dir" || return 1
-	x_ mkdir -p "$elfdir/$target"
-
-	chkvars tree
-	cdir="src/$project/$tree"
-
-	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
-		[ -d "$cdir" ] || return 1
-	fi
-	x_ ./update trees -f "$project" "$target"
-
-	[ -z "$mode" ] && $dry check_cross_compiler; return 0
 }
 
 configure_project()
@@ -167,6 +149,7 @@ configure_project()
 		done
 	fi
 
+	[ "$mode" = "fetch" ] || x_ ./update trees -f "$project" $target
 	[ "$mode" = "fetch" ] || return 0
 	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
 }
@@ -194,10 +177,9 @@ check_cross_compiler()
 check_defconfig()
 {
 	[ -f "$defconfig" ] || $dry $err "$project/$target: missing defconfig"
-
 	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
-	$dry elfcheck || return 1 # skip build if a previous one exists
 
+	$dry elfcheck || return 1 # skip build if a previous one exists
 	$dry x_ mkdir -p "$dest_dir"
 }
 
@@ -211,32 +193,32 @@ elfcheck()
 
 handle_makefile()
 {
-	$dry check_makefile "$cdir" && x_ make clean -C "$cdir"
-	[ -f "$defconfig" ] && x_ cp "$defconfig" "$cdir/.config"
+	$dry check_makefile "$srcdir" && x_ make clean -C "$srcdir"
+	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
 	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
-	    "$cdir" silentoldconfig || make -C "$cdir" oldconfig || :
+	    "$srcdir" silentoldconfig || make -C "$srcdir" oldconfig || :
 
-	run_make_command || $err "handle_makefile $cdir: no makefile!"
+	run_make_command || $err "handle_makefile $srcdir: no makefile!"
 
 	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
-	[ "${mode%config}" = "$mode" ] || $dry x_ cp "$cdir/$_copy" "$defconfig"
+	[ "${mode%config}" = "$mode" ] || \
+	    $dry x_ cp "$srcdir/$_copy" "$defconfig"
 
-	[ -e "$cdir/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && $dry x_ git -C "$cdir" clean -fdx; :
+	[ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
+	    [ "$mode" = "distclean" ] && $dry x_ git -C "$srcdir" clean -fdx; :
 }
 
 run_make_command()
 {
 	[ -z "$premake" ] || [ -n "$mode" ] || $premake || $err "!$premake"
 
-	$dry check_cmake "$cdir" && [ -z "$mode" ] && $dry check_autoconf \
-	    "$cdir"; $dry check_makefile "$cdir" || return 1
+	$dry check_cmake "$srcdir" && [ -z "$mode" ] && $dry check_autoconf \
+	    "$srcdir"; $dry check_makefile "$srcdir" || return 1
 
-	$dry make -C "$cdir" $mode -j$XBMK_THREADS $makeargs \
-	    || $err "$cdir mk$mode"
+	$dry make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs || $err "!$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
 
-	[ "$mode" = "clean" ] && $dry make -C "$cdir" distclean || :; return 0
+	[ "$mode" = "clean" ] && $dry make -C "$srcdir" distclean || :; :
 }
 
 check_cmake()
@@ -267,12 +249,10 @@ check_makefile()
 copy_elf()
 {
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir" && while read -r f; do
-		[ -f "$cdir/$f" ] && x_ cp "$cdir/$f" "$dest_dir"
-	done < "$listfile"; x_ make clean -C "$cdir"
+		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"
+	done < "$listfile"; x_ make clean -C "$srcdir"
 }
 
 main $@
-e "$mkhelpercfg" f missing && mkhelpercfg="$TMPDIR/mkhelper.cfg" && x_ \
-    touch "$mkhelpercfg"
 . "$mkhelpercfg"
-handle_project
+$cmd
