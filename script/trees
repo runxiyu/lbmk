@@ -40,7 +40,7 @@ main()
 		./update trees $_f "$p" || $err "!./update trees $_f $p"
 		[ "$XBMK_RELEASE" != "y" ] || singletree "$p" || \
 		    x_ rm -Rf "src/$p/$p"; continue
-	done && return 0
+	done && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
 
@@ -253,6 +253,6 @@ copy_elf()
 	done < "$listfile"; x_ make clean -C "$srcdir"
 }
 
-main $@
+main $@ || exit 0
 . "$mkhelpercfg"
 $cmd
