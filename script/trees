@@ -8,15 +8,11 @@ set -u -e
 
 . "include/lib.sh"
 . "include/git.sh"
-. "include/rom.sh"
-
-. "config/data/pico-serprog/mkhelper.cfg"
-. "config/data/coreboot/mkhelper.cfg"
 
 eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    premake postmake`
+    premake postmake mkhelpercfg`
 
 main()
 {
@@ -54,10 +50,16 @@ main()
 	listfile="$datadir/build.list" # needed on multi, optional on single
 	[ -f "$listfile" ] || listfile="" # optional on all projects
 
-	remkdir "${tmpgit%/*}"
+	mkhelpercfg="$datadir/mkhelper.cfg"
 
-	cmd="build_targets" && singletree "$project" && cmd="build_project"
-	$cmd $@
+	targets="$@"
+	remkdir "${tmpgit%/*}"
+}
+
+handle_project()
+{
+	cmd="build_targets $targets" && singletree "$project" && \
+	    cmd="build_project"; $cmd
 
 	[ -f "$listfile" ] || return 0
 	[ -z "$mode" ] && [ "$_f" = "-b" ] && \
@@ -84,9 +86,8 @@ build_targets()
 {
 	[ -d "$cfgsdir" ] || $err "directory, $cfgsdir, does not exist"
 
-	# Build for all targets if no argument is given
-	targets="$(ls -1 "$cfgsdir")" || $err "Can't get options for $cfgsdir"
-	[ $# -gt 0 ] && targets=$@
+	[ $# -gt 0 ] || \
+	    targets="$(ls -1 "$cfgsdir")" || $err "$cfgsdir: Canot get options"
 
 	handle_targets
 }
@@ -288,3 +289,7 @@ copy_elf()
 }
 
 main $@
+e "$mkhelpercfg" f missing && mkhelpercfg="$TMPDIR/mkhelper.cfg" && x_ \
+    touch "$mkhelpercfg"
+. "$mkhelpercfg"
+handle_project
