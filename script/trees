@@ -88,11 +88,6 @@ build_targets()
 	[ $# -gt 0 ] || \
 	    targets="$(ls -1 "$cfgsdir")" || $err "$cfgsdir: Canot get options"
 
-	handle_targets
-}
-
-handle_targets()
-{
 	for x in $targets; do
 		[ "$x" = "list" ] && x_ ls -1 "config/$project" && \
 		    listfile="" && break
