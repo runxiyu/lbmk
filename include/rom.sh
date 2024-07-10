@@ -94,8 +94,6 @@ mkcorebootbin()
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
 
-	x_ ./update trees -d coreboot $tree
-
 	[ "$payload_seabios" = "y" ] && pname="seabios" && add_seabios
 	[ "$payload_uboot" = "y" ] && pname="uboot" && add_uboot
 
