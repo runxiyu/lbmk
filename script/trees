@@ -162,7 +162,7 @@ configure_project()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
 
-	if [ "$_f" != "-d" ]; then
+	if [ "$_f" = "-d" ]; then
 		:
 	elif [ -z "$mode" ]; then
 		for bd in $build_depend; do
