@@ -57,7 +57,7 @@ mkvendorfiles()
 check_coreboot_utils()
 {
 	for util in cbfstool ifdtool; do
-		[ -f "elf/$util/$1/$util" ] && continue
+		e "elf/$util/$1/$util" f && continue
 
 		utilelfdir="elf/$util/$1"
 		utilsrcdir="src/coreboot/$1/util/$util"
