@@ -12,13 +12,13 @@ set -u -e
 eval `setvars "" xarch cdir defconfig cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    premake postmake mkhelpercfg`
+    premake postmake mkhelpercfg dry`
 
 main()
 {
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
-		_f="$1"
+		_f="$1" && [ "$_f" = "-d" ] && dry=":"
 		case "$1" in
 		-d) mode="" ;;
 		-b) mode="" ;;
@@ -62,8 +62,7 @@ handle_project()
 	    cmd="build_project"; $cmd
 
 	[ -f "$listfile" ] || return 0
-	[ -z "$mode" ] && [ "$_f" = "-b" ] && \
-	    printf "\n\nOK! Check %s/\n\n" "$elfdir"; return 0
+	[ -z "$mode" ] && $dry printf "\n\nOK! Check %s/\n\n" "$elfdir"; :
 }
 
 build_project()
@@ -79,7 +78,7 @@ build_project()
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
 
-	[ -n "$mode" ] || copy_elf; return 0
+	[ -n "$mode" ] || $dry copy_elf; return 0
 }
 
 build_targets()
@@ -115,7 +114,7 @@ handle_defconfig()
 
 		[ -n "$mode" ] || check_defconfig || continue
 		handle_makefile
-		[ -n "$mode" ] || copy_elf
+		[ -n "$mode" ] || $dry copy_elf
 	done; return 0
 }
 
@@ -135,7 +134,7 @@ handle_src_tree()
 	fi
 	x_ ./update trees -f "$project" "$target"
 
-	[ -z "$mode" ] && [ "$_f" = "-b" ] && check_cross_compiler; return 0
+	[ -z "$mode" ] && $dry check_cross_compiler; return 0
 }
 
 configure_project()
@@ -163,16 +162,13 @@ configure_project()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
 
-	if [ "$_f" = "-d" ]; then
-		:
-	elif [ -z "$mode" ]; then
+	if [ -z "$mode" ]; then
 		for bd in $build_depend; do
-			bd_project="${bd%%/*}"; bd_tree="${bd##*/}"
-			[ -z "$bd_project" ] && \
-			    $err "$project/$tree: bad bd: '$bd'"
-			[ "${bd##*/}" = "$bd" ] && bd_tree=""
-			[ -z "$bd_project" ] || ./update trees -b $bd_project \
-			    $bd_tree || $err "$project/$tree: !bd $bd"
+			bd_p="${bd%%/*}"; bd_t="${bd##*/}"
+			[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
+			[ "${bd##*/}" = "$bd" ] && bd_t=""
+			[ -z "$bd_p" ] || $dry ./update trees -b $bd_p $bd_t \
+			    || $err "!mk $project/$tree $bd_p/$bd_t"
 		done
 	fi
 
@@ -202,19 +198,16 @@ check_cross_compiler()
 
 check_defconfig()
 {
-	[ "$_f" = "-d" ] && return 0
-	[ -f "$defconfig" ] || $err "$project/$target: missing defconfig"
+	[ -f "$defconfig" ] || $dry $err "$project/$target: missing defconfig"
 
 	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
-	elfcheck || return 1 # skip build if a previous one exists
+	$dry elfcheck || return 1 # skip build if a previous one exists
 
-	x_ mkdir -p "$dest_dir"
+	$dry x_ mkdir -p "$dest_dir"
 }
 
 elfcheck()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run. assume a build exists.
-
 	# TODO: very hacky check. do it properly (based on build.list)
 	for elftest in "$dest_dir"/*; do
 		[ -e "$elftest" ] && e "$elftest" f && return 1
@@ -223,48 +216,45 @@ elfcheck()
 
 handle_makefile()
 {
-	check_makefile "$cdir" && x_ make clean -C "$cdir"
+	$dry check_makefile "$cdir" && x_ make clean -C "$cdir"
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$cdir/.config"
-	[ "$_f" = "-d" ] || [ -n "$mode" ] || [ -n "$btype" ] || make -C \
+	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
 	    "$cdir" silentoldconfig || make -C "$cdir" oldconfig || :
 
 	run_make_command || $err "handle_makefile $cdir: no makefile!"
-	[ "$_f" = "-d" ] && return 0
 
 	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
-	[ "${mode%config}" = "$mode" ] || x_ cp "$cdir/$_copy" "$defconfig"
+	[ "${mode%config}" = "$mode" ] || $dry x_ cp "$cdir/$_copy" "$defconfig"
 
 	[ -e "$cdir/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && x_ git -C "$cdir" clean -fdx; return 0
+	    [ "$mode" = "distclean" ] && $dry x_ git -C "$cdir" clean -fdx; :
 }
 
 run_make_command()
 {
 	[ -z "$premake" ] || [ -n "$mode" ] || $premake || $err "!$premake"
 
-	check_cmake "$cdir" && [ -z "$mode" ] && check_autoconf "$cdir"
-	check_makefile "$cdir" || return 1
+	$dry check_cmake "$cdir" && [ -z "$mode" ] && $dry check_autoconf \
+	    "$cdir"; $dry check_makefile "$cdir" || return 1
 
-	[ "$_f" = "-d" ] || make -C "$cdir" $mode -j$XBMK_THREADS $makeargs \
+	$dry make -C "$cdir" $mode -j$XBMK_THREADS $makeargs \
 	    || $err "$cdir mk$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
 
-	[ "$_f" = "-d" ] && return 0
-	[ "$mode" = "clean" ] && make -C "$cdir" distclean || :; return 0
+	[ "$mode" = "clean" ] && $dry make -C "$cdir" distclean || :; return 0
 }
 
 check_cmake()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
-	[ -z "$cmakedir" ] || check_makefile "$1" || cmake -B "$1" \
-	    "$1/$cmakedir" || check_makefile "$1" || $err "$1: !cmk $cmakedir"
-	[ -z "$cmakedir" ] || check_makefile "$1" || \
-		$err "check_cmake $1: can't generate Makefile"; return 0
+	[ -z "$cmakedir" ] || $dry check_makefile "$1" || cmake -B "$1" \
+	    "$1/$cmakedir" || $dry check_makefile "$1" || $err \
+	    "$1: !cmk $cmakedir"
+	[ -z "$cmakedir" ] || $dry check_makefile "$1" || \
+	    $err "check_cmake $1: can't generate Makefile"; return 0
 }
 
 check_autoconf()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
 	(
 	cd "$1" || $err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
@@ -275,14 +265,12 @@ check_autoconf()
 
 check_makefile()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
 	[ -f "$1/Makefile" ] || [ -f "$1/makefile" ] || \
 	    [ -f "$1/GNUmakefile" ] || return 1; return 0
 }
 
 copy_elf()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir" && while read -r f; do
 		[ -f "$cdir/$f" ] && x_ cp "$cdir/$f" "$dest_dir"
 	done < "$listfile"; x_ make clean -C "$cdir"

@@ -26,13 +26,12 @@ mkserprog()
 
 mkpayload_grub()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
 	eval `setvars "" grub_modules grub_install_modules`
-	eval `setcfg "$grubdata/module/$tree"`
+	$dry eval `setcfg "$grubdata/module/$tree"`
 
-	x_ rm -f "$cdir/grub.elf"
+	$dry x_ rm -f "$cdir/grub.elf"
 
-	"${cdir}/grub-mkstandalone" --grub-mkimage="${cdir}/grub-mkimage" \
+	$dry "${cdir}/grub-mkstandalone" --grub-mkimage="${cdir}/grub-mkimage" \
 	    -O i386-coreboot -o "${cdir}/grub.elf" -d "${cdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
@@ -44,12 +43,9 @@ mkpayload_grub()
 
 mkvendorfiles()
 {
-	if [ "$_f" = "-d" ]; then
-		check_coreboot_utils "$tree"
-	elif [ "$_f" = "-b" ]; then
-		printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" || \
-		    $err "!mk $cdir .coreboot-version"
-	fi
+	check_coreboot_utils "$tree"
+	printf "%s\n" "${version%%-*}" > "$cdir/.coreboot-version" || \
+	    $err "!mk $cdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
 	    x_ ./vendor download $target; return 0
 }
@@ -73,7 +69,6 @@ check_coreboot_utils()
 
 mkcorebootbin()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
 	[ "$target" = "$tree" ] && return 0
 
 	tmprom="$cdir/build/coreboot.rom"
@@ -86,7 +81,7 @@ mkcorebootbin()
 	[ "$payload_uboot" = "y" ] || payload_seabios="y"
 	[ "$payload_grub" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "y" ] && \
-	    $err "$target: U-Boot and SeaBIOS/GRUB are both enabled."
+	    $dry $err "$target: U-Boot and SeaBIOS/GRUB are both enabled."
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
@@ -96,15 +91,15 @@ mkcorebootbin()
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
 
-	[ "$payload_seabios" = "y" ] && pname="seabios" && add_seabios
-	[ "$payload_uboot" = "y" ] && pname="uboot" && add_uboot
+	[ "$payload_seabios" = "y" ] && pname="seabios" && $dry add_seabios
+	[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
 
 	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
-	x_ mkdir -p "${newrom%/*}"; x_ mv "$tmprom" "$newrom"
+	$dry x_ mkdir -p "${newrom%/*}"; $dry x_ mv "$tmprom" "$newrom"
 
 	[ "$XBMK_RELEASE" = "y" ] || return 0
-	mksha512sum "$newrom" "vendorhashes"
-	./vendor inject -r "$newrom" -b "$target" -n nuke || $err "!n $newrom"
+	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./vendor inject \
+	    -r "$newrom" -b "$target" -n nuke || $err "!nuke $newrom"
 }
 
 add_seabios()
@@ -147,7 +142,6 @@ add_uboot()
 
 mkcoreboottar()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
 	[ "$target" = "$tree" ] && return 0; [ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$release" != "n" ] && mkrom_tarball "bin/$target"; return 0
+	    [ "$release" != "n" ] && $dry mkrom_tarball "bin/$target"; return 0
 }
