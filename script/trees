@@ -122,7 +122,7 @@ configure_project()
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
 	_tcfg="$1/target.cfg"
-	while [ -f "$_tcfg" ] || [ "$cmd" = "build_targets" ]; do
+	while [ -f "$_tcfg" ] || [ "$cmd" != "build_project" ]; do
 		eval `setvars "" rev tree`
 
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
