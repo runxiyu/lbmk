@@ -139,19 +139,22 @@ configure_project()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
 
-	if [ -z "$mode" ]; then
-		for bd in $build_depend; do
-			bd_p="${bd%%/*}"; bd_t="${bd##*/}"
-			[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
-			[ "${bd##*/}" = "$bd" ] && bd_t=""
-			[ -z "$bd_p" ] || $dry ./update trees -b $bd_p $bd_t \
-			    || $err "!mk $project/$tree $bd_p/$bd_t"
-		done
-	fi
+	[ -z "$mode" ] && build_dependencies
 
 	[ "$mode" = "fetch" ] || x_ ./update trees -f "$project" $target
 	[ "$mode" = "fetch" ] || return 0
 	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
+}
+
+build_dependencies()
+{
+	for bd in $build_depend; do
+		bd_p="${bd%%/*}"; bd_t="${bd##*/}"
+		[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
+		[ "${bd##*/}" = "$bd" ] && bd_t=""
+		[ -z "$bd_p" ] || $dry ./update trees -b $bd_p $bd_t \
+		    || $err "!mk $project/$tree $bd_p/$bd_t"; continue
+	done; return 0
 }
 
 check_cross_compiler()
