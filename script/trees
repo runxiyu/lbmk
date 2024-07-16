@@ -118,6 +118,7 @@ configure_project()
 {
 	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
 	    tree_depend makeargs btype mkhelper bootstrapargs premake release`
+
 	[ -f "$1/target.cfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
@@ -143,6 +144,7 @@ configure_project()
 
 	[ "$mode" = "fetch" ] || x_ ./update trees -f "$project" $target
 	[ "$mode" = "fetch" ] || return 0
+
 	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
 }
 
