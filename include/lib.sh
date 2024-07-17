@@ -180,18 +180,19 @@ singletree()
 
 download()
 {
-	dl_fail="y" # 1 url, 2 url backup, 3 destination, 4 checksum
-	vendor_checksum "$4" "$3" 2>/dev/null || dl_fail="n"
+	cached="cache/file/$4"
+	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
+	vendor_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
 	[ "$dl_fail" = "n" ] && e "$3" f && return 0
-	x_ mkdir -p "${3%/*}" && for url in "$1" "$2"; do
+	x_ mkdir -p "${3%/*}" cache/file && for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
-		x_ rm -f "$3"
-		curl --location --retry 3 -A "$_ua" "$url" -o "$3" || \
-		    wget --tries 3 -U "$_ua" "$url" -O "$3" || continue
-		vendor_checksum "$4" "$3" || dl_fail="n"
-	done;
-	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"; return 0
+		x_ rm -f "$cached"
+		curl --location --retry 3 -A "$_ua" "$url" -o "$cached" || \
+		    wget --tries 3 -U "$_ua" "$url" -O "$cached" || continue
+		vendor_checksum "$4" "$cached" || dl_fail="n"
+	done; [ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
+	[ "$cached" = "$3" ] || cp "$cached" "$3" || $err "!d cp $cached $3"; :
 }
 
 vendor_checksum()

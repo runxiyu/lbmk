@@ -8,7 +8,7 @@ me7updateparser="$PWD/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$PWD/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$PWD/elf/uefitool/uefiextract"
 vendir="vendorfiles"
-appdir="$vendir/app"
+appdir="cache/app"
 cbcfgsdir="config/coreboot"
 
 eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
@@ -78,7 +78,7 @@ getfiles()
 fetch()
 {
 	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"; _dest="${5##*../}"
-	[ "$5" = "/dev/null" ] && return 0; _dl="$vendir/cache/$dlsum"
+	[ "$5" = "/dev/null" ] && return 0; _dl="cache/file/$dlsum"
 
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
