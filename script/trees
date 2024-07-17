@@ -38,8 +38,7 @@ main()
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && for p in $(ls -1 config/git); do
 		./update trees $_f "$p" || $err "!./update trees $_f $p"
-		[ "$XBMK_RELEASE" != "y" ] || singletree "$p" || \
-		    x_ rm -Rf "repo/$p"; continue
+		[ "$XBMK_RELEASE" != "y" ] || x_ rm -Rf "repo/$p"; continue
 	done && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
