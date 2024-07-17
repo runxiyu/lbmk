@@ -1,6 +1,7 @@
 *~
 *.o
 /lbmk.err.log
+/repo/
 /docs/
 /pciroms/
 /util/dell-flash-unlock/dell_flash_unlock

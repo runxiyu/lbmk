@@ -103,7 +103,15 @@ fetch_submodule()
 
 tmpclone()
 {
-	git clone $1 "$3" || git clone $2 "$3" || $err "!clone $1 $2 $3 $4 $5"
+	repodir="repo/${1##*/}"
+	x_ mkdir -p "repo"
+	if [ -d "$repodir" ]; then
+		git -C "$repodir" pull || :
+	else
+		git clone $1 "$repodir" || git clone $2 "$repodir" || \
+		    $err "!clone $1 $2 $repodir $4 $5"
+	fi
+	git clone "$repodir" "$3" || $err "!clone $repodir $3"
 	git -C "$3" reset --hard "$4" || $err "!reset $1 $2 $3 $4 $5"
 	git_am_patches "$3" "$5"
 }
