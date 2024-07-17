@@ -103,7 +103,8 @@ tmpclone()
 	repodir="repo/${1##*/}"
 	x_ mkdir -p "repo"
 	if [ -d "$repodir" ]; then
-		git -C "$repodir" pull || :
+		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
+		    || sleep 3 || git -C "$repodir" pull :
 	else
 		git clone $1 "$repodir" || git clone $2 "$repodir" || \
 		    $err "!clone $1 $2 $repodir $4 $5"
