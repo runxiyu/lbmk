@@ -12,7 +12,7 @@ set -u -e
 eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    defconfig postmake mkhelpercfg dry dest_dir`
+    defconfig postmake mkhelpercfg dry dest_dir mdir badhash`
 
 main()
 {
@@ -116,7 +116,8 @@ handle_defconfig()
 configure_project()
 {
 	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
-	    tree_depend makeargs btype mkhelper bootstrapargs premake release`
+	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
+	    badhash`
 
 	[ -f "$1/target.cfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
@@ -141,6 +142,11 @@ configure_project()
 
 	[ -z "$mode" ] && build_dependencies
 
+	mdir="$PWD/config/submodule/$project"
+	[ -n "$tree" ] && mdir="$mdir/$tree"
+
+	[ -f "CHANGELOG" ] || check_project_hashes
+
 	[ "$mode" = "fetch" ] || x_ ./update trees -f "$project" $target
 	[ "$mode" = "fetch" ] || return 0
 
@@ -156,6 +162,45 @@ build_dependencies()
 		[ -z "$bd_p" ] || $dry ./update trees -b $bd_p $bd_t \
 		    || $err "!mk $project/$tree $bd_p/$bd_t"; continue
 	done; return 0
+}
+
+check_project_hashes()
+{
+	x_ mkdir -p hash
+
+	old_pjhash=""
+	[ ! -f "hash/$project$tree" ] || \
+	    read -r old_pjhash < "hash/$project$tree"
+
+	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
+	    "$TMPDIR/project.tmp"; x_ touch "$TMPDIR/project.tmp"
+	x_ touch "$TMPDIR/project.hash"
+
+	for delcheck in "$datadir" "$configdir/$tree" "$mdir"; do
+		[ -d "$delcheck" ] || continue
+		find "$delcheck" -type f -not -path "*/.git*/*" \
+		    >> "$TMPDIR/project.tmp" || \
+		    $err "!find $delcheck > project.tmp"
+	done
+	sort "$TMPDIR/project.tmp" > "$TMPDIR/project.list" || \
+	    $err "!sort project tmp/list"
+
+	while read -r delcheck; do
+		[ -f "$delcheck" ] || continue
+		sha512sum "$delcheck" | awk '{print $1}' >> \
+		    "$TMPDIR/project.hash" || $err "!findhash $delcheck"
+	done < "$TMPDIR/project.list"
+
+	pjhash="$(sha512sum "$TMPDIR/project.hash" | awk '{print $1}')" || :
+	badhash="y" && [ "$pjhash" = "$old_pjhash" ] && badhash="n"
+	[ -f "hash/$project$tree" ] || badhash="y"
+
+	printf "%s\n" "$pjhash" > "hash/$project$tree" || \
+	    $err "!mk hash/$project$tree"
+
+	[ "$badhash" = "n" ] || rm -Rf "src/$project/$tree" \
+	    "elf/$project/$tree" "elf/$project/$target" || \
+	    $err "!rmproject $project $tree"; :
 }
 
 check_cross_compiler()

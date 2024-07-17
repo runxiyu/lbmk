@@ -53,6 +53,8 @@ mkvendorfiles()
 check_coreboot_utils()
 {
 	for util in cbfstool ifdtool; do
+		[ "$badhash" = "n" ] || rm -f "elf/$util/$1/$util" || \
+		    $err "!rm badelf elf/$util/$1/$util"
 		e "elf/$util/$1/$util" f && continue
 
 		utilelfdir="elf/$util/$1"

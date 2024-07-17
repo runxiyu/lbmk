@@ -2,7 +2,7 @@
 # Copyright (c) 2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval `setvars "" loc url bkup_url subfile mdir subhash subrepo subrepo_bkup \
+eval `setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
     depend subfile_bkup`
 
 fetch_targets()
@@ -69,9 +69,6 @@ git_prep()
 
 prep_submodules()
 {
-	mdir="$PWD/config/submodule/$project"
-	[ -n "$tree" ] && mdir="$mdir/$tree"
-
 	[ -f "$mdir/module.list" ] && while read -r msrcdir; do
 		fetch_submodule "$msrcdir"
 	done < "$mdir/module.list"; return 0
