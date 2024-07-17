@@ -92,10 +92,13 @@ mkcorebootbin()
 
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
-
-	[ "$payload_seabios" = "y" ] && pname="seabios" && $dry add_seabios
-	[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
-
+	if grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
+		[ "$payload_seabios" = "y" ] && pname="seabios" && \
+		    $dry add_seabios
+		[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
+	else
+		pname="custom" # coreboot's build system added payloads
+	fi
 	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
 	$dry x_ mkdir -p "${newrom%/*}"; $dry x_ mv "$tmprom" "$newrom"
 

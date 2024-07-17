@@ -248,7 +248,8 @@ detect_board()
 	path="$1"
 	filename="$(basename "$path")"
 	case "$filename" in
-	grub_*|seagrub_*) board="$(echo "$filename" | cut -d '_' -f2-3)" ;;
+	grub_*|seagrub_*|custom_*)
+		board="$(echo "$filename" | cut -d '_' -f2-3)" ;;
 	seabios_withgrub_*)
 		board="$(echo "$filename" | cut -d '_' -f3-4)" ;;
 	*.tar.xz)
