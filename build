@@ -100,7 +100,7 @@ build_release()
 	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
 	./update trees -f
 	rmgit .
-	x_ rm -Rf hash repo
+	x_ rm -Rf cache
 	x_ mv src/docs docs
 	) || $err "can't create release files"
 
