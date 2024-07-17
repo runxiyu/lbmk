@@ -13,7 +13,7 @@ fetch_targets()
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
 	git_prep "$loc" "$loc" "$PWD/$configdir/$tree/patches" \
-	    "${loc%/*}/$tree" u; nuke "$project/$tree" "$project/$tree"
+	    "src/$project/$tree" u; nuke "$project/$tree" "$project/$tree"
 }
 
 fetch_project()
@@ -37,7 +37,7 @@ fetch_project()
 
 clone_project()
 {
-	loc="src/$project/$project" && singletree "$project" && loc="${loc%/*}"
+	loc="repo/$project" && singletree "$project" && loc="src/$project"
 
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 	e "$loc" d && return 0
@@ -61,7 +61,7 @@ git_prep()
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
 	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
 
-	[ "$XBMK_RELEASE" = "y" ] && [ "$_loc" != "src/$project/$project" ] \
+	[ "$XBMK_RELEASE" = "y" ] && [ "$_loc" != "repo/$project" ] \
 	    && rmgit "$tmpgit"
 
 	move_repo "$_loc"
