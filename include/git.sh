@@ -100,6 +100,7 @@ fetch_submodule()
 
 tmpclone()
 {
+	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
 	repodir="repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
 	x_ mkdir -p "repo"
 	if [ -d "$repodir" ] && [ $# -lt 6 ]; then
