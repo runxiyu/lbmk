@@ -38,7 +38,7 @@ main()
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && for p in $(ls -1 config/git); do
 		./update trees $_f "$p" || $err "!./update trees $_f $p"
-		[ "$XBMK_RELEASE" != "y" ] || x_ rm -Rf "repo/$p"; continue
+		[ "$XBMK_RELEASE" != "y" ] || x_ rm -Rf "cache/repo/$p"; :
 	done && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
@@ -166,11 +166,11 @@ build_dependencies()
 
 check_project_hashes()
 {
-	x_ mkdir -p hash
+	x_ mkdir -p cache/hash
 
 	old_pjhash=""
-	[ ! -f "hash/$project$tree" ] || \
-	    read -r old_pjhash < "hash/$project$tree"
+	[ ! -f "cache/hash/$project$tree" ] || \
+	    read -r old_pjhash < "cache/hash/$project$tree"
 
 	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
 	    "$TMPDIR/project.tmp"; x_ touch "$TMPDIR/project.tmp"
@@ -193,10 +193,10 @@ check_project_hashes()
 
 	pjhash="$(sha512sum "$TMPDIR/project.hash" | awk '{print $1}')" || :
 	badhash="y" && [ "$pjhash" = "$old_pjhash" ] && badhash="n"
-	[ -f "hash/$project$tree" ] || badhash="y"
+	[ -f "cache/hash/$project$tree" ] || badhash="y"
 
-	printf "%s\n" "$pjhash" > "hash/$project$tree" || \
-	    $err "!mk hash/$project$tree"
+	printf "%s\n" "$pjhash" > "cache/hash/$project$tree" || \
+	    $err "!mk cache/hash/$project$tree"
 
 	[ "$badhash" = "n" ] || rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree" "elf/$project/$target" || \

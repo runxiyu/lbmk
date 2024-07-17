@@ -37,7 +37,8 @@ fetch_project()
 
 clone_project()
 {
-	loc="repo/$project" && singletree "$project" && loc="src/$project"
+	loc="cache/repo/$project" && singletree "$project" && \
+	    loc="src/$project"
 
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 	e "$loc" d && return 0
@@ -61,7 +62,7 @@ git_prep()
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
 	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
 
-	[ "$XBMK_RELEASE" = "y" ] && [ "$_loc" != "repo/$project" ] \
+	[ "$XBMK_RELEASE" = "y" ] && [ "$_loc" != "cache/repo/$project" ] \
 	    && rmgit "$tmpgit"
 
 	move_repo "$_loc"
@@ -101,8 +102,8 @@ fetch_submodule()
 tmpclone()
 {
 	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
-	repodir="repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
-	x_ mkdir -p "repo"
+	repodir="cache/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
+	x_ mkdir -p "cache/repo"
 	if [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
 		    || sleep 3 || git -C "$repodir" pull :
