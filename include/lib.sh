@@ -88,6 +88,14 @@ if [ -z "${TMPDIR+x}" ]; then
 	xbmk_parent="y"
 fi
 
+# XBMK_CACHE is a directory, for caching downloads and git repositories
+[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$PWD/cache"
+[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$PWD/cache"
+[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$PWD/cache" ] && \
+    $err "cachedir is default, $PWD/cache, but it exists and is a symlink"
+[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$PWD/cache"
+[ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' exists but it's a file"
+
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
 [ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
@@ -180,14 +188,16 @@ singletree()
 
 download()
 {
-	cached="cache/file/$4"
+	cached="$XBMK_CACHE/file/$4"
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
 	vendor_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
 	[ "$dl_fail" = "n" ] && e "$3" f && return 0
-	x_ mkdir -p "${3%/*}" cache/file && for url in "$1" "$2"; do
+	mkdir -p "${3%/*}" "$XBMK_CACHE/file" || \
+	    $err "!mkdir '$3' '$XBMK_CACHE/file'"
+	for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
-		x_ rm -f "$cached"
+		rm -f "$cached" || $err "!rm -f '$cached'"
 		curl --location --retry 3 -A "$_ua" "$url" -o "$cached" || \
 		    wget --tries 3 -U "$_ua" "$url" -O "$cached" || continue
 		vendor_checksum "$4" "$cached" || dl_fail="n"

@@ -8,7 +8,7 @@ me7updateparser="$PWD/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$PWD/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$PWD/elf/uefitool/uefiextract"
 vendir="vendorfiles"
-appdir="cache/app"
+appdir="$XBMK_CACHE/app"
 cbcfgsdir="config/coreboot"
 
 eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
@@ -78,11 +78,12 @@ getfiles()
 fetch()
 {
 	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"; _dest="${5##*../}"
-	[ "$5" = "/dev/null" ] && return 0; _dl="cache/file/$dlsum"
+	[ "$5" = "/dev/null" ] && return 0; _dl="$XBMK_CACHE/file/$dlsum"
 
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
-	x_ rm -Rf "${_dl}_extracted"
+	rm -Rf "${_dl}_extracted" || \
+	    $err "!rm -Rf ${_ul}_extracted"
 	e "$_dest" f && return 0
 
 	mkdir -p "${_dest%/*}" || $err "mkdirs: !mkdir -p ${_dest%/*}"

@@ -165,11 +165,11 @@ build_dependencies()
 
 check_project_hashes()
 {
-	x_ mkdir -p cache/hash
+	mkdir -p "$XBMK_CACHE/hash" || $err "!mkdir '$XBMK_CACHE/hash'"
 
 	old_pjhash=""
-	[ ! -f "cache/hash/$project$tree" ] || \
-	    read -r old_pjhash < "cache/hash/$project$tree"
+	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
+	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
 	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
 	    "$TMPDIR/project.tmp"; x_ touch "$TMPDIR/project.tmp"
@@ -192,10 +192,10 @@ check_project_hashes()
 
 	pjhash="$(sha512sum "$TMPDIR/project.hash" | awk '{print $1}')" || :
 	badhash="y" && [ "$pjhash" = "$old_pjhash" ] && badhash="n"
-	[ -f "cache/hash/$project$tree" ] || badhash="y"
+	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 
-	printf "%s\n" "$pjhash" > "cache/hash/$project$tree" || \
-	    $err "!mk cache/hash/$project$tree"
+	printf "%s\n" "$pjhash" > "$XBMK_CACHE/hash/$project$tree" || \
+	    $err "!mk $XBMK_CACHE/hash/$project$tree"
 
 	[ "$badhash" = "n" ] || rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree" "elf/$project/$target" || \
