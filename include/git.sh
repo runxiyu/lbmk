@@ -3,7 +3,7 @@
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 eval `setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
-    depend subfile_bkup`
+    depend subfile_bkup repofail`
 
 fetch_targets()
 {
@@ -101,6 +101,8 @@ fetch_submodule()
 
 tmpclone()
 {
+	repofail="n"
+
 	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
 	repodir="cache/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
 	x_ mkdir -p "cache/repo"
@@ -115,7 +117,10 @@ tmpclone()
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || $err "!clone $repodir $3"
 	git -C "$3" reset --hard "$4" || $err "!reset $1 $2 $3 $4 $5"
 	git_am_patches "$3" "$5"
-	) || [ $# -gt 5 ] || tmpclone $@ retry; :
+	) || repofail="y"
+
+	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone $@ retry
+	[ "$repofail" = "y" ] && $err "!clone $1 $2 $3 $4 $5"; :
 }
 
 git_am_patches()
