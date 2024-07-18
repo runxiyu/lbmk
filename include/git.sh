@@ -101,6 +101,8 @@ fetch_submodule()
 
 tmpclone()
 {
+	[ "$repofail" = "y" ] && \
+	    printf "Cached clone failed; trying online.\n" 1>&2
 	repofail="n"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
