@@ -108,7 +108,7 @@ tmpclone()
 	x_ mkdir -p "cache/repo"
 	if [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
-		    || sleep 3 || git -C "$repodir" pull :
+		    || sleep 3 || git -C "$repodir" pull || :
 	else
 		git clone $1 "$repodir" || git clone $2 "$repodir" || \
 		    $err "!clone $1 $2 $repodir $4 $5"
