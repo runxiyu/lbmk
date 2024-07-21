@@ -7,5 +7,5 @@ help2man innoextract libftdi libgpiod libjaylink libpciaccess libusb nasm \
 ncurses openssl p7zip \
 pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
 sharutils subversion swig texinfo ttf-dejavu unarchiver unifont-utils unzip \
-wget xz zlib \
+wget xz zlib ccache \
 "
