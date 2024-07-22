@@ -128,7 +128,9 @@ add_seabios()
 	[ "$payload_memtest" = "y" ] && cbfs "$tmprom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
 
-	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && add_grub; :
+	[ "$payload_grub" = "y" ] && add_grub
+
+	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
 add_grub()
@@ -137,6 +139,10 @@ add_grub()
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
 	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
+}
+
+mkseagrub()
+{
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	for keymap in config/data/grub/keymap/*.gkb; do
 		[ -f "$keymap" ] || continue
