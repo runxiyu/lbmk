@@ -106,14 +106,8 @@ mkcorebootbin()
 		    $dry add_seabios
 		[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
 	else
-		pname="custom" # coreboot's build system added payloads
-	fi
-	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
-	$dry x_ mkdir -p "${newrom%/*}"; $dry x_ mv "$tmprom" "$newrom"
-
-	[ "$XBMK_RELEASE" = "y" ] || return 0
-	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./vendor inject \
-	    -r "$newrom" -b "$target" -n nuke || $err "!nuke $newrom"
+		pname="custom" && cprom; :
+	fi; :
 }
 
 add_seabios()
@@ -132,7 +126,7 @@ add_seabios()
 	[ "$payload_memtest" = "y" ] && cbfs "$tmprom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
 
-	[ "$payload_grub" = "y" ] && pname="seagrub" && add_grub; return 0
+	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && add_grub; :
 }
 
 add_grub()
@@ -142,6 +136,11 @@ add_grub()
 	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
 	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
+	for keymap in config/data/grub/keymap/*.gkb; do
+		[ -f "$keymap" ] || continue
+		keymap="${keymap##*/}"
+		cprom "${keymap%.gkb}"
+	done
 }
 
 add_uboot()
@@ -151,7 +150,21 @@ add_uboot()
 	    ubootelf="$ubdir/u-boot"
 	[ -f "$ubootelf" ] || $err "cb/$target: Can't find u-boot"
 
-	cbfs "$tmprom" "$ubootelf" "fallback/payload"
+	cbfs "$tmprom" "$ubootelf" "fallback/payload"; cprom
+}
+
+cprom()
+{
+	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
+	[ $# -gt 0 ] && newrom="${newrom%.rom}_$1.rom"
+
+	x_ mkdir -p "bin/$target"
+	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && \
+	    cbfs "$newrom" "config/data/grub/keymap/$1.gkb" keymap.gkb raw
+
+	[ "$XBMK_RELEASE" = "y" ] || return 0
+	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./vendor inject \
+	    -r "$newrom" -b "$target" -n nuke || $err "!nuke $newrom"
 }
 
 mkcoreboottar()
