@@ -12,7 +12,8 @@ set -u -e
 eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    defconfig postmake mkhelpercfg dry dest_dir mdir badhash`
+    defconfig postmake mkhelpercfg dry dest_dir mdir`
+badhash="n"
 
 main()
 {
@@ -115,8 +116,8 @@ handle_defconfig()
 configure_project()
 {
 	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
-	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
-	    badhash`
+	    tree_depend makeargs btype mkhelper bootstrapargs premake release`
+	badhash="n"
 
 	[ -f "$1/target.cfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
