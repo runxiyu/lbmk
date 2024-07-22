@@ -82,7 +82,9 @@ mkcorebootbin()
 {
 	[ "$target" = "$tree" ] && return 0
 
-	tmprom="$srcdir/build/coreboot.rom"
+	tmprom="$TMPDIR/coreboot.rom"
+	mv "$srcdir/build/coreboot.rom" "$tmprom" || $err "!mktmprom"
+
 	initmode="${defconfig##*/}"; displaymode="${initmode##*_}"
 	initmode="${initmode%%_*}"
 	[ -n "$displaymode" ] && displaymode="_$displaymode"
