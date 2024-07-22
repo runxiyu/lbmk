@@ -181,6 +181,11 @@ cprom()
 
 mkcoreboottar()
 {
+	$dry realmkcoreboottar
+}
+
+realmkcoreboottar()
+{
 	[ "$target" = "$tree" ] && return 0; [ "$XBMK_RELEASE" = "y" ] && \
 	    [ "$release" != "n" ] && $dry mkrom_tarball "bin/$target"; return 0
 }
