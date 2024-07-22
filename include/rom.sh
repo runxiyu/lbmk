@@ -79,6 +79,11 @@ check_coreboot_utils()
 
 mkcorebootbin()
 {
+	$dry realmkcorebootbin; :
+}
+
+realmkcorebootbin()
+{
 	[ "$target" = "$tree" ] && return 0
 
 	tmprom="$TMPDIR/coreboot.rom"
