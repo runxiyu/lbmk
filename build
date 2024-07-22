@@ -22,14 +22,15 @@ err="fail"
 main()
 {
 	[ $# -lt 1 ] && $err "bad command"
-	spath="script/$1"
+	spath="script/$1"; shcmd="shift 1"
+	[ "${1#-*}" != "$1" ] && spath="script/trees" && shcmd=":"
 
 	for g in "which git" "git config --global user.name" \
 	    "git config --global user.email" "git_init"; do
 		eval "$g 1>/dev/null 2>/dev/null || git_err \"$g\""
 	done
 
-	case "${1}" in
+	case "${spath#script/}" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
 	release) shift 1; mkrelease $@ ;;
 	inject) shift 1; vendor_inject $@ ;;
@@ -41,8 +42,9 @@ main()
 		fi; shift 1
 		x_ ./update trees -b coreboot $@ ;;
 	*)
+		echo "'$@'"
 		[ -f "$spath" ] || $err "bad command"
-		shift 1; "$spath" $@ || $err "excmd: $spath $@" ;;
+		$shcmd; "$spath" $@ || $err "excmd: $spath $@" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
