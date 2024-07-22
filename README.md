@@ -94,7 +94,7 @@ easy to do so.
 Not a coreboot fork!
 --------------------
 
-Libreboot is not a fork of coreboot. Every so often, the project
+Libreboot is *not a fork of coreboot*. Every so often, the project
 re-bases on the latest version of coreboot, with the number of custom
 patches in use minimized. Tested, *stable* (static) releases are then provided
 in Libreboot, based on specific coreboot revisions.
