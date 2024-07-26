@@ -25,10 +25,8 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
 
 vendor_download()
 {
-	export PATH="$PATH:/sbin"
-
-	[ $# -gt 0 ] || $err "No argument given"
-	board="$1" && readcfg && readkconfig && bootstrap && getfiles; return 0
+	[ $# -gt 0 ] || $err "No argument given"; export PATH="$PATH:/sbin"
+	board="$1"; readcfg && readkconfig && bootstrap && getfiles; :
 }
 
 readkconfig()
@@ -49,14 +47,14 @@ readkconfig()
 
 bootstrap()
 {
-	x_ ./update trees -f coreboot ${cbdir##*/}
+	x_ ./mk -f coreboot ${cbdir##*/}
 	for d in uefitool biosutilities bios_extract; do
-		x_ ./update trees -b "$d"
+		x_ ./mk -b "$d"
 	done
 	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
-	    x_ ./update trees -d coreboot $MRC_refcode_cbtree; return 0
+	    x_ ./mk -d coreboot $MRC_refcode_cbtree; return 0
 }
 
 getfiles()
@@ -68,9 +66,8 @@ getfiles()
 	    "$CONFIG_SMSC_SCH5545_EC_FW_FILE"
 	[ -z "$CONFIG_KBC1126_FIRMWARE" ] || fetch kbc1126ec "$EC_url" \
 	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW1"
-	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch "e6400vga" \
-	    "$E6400_VGA_DL_url" "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" \
-	    "$CONFIG_VGA_BIOS_FILE"
+	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch e6400vga "$E6400_VGA_DL_url" \
+	  "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 	[ -z "$CONFIG_HAVE_MRC" ] || fetch "mrc" "$MRC_url" "$MRC_url_bkup" \
 	    "$MRC_hash" "$CONFIG_MRC_FILE"; return 0
 }
@@ -82,33 +79,27 @@ fetch()
 
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
-	rm -Rf "${_dl}_extracted" || \
-	    $err "!rm -Rf ${_ul}_extracted"
+	rm -Rf "${_dl}_extracted" || $err "!rm -Rf ${_ul}_extracted"
 	e "$_dest" f && return 0
 
 	mkdir -p "${_dest%/*}" || $err "mkdirs: !mkdir -p ${_dest%/*}"
-	remkdir "$appdir"
-	extract_archive "$_dl" "$appdir" || [ "$dl_type" = "e6400vga" ] || \
-	    $err "mkdirs $_dest $dl_type: !extract"
+	remkdir "$appdir"; extract_archive "$_dl" "$appdir" || \
+	    [ "$dl_type" = "e6400vga" ] || $err "mkd $_dest $dl_type: !extract"
 
-	eval "extract_$dl_type"
-	set -u -e
-
-	e "$_dest" f missing && $err "!extract_$dl_type"; return 0
+	eval "extract_$dl_type"; set -u -e
+	e "$_dest" f missing && $err "!extract_$dl_type"; :
 }
 
 extract_intel_me()
 {
 	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing"
 
-	_me="$PWD/$_dest" # must always be an absolute path
-	cdir="$PWD/$appdir" # must always be an absolute path
+	_me="$PWD/$_dest"; cdir="$PWD/$appdir"
 	[ $# -gt 0 ] && _me="${1}" && cdir="$2"
 
 	e "$_me" f && return 0
 
-	sdir="$(mktemp -d)"
-	[ -z "$sdir" ] && return 0
+	sdir="$(mktemp -d)"; [ -z "$sdir" ] && return 0
 	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
 
 	set +u +e
@@ -131,8 +122,7 @@ extract_intel_me()
 		else
 			continue
 		fi
-		cdir="$1"
-		[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
+		cdir="$1"; [ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 		cd "$cdir" || :
 	done
 	)
@@ -149,8 +139,7 @@ extract_kbc1126ec()
 {
 	e "$kbc1126_ec_dump" f missing && $err "$cbdir: kbc1126 util missing"
 	(
-	x_ cd "$appdir/"
-	mv Rompaq/68*.BIN ec.bin || :
+	x_ cd "$appdir/"; mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f "ec.bin" ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
 		    unar -D 68*.CAB Rom.bin || $err "can't extract Rom.bin"
@@ -195,14 +184,10 @@ extract_sch5545ec()
 
 vendor_inject()
 {
-	set +u +e
-
-	[ $# -lt 1 ] && $err "No options specified."
+	set +u +e; [ $# -lt 1 ] && $err "No options specified."
 	[ "$1" = "listboards" ] && eval "ls -1 config/coreboot || :; exit 0"
 
-	archive="$1"
-
-	while getopts n:r:b:m: option; do
+	archive="$1"; while getopts n:r:b:m: option; do
 		case "$option" in
 		n) nukemode="$OPTARG" ;;
 		r) rom="$OPTARG" ;;
@@ -215,11 +200,7 @@ vendor_inject()
 	check_board || return 0
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board
 	[ "$vrelease" != "y" ] && patch_rom "$rom"
-	[ "$vrelease" = "y" ] && patch_release_roms
-
-	[ "$nukemode" = "nuke" ] && return 0
-	printf "Friendly reminder (this is *not* an error message):\n"
-	printf "Make sure the files were inserted. ALSO:\n%s\n" "$kbnotice"
+	[ "$vrelease" = "y" ] && patch_release_roms; :
 }
 
 check_board()
@@ -246,15 +227,13 @@ check_release()
 # It will only succeed if the filename is not changed from the build/download
 detect_board()
 {
-	path="$1"
-	filename="$(basename "$path")"
+	path="$1"; filename="$(basename "$path")"
 	case "$filename" in
 	grub_*|seagrub_*|custom_*)
 		board="$(echo "$filename" | cut -d '_' -f2-3)" ;;
 	seabios_withgrub_*)
 		board="$(echo "$filename" | cut -d '_' -f3-4)" ;;
-	*.tar.xz)
-		_stripped_prefix="${filename#*_}"
+	*.tar.xz) _stripped_prefix="${filename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*) $err "detect_board $filename: could not detect board type"
 	esac; printf "%s\n" "$board"
@@ -265,10 +244,8 @@ readcfg()
 	if [ "$board" = "serprog_rp2040" ] || \
 	    [ "$board" = "serprog_stm32" ]; then
 		return 1
-	fi
-	boarddir="$cbcfgsdir/$board"
-	eval `setcfg "$boarddir/target.cfg"`
-	chkvars vcfg tree
+	fi; boarddir="$cbcfgsdir/$board"
+	eval `setcfg "$boarddir/target.cfg"`; chkvars vcfg tree
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
@@ -277,13 +254,12 @@ readcfg()
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 
-	x_ ./update trees -d coreboot $tree
+	x_ ./mk -d coreboot $tree
 }
 
 patch_release_roms()
 {
-	remkdir "tmp/romdir"
-	tar -xf "$archive" -C "tmp/romdir" || \
+	remkdir "tmp/romdir"; tar -xf "$archive" -C "tmp/romdir" || \
 	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"tmp/romdir\""
 
 	for x in "tmp/romdir/bin/"*/*.rom ; do
@@ -311,9 +287,7 @@ patch_release_roms()
 
 patch_rom()
 {
-	rom="$1"
-
-	. "$(check_defconfig "$boarddir")" 2>/dev/null || exit 0
+	rom="$1"; . "$(check_defconfig "$boarddir")" 2>/dev/null || exit 0
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
 	    "mrc" "0xfffa0000"
@@ -324,8 +298,7 @@ patch_rom()
 	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && inject \
 	    ecfw2.bin "$CONFIG_KBC1126_FW2" raw "$CONFIG_KBC1126_FW2_OFFSET"
 	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
-		inject "pci$CONFIG_VGA_BIOS_ID.rom" \
-		    "$CONFIG_VGA_BIOS_FILE" "optionrom"
+	  inject "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" optionrom
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		inject sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
@@ -359,7 +332,7 @@ inject()
 	[ "$_t" != "stage" ] || "$cbfstool" "$rom" add-stage -f \
 	    "$_dest" -n "$cbfsname" -t stage -c lzma || $err "$rom: !add ref"
 	[ "$_t" = "stage" ] || "$cbfstool" "$rom" add -f "$_dest" \
-	    -n "$cbfsname" -t $_t $_offset || $err "$rom !add $_t ($_dest)"
+	    -n "$cbfsname" -t $_t $_offset || $err "$rom !add $_t ($_dest)"; :
 }
 
 modify_gbe()

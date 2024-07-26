@@ -27,7 +27,7 @@ main()
 
 	for g in "which git" "git config --global user.name" \
 	    "git config --global user.email" "git_init"; do
-		eval "$g 1>/dev/null 2>/dev/null || git_err \"$g\""
+		eval "$g 1>/dev/null 2>/dev/null || $err \"Unconfigured: $g\""
 	done
 
 	case "${spath#script/}" in
@@ -37,14 +37,13 @@ main()
 	download) shift 1; vendor_download $@ ;;
 	roms)
 		if [ $# -gt 1 ] && [ "$2" = "serprog" ]; then
-			x_ ./update trees -b stm32-vserprog
-			x_ ./update trees -b pico-serprog; return 0
+			x_ ./mk -b stm32-vserprog
+			x_ ./mk -b pico-serprog; return 0
 		fi; shift 1
-		x_ ./update trees -b coreboot $@ ;;
+		x_ ./mk -b coreboot $@ ;;
 	*)
-		echo "'$@'"
 		[ -f "$spath" ] || $err "bad command"
-		$shcmd; "$spath" $@ || $err "excmd: $spath $@" ;;
+		$shcmd; "$spath" $@ || $err "excmd: $spath $(echo "$@")" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
@@ -60,12 +59,6 @@ git_init()
 	git commit -m "$projectname $version" --date "$cdate" \
 	    --author="xbmk <xbmk@example.com>" || return 1
 	git tag -a "$version" -m "$projectname $version" || return 1
-}
-
-git_err()
-{
-	printf "You need to set git name/email, like so:\n%s\n\n" "$1" 1>&2
-	$err "Git name/email not configured"
 }
 
 mkrelease()
@@ -100,9 +93,7 @@ build_release()
 {
 	(
 	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
-	./update trees -f
-	rmgit .
-	x_ rm -Rf tmp
+	./mk -f; x_ rm -Rf tmp; rmgit .
 	x_ mv src/docs docs
 	) || $err "can't create release files"
 
@@ -117,12 +108,11 @@ build_release()
 	[ "$mode" = "src" ] && return 0
 
 	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
-
 	(
 	cd "$srcdir" || $err "$vdir: 2 !cd \"$srcdir\""
-	./update trees -b coreboot || $err "$vdir: roms-all"
-	./update trees -b pico-serprog || $err "$vdir: rp2040"
-	./update trees -b stm32-vserprog || $err "$vdir: stm32"
+	./mk -b coreboot || $err "$vdir: roms-all"
+	./mk -b pico-serprog || $err "$vdir: rp2040"
+	./mk -b stm32-vserprog || $err "$vdir: stm32"
 	x_ mv bin ../roms
 	) || $err "can't build rom images"
 

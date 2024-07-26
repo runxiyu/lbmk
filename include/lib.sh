@@ -7,8 +7,6 @@ export LC_COLLATE=C
 export LC_ALL=C
 
 _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-kbnotice="Insert a .gkb file from config/data/grub/keymap/ as keymap.gkb \
-if you want a custom keymap in GRUB; use cbfstool from elf/cbfstool."
 
 ifdtool="elf/ifdtool/default/ifdtool"
 cbfstool="elf/cbfstool/default/cbfstool"
@@ -58,8 +56,7 @@ e()
 	estr="[ -$es_t \"\$1\" ] || return 1"
 	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
 
-	eval "$estr"
-	printf "%s %s\n" "$1" "$es2" 1>&2
+	eval "$estr"; printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
 install_packages()
@@ -121,8 +118,7 @@ versiondate_="$versiondate"
 [ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 for p in projectname version versiondate projectsite; do
-	chkvars "$p"
-	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
+	chkvars "$p"; eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
 done
 relname="$projectname-$version"
 export LOCALVERSION="-$projectname-${version%%-*}"
@@ -147,8 +143,7 @@ mkrom_tarball()
 	printf "%s\n" "$versiondate" > "$1/versiondate" || $err "$1 !vdate"
 	printf "%s\n" "$projectname" > "$1/projectname" || $err "$1 !pname"
 
-	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
-	x_ rm -Rf "$1"
+	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"; x_ rm -Rf "$1"; :
 }
 
 mktarball()
@@ -182,7 +177,7 @@ rmgit()
 singletree()
 {
 	for targetfile in "config/${1}/"*/target.cfg; do
-		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1
+		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1; :
 	done; return 0
 }
 
@@ -208,8 +203,7 @@ download()
 vendor_checksum()
 {
 	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
-	printf "Bad checksum for file: %s\n" "$2" 1>&2
-	rm -f "$2" || :
+	printf "Bad checksum for file: %s\n" "$2" 1>&2; rm -f "$2" || :; :
 }
 
 cbfs()

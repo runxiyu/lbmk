@@ -12,8 +12,7 @@ set -u -e
 eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    defconfig postmake mkhelpercfg dry dest_dir mdir`
-badhash="n"
+    defconfig postmake mkhelpercfg dry dest_dir mdir`; badhash="n"
 
 main()
 {
@@ -38,7 +37,7 @@ main()
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
 	[ -z "$project" ] && for p in $(ls -1 config/git); do
-		./update trees $_f "$p" || $err "!./update trees $_f $p"; :
+		./mk $_f "$p" || $err "!./mk $_f $p"; :
 	done && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
@@ -53,9 +52,8 @@ main()
 	e "$mkhelpercfg" f missing && mkhelpercfg="$TMPDIR/mkhelper.cfg" && \
 	    x_ touch "$mkhelpercfg"
 
-	targets="$@"
-	cmd="build_targets $targets" && singletree "$project" && \
-	    cmd="build_project"
+	targets="$@"; cmd="build_targets $targets"
+	singletree "$project" && cmd="build_project"
 
 	remkdir "${tmpgit%/*}"
 }
@@ -95,8 +93,7 @@ handle_defconfig()
 	configure_project "$target_dir" || return 0
 	x_ mkdir -p "$elfdir/$target"
 
-	chkvars tree
-	srcdir="src/$project/$tree"
+	chkvars tree; srcdir="src/$project/$tree"
 
 	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
 		[ -d "$srcdir" ] || return 0
@@ -117,17 +114,12 @@ configure_project()
 {
 	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
 	    tree_depend makeargs btype mkhelper bootstrapargs premake release`
-	badhash="n"
-
-	[ -f "$1/target.cfg" ] || btype="auto"
+	_tcfg="$1/target.cfg"; badhash="n"; [ -f "$_tcfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
-	_tcfg="$1/target.cfg"
 	while [ -f "$_tcfg" ] || [ "$cmd" != "build_project" ]; do
-		eval `setvars "" rev tree`
-
+		eval `setvars "" rev tree`; eval `setcfg "$_tcfg"`
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
-		eval `setcfg "$_tcfg"`
 
 		[ "$_f" = "-d" ] && build_depend="" # dry run
 		[ "$cmd" = "build_project" ] && break
@@ -136,20 +128,16 @@ configure_project()
 		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
 		    && break; _tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
 	done
-
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
-
 	[ -z "$mode" ] && build_dependencies
 
 	mdir="$PWD/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
-
 	[ -f "CHANGELOG" ] || check_project_hashes
 
-	[ "$mode" = "fetch" ] || x_ ./update trees -f "$project" $target
+	[ "$mode" = "fetch" ] || x_ ./mk -f "$project" $target
 	[ "$mode" = "fetch" ] || return 0
-
 	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
 }
 
@@ -159,7 +147,7 @@ build_dependencies()
 		bd_p="${bd%%/*}"; bd_t="${bd##*/}"
 		[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
 		[ "${bd##*/}" = "$bd" ] && bd_t=""
-		[ -z "$bd_p" ] || $dry ./update trees -b $bd_p $bd_t \
+		[ -z "$bd_p" ] || $dry ./mk -b $bd_p $bd_t \
 		    || $err "!mk $project/$tree $bd_p/$bd_t"; continue
 	done; return 0
 }
@@ -167,28 +155,23 @@ build_dependencies()
 check_project_hashes()
 {
 	mkdir -p "$XBMK_CACHE/hash" || $err "!mkdir '$XBMK_CACHE/hash'"
-
-	old_pjhash=""
-	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
+	old_pjhash=""; [ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
 	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
 	    "$TMPDIR/project.tmp"; x_ touch "$TMPDIR/project.tmp"
 	x_ touch "$TMPDIR/project.hash"
 
-	for delcheck in "$datadir" "$configdir/$tree" "$mdir"; do
-		[ -d "$delcheck" ] || continue
-		find "$delcheck" -type f -not -path "*/.git*/*" \
-		    >> "$TMPDIR/project.tmp" || \
-		    $err "!find $delcheck > project.tmp"
-	done
-	sort "$TMPDIR/project.tmp" > "$TMPDIR/project.list" || \
+	for rmchk in "$datadir" "$configdir/$tree" "$mdir"; do
+		[ -d "$rmchk" ] || continue
+		find "$rmchk" -type f -not -path "*/.git*/*" >> \
+		    "$TMPDIR/project.tmp" || $err "!find $rmchk > project.tmp"
+	done; sort "$TMPDIR/project.tmp" > "$TMPDIR/project.list" || \
 	    $err "!sort project tmp/list"
 
-	while read -r delcheck; do
-		[ -f "$delcheck" ] || continue
-		sha512sum "$delcheck" | awk '{print $1}' >> \
-		    "$TMPDIR/project.hash" || $err "!findhash $delcheck"
+	while read -r rmchk; do
+		[ ! -f "$rmchk" ] || sha512sum "$rmchk" | awk \
+		    '{print $1}' >> "$TMPDIR/project.hash" || $err "!h $rmchk"
 	done < "$TMPDIR/project.list"
 
 	pjhash="$(sha512sum "$TMPDIR/project.hash" | awk '{print $1}')" || :
@@ -200,7 +183,7 @@ check_project_hashes()
 
 	[ "$badhash" = "n" ] || rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree" "elf/$project/$target" || \
-	    $err "!rmproject $project $tree"; :
+	    $err "!rm $project $tree"; :
 }
 
 check_cross_compiler()
@@ -211,7 +194,7 @@ check_cross_compiler()
 		[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 		[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
-		x_ ./update trees -f coreboot ${cbdir#src/coreboot/}
+		x_ ./mk -f coreboot ${cbdir#src/coreboot/}
 
 		export PATH="$PWD/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 		export CROSS_COMPILE="${xarch% *}-"
@@ -261,7 +244,6 @@ handle_makefile()
 run_make_command()
 {
 	[ -z "$premake" ] || [ -n "$mode" ] || $premake || $err "!$premake"
-
 	$dry check_cmake "$srcdir" && [ -z "$mode" ] && $dry check_autoconf \
 	    "$srcdir"; $dry check_makefile "$srcdir" || return 1
 

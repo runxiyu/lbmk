@@ -8,7 +8,7 @@ eval `setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
 fetch_targets()
 {
 	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
-		x_ ./update trees -f "$project" "$tree_depend"
+		x_ ./mk -f "$project" "$tree_depend"
 	e "src/$project/$tree" d && return 0
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
@@ -23,10 +23,10 @@ fetch_project()
 
 	chkvars url
 
-	[ -n "$xtree" ] && x_ ./update trees -f coreboot "$xtree"
+	[ -n "$xtree" ] && x_ ./mk -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
 		printf "'%s' needs '%s'; grabbing '%s'\n" "$project" "$d" "$d"
-		x_ ./update trees -f $d
+		x_ ./mk -f $d
 	done
 	clone_project
 
@@ -39,32 +39,24 @@ clone_project()
 {
 	loc="$XBMK_CACHE/repo/$project" && singletree "$project" && \
 	    loc="src/$project"
-
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
-	e "$loc" d && return 0
 
-	remkdir "${tmpgit%/*}"
-	git_prep "$url" "$bkup_url" "$PWD/config/$project/patches" "$loc"
+	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
+	    "$url" "$bkup_url" "$PWD/config/$project/patches" "$loc"; :
 }
 
 git_prep()
 {
-	_patchdir="$3" # $1 and $2 are gitrepo and gitrepo_backup
-	_loc="$4"
+	_patchdir="$3"; _loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
-	chkvars rev
-
-	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
+	chkvars rev; tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
-		prep_submodules "$_loc"
-	fi
+		prep_submodules "$_loc"; fi
 
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
 	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
-
 	[ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
-		rmgit "$tmpgit"
+	    [ "$_loc" != "$XBMK_CACHE/repo/$project" ] && rmgit "$tmpgit"
 
 	move_repo "$_loc"
 }
@@ -87,7 +79,6 @@ fetch_submodule()
 		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
 		eval "$_seval; then st=\"\$st \$xt\"; fi"
 	done
-
 	st="${st# }" && [ "$st" = "repo file" ] && $err "$mdir: repo+file"
 
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
@@ -103,12 +94,12 @@ fetch_submodule()
 tmpclone()
 {
 	[ "$repofail" = "y" ] && \
-	    printf "Cached clone failed; trying online.\n" 1>&2
-	repofail="n"
+	    printf "Cached clone failed; trying online.\n" 1>&2; repofail="n"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
 	mkdir -p "$XBMK_CACHE/repo" || $err "!rmdir $XBMK_CACHE/repo"
+
 	if [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
 		    || sleep 3 || git -C "$repodir" pull || :

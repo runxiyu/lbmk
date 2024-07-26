@@ -28,10 +28,8 @@ mkpayload_grub()
 {
 	eval `setvars "" grub_modules grub_install_modules`
 	$dry eval `setcfg "$grubdata/module/$tree"`
-
-	$dry x_ rm -f "$srcdir/grub.elf"
-
-	$dry "$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
+	$dry x_ rm -f "$srcdir/grub.elf"; $dry \
+	"$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
@@ -79,15 +77,10 @@ check_coreboot_utils()
 
 mkcorebootbin()
 {
-	$dry realmkcorebootbin; :
-}
-
-realmkcorebootbin()
-{
 	[ "$target" = "$tree" ] && return 0
 
 	tmprom="$TMPDIR/coreboot.rom"
-	mv "$srcdir/build/coreboot.rom" "$tmprom" || $err "!mktmprom"
+	$dry x_ cp "$srcdir/build/coreboot.rom" "$tmprom"
 
 	initmode="${defconfig##*/}"; displaymode="${initmode##*_}"
 	initmode="${initmode%%_*}"
@@ -107,12 +100,12 @@ realmkcorebootbin()
 
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
-	if grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
+	if $dry grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		[ "$payload_seabios" = "y" ] && pname="seabios" && \
 		    $dry add_seabios
 		[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
 	else
-		pname="custom" && cprom; :
+		pname="custom" && $dry cprom; :
 	fi; :
 }
 
@@ -149,10 +142,8 @@ mkseagrub()
 {
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	for keymap in config/data/grub/keymap/*.gkb; do
-		[ -f "$keymap" ] || continue
-		keymap="${keymap##*/}"
-		cprom "${keymap%.gkb}"
-	done
+		[ -f "$keymap" ] && cprom "${keymap##*/}"; :
+	done; :
 }
 
 add_uboot()
@@ -168,11 +159,11 @@ add_uboot()
 cprom()
 {
 	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
-	[ $# -gt 0 ] && newrom="${newrom%.rom}_$1.rom"
+	[ $# -gt 0 ] && newrom="${newrom%.rom}_${1%.gkb}.rom"
 
 	x_ mkdir -p "bin/$target"
 	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && \
-	    cbfs "$newrom" "config/data/grub/keymap/$1.gkb" keymap.gkb raw
+	    cbfs "$newrom" "config/data/grub/keymap/$1" keymap.gkb raw
 
 	[ "$XBMK_RELEASE" = "y" ] || return 0
 	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./vendor inject \
@@ -181,11 +172,6 @@ cprom()
 
 mkcoreboottar()
 {
-	$dry realmkcoreboottar
-}
-
-realmkcoreboottar()
-{
 	[ "$target" = "$tree" ] && return 0; [ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$release" != "n" ] && $dry mkrom_tarball "bin/$target"; return 0
+	    [ "$release" != "n" ] && $dry mkrom_tarball "bin/$target"; :
 }
