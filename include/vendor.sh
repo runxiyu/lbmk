@@ -48,9 +48,7 @@ readkconfig()
 bootstrap()
 {
 	x_ ./mk -f coreboot ${cbdir##*/}
-	for d in uefitool biosutilities bios_extract; do
-		x_ ./mk -b "$d"
-	done
+	mk -b uefitool biosutilities bios_extract
 	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \

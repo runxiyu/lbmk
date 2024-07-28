@@ -212,3 +212,11 @@ cbfs()
 	lzma="-c lzma" && [ $# -gt 3 ] && lzma="-t raw"
 	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
 }
+
+mk()
+{
+	mk_flag="$1" || $err "No argument given"
+	shift 1 && for mk_arg in $@; do
+		./mk $mk_flag $mk_arg || $err "./mk $mk_flag $mk_arg"; :
+	done; :
+}

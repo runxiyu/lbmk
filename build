@@ -36,11 +36,9 @@ main()
 	inject) shift 1; vendor_inject $@ ;;
 	download) shift 1; vendor_download $@ ;;
 	roms)
-		if [ $# -gt 1 ] && [ "$2" = "serprog" ]; then
-			x_ ./mk -b stm32-vserprog
-			x_ ./mk -b pico-serprog; return 0
-		fi; shift 1
-		x_ ./mk -b coreboot $@ ;;
+		[ $# -gt 1 ] && [ "$2" = "serprog" ] && \
+		    mk -b stm32-vserprog pico-serprog && return 0
+		shift 1; x_ ./mk -b coreboot $@ ;;
 	*)
 		[ -f "$spath" ] || $err "bad command"
 		$shcmd; "$spath" $@ || $err "excmd: $spath $(echo "$@")" ;;
@@ -110,9 +108,7 @@ build_release()
 	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
 	(
 	cd "$srcdir" || $err "$vdir: 2 !cd \"$srcdir\""
-	./mk -b coreboot || $err "$vdir: roms-all"
-	./mk -b pico-serprog || $err "$vdir: rp2040"
-	./mk -b stm32-vserprog || $err "$vdir: stm32"
+	mk -b coreboot pico-serprog stm32-vserprog
 	x_ mv bin ../roms
 	) || $err "can't build rom images"
 

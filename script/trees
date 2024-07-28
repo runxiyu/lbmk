@@ -36,9 +36,7 @@ main()
 		project="${OPTARG#src/}"; shift 2
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
-	[ -z "$project" ] && for p in $(ls -1 config/git); do
-		./mk $_f "$p" || $err "!./mk $_f $p"; :
-	done && return 1
+	[ -z "$project" ] && mk $_f $(ls -1 config/git) && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
 
