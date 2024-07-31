@@ -1,7 +1,7 @@
-From 223ac17617b3a0c08925abbbe42d0d003e144a28 Mon Sep 17 00:00:00 2001
+From e785387dffe382a02d4c0cb006cced48c235484c Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:21:39 +0100
-Subject: [PATCH 08/30] acer/g43t-am3: set VRAM to 256MiB by default
+Subject: [PATCH 08/39] acer/g43t-am3: set VRAM to 256MiB by default
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/acer/g43t-am3/cmos.default b/src/mainboard/acer/g43t-am3/cmos.default
-index 706f5dd551..e8b45ea22c 100644
+index 23f0e55f3e..8d6c4db1ce 100644
 --- a/src/mainboard/acer/g43t-am3/cmos.default
 +++ b/src/mainboard/acer/g43t-am3/cmos.default
-@@ -3,4 +3,4 @@ debug_level=Debug
+@@ -5,4 +5,4 @@ debug_level=Debug
  power_on_after_fail=Disable
  nmi=Enable
  sata_mode=AHCI

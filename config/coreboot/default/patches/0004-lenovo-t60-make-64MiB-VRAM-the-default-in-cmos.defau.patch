@@ -1,17 +1,17 @@
-From eca0f4a3a4d6907e92b948547a362ca0ac3fc382 Mon Sep 17 00:00:00 2001
+From 5b2a26e72bce37f7b0a92f1ed93fd607cea8de9b Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@osboot.org>
 Date: Mon, 22 Feb 2021 22:16:59 +0000
-Subject: [PATCH 04/30] lenovo/t60: make 64MiB VRAM the default in cmos.default
+Subject: [PATCH 04/39] lenovo/t60: make 64MiB VRAM the default in cmos.default
 
 ---
  src/mainboard/lenovo/t60/cmos.default | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/lenovo/t60/cmos.default b/src/mainboard/lenovo/t60/cmos.default
-index af865f16da..7f03157df7 100644
+index 283a5747ee..91f6c0e6e2 100644
 --- a/src/mainboard/lenovo/t60/cmos.default
 +++ b/src/mainboard/lenovo/t60/cmos.default
-@@ -15,4 +15,4 @@ trackpoint=Enable
+@@ -17,4 +17,4 @@ trackpoint=Enable
  sticky_fn=Disable
  power_management_beeps=Enable
  low_battery_beep=Enable

@@ -1,0 +1,36 @@
+From adb6121970034aa63da8c6303292ff81f340d9db Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 5 Nov 2023 22:57:08 +0000
+Subject: [PATCH 32/39] use mirrorservice.org for gcc downloads
+
+the gnu.org 302 redirect often fails
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/crossgcc/buildgcc | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
+index 5faff337b4..2743f96903 100755
+--- a/util/crossgcc/buildgcc
++++ b/util/crossgcc/buildgcc
+@@ -69,11 +69,11 @@ NASM_ARCHIVE="nasm-${NASM_VERSION}.tar.bz2"
+ # to the jenkins build as well, or the builder won't download it.
+ 
+ # GCC toolchain archive locations
+-GMP_BASE_URL="https://ftpmirror.gnu.org/gmp"
+-MPFR_BASE_URL="https://ftpmirror.gnu.org/mpfr"
+-MPC_BASE_URL="https://ftpmirror.gnu.org/mpc"
+-GCC_BASE_URL="https://ftpmirror.gnu.org/gcc/gcc-${GCC_VERSION}"
+-BINUTILS_BASE_URL="https://ftpmirror.gnu.org/binutils"
++GMP_BASE_URL="https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gmp"
++MPFR_BASE_URL="https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/mpfr"
++MPC_BASE_URL="https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/mpc"
++GCC_BASE_URL="https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}"
++BINUTILS_BASE_URL="https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/binutils"
+ IASL_BASE_URL="https://www.mirrorservice.org/sites/libreboot.org/release/misc/acpica"
+ # CLANG toolchain archive locations
+ LLVM_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
+-- 
+2.39.2
+

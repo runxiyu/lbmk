@@ -1,7 +1,7 @@
-From a3a0969075163be413f968b03671aa5d8662672a Mon Sep 17 00:00:00 2001
+From 37418629a56cb740cae2870317458ea52daad8c9 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 14 May 2021 13:18:26 +0100
-Subject: [PATCH 07/30] gigabyte/ga-g41m-es2l: set VRAM to 256MiB by default
+Subject: [PATCH 07/39] gigabyte/ga-g41m-es2l: set VRAM to 256MiB by default
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default b/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default
-index 8372032119..bedad54d2a 100644
+index fe79c83570..4a1f97a9d8 100644
 --- a/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default
 +++ b/src/mainboard/gigabyte/ga-g41m-es2l/cmos.default
-@@ -2,4 +2,4 @@ boot_option=Fallback
+@@ -4,4 +4,4 @@ boot_option=Fallback
  debug_level=Debug
  power_on_after_fail=Enable
  nmi=Enable

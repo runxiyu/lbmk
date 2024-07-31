@@ -1,7 +1,7 @@
-From 50a52cea2b43e6e407b456c082e908c7d29e090b Mon Sep 17 00:00:00 2001
+From e60ec1c7304e3f167fd2bf762f28b7eacd0b169a Mon Sep 17 00:00:00 2001
 From: Vitali64 <5405891-vitali64yt@users.noreply.gitlab.com>
 Date: Wed, 27 Oct 2021 13:36:01 +0200
-Subject: [PATCH 02/30] add c3 and clockgen to apple/macbook21
+Subject: [PATCH 02/39] add c3 and clockgen to apple/macbook21
 
 ---
  src/mainboard/apple/macbook21/Kconfig       |  1 +
@@ -10,10 +10,10 @@ Subject: [PATCH 02/30] add c3 and clockgen to apple/macbook21
  3 files changed, 20 insertions(+)
 
 diff --git a/src/mainboard/apple/macbook21/Kconfig b/src/mainboard/apple/macbook21/Kconfig
-index 5f5ffde588..27377b737c 100644
+index 330d8efae2..cf10343554 100644
 --- a/src/mainboard/apple/macbook21/Kconfig
 +++ b/src/mainboard/apple/macbook21/Kconfig
-@@ -16,6 +16,7 @@ config BOARD_SPECIFIC_OPTIONS
+@@ -18,6 +18,7 @@ config BOARD_SPECIFIC_OPTIONS
  	select HAVE_ACPI_TABLES
  	select HAVE_ACPI_RESUME
  	select I945_LVDS

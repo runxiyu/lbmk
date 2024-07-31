@@ -1,0 +1,29 @@
+From 5c385ef4b4424ed8c37e549a00866edda960563f Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Wed, 31 Jul 2024 00:03:02 +0100
+Subject: [PATCH 29/39] use own mirror for acpica files
+
+intel likes to break links for no reason,
+so we host our own backups of acpica.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ util/crossgcc/buildgcc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
+index ad756652ed..5faff337b4 100755
+--- a/util/crossgcc/buildgcc
++++ b/util/crossgcc/buildgcc
+@@ -74,7 +74,7 @@ MPFR_BASE_URL="https://ftpmirror.gnu.org/mpfr"
+ MPC_BASE_URL="https://ftpmirror.gnu.org/mpc"
+ GCC_BASE_URL="https://ftpmirror.gnu.org/gcc/gcc-${GCC_VERSION}"
+ BINUTILS_BASE_URL="https://ftpmirror.gnu.org/binutils"
+-IASL_BASE_URL="https://downloadmirror.intel.com/783534"
++IASL_BASE_URL="https://www.mirrorservice.org/sites/libreboot.org/release/misc/acpica"
+ # CLANG toolchain archive locations
+ LLVM_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
+ CLANG_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
+-- 
+2.39.2
+
