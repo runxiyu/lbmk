@@ -1,7 +1,7 @@
-From 6f4968919cf4e801caacf8392492457b79efa9c6 Mon Sep 17 00:00:00 2001
+From b42ca30081b25cbabfb2659adca9d935ef3a8399 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Mon, 20 May 2024 10:24:16 -0600
-Subject: [PATCH] mb/dell/e6400: Use 100 MHz reference clock for display
+Subject: [PATCH 3/3] mb/dell/e6400: Use 100 MHz reference clock for display
 
 The E6400 uses a 100 MHz reference clock for spread spectrum support on
 LVDS, whereas libgfxinit previously assumed a 96 MHz input clock. For
@@ -19,10 +19,10 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  2 files changed, 7 insertions(+)
 
 diff --git a/src/mainboard/dell/e6400/Kconfig b/src/mainboard/dell/e6400/Kconfig
-index 034de4be2b..4cb16af697 100644
+index 417d95fd5d..6fe1b1c456 100644
 --- a/src/mainboard/dell/e6400/Kconfig
 +++ b/src/mainboard/dell/e6400/Kconfig
-@@ -17,6 +17,9 @@ config BOARD_SPECIFIC_OPTIONS
+@@ -19,6 +19,9 @@ config BOARD_SPECIFIC_OPTIONS
  	select INTEL_GMA_HAVE_VBT
  	select EC_DELL_MEC5035
  
@@ -33,10 +33,10 @@ index 034de4be2b..4cb16af697 100644
  	default "dell/e6400"
  
 diff --git a/src/northbridge/intel/gm45/Kconfig b/src/northbridge/intel/gm45/Kconfig
-index 2a266b9771..2432c9d78e 100644
+index 8059e7ee80..5df5a93296 100644
 --- a/src/northbridge/intel/gm45/Kconfig
 +++ b/src/northbridge/intel/gm45/Kconfig
-@@ -13,6 +13,10 @@ config NORTHBRIDGE_INTEL_GM45
+@@ -14,6 +14,10 @@ config NORTHBRIDGE_INTEL_GM45
  
  if NORTHBRIDGE_INTEL_GM45
  
@@ -48,5 +48,5 @@ index 2a266b9771..2432c9d78e 100644
  	select VBOOT_STARTS_IN_BOOTBLOCK
  
 -- 
-2.45.1
+2.39.2
 
