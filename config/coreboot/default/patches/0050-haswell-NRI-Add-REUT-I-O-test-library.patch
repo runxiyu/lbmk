@@ -1,7 +1,7 @@
-From 49a7ef2401922a8492ba577a43235bcfba7ea822 Mon Sep 17 00:00:00 2001
+From 5ea55ac3f02a8a10f05e84ab9fbace424194869f Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:11:29 +0200
-Subject: [PATCH 08/20] haswell NRI: Add REUT I/O test library
+Subject: [PATCH 08/17] haswell NRI: Add REUT I/O test library
 
 Implement a library to run I/O tests using the REUT hardware.
 
@@ -27,10 +27,10 @@ index 8d7d4e4db0..6e1b365602 100644
 +romstage-y += testing_io.c
  romstage-y += timings_refresh.c
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 1971b44b66..7f19fde4cc 100644
+index 4d9487d79c..f029e7f076 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -58,6 +58,88 @@ enum {
+@@ -59,6 +59,88 @@ enum {
  	REUT_MODE_NOP  = 3, /* Normal operation mode */
  };
  
@@ -119,7 +119,7 @@ index 1971b44b66..7f19fde4cc 100644
  enum command_training_iteration {
  	CT_ITERATION_CLOCK = 0,
  	CT_ITERATION_CMD_NORTH,
-@@ -199,6 +281,10 @@ struct sysinfo {
+@@ -200,6 +282,10 @@ struct sysinfo {
  	uint16_t mr1[NUM_CHANNELS][NUM_SLOTS];
  	uint16_t mr2[NUM_CHANNELS][NUM_SLOTS];
  	uint16_t mr3[NUM_CHANNELS][NUM_SLOTS];
@@ -130,7 +130,7 @@ index 1971b44b66..7f19fde4cc 100644
  };
  
  static inline bool is_hsw_ult(void)
-@@ -340,6 +426,30 @@ void write_wdb_va_pat(
+@@ -341,6 +427,30 @@ void write_wdb_va_pat(
  void program_wdb_lfsr(const struct sysinfo *ctrl, bool cleanup);
  void setup_wdb(const struct sysinfo *ctrl);
  

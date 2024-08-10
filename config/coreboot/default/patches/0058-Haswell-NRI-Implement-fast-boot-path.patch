@@ -1,7 +1,7 @@
-From c7d6a901edf648f0f02dd2053337bcf3a319e49b Mon Sep 17 00:00:00 2001
+From 50c9d184cc89cd718c1cb95e1a3cabed24e09e1e Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 13 Apr 2024 01:16:30 +0200
-Subject: [PATCH 16/20] Haswell NRI: Implement fast boot path
+Subject: [PATCH 16/17] Haswell NRI: Implement fast boot path
 
 When the memory configuration hasn't changed, there is no need to do
 full memory training. Instead, boot firmware can use saved training
@@ -269,10 +269,10 @@ index 5f7ceec222..3ad8ce29e7 100644
  	/** TODO: setup_sdram_meminfo **/
  }
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 9bab57b518..0750904aec 100644
+index a0a913f926..2ac16eaad3 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -169,6 +169,8 @@ enum regfile_mode {
+@@ -170,6 +170,8 @@ enum regfile_mode {
  	REG_FILE_USE_CURRENT,	/* Used when changing parameters after the test */
  };
  
@@ -281,7 +281,7 @@ index 9bab57b518..0750904aec 100644
  struct wdb_pat {
  	uint32_t start_ptr;	/* Starting pointer in WDB */
  	uint32_t stop_ptr;	/* Stopping pointer in WDB */
-@@ -219,6 +221,7 @@ enum raminit_status {
+@@ -220,6 +222,7 @@ enum raminit_status {
  	RAMINIT_STATUS_RCVEN_FAILURE,
  	RAMINIT_STATUS_RMPR_FAILURE,
  	RAMINIT_STATUS_JWRL_FAILURE,
@@ -289,7 +289,7 @@ index 9bab57b518..0750904aec 100644
  	RAMINIT_STATUS_UNSPECIFIED_ERROR, /** TODO: Deprecated in favor of specific values **/
  };
  
-@@ -228,6 +231,11 @@ enum generic_stepping {
+@@ -229,6 +232,11 @@ enum generic_stepping {
  	STEPPING_C0 = 3,
  };
  
@@ -299,9 +299,9 @@ index 9bab57b518..0750904aec 100644
 +};
 +
  struct raminit_dimm_info {
- 	spd_raw_data raw_spd;
+ 	spd_ddr3_raw_data raw_spd;
  	struct dimm_attr_ddr3_st data;
-@@ -447,12 +455,22 @@ enum raminit_status do_jedec_init(struct sysinfo *ctrl);
+@@ -448,12 +456,22 @@ enum raminit_status do_jedec_init(struct sysinfo *ctrl);
  enum raminit_status train_receive_enable(struct sysinfo *ctrl);
  enum raminit_status train_read_mpr(struct sysinfo *ctrl);
  enum raminit_status train_jedec_write_leveling(struct sysinfo *ctrl);

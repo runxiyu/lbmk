@@ -1,7 +1,7 @@
-From 1ea9b05694da7ee61d49d9cd2b7e533a98e42321 Mon Sep 17 00:00:00 2001
+From eb8150a07c472078ad37887de13a166e6cf8bdad Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 21:49:40 +0200
-Subject: [PATCH 06/20] haswell NRI: Add DDR3 JEDEC reset and init
+Subject: [PATCH 06/17] haswell NRI: Add DDR3 JEDEC reset and init
 
 Implement JEDEC reset and init sequence for DDR3. The MRS commands are
 issued through the REUT (Robust Electrical Unified Testing) hardware.
@@ -443,10 +443,10 @@ index 559dfc3a4e..94b268468c 100644
  }
  
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 4763b25e8d..4bc2a4955f 100644
+index 8f937c4ccd..759d755d6d 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -27,6 +27,30 @@
+@@ -28,6 +28,30 @@
  /* Always use 12 legs for emphasis (not trained) */
  #define TXEQFULLDRV		(3 << 4)
  
@@ -477,7 +477,7 @@ index 4763b25e8d..4bc2a4955f 100644
  enum command_training_iteration {
  	CT_ITERATION_CLOCK = 0,
  	CT_ITERATION_CMD_NORTH,
-@@ -50,6 +74,7 @@ enum raminit_status {
+@@ -51,6 +75,7 @@ enum raminit_status {
  	RAMINIT_STATUS_UNSUPPORTED_MEMORY,
  	RAMINIT_STATUS_MPLL_INIT_FAILURE,
  	RAMINIT_STATUS_POLL_TIMEOUT,
@@ -485,7 +485,7 @@ index 4763b25e8d..4bc2a4955f 100644
  	RAMINIT_STATUS_UNSPECIFIED_ERROR, /** TODO: Deprecated in favor of specific values **/
  };
  
-@@ -72,6 +97,7 @@ struct sysinfo {
+@@ -73,6 +98,7 @@ struct sysinfo {
  	uint32_t cpu;		/* CPUID value */
  
  	bool dq_pins_interleaved;
@@ -493,7 +493,7 @@ index 4763b25e8d..4bc2a4955f 100644
  
  	/** TODO: ECC support untested **/
  	bool is_ecc;
-@@ -161,6 +187,11 @@ struct sysinfo {
+@@ -162,6 +188,11 @@ struct sysinfo {
  	union tc_bank_rank_b_reg tc_bankrank_b[NUM_CHANNELS];
  	union tc_bank_rank_c_reg tc_bankrank_c[NUM_CHANNELS];
  	union tc_bank_rank_d_reg tc_bankrank_d[NUM_CHANNELS];
@@ -505,7 +505,7 @@ index 4763b25e8d..4bc2a4955f 100644
  };
  
  static inline bool is_hsw_ult(void)
-@@ -196,6 +227,53 @@ static inline void clear_data_offset_train_all(struct sysinfo *ctrl)
+@@ -197,6 +228,53 @@ static inline void clear_data_offset_train_all(struct sysinfo *ctrl)
  	memset(ctrl->data_offset_train, 0, sizeof(ctrl->data_offset_train));
  }
  
@@ -559,7 +559,7 @@ index 4763b25e8d..4bc2a4955f 100644
  void raminit_main(enum raminit_boot_mode bootmode);
  
  enum raminit_status collect_spd_info(struct sysinfo *ctrl);
-@@ -203,6 +281,7 @@ enum raminit_status initialise_mpll(struct sysinfo *ctrl);
+@@ -204,6 +282,7 @@ enum raminit_status initialise_mpll(struct sysinfo *ctrl);
  enum raminit_status convert_timings(struct sysinfo *ctrl);
  enum raminit_status configure_mc(struct sysinfo *ctrl);
  enum raminit_status configure_memory_map(struct sysinfo *ctrl);
@@ -567,7 +567,7 @@ index 4763b25e8d..4bc2a4955f 100644
  
  void configure_timings(struct sysinfo *ctrl);
  void configure_refresh(struct sysinfo *ctrl);
-@@ -215,8 +294,28 @@ uint32_t get_tXS_offset(uint32_t mem_clock_mhz);
+@@ -216,8 +295,28 @@ uint32_t get_tXS_offset(uint32_t mem_clock_mhz);
  uint32_t get_tZQOPER(uint32_t mem_clock_mhz, bool lpddr);
  uint32_t get_tZQCS(uint32_t mem_clock_mhz, bool lpddr);
  

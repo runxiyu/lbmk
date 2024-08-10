@@ -1,7 +1,7 @@
-From c24b26594bfab47a8709ed7fb5cb77307fb73a53 Mon Sep 17 00:00:00 2001
+From 36ec2cfa730ba720ef7ded21cc3e84c47f4e2623 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 11:58:59 +0200
-Subject: [PATCH 12/20] haswell NRI: Add function to change margins
+Subject: [PATCH 12/17] haswell NRI: Add function to change margins
 
 Implement a function to change margin parameters. Haswell provides a
 register to apply an offset to margin parameters during training, so
@@ -169,10 +169,10 @@ index 055c666eee..299c44a6b0 100644
 +	change_margin(ctrl, param, value0, true, 0, rank, 0, update_ctrl, regfile);
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index b4e8c7de5a..5242b16f28 100644
+index eaaaedad1e..1c8473056b 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -35,6 +35,18 @@
+@@ -36,6 +36,18 @@
  
  #define RTTNOM_MASK		(BIT(9) | BIT(6) | BIT(2))
  
@@ -191,7 +191,7 @@ index b4e8c7de5a..5242b16f28 100644
  #define BASIC_VA_PAT_SPREAD_8	0x01010101
  
  #define WDB_CACHE_LINE_SIZE	8
-@@ -45,6 +57,14 @@
+@@ -46,6 +58,14 @@
  /* Specified in PI ticks. 64 PI ticks == 1 qclk */
  #define tDQSCK_DRIFT		64
  
@@ -206,7 +206,7 @@ index b4e8c7de5a..5242b16f28 100644
  /* ZQ calibration types */
  enum {
  	ZQ_INIT,	/* DDR3: ZQCL with tZQinit, LPDDR3: ZQ Init  with tZQinit  */
-@@ -514,6 +534,25 @@ void download_regfile(
+@@ -515,6 +535,25 @@ void download_regfile(
  	bool read_rf_rd,
  	bool read_rf_wr);
  

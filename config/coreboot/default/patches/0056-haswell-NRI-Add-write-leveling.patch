@@ -1,7 +1,7 @@
-From bebe0b74bede64b03aa1e3781310ef539465627b Mon Sep 17 00:00:00 2001
+From ce0ed94f993506e75b711c214b49ba480037e7d3 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 12:56:04 +0200
-Subject: [PATCH 14/20] haswell NRI: Add write leveling
+Subject: [PATCH 14/17] haswell NRI: Add write leveling
 
 Implement JEDEC write leveling, which is done in two steps. The first
 step uses the JEDEC procedure to do "fine" write leveling, i.e. align
@@ -43,10 +43,10 @@ index 264d1468f5..1ff23be615 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 49e9214656..86d89f2120 100644
+index 7a486479ea..d6b11b9d3c 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -59,6 +59,9 @@
+@@ -60,6 +60,9 @@
  /* Specified in PI ticks. 64 PI ticks == 1 qclk */
  #define tDQSCK_DRIFT		64
  
@@ -56,7 +56,7 @@ index 49e9214656..86d89f2120 100644
  enum margin_parameter {
  	RcvEna,
  	RdT,
-@@ -215,6 +218,7 @@ enum raminit_status {
+@@ -216,6 +219,7 @@ enum raminit_status {
  	RAMINIT_STATUS_REUT_ERROR,
  	RAMINIT_STATUS_RCVEN_FAILURE,
  	RAMINIT_STATUS_RMPR_FAILURE,
@@ -64,7 +64,7 @@ index 49e9214656..86d89f2120 100644
  	RAMINIT_STATUS_UNSPECIFIED_ERROR, /** TODO: Deprecated in favor of specific values **/
  };
  
-@@ -380,6 +384,11 @@ static inline uint32_t get_data_train_feedback(const uint8_t channel, const uint
+@@ -381,6 +385,11 @@ static inline uint32_t get_data_train_feedback(const uint8_t channel, const uint
  	return mchbar_read32(DDR_DATA_TRAIN_FEEDBACK(channel, byte));
  }
  
@@ -76,7 +76,7 @@ index 49e9214656..86d89f2120 100644
  /* Number of ticks to wait in units of 69.841279 ns (citation needed) */
  static inline void tick_delay(const uint32_t delay)
  {
-@@ -437,6 +446,7 @@ enum raminit_status configure_memory_map(struct sysinfo *ctrl);
+@@ -438,6 +447,7 @@ enum raminit_status configure_memory_map(struct sysinfo *ctrl);
  enum raminit_status do_jedec_init(struct sysinfo *ctrl);
  enum raminit_status train_receive_enable(struct sysinfo *ctrl);
  enum raminit_status train_read_mpr(struct sysinfo *ctrl);

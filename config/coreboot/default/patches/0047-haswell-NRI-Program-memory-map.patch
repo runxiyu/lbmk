@@ -1,7 +1,7 @@
-From b872fb9fc10d1789989072b8533b797152e6cb54 Mon Sep 17 00:00:00 2001
+From 406e474c7f9f83dc10c7c0fa7cd9765ae822ad4e Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 21:24:50 +0200
-Subject: [PATCH 05/20] haswell NRI: Program memory map
+Subject: [PATCH 05/17] haswell NRI: Program memory map
 
 This is very similar to Sandy/Ivy Bridge, except that there's several
 registers to program in GDXCBAR. One of these GDXCBAR registers has a
@@ -234,10 +234,10 @@ index fcc981ad04..559dfc3a4e 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index cd1f2eb2a5..4763b25e8d 100644
+index 5915a2bab0..8f937c4ccd 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -202,6 +202,7 @@ enum raminit_status collect_spd_info(struct sysinfo *ctrl);
+@@ -203,6 +203,7 @@ enum raminit_status collect_spd_info(struct sysinfo *ctrl);
  enum raminit_status initialise_mpll(struct sysinfo *ctrl);
  enum raminit_status convert_timings(struct sysinfo *ctrl);
  enum raminit_status configure_mc(struct sysinfo *ctrl);

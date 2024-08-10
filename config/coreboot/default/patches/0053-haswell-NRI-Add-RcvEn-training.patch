@@ -1,7 +1,7 @@
-From 4254a9ff03658d7a6f1a4e32cfe4c65dbfc072f8 Mon Sep 17 00:00:00 2001
+From 0826d1e9ba50daad13c3d5adccba4b180c82296b Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:05:41 +0200
-Subject: [PATCH 11/20] haswell NRI: Add RcvEn training
+Subject: [PATCH 11/17] haswell NRI: Add RcvEn training
 
 Implement the RcvEn (Receive Enable) calibration procedure.
 
@@ -39,10 +39,10 @@ index 5e4674957d..7d444659c3 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 906b3143b9..b4e8c7de5a 100644
+index 8707257b27..eaaaedad1e 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -42,6 +42,9 @@
+@@ -43,6 +43,9 @@
  #define NUM_WDB_CL_MUX_SEEDS	3
  #define NUM_CADB_MUX_SEEDS	3
  
@@ -52,7 +52,7 @@ index 906b3143b9..b4e8c7de5a 100644
  /* ZQ calibration types */
  enum {
  	ZQ_INIT,	/* DDR3: ZQCL with tZQinit, LPDDR3: ZQ Init  with tZQinit  */
-@@ -188,6 +191,7 @@ enum raminit_status {
+@@ -189,6 +192,7 @@ enum raminit_status {
  	RAMINIT_STATUS_MPLL_INIT_FAILURE,
  	RAMINIT_STATUS_POLL_TIMEOUT,
  	RAMINIT_STATUS_REUT_ERROR,
@@ -60,7 +60,7 @@ index 906b3143b9..b4e8c7de5a 100644
  	RAMINIT_STATUS_UNSPECIFIED_ERROR, /** TODO: Deprecated in favor of specific values **/
  };
  
-@@ -270,6 +274,10 @@ struct sysinfo {
+@@ -271,6 +275,10 @@ struct sysinfo {
  
  	union ddr_data_vref_adjust_reg dimm_vref;
  
@@ -71,7 +71,7 @@ index 906b3143b9..b4e8c7de5a 100644
  	uint32_t data_offset_train[NUM_CHANNELS][NUM_LANES];
  	uint32_t data_offset_comp[NUM_CHANNELS][NUM_LANES];
  
-@@ -344,6 +352,11 @@ static inline void clear_data_offset_train_all(struct sysinfo *ctrl)
+@@ -345,6 +353,11 @@ static inline void clear_data_offset_train_all(struct sysinfo *ctrl)
  	memset(ctrl->data_offset_train, 0, sizeof(ctrl->data_offset_train));
  }
  
@@ -83,7 +83,7 @@ index 906b3143b9..b4e8c7de5a 100644
  /* Number of ticks to wait in units of 69.841279 ns (citation needed) */
  static inline void tick_delay(const uint32_t delay)
  {
-@@ -399,6 +412,7 @@ enum raminit_status convert_timings(struct sysinfo *ctrl);
+@@ -400,6 +413,7 @@ enum raminit_status convert_timings(struct sysinfo *ctrl);
  enum raminit_status configure_mc(struct sysinfo *ctrl);
  enum raminit_status configure_memory_map(struct sysinfo *ctrl);
  enum raminit_status do_jedec_init(struct sysinfo *ctrl);

@@ -1,7 +1,7 @@
-From eba8680d618db95028e3f984f25881df0e67abf7 Mon Sep 17 00:00:00 2001
+From e30c9c431ef11d87c6f46071ec43cc34391b8349 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 14:29:05 +0200
-Subject: [PATCH 15/20] haswell NRI: Add final raminit steps
+Subject: [PATCH 15/17] haswell NRI: Add final raminit steps
 
 Implement the remaining raminit steps. Although many training steps are
 missing, this is enough to boot on the Asrock B85M Pro4.
@@ -489,10 +489,10 @@ index 2fed93de5b..5f7ceec222 100644
  
  	/** TODO: setup_sdram_meminfo **/
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 86d89f2120..9bab57b518 100644
+index d6b11b9d3c..a0a913f926 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -447,6 +447,8 @@ enum raminit_status do_jedec_init(struct sysinfo *ctrl);
+@@ -448,6 +448,8 @@ enum raminit_status do_jedec_init(struct sysinfo *ctrl);
  enum raminit_status train_receive_enable(struct sysinfo *ctrl);
  enum raminit_status train_read_mpr(struct sysinfo *ctrl);
  enum raminit_status train_jedec_write_leveling(struct sysinfo *ctrl);

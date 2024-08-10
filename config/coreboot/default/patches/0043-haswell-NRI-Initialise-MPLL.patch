@@ -1,7 +1,7 @@
-From cce5392f272b0acc493f47f9b5ca3cf90ce901e8 Mon Sep 17 00:00:00 2001
+From 8b584165a99c69cc808f86efcdd55acb06a4464c Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Thu, 11 Apr 2024 17:25:07 +0200
-Subject: [PATCH 01/20] haswell NRI: Initialise MPLL
+Subject: [PATCH 01/17] haswell NRI: Initialise MPLL
 
 Add code to initialise the MPLL (Memory PLL). The procedure is similar
 to the one for Sandy/Ivy Bridge, but it is not worth factoring out.
@@ -290,10 +290,10 @@ index 19ec5859ac..bf745e943f 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 1a0793947e..a54581abc7 100644
+index 8078c9c386..15a1550424 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -23,6 +23,8 @@ enum raminit_status {
+@@ -24,6 +24,8 @@ enum raminit_status {
  	RAMINIT_STATUS_SUCCESS = 0,
  	RAMINIT_STATUS_NO_MEMORY_INSTALLED,
  	RAMINIT_STATUS_UNSUPPORTED_MEMORY,
@@ -302,7 +302,7 @@ index 1a0793947e..a54581abc7 100644
  	RAMINIT_STATUS_UNSPECIFIED_ERROR, /** TODO: Deprecated in favor of specific values **/
  };
  
-@@ -82,10 +84,19 @@ struct sysinfo {
+@@ -83,10 +85,19 @@ struct sysinfo {
  	uint8_t rankmap[NUM_CHANNELS];
  	uint8_t rank_mirrored[NUM_CHANNELS];
  	uint32_t channel_size_mb[NUM_CHANNELS];

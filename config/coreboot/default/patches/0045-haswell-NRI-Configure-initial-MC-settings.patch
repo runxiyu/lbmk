@@ -1,7 +1,7 @@
-From 574f4965976b56f98a825dea71e919fefb2c8547 Mon Sep 17 00:00:00 2001
+From 0001039f5ea6be6700a453f511069be2ce1b4e7e Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 17:22:07 +0200
-Subject: [PATCH 03/20] haswell NRI: Configure initial MC settings
+Subject: [PATCH 03/17] haswell NRI: Configure initial MC settings
 
 Program initial memory controller settings. Many of these values will be
 adjusted later during training.
@@ -885,10 +885,10 @@ index 2fea658415..fcc981ad04 100644
  	ctrl->bootmode = bootmode;
  }
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 01e5ed1bd6..aa86b9aa39 100644
+index e0ebd3a2a7..fffa6d5450 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -3,15 +3,40 @@
+@@ -3,16 +3,41 @@
  #ifndef HASWELL_RAMINIT_NATIVE_H
  #define HASWELL_RAMINIT_NATIVE_H
  
@@ -900,7 +900,8 @@ index 01e5ed1bd6..aa86b9aa39 100644
 +
 +#include "reg_structs.h"
  
- #define SPD_LEN 256
+ /** TODO (Angel): Remove this after in-review patches are submitted **/
+ #define SPD_LEN SPD_SIZE_MAX_DDR3
  
 +/* Each channel has 4 ranks, spread across 2 slots */
 +#define NUM_SLOTRANKS		4
@@ -929,7 +930,7 @@ index 01e5ed1bd6..aa86b9aa39 100644
  enum raminit_boot_mode {
  	BOOTMODE_COLD,
  	BOOTMODE_WARM,
-@@ -57,6 +82,9 @@ struct sysinfo {
+@@ -58,6 +83,9 @@ struct sysinfo {
  	 * LPDDR-specific functions have stubs which will halt upon execution.
  	 */
  	bool lpddr;
@@ -939,7 +940,7 @@ index 01e5ed1bd6..aa86b9aa39 100644
  
  	struct raminit_dimm_info dimms[NUM_CHANNELS][NUM_SLOTS];
  	union dimm_flags_ddr3_st flags;
-@@ -93,16 +121,89 @@ struct sysinfo {
+@@ -94,16 +122,89 @@ struct sysinfo {
  	uint32_t mem_clock_mhz;
  	uint32_t mem_clock_fs;		/* Memory clock period in femtoseconds */
  	uint32_t qclkps;		/* Quadrature clock period in picoseconds */

@@ -1,7 +1,7 @@
-From 42b21fdce8c8bade53d9d86515f88b0665a4c1b1 Mon Sep 17 00:00:00 2001
+From adde2e8d038b2d07ab7287eedab5888d92a56a60 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 16:29:55 +0200
-Subject: [PATCH 02/20] haswell NRI: Post-process selected timings
+Subject: [PATCH 02/17] haswell NRI: Post-process selected timings
 
 Once the MPLL has been initialised, convert the timings from the SPD to
 be in DCLKs, which is what the hardware expects. In addition, calculate
@@ -110,10 +110,10 @@ index bf745e943f..2fea658415 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index a54581abc7..01e5ed1bd6 100644
+index 15a1550424..e0ebd3a2a7 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -78,6 +78,9 @@ struct sysinfo {
+@@ -79,6 +79,9 @@ struct sysinfo {
  	uint32_t tCWL;
  	uint32_t tCMD;
  
@@ -123,7 +123,7 @@ index a54581abc7..01e5ed1bd6 100644
  	uint8_t lanes;			/* 8 or 9 */
  	uint8_t chanmap;
  	uint8_t dpc[NUM_CHANNELS];	/* DIMMs per channel */
-@@ -96,7 +99,12 @@ void raminit_main(enum raminit_boot_mode bootmode);
+@@ -97,7 +100,12 @@ void raminit_main(enum raminit_boot_mode bootmode);
  
  enum raminit_status collect_spd_info(struct sysinfo *ctrl);
  enum raminit_status initialise_mpll(struct sysinfo *ctrl);
@@ -137,7 +137,7 @@ index a54581abc7..01e5ed1bd6 100644
 +
  #endif
 diff --git a/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c b/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c
-index 2dab8504c4..7d98341a7e 100644
+index eff993800b..4f7fe46494 100644
 --- a/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c
 +++ b/src/northbridge/intel/haswell/native_raminit/spd_bitmunching.c
 @@ -204,3 +204,103 @@ enum raminit_status collect_spd_info(struct sysinfo *ctrl)

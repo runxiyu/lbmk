@@ -1,7 +1,7 @@
-From 8ad18cc335f60a78f47ab9e5a7994f6075b6a176 Mon Sep 17 00:00:00 2001
+From 66db8447d6cf724c4b25618c94d5a53d501f214e Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 01:11:03 +0200
-Subject: [PATCH 10/20] haswell NRI: Add library to change margins
+Subject: [PATCH 10/17] haswell NRI: Add library to change margins
 
 Implement a library to change Rx/Tx margins. It will be expanded later.
 
@@ -187,10 +187,10 @@ index 0000000000..055c666eee
 +	mchbar_write32(reg, ddr_data_control_0.raw);
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 7f19fde4cc..906b3143b9 100644
+index f029e7f076..8707257b27 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -117,6 +117,30 @@ enum test_stop {
+@@ -118,6 +118,30 @@ enum test_stop {
  	ALSOE  = 3,	/* Stop on all lanes error */
  };
  
@@ -221,7 +221,7 @@ index 7f19fde4cc..906b3143b9 100644
  struct wdb_pat {
  	uint32_t start_ptr;	/* Starting pointer in WDB */
  	uint32_t stop_ptr;	/* Stopping pointer in WDB */
-@@ -450,6 +474,32 @@ uint8_t select_reut_ranks(struct sysinfo *ctrl, uint8_t channel, uint8_t rankmas
+@@ -451,6 +475,32 @@ uint8_t select_reut_ranks(struct sysinfo *ctrl, uint8_t channel, uint8_t rankmas
  void run_mpr_io_test(bool clear_errors);
  uint8_t run_io_test(struct sysinfo *ctrl, uint8_t chanmask, uint8_t dq_pat, bool clear_errors);
  

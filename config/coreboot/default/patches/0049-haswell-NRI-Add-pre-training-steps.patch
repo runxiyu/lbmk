@@ -1,7 +1,7 @@
-From 936d432822fcd9aa2f018444cdc89e48e6d257d5 Mon Sep 17 00:00:00 2001
+From 19890277e3a0d411b016efbe1b54e511d4f36c0d Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 23:12:18 +0200
-Subject: [PATCH 07/20] haswell NRI: Add pre-training steps
+Subject: [PATCH 07/17] haswell NRI: Add pre-training steps
 
 Implement pre-training steps, which consist of enabling ECC I/O and
 filling the WDB (Write Data Buffer, stores test patterns) through a
@@ -91,10 +91,10 @@ index 94b268468c..5e4674957d 100644
  
  /* Return a generic stepping value to make stepping checks simpler */
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 4bc2a4955f..1971b44b66 100644
+index 759d755d6d..4d9487d79c 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -35,6 +35,13 @@
+@@ -36,6 +36,13 @@
  
  #define RTTNOM_MASK		(BIT(9) | BIT(6) | BIT(2))
  
@@ -108,7 +108,7 @@ index 4bc2a4955f..1971b44b66 100644
  /* ZQ calibration types */
  enum {
  	ZQ_INIT,	/* DDR3: ZQCL with tZQinit, LPDDR3: ZQ Init  with tZQinit  */
-@@ -316,6 +323,23 @@ void reut_issue_mrs_all(
+@@ -317,6 +324,23 @@ void reut_issue_mrs_all(
  
  enum raminit_status reut_issue_zq(struct sysinfo *ctrl, uint8_t chanmask, uint8_t zq_type);
  

@@ -1,7 +1,7 @@
-From d94843c7c0e25cb6da4040b845556034fdb0e2c3 Mon Sep 17 00:00:00 2001
+From 44032c7df6f4537c43ba80ae2f4a239616bd8d2d Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 20:59:58 +0200
-Subject: [PATCH 04/20] haswell NRI: Add timings/refresh programming
+Subject: [PATCH 04/17] haswell NRI: Add timings/refresh programming
 
 Program the registers with timing and refresh parameters.
 
@@ -126,10 +126,10 @@ index 8b81c7c341..b8d6c1ef40 100644
 +	return DIV_ROUND_UP(get_tZQOPER(mem_clock_mhz, lpddr), 4);
 +}
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index aa86b9aa39..cd1f2eb2a5 100644
+index fffa6d5450..5915a2bab0 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -155,6 +155,12 @@ struct sysinfo {
+@@ -156,6 +156,12 @@ struct sysinfo {
  	uint8_t cke_cmd_pi_code[NUM_CHANNELS][NUM_GROUPS];
  	uint8_t cmd_north_pi_code[NUM_CHANNELS][NUM_GROUPS];
  	uint8_t cmd_south_pi_code[NUM_CHANNELS][NUM_GROUPS];
@@ -142,7 +142,7 @@ index aa86b9aa39..cd1f2eb2a5 100644
  };
  
  static inline bool is_hsw_ult(void)
-@@ -200,6 +206,14 @@ enum raminit_status configure_mc(struct sysinfo *ctrl);
+@@ -201,6 +207,14 @@ enum raminit_status configure_mc(struct sysinfo *ctrl);
  void configure_timings(struct sysinfo *ctrl);
  void configure_refresh(struct sysinfo *ctrl);
  

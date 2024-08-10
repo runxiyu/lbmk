@@ -1,7 +1,7 @@
-From be58501141aa97aa544b670e566cd6cf6797c18e Mon Sep 17 00:00:00 2001
+From 8528c7aa2a3cfcf0fe494a515a2e531ff0f1dab8 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Wed, 17 Apr 2024 13:20:32 +0200
-Subject: [PATCH 17/20] haswell NRI: Do sense amplifier offset training
+Subject: [PATCH 17/17] haswell NRI: Do sense amplifier offset training
 
 Quoting Wikipedia:
 
@@ -61,10 +61,10 @@ index 056dde1adc..ce637e2d03 100644
  	{ train_read_mpr,                                         true, "RDMPRT",     },
  	{ train_jedec_write_leveling,                             true, "JWRL",       },
 diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-index 0750904aec..95ccd0a8b3 100644
+index 2ac16eaad3..07eea98831 100644
 --- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
 +++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
-@@ -22,6 +22,8 @@
+@@ -23,6 +23,8 @@
  #define NUM_LANES		9
  #define NUM_LANES_NO_ECC	8
  
@@ -73,7 +73,7 @@ index 0750904aec..95ccd0a8b3 100644
  #define COMP_INT		10
  
  /* Always use 12 legs for emphasis (not trained) */
-@@ -218,6 +220,7 @@ enum raminit_status {
+@@ -219,6 +221,7 @@ enum raminit_status {
  	RAMINIT_STATUS_MPLL_INIT_FAILURE,
  	RAMINIT_STATUS_POLL_TIMEOUT,
  	RAMINIT_STATUS_REUT_ERROR,
@@ -81,7 +81,7 @@ index 0750904aec..95ccd0a8b3 100644
  	RAMINIT_STATUS_RCVEN_FAILURE,
  	RAMINIT_STATUS_RMPR_FAILURE,
  	RAMINIT_STATUS_JWRL_FAILURE,
-@@ -243,6 +246,12 @@ struct raminit_dimm_info {
+@@ -244,6 +247,12 @@ struct raminit_dimm_info {
  	bool valid;
  };
  
@@ -94,7 +94,7 @@ index 0750904aec..95ccd0a8b3 100644
  struct sysinfo {
  	enum raminit_boot_mode bootmode;
  	enum generic_stepping stepping;
-@@ -330,6 +339,8 @@ struct sysinfo {
+@@ -331,6 +340,8 @@ struct sysinfo {
  	uint8_t rxdqsn[NUM_CHANNELS][NUM_SLOTRANKS][NUM_LANES];
  	int8_t  rxvref[NUM_CHANNELS][NUM_SLOTRANKS][NUM_LANES];
  
@@ -103,7 +103,7 @@ index 0750904aec..95ccd0a8b3 100644
  	uint8_t clk_pi_code[NUM_CHANNELS][NUM_SLOTRANKS];
  	uint8_t ctl_pi_code[NUM_CHANNELS][NUM_SLOTRANKS];
  	uint8_t cke_pi_code[NUM_CHANNELS][NUM_SLOTRANKS];
-@@ -452,6 +463,7 @@ enum raminit_status convert_timings(struct sysinfo *ctrl);
+@@ -453,6 +464,7 @@ enum raminit_status convert_timings(struct sysinfo *ctrl);
  enum raminit_status configure_mc(struct sysinfo *ctrl);
  enum raminit_status configure_memory_map(struct sysinfo *ctrl);
  enum raminit_status do_jedec_init(struct sysinfo *ctrl);
