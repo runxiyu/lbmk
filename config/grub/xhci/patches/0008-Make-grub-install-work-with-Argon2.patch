@@ -1,0 +1,26 @@
+From 5e540d3e4c01940c66425c4475a1cb6a35b188e8 Mon Sep 17 00:00:00 2001
+From: Ax333l <main@axelen.xyz>
+Date: Thu, 17 Aug 2023 00:00:00 +0000
+Subject: [PATCH 08/22] Make grub-install work with Argon2
+
+Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
+---
+ util/grub-install.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/util/grub-install.c b/util/grub-install.c
+index 7dc5657bb..cf7315891 100644
+--- a/util/grub-install.c
++++ b/util/grub-install.c
+@@ -448,6 +448,8 @@ probe_mods (grub_disk_t disk)
+     {
+       grub_util_cryptodisk_get_abstraction (disk,
+ 					    push_cryptodisk_module, NULL);
++      /* HACK: always push argon2 */
++      grub_install_push_module ("argon2");
+       have_abstractions = 1;
+       have_cryptodisk = 1;
+     }
+-- 
+2.39.2
+
