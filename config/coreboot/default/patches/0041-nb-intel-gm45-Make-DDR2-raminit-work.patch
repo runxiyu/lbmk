@@ -1,7 +1,7 @@
-From 65510f6ea53d6f23f47df69d623810aa87041918 Mon Sep 17 00:00:00 2001
+From 88a9c562b77316f1217139e62425f9af1c351c6f Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 6 Aug 2024 00:50:24 +0100
-Subject: [PATCH 2/3] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
+Subject: [PATCH 41/59] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
 
 We add this patch:
 
@@ -27,12 +27,12 @@ Angel's patch, only when DDR3 memory is used.
 
 Signed-off-by: Leah Rowe <info@minifree.org>
 ---
- src/northbridge/intel/gm45/raminit.c          | 182 ++++++++++--------
+ src/northbridge/intel/gm45/raminit.c          | 161 +++++++++---------
  .../intel/gm45/raminit_rcomp_calibration.c    |   9 +-
- 2 files changed, 104 insertions(+), 87 deletions(-)
+ 2 files changed, 88 insertions(+), 82 deletions(-)
 
 diff --git a/src/northbridge/intel/gm45/raminit.c b/src/northbridge/intel/gm45/raminit.c
-index df8f46fbbc..b051374eaa 100644
+index df8f46fbbc..433db3a68c 100644
 --- a/src/northbridge/intel/gm45/raminit.c
 +++ b/src/northbridge/intel/gm45/raminit.c
 @@ -1117,7 +1117,10 @@ static void dram_program_timings(const int spd_type, const timings_t *const timi
@@ -40,43 +40,14 @@ index df8f46fbbc..b051374eaa 100644
  			else
  				reg = (reg & ~(0xf << 10)) | (3 << 10);
 -			reg = (reg & ~(0x7 <<  5)) | (2 << 5);
-+			if (sysinfo->spd_type == DDR2)
++			if (spd_type == DDR2)
 +				reg = (reg & ~(0x7 <<  5)) | (2 << 5);
 +			else
 +				reg = (reg & ~(0x7 <<  5)) | (3 << 5);
  		} else if (timings->mem_clock != MEM_CLOCK_1067MT) {
  			reg = (reg & ~(0x7 << 15)) | ((9 - timings->CAS) << 15);
  			reg = (reg & ~(0xf << 10)) | ((timings->CAS - 3) << 10);
-@@ -1285,12 +1288,23 @@ static void ddr2_odt_setup(const timings_t *const timings, const int sff)
- 		reg = (reg & ~(0x7 << (48 - 32))) | ((timings->CAS - 2) << (48 - 32));
- 		reg = (reg & ~(0xf << (44 - 32))) | (8 << (44 - 32));
- 		reg = (reg & ~(0xf << (40 - 32))) | (7 << (40 - 32));
--		if (timings->mem_clock == MEM_CLOCK_667MT) {
--			reg = (reg & ~(0xf << (36 - 32))) | (8 << (36 - 32));
--			reg = (reg & ~(0xf << (32 - 32))) | (8 << (32 - 32));
-+		if (sysinfo->spd_type == DDR2) {
-+			if (timings->mem_clock == MEM_CLOCK_667MT) {
-+				reg = (reg & ~(0xf << (36 - 32))) | (8 << (36 - 32));
-+				reg = (reg & ~(0xf << (32 - 32))) | (8 << (32 - 32));
-+			} else {
-+				reg = (reg & ~(0xf << (36 - 32))) | (9 << (36 - 32));
-+				reg = (reg & ~(0xf << (32 - 32))) | (9 << (32 - 32));
-+			}
- 		} else {
--			reg = (reg & ~(0xf << (36 - 32))) | (9 << (36 - 32));
--			reg = (reg & ~(0xf << (32 - 32))) | (9 << (32 - 32));
-+			/* DDR3 */
-+			if (timings->mem_clock == MEM_CLOCK_667MT) {
-+				reg = (reg & ~(0xf << (36 - 32))) | (4 << (36 - 32));
-+				reg = (reg & ~(0xf << (32 - 32))) | (4 << (32 - 32));
-+			} else {
-+				reg = (reg & ~(0xf << (36 - 32))) | (5 << (36 - 32));
-+				reg = (reg & ~(0xf << (32 - 32))) | (5 << (32 - 32));
-+			}
- 		}
- 		mchbar_write32(CxODT_HIGH(ch), reg);
- 
-@@ -2209,83 +2223,85 @@ void raminit(sysinfo_t *const sysinfo, const int s3resume)
+@@ -2209,83 +2212,85 @@ void raminit(sysinfo_t *const sysinfo, const int s3resume)
  		raminit_write_training(timings->mem_clock, dimms, s3resume);
  	}
  
