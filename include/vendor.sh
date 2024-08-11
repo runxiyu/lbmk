@@ -11,17 +11,19 @@ vendir="vendorfiles"
 appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
 
+cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
+    CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
+    CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
+    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 \
+    CONFIG_HAVE_MRC CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB \
+    CONFIG_REFCODE_BLOB_FILE CONFIG_GBE_BIN_PATH CONFIG_IFD_BIN_PATH"
+
 eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
-    E6400_VGA_romname CONFIG_HAVE_MRC SCH5545EC_DL_url_bkup SCH5545EC_DL_hash \
+    E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest tree \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
-    CONFIG_BOARD_DELL_E6400 CONFIG_HAVE_ME_BIN archive EC_url boarddir rom \
-    CONFIG_ME_BIN_PATH CONFIG_KBC1126_FIRMWARE _dest tree CONFIG_GBE_BIN_PATH \
-    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW2_OFFSET \
-    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_KBC1126_FW1 cbdir DL_url \
-    CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_SMSC_SCH5545_EC_FW_FILE nukemode \
-    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB cbfstoolref \
-    CONFIG_REFCODE_BLOB_FILE vrelease verify _7ztest`
+    archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
+    verify _7ztest $cv`
 
 vendor_download()
 {
@@ -32,9 +34,21 @@ vendor_download()
 readkconfig()
 {
 	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
+
+	rm -f "$TMPDIR/tmpcbcfg" || $err "!rm -f \"$TMPDIR/tmpcbcfg\""
 	while read -r cbcfgfile; do
-		set +u +e; . "$cbcfgfile" 2>/dev/null; set -u -e
+		for cbc in $cv; do
+			rm -f "$TMPDIR/tmpcbcfg2" || \
+			    $err "!rm $TMPDIR/tmpcbcfg2"
+			grep "$cbc" "$cbcfgfile" 1>"$TMPDIR/tmpcbcfg2" \
+			    2>/dev/null || :
+			[ -f "$TMPDIR/tmpcbcfg2" ] || continue
+			cat "$TMPDIR/tmpcbcfg2" >> "$TMPDIR/tmpcbcfg" || \
+			    $err "!cat $TMPDIR/tmpcbcfg2"
+		done
 	done < "$TMPDIR/vendorcfg.list"
+
+	eval `setcfg "$TMPDIR/tmpcbcfg"`
 
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
