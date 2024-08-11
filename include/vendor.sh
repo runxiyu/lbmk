@@ -299,7 +299,8 @@ patch_release_roms()
 
 patch_rom()
 {
-	rom="$1"; . "$(check_defconfig "$boarddir")" 2>/dev/null || exit 0
+	rom="$1"
+	readkconfig || exit 0
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
 	    "mrc" "0xfffa0000"
