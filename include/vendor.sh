@@ -143,8 +143,9 @@ extract_intel_me()
 
 extract_archive()
 {
-	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
-	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
+	innoextract "$1" -d "$2" 2>/dev/null || python "$pfs_extract" "$1" \
+	    -e 2>/dev/null || 7z x "$1" -o"$2" 2>/dev/null || unar "$1" -o \
+	    "$2" 2>/dev/null || unzip "$1" -d "$2" 2>/dev/null || return 1
 }
 
 extract_kbc1126ec()
