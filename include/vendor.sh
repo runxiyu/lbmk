@@ -23,7 +23,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest tree \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
-    verify _7ztest ME_bootguard $cv`
+    verify _7ztest ME_bootguard IFD_platform ifdprefix $cv`
 
 vendor_download()
 {
@@ -160,7 +160,7 @@ extract_deguard_me()
 		git -C "$1/disreguard" commit -m "tmp" || \
 		    $err "!commit $1/disreguard"
 	fi
-	git -C "$1/disreguard" am config/data/deguard/appdir.patch || \
+	git -C "$1/disreguard" am "$PWD/config/data/deguard/appdir.patch" || \
 	    $err "Cannot temporarily patch deguard clone in $1/disreguard"
 	(
 	cd "$1/disreguard" || $err "Cannot cd to '$1/disreguard'"
@@ -296,6 +296,7 @@ readcfg()
 	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
+	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"
 
 	x_ ./mk -d coreboot $tree
 }
@@ -365,10 +366,11 @@ inject()
 	e "$_dest" f n && [ "$nukemode" != "nuke" ] && $err "!inject $dl_type"
 
 	if [ "$cbfsname" = "IFD" ]; then
-		[ "$nukemode" = "nuke" ] || "$ifdtool" -i $_t:$_dest "$rom" \
-		    -O "$rom" || $err "failed: inject '$_t' '$_dest' on '$rom'"
-		[ "$nukemode" != "nuke" ] || "$ifdtool" --nuke $_t "$rom" \
-		    -O "$rom" || $err "$rom: can't nuke $_t in IFD"; return 0
+		[ "$nukemode" = "nuke" ] || "$ifdtool" $ifdprefix -i \
+		    $_t:$_dest "$rom" -O "$rom" || \
+		    $err "failed: inject '$_t' '$_dest' on '$rom'"
+		[ "$nukemode" != "nuke" ] || "$ifdtool" $ifdprefix --nuke $_t \
+		    "$rom" -O "$rom" || $err "$rom: !nuke IFD/$_t"; return 0
 	elif [ "$nukemode" = "nuke" ]; then
 		"$cbfstool" "$rom" remove -n "$cbfsname" || \
 		    $err "inject $rom: can't remove $cbfsname"; return 0
@@ -388,5 +390,5 @@ modify_gbe()
 
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$TMPDIR/gbe"
 	x_ "util/nvmutil/nvm" "$TMPDIR/gbe" setmac $new_mac
-	x_ "$ifdtool" -i GbE:"$TMPDIR/gbe" "$1" -O "$1"
+	x_ "$ifdtool" $ifdprefix -i GbE:"$TMPDIR/gbe" "$1" -O "$1"
 }
