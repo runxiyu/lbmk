@@ -23,7 +23,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest tree \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
-    verify _7ztest $cv`
+    verify _7ztest ME_bootguard $cv`
 
 vendor_download()
 {
@@ -107,6 +107,14 @@ extract_intel_me()
 	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing"
 
 	_me="$PWD/$_dest"; cdir="$PWD/$appdir"
+	if [ "$ME_bootguard" = "me11disreguard" ]; then
+		# run mkukri's util to extract me.bin and disable bootguard
+		# for Dell OptiPlex 3050 Micro, using the deguard util.
+		extract_deguard_me "$cdir" "$_me"
+		return 0
+	fi
+	# All other ME setups are extracted with brute force and me_cleaner:
+
 	[ $# -gt 0 ] && _me="${1}" && cdir="$2"
 
 	e "$_me" f && return 0
@@ -139,6 +147,29 @@ extract_intel_me()
 	done
 	)
 	rm -Rf "$sdir" || $err "extract_intel_me: !rm -Rf $sdir"
+}
+
+extract_deguard_me()
+{
+	x_ ./mk -f deguard
+	cp -R src/deguard "$1/disreguard" || \
+	    $err "Cannot make temporary deguard clone in $1/disreguard"
+	if [ ! -e "$1/disreguard/.git" ]; then
+		git -C "$1/disreguard" init || $err "!init $1/disreguard"
+		git -C "$1/disreguard" add -A . || $err "!add $1/disreguard"
+		git -C "$1/disreguard" commit -m "tmp" || \
+		    $err "!commit $1/disreguard"
+	fi
+	git -C "$1/disreguard" am config/data/deguard/appdir.patch || \
+	    $err "Cannot temporarily patch deguard clone in $1/disreguard"
+	(
+	cd "$1/disreguard" || $err "Cannot cd to '$1/disreguard'"
+	x_ ./RUNME.sh
+	)
+	"$mecleaner" --whitelist MFS --truncate "$1/disreguard/me.bin" || \
+	    $err "extract_intel_me: Can't truncate disreguarded ME"
+	cp "$cdir/disreguard/me.bin" "$2" || \
+	    $err "extract_intel_me: Can't move disreguarded me.bin"
 }
 
 extract_archive()
