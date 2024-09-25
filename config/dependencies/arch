@@ -9,4 +9,4 @@ pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
 sharutils subversion swig texinfo ttf-dejavu unarchiver unzip wget xz zlib \
 "
 
-aur_notice="bdf-unifont unifont"
+aur_notice="bdf-unifont unifont cross-mipsel-linux-gnu-binutils cross-mipsel-linux-gnu-gcc"

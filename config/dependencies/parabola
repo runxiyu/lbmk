@@ -9,3 +9,5 @@ pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
 sharutils subversion swig texinfo ttf-dejavu unarchiver unifont-utils unzip \
 wget xz zlib ccache \
 "
+
+aur_notice="cross-mipsel-linux-gnu-binutils cross-mipsel-linux-gnu-gcc"
