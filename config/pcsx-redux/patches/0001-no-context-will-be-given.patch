@@ -1,0 +1,36 @@
+From 6516ecaea03845cd07732bd4ca8c32cd08ea4281 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Wed, 25 Sep 2024 23:45:56 +0100
+Subject: [PATCH 1/1] no context will be given.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ lbmkbofhmakefile | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+ create mode 100644 lbmkbofhmakefile
+
+diff --git a/lbmkbofhmakefile b/lbmkbofhmakefile
+new file mode 100644
+index 00000000..fe2e36d2
+--- /dev/null
++++ b/lbmkbofhmakefile
+@@ -0,0 +1,16 @@
++# SPDX-License-Identifier: MIT
++# SPDX-FileCopyrightText: 2024 Leah Rowe <leah@libreboot.org>
++
++# This is not the original pcsx-redux Makefile.
++# We don't need to build all of PCSX-Redux, only the Open BIOS.
++# Due to idiosyncrasies of lbmk's design, it's simpler to just hack
++# the Makefile like this.
++
++all:
++	make -C src/mips/openbios
++
++clean:
++	make -C src/mips/openbios clean
++
++distclean:
++	make -C src/mips/openbios clean
+-- 
+2.39.5
+

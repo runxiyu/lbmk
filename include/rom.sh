@@ -24,6 +24,13 @@ mkserprog()
 	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
 }
 
+copyps1bios()
+{
+	x_ rm -Rf bin/playstation
+	x_ mkdir -p bin/playstation
+	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
+}
+
 mkpayload_grub()
 {
 	eval `setvars "" grub_modules grub_install_modules`

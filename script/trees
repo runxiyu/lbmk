@@ -12,7 +12,7 @@ set -u -e
 eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    defconfig postmake mkhelpercfg dry dest_dir mdir`; badhash="n"
+    defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs`; badhash="n"
 
 main()
 {
@@ -111,7 +111,8 @@ handle_defconfig()
 configure_project()
 {
 	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
-	    tree_depend makeargs btype mkhelper bootstrapargs premake release`
+	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
+	    cleanargs`
 	_tcfg="$1/target.cfg"; badhash="n"; [ -f "$_tcfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
@@ -224,7 +225,7 @@ elfcheck()
 
 handle_makefile()
 {
-	$dry check_makefile "$srcdir" && x_ make clean -C "$srcdir"
+	$dry check_makefile "$srcdir" && x_ make -C "$srcdir" $cleanargs clean
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
 	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
 	    "$srcdir" silentoldconfig || make -C "$srcdir" oldconfig || :
@@ -236,7 +237,7 @@ handle_makefile()
 	    $dry x_ cp "$srcdir/$_copy" "$defconfig"
 
 	[ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && $dry x_ git -C "$srcdir" clean -fdx; :
+	    [ "$mode" = "distclean" ] && $dry x_ git -C "$srcdir" $cleanargs clean -fdx; :
 }
 
 run_make_command()
@@ -248,7 +249,8 @@ run_make_command()
 	$dry make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs || $err "!$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
 
-	[ "$mode" = "clean" ] && $dry make -C "$srcdir" distclean || :; :
+	[ "$mode" = "clean" ] && \
+	    $dry make -C "$srcdir" $cleanargs distclean || :; :
 }
 
 check_cmake()
@@ -280,7 +282,7 @@ copy_elf()
 {
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir" && while read -r f; do
 		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"
-	done < "$listfile"; x_ make clean -C "$srcdir"
+	done < "$listfile"; x_ make clean -C "$srcdir" $cleanargs
 }
 
 main $@ || exit 0
