@@ -91,21 +91,24 @@ fetch_submodule()
 	    "$mdir/${1##*/}/patches"
 }
 
+livepull="n"
 tmpclone()
 {
 	[ "$repofail" = "y" ] && \
-	    printf "Cached clone failed; trying online.\n" 1>&2; repofail="n"
+	    printf "Cached clone failed; trying online.\n" 1>&2 && livepull="y"
+
+	repofail="n"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
 	mkdir -p "$XBMK_CACHE/repo" || $err "!rmdir $XBMK_CACHE/repo"
 
-	if [ -d "$repodir" ] && [ $# -lt 6 ]; then
-		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
-		    || sleep 3 || git -C "$repodir" pull || :
-	else
+	if [ "$livepull" = "y" ]; then
 		git clone $1 "$repodir" || git clone $2 "$repodir" || \
 		    $err "!clone $1 $2 $repodir $4 $5"
+	elif [ -d "$repodir" ] && [ $# -lt 6 ]; then
+		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
+		    || sleep 3 || git -C "$repodir" pull || :
 	fi
 	(
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || $err "!clone $repodir $3"
