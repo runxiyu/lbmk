@@ -103,9 +103,9 @@ tmpclone()
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
 	mkdir -p "$XBMK_CACHE/repo" || $err "!rmdir $XBMK_CACHE/repo"
 
-	if [ "$livepull" = "y" ]; then
+	if [ "$livepull" = "y" ] && [ ! -d "$repodir" ]; then
 		git clone $1 "$repodir" || git clone $2 "$repodir" || \
-		    $err "!clone $1 $2 $repodir $4 $5"
+		    $err "!clone $1 $2 $repodir $4 $5" #
 	elif [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
 		    || sleep 3 || git -C "$repodir" pull || :
