@@ -135,7 +135,8 @@ add_seabios()
 
 	[ "$payload_grub" = "y" ] && add_grub
 
-	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
+	[ "$seabiosname" = "fallback/payload" ] && cprom
+	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
 add_grub()
@@ -149,6 +150,7 @@ add_grub()
 
 mkseagrub()
 {
+	[ "$grubname" = "fallback/payload" ] && pname="grub"
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	for keymap in config/data/grub/keymap/*.gkb; do
 		[ -f "$keymap" ] && cprom "${keymap##*/}"; :
