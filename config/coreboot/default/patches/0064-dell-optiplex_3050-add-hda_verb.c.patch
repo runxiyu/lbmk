@@ -1,0 +1,139 @@
+From 6731fef7759f4c67a6d0e85d16de9d99302c9b49 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Sun, 6 Oct 2024 17:25:27 +0100
+Subject: [PATCH 1/1] dell/optiplex_3050: add hda_verb.c
+
+Configured for the line jack at the front of the machine.
+
+Based on dumps from the vendor BIOS.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/mainboard/dell/optiplex_3050/Kconfig     |  1 +
+ src/mainboard/dell/optiplex_3050/Makefile.mk |  2 +
+ src/mainboard/dell/optiplex_3050/hda_verb.c  | 90 ++++++++++++++++++++
+ 3 files changed, 93 insertions(+)
+ create mode 100644 src/mainboard/dell/optiplex_3050/hda_verb.c
+
+diff --git a/src/mainboard/dell/optiplex_3050/Kconfig b/src/mainboard/dell/optiplex_3050/Kconfig
+index 763acda0b2..777e29745a 100644
+--- a/src/mainboard/dell/optiplex_3050/Kconfig
++++ b/src/mainboard/dell/optiplex_3050/Kconfig
+@@ -18,6 +18,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SKYLAKE_SOC_PCH_H
+ 	select SOC_INTEL_KABYLAKE
+ 	select SUPERIO_SMSC_SCH555x
++	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+ 
+ config CBFS_SIZE
+ 	default 0x900000
+diff --git a/src/mainboard/dell/optiplex_3050/Makefile.mk b/src/mainboard/dell/optiplex_3050/Makefile.mk
+index c078124332..1e2626967a 100644
+--- a/src/mainboard/dell/optiplex_3050/Makefile.mk
++++ b/src/mainboard/dell/optiplex_3050/Makefile.mk
+@@ -6,4 +6,6 @@ bootblock-y += sch5555_ec.c
+ romstage-y += romstage.c
+ 
+ ramstage-y += ramstage.c
++ramstage-y += hda_verb.c
++
+ ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
+diff --git a/src/mainboard/dell/optiplex_3050/hda_verb.c b/src/mainboard/dell/optiplex_3050/hda_verb.c
+new file mode 100644
+index 0000000000..621e4f7a52
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3050/hda_verb.c
+@@ -0,0 +1,90 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++	/* coreboot specific header, codec 0 */
++	0x10ec0255, /* Realtek ALC3234 */
++	0x102807a3, /* Subsystem ID */
++	11,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(0, 0x102807a3),
++
++	AZALIA_PIN_CFG(0, 0x12, 0x40000000), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x14, AZALIA_PIN_DESC(
++		AZALIA_INTEGRATED,
++		AZALIA_INTERNAL,
++		AZALIA_SPEAKER,
++		AZALIA_OTHER_ANALOG,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_NO_JACK_PRESENCE_DETECT,
++		5, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x17, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1b, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_LINE_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		2, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x1d, 0x4054c029), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x21, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_HP_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		5, 15
++	)),
++
++	/* coreboot specific header, codec 2 */
++	0x80862809, /* Intel Skylake HDMI */
++	0x80860101, /* Subsystem ID */
++	4,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(2, 0x80860101),
++
++	AZALIA_PIN_CFG(2, 0x05, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x06, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x07, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++};
++
++const u32 pc_beep_verbs[] = {};
++
++AZALIA_ARRAY_SIZES;
+-- 
+2.39.5
+
