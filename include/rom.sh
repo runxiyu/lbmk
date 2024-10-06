@@ -118,9 +118,10 @@ mkcorebootbin()
 
 add_seabios()
 {
+	[ -n "$seabiosname" ] || seabiosname="fallback/payload"
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 
-	cbfs "$tmprom" "$_seabioself" "fallback/payload"
+	cbfs "$tmprom" "$_seabioself" "$seabiosname"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	_z="2"; [ "$initmode" = "vgarom" ] && _z="0"
@@ -139,7 +140,8 @@ add_seabios()
 
 add_grub()
 {
-	cbfs "$tmprom" "$grubelf" "img/grub2"
+	[ -n "$grubname" ] || grubname="img/grub2"
+	cbfs "$tmprom" "$grubelf" "$grubname"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
 	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
