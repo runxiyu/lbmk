@@ -1,0 +1,74 @@
+From bfce6c7e9464daa2756e34678d27e38946162132 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Sun, 6 Oct 2024 23:48:05 +0100
+Subject: [PATCH 1/1] dell/optiplex_3050: Add data.vbt
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/mainboard/dell/optiplex_3050/Kconfig  |   5 +++++
+ src/mainboard/dell/optiplex_3050/data.vbt | Bin 0 -> 4300 bytes
+ 2 files changed, 5 insertions(+)
+ create mode 100644 src/mainboard/dell/optiplex_3050/data.vbt
+
+diff --git a/src/mainboard/dell/optiplex_3050/Kconfig b/src/mainboard/dell/optiplex_3050/Kconfig
+index 777e29745a..c978626d55 100644
+--- a/src/mainboard/dell/optiplex_3050/Kconfig
++++ b/src/mainboard/dell/optiplex_3050/Kconfig
+@@ -19,6 +19,8 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SOC_INTEL_KABYLAKE
+ 	select SUPERIO_SMSC_SCH555x
+ 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
++	select INTEL_GMA_HAVE_VBT
++	select INTEL_GMA_ADD_VBT
+ 
+ config CBFS_SIZE
+ 	default 0x900000
+@@ -29,6 +31,9 @@ config MAINBOARD_DIR
+ config MAINBOARD_PART_NUMBER
+ 	default "OptiPlex 3050 Micro"
+ 
++config INTEL_GMA_VBT_FILE
++	default "src/mainboard/\$(MAINBOARDDIR)/data.vbt"
++
+ config DIMM_SPD_SIZE
+ 	default 512	# DDR4
+ 
+diff --git a/src/mainboard/dell/optiplex_3050/data.vbt b/src/mainboard/dell/optiplex_3050/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..6dc40cd99563bcd957ec2a9c4567e3b21e5d1d1f
+GIT binary patch
+literal 4300
+zcmeHJZ)_A*5TD(>zi)T1ds~!pU>y<RuF$e~N-bJsuXmJ|7P*63&uGGx+#w{DmbQ?B
+ze^_HpNECA))Sw}xiC;|p(!}^ljU+}T!9QpeKH4uPN;EMM;}_tZeY@?IBiNH@l!V#L
+zn>X`jfBW9Nd2eS$e@7qg=y|L+*|P~<Du4l>Ybk24rH<}xJ9eg%eaW32z1vbf_%+-P
+zC$uXU01ASzM2Q>g;@$hkii6SZG3@E+#eVw*w9N;N1g6_?YiB3s;_)?@>DbVf-r9}P
+zO`Vx|jP%robSBQ#gsrAYO>p&IQpqWSxVK|yXmkvV`v!Im77N$TZXru*X!y{`-Y55r
+zVKf!Pgkc!X2_qgyK4nY|jSRP7a&Qp0+diYXy*OGNIan;Ts7z%5ry$@FKoGo8XMq5h
+z6OcC{V?x>l17U>+7I|RUgn|iuCftWGW>(Kf196=odH`0=A3;(GULp|y6Ks_T0R#_x
+zlLt);9A0GWnQsLE?*|8{0RgE`gv2JC<6bXwubJ}!0Qv+3{3xJE9q#3H2<s&G0tf>5
+z>@mL~p#5nF3*pl}^hKC<v1C31Ae!^M&^2;#l`=O_ZLQWF$7*Y}Uh$G>xt9(*`c-X6
+zFkpAE5jIOv7?VVJPHKbYp3@KrBCHN-@DOp9_>7mqcf{Wl|3v&7@nvGak3pDtDe*nT
+zYl+trr--)_KT146>^lIL%Ay5+{&h=mW!RCRdEk{8SSMWj3D+L{)!qr(URTPl<i;AB
+za@p^PE9Ea6pj-}YuxDTr0>wf|yGUKG?B!CDGOpf7(oT__tC!2cJgEtK{*6}R$n1=r
+z$PSguH+xU1hb?rHq(J+G2P}V^ryazPkEs%j0}In3b4gctpl8)ZC&3qS6o31yv0DC@
+zBN6*5So*Vg*3aOq|DtfT{{PvtW2P<e%*HkB(yV?<-ipBd2rTP@b3v<wGk0i#{Bmcc
+z@y0B7K0!Gt2Iyi?fd2i^HUB$v{Q!tv^fz~$94j}a>75FZ$;1Eo6%!)V*$4D5C>nt}
+z7_D}&ricJyuY&X-!vUs`GWIOPx0wDOV;?d6f$4uRCdjx-*4N7{CF5RMe_CcQ%J`0~
+ze<-uhWc)?e%Q6cpxK`1V3hPmDzoNgOuwx3otLUF7>?;L-S9HJ1!Ybac>fI{aq2eJ`
+ze@SJpsrbICf1$GTDqdFgx)56u!i^z48)A=#)F$0)i8F!~4)H=KFrv`ilM@v#FA5q-
+zZ`~^T%U!!Etw*TnvRA91loJ<5n5;vH=aymAq8i4g#?~Vu@R%z0b-pk{VF{Q?SZOpI
+zZFLYDT8~J)KBGPNg2zT^r<&>dt1z12coq!P7_N5^Xb$wE-B-rFk(v<3F&oiLZ61P9
+z^8O8kx7Uu(WFsrh-0{jBgc7g$6w^0d!yLLcn#Qi_glV3tAo!dLNa^?163N|n^-pD?
+z(daC>dtpbi#Q&W%m0IHPOiO7pA89lVboYWH=_yh1N|ChuwX7oAZcPqP-%SWj_FFt3
+zyd_?zD3jia8uH=I*yP#l#Bw9^#^N~y33zEtk*o#5XfjXdCkjSG)~N^WoRlb;h;B3|
+zIfCjSc(I06T!_GA1{WKOk*chsMCXx5vW@41o#fZgYViT9VSih*nQN}>g+zCejX>9!
+zZ{c$hGa+w5eO}YT_FH@}B)U(Dl-|zF&dk8R;^4yrPZe)YrI^k%j}0~VZ%*1PT98&h
+z556thD#%T3IZc)NKi{(4RJn@8Dq3?JywFKA?WW585y(IR)(Ee|k5bDtz|lFnDY}0G
+Ds8qe3
+
+literal 0
+HcmV?d00001
+
+-- 
+2.39.5
+
