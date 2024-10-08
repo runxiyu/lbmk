@@ -29,6 +29,15 @@ copyps1bios()
 	x_ rm -Rf bin/playstation
 	x_ mkdir -p bin/playstation
 	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
+
+	printf "MIT License\n\nCopyright (c) 2019-2024 PCSX-Redux authors\n\n" \
+	    > bin/playstation/COPYING.txt || $err "!pcsx-redux copyright"
+	cat config/snippet/mit >>bin/playstation/COPYING.txt || $err "!pcsx MIT"
+
+	if [ -e "src/pcsx-redux/.git" ]; then
+		git -C src/pcsx-redux/src/mips/openbios shortlog -sne > \
+		    bin/playstation/AUTHORS.txt || $err "!pcsx-redux authors"
+	fi
 }
 
 mkpayload_grub()
