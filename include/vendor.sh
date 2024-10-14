@@ -165,7 +165,7 @@ extract_deguard_me()
 	(
 	cd "$1/disreguard" || $err "Cannot cd to '$1/disreguard'"
 	x_ ./RUNME.sh
-	)
+	) || $err "$1/disreguard: RUNME.sh returned error status"
 	"$mecleaner" --whitelist MFS --truncate "$1/disreguard/me.bin" || \
 	    $err "extract_intel_me: Can't truncate disreguarded ME"
 	cp "$cdir/disreguard/me.bin" "$2" || \
