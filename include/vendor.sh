@@ -390,5 +390,6 @@ modify_gbe()
 
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$TMPDIR/gbe"
 	x_ "util/nvmutil/nvm" "$TMPDIR/gbe" setmac $new_mac
-	x_ "$ifdtool" $ifdprefix -i GbE:"$TMPDIR/gbe" "$1" -O "$1"
+	"$ifdtool" $ifdprefix -i GbE:"$TMPDIR/gbe" "$1" -O "$1" || \
+	    $err "Cannot insert modified GbE region into target image."
 }
