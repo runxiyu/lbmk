@@ -1,7 +1,7 @@
-From 0001039f5ea6be6700a453f511069be2ce1b4e7e Mon Sep 17 00:00:00 2001
+From e91b308fe5848b14cabbd29be4af60e3a9b7938d Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 17:22:07 +0200
-Subject: [PATCH 03/17] haswell NRI: Configure initial MC settings
+Subject: [PATCH 45/65] haswell NRI: Configure initial MC settings
 
 Program initial memory controller settings. Many of these values will be
 adjusted later during training.
@@ -1590,5 +1590,5 @@ index 45f8174995..4c3f399b5d 100644
  #define HDAUDRID		0x6008
  #define UMAGFXCTL		0x6020
 -- 
-2.39.2
+2.39.5
 

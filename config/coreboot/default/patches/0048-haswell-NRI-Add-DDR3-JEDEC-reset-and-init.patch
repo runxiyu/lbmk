@@ -1,7 +1,7 @@
-From eb8150a07c472078ad37887de13a166e6cf8bdad Mon Sep 17 00:00:00 2001
+From cc302630662eee011a903df4fd7a36d82bd22203 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 21:49:40 +0200
-Subject: [PATCH 06/17] haswell NRI: Add DDR3 JEDEC reset and init
+Subject: [PATCH 48/65] haswell NRI: Add DDR3 JEDEC reset and init
 
 Implement JEDEC reset and init sequence for DDR3. The MRS commands are
 issued through the REUT (Robust Electrical Unified Testing) hardware.
@@ -1032,5 +1032,5 @@ index 07f4b9dc16..5b3696347c 100644
  #define PMSYNC_CONFIG2	0x33cc	/* 32bit */
  #define SOFT_RESET_CTRL 0x38f4
 -- 
-2.39.2
+2.39.5
 

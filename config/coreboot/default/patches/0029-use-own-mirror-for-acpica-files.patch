@@ -1,7 +1,7 @@
-From 5c385ef4b4424ed8c37e549a00866edda960563f Mon Sep 17 00:00:00 2001
+From 5b425149a2ba0d1c044c32f5e16ba4d4e59796a8 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Wed, 31 Jul 2024 00:03:02 +0100
-Subject: [PATCH 29/39] use own mirror for acpica files
+Subject: [PATCH 29/65] use own mirror for acpica files
 
 intel likes to break links for no reason,
 so we host our own backups of acpica.
@@ -25,5 +25,5 @@ index ad756652ed..5faff337b4 100755
  LLVM_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
  CLANG_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
 -- 
-2.39.2
+2.39.5
 

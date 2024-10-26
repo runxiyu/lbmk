@@ -1,7 +1,7 @@
-From 7e921212d3113320b2d28e66cd6a6788533fcab7 Mon Sep 17 00:00:00 2001
+From 726d0001bda013a094779149828e2bc1be581fa8 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 3 May 2024 11:03:32 -0600
-Subject: [PATCH 37/39] ec/dell/mec5035: Add S3 suspend SMI handler
+Subject: [PATCH 37/65] ec/dell/mec5035: Add S3 suspend SMI handler
 
 Change-Id: I655868aba46911d128f6c24f410dc6fdf83f3070
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -113,5 +113,5 @@ index 0000000000..1db834773d
 +	}
 +}
 -- 
-2.39.2
+2.39.5
 

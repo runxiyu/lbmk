@@ -1,7 +1,7 @@
-From 892b6244c27590cbf1d82125340c57273e42b911 Mon Sep 17 00:00:00 2001
+From e4509a2d3204d8798cc48be37f33e43d07ff5e3b Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sat, 19 Aug 2023 16:19:10 -0600
-Subject: [PATCH 18/39] mb/dell: Add Latitude E6530 (Ivy Bridge)
+Subject: [PATCH 18/65] mb/dell: Add Latitude E6530 (Ivy Bridge)
 
 Mainboard is QALA0/LA-7761P (UMA). The version with a Nvidia dGPU was
 not tested. I do not physically have this system; someone with physical
@@ -426,5 +426,5 @@ index 0000000000..8b9c82fba4
 +	end
 +end
 -- 
-2.39.2
+2.39.5
 

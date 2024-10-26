@@ -1,7 +1,7 @@
-From 5ea55ac3f02a8a10f05e84ab9fbace424194869f Mon Sep 17 00:00:00 2001
+From 78b25eb96baef7da2f5481572a6df2b88ee2b3d4 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:11:29 +0200
-Subject: [PATCH 08/17] haswell NRI: Add REUT I/O test library
+Subject: [PATCH 50/65] haswell NRI: Add REUT I/O test library
 
 Implement a library to run I/O tests using the REUT hardware.
 
@@ -1126,5 +1126,5 @@ index f8408e51a0..817a9f8bf8 100644
  #define MCSCHEDS_CBIT		0x4c20
  
 -- 
-2.39.2
+2.39.5
 

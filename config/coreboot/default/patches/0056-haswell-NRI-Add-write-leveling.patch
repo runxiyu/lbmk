@@ -1,7 +1,7 @@
-From ce0ed94f993506e75b711c214b49ba480037e7d3 Mon Sep 17 00:00:00 2001
+From e8f50deac2a671f7ec3958b376c37dd6b9bad5bd Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 12:56:04 +0200
-Subject: [PATCH 14/17] haswell NRI: Add write leveling
+Subject: [PATCH 56/65] haswell NRI: Add write leveling
 
 Implement JEDEC write leveling, which is done in two steps. The first
 step uses the JEDEC procedure to do "fine" write leveling, i.e. align
@@ -685,5 +685,5 @@ index 6a31d3a32c..7c0b5a49de 100644
  #define REUT_ch_MISC_ODT_CTRL(ch)		_MCMAIN_C(0x4194, ch)
  #define REUT_ch_MISC_PAT_CADB_CTRL(ch)		_MCMAIN_C(0x4198, ch)
 -- 
-2.39.2
+2.39.5
 

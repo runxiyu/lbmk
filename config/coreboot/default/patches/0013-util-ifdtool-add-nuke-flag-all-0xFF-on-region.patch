@@ -1,7 +1,7 @@
-From 70cf6905b54d39285025373dae1c897c9c727f83 Mon Sep 17 00:00:00 2001
+From 851aa297808a4776634df5817cae54c226b4d750 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
-Subject: [PATCH 13/39] util/ifdtool: add --nuke flag (all 0xFF on region)
+Subject: [PATCH 13/65] util/ifdtool: add --nuke flag (all 0xFF on region)
 
 When this option is used, the region's contents are overwritten
 with all ones (0xFF).
@@ -201,5 +201,5 @@ index 32b2081d93..1473cf058b 100644
  		struct fpsba *fpsba = find_fpsba(image, size);
  		struct fmsba *fmsba = find_fmsba(image, size);
 -- 
-2.39.2
+2.39.5
 

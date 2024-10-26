@@ -1,7 +1,7 @@
-From 36ec2cfa730ba720ef7ded21cc3e84c47f4e2623 Mon Sep 17 00:00:00 2001
+From dbf0fc28bbb939fe5a90c991b752f790828d462d Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 11:58:59 +0200
-Subject: [PATCH 12/17] haswell NRI: Add function to change margins
+Subject: [PATCH 54/65] haswell NRI: Add function to change margins
 
 Implement a function to change margin parameters. Haswell provides a
 register to apply an offset to margin parameters during training, so
@@ -268,5 +268,5 @@ index 9172d4f2b0..0acafbc826 100644
  
  /* DDR CKE per-channel */
 -- 
-2.39.2
+2.39.5
 

@@ -1,7 +1,7 @@
-From 0826d1e9ba50daad13c3d5adccba4b180c82296b Mon Sep 17 00:00:00 2001
+From d3cd9ccb7d2eed7ecd5bcdc33d73a5e28b029dba Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 00:05:41 +0200
-Subject: [PATCH 11/17] haswell NRI: Add RcvEn training
+Subject: [PATCH 53/65] haswell NRI: Add RcvEn training
 
 Implement the RcvEn (Receive Enable) calibration procedure.
 
@@ -704,5 +704,5 @@ index a81559bb1e..9172d4f2b0 100644
  #define REUT_ch_PAT_WDB_CL_MUX_CFG(ch)		_MCMAIN_C(0x4040, ch)
  
 -- 
-2.39.2
+2.39.5
 

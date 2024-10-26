@@ -1,7 +1,7 @@
-From eef3e0d517bde40d4761a9af3c004801a89db887 Mon Sep 17 00:00:00 2001
+From 0ad294f2da8085d5612f7940ec8601d979cb2421 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 2 Mar 2024 22:51:09 +0000
-Subject: [PATCH 34/39] nb/intel/haswell: make IOMMU a runtime option
+Subject: [PATCH 34/65] nb/intel/haswell: make IOMMU a runtime option
 
 When I tested graphics cards on a coreboot port for Dell
 OptiPlex 9020 SFF, I could not use a graphics card unless
@@ -288,5 +288,5 @@ index e47deb5da6..1a7e0b1076 100644
  	if (capid0_a & VTD_DISABLE)
  		return;
 -- 
-2.39.2
+2.39.5
 

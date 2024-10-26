@@ -1,7 +1,7 @@
-From 1111dcab65ca83f175f1bb9c0496cae24fbfb7c2 Mon Sep 17 00:00:00 2001
+From 73313e682ba8808f8db6259ac7d93f54c11cb884 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Wed, 31 Jan 2024 22:07:25 -0700
-Subject: [PATCH 21/39] mb/dell: Add Latitude E6520 (Sandy Bridge)
+Subject: [PATCH 21/65] mb/dell: Add Latitude E6520 (Sandy Bridge)
 
 Mainboard is PAL60/LA-6562P (UMA). The version with an Nvidia dGPU was
 not tested. I do not physically have this system; someone with physical
@@ -445,5 +445,5 @@ index 0000000000..f90f2dee1f
 +	end
 +end
 -- 
-2.39.2
+2.39.5
 

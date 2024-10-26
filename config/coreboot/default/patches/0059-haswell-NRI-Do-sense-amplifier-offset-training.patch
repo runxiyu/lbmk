@@ -1,7 +1,7 @@
-From 8528c7aa2a3cfcf0fe494a515a2e531ff0f1dab8 Mon Sep 17 00:00:00 2001
+From c22e06a8ef87f74cc9955ffc259e7052742269c4 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Wed, 17 Apr 2024 13:20:32 +0200
-Subject: [PATCH 17/17] haswell NRI: Do sense amplifier offset training
+Subject: [PATCH 59/65] haswell NRI: Do sense amplifier offset training
 
 Quoting Wikipedia:
 
@@ -472,5 +472,5 @@ index 49a215aa71..1a168a3fc8 100644
  
  #define DQ_CONTROL_1(ch, byte)			_DDRIO_C_R_B(0x0060, ch, 0, byte)
 -- 
-2.39.2
+2.39.5
 

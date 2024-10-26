@@ -1,7 +1,7 @@
-From bfce6c7e9464daa2756e34678d27e38946162132 Mon Sep 17 00:00:00 2001
+From 60de0b27075ef9cc8339896e769e4231a43ceeea Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 6 Oct 2024 23:48:05 +0100
-Subject: [PATCH 1/1] dell/optiplex_3050: Add data.vbt
+Subject: [PATCH 65/65] dell/optiplex_3050: Add data.vbt
 
 Signed-off-by: Leah Rowe <info@minifree.org>
 ---
@@ -11,10 +11,10 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  create mode 100644 src/mainboard/dell/optiplex_3050/data.vbt
 
 diff --git a/src/mainboard/dell/optiplex_3050/Kconfig b/src/mainboard/dell/optiplex_3050/Kconfig
-index 777e29745a..c978626d55 100644
+index eab6034158..523a160ae3 100644
 --- a/src/mainboard/dell/optiplex_3050/Kconfig
 +++ b/src/mainboard/dell/optiplex_3050/Kconfig
-@@ -19,6 +19,8 @@ config BOARD_SPECIFIC_OPTIONS
+@@ -17,6 +17,8 @@ config BOARD_SPECIFIC_OPTIONS
  	select SOC_INTEL_KABYLAKE
  	select SUPERIO_SMSC_SCH555x
  	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
@@ -23,7 +23,7 @@ index 777e29745a..c978626d55 100644
  
  config CBFS_SIZE
  	default 0x900000
-@@ -29,6 +31,9 @@ config MAINBOARD_DIR
+@@ -27,6 +29,9 @@ config MAINBOARD_DIR
  config MAINBOARD_PART_NUMBER
  	default "OptiPlex 3050 Micro"
  

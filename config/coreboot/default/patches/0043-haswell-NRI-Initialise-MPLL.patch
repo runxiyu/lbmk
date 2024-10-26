@@ -1,7 +1,7 @@
-From 8b584165a99c69cc808f86efcdd55acb06a4464c Mon Sep 17 00:00:00 2001
+From ab36967cce0593dd17f3018ab4a6661e4219d242 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Thu, 11 Apr 2024 17:25:07 +0200
-Subject: [PATCH 01/17] haswell NRI: Initialise MPLL
+Subject: [PATCH 43/65] haswell NRI: Initialise MPLL
 
 Add code to initialise the MPLL (Memory PLL). The procedure is similar
 to the one for Sandy/Ivy Bridge, but it is not worth factoring out.
@@ -344,5 +344,5 @@ index 5610e7089a..45f8174995 100644
  #define SAPMCTL			0x5f00
  
 -- 
-2.39.2
+2.39.5
 

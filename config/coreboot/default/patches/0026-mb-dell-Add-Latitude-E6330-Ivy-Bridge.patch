@@ -1,7 +1,7 @@
-From 87e6f8bf38c5dcb4075d0df32507bf9151338b92 Mon Sep 17 00:00:00 2001
+From 48347cf8bc52db7a454a7be8cbc6f9d9eb67b8b0 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 8 Mar 2024 09:33:03 -0700
-Subject: [PATCH 26/39] mb/dell: Add Latitude E6330 (Ivy Bridge)
+Subject: [PATCH 26/65] mb/dell: Add Latitude E6330 (Ivy Bridge)
 
 Mainboard is QAL70/LA-7741P. I do not physically have this system;
 someone with physical access to one sent me the output of autoport which
@@ -432,5 +432,5 @@ index 0000000000..4125159367
 +	end
 +end
 -- 
-2.39.2
+2.39.5
 

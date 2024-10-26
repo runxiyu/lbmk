@@ -1,7 +1,7 @@
-From 919cbfa034db5d2ef9e56dd71ef329c38c5ede3c Mon Sep 17 00:00:00 2001
+From b24c5caf5a8f63555d3b71e7a786c822a4c262cc Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 4 May 2024 02:00:53 +0100
-Subject: [PATCH 39/39] nb/haswell: lock policy regs when disabling IOMMU
+Subject: [PATCH 39/65] nb/haswell: lock policy regs when disabling IOMMU
 
 Angel Pons told me I should do it. See comments here:
 https://review.coreboot.org/c/coreboot/+/81016
@@ -51,5 +51,5 @@ index 1a7e0b1076..e9506ee830 100644
  	/* Set L3HIT2PEND_DIS, lock GFXVTBAR policy config registers */
  	u32 reg32;
 -- 
-2.39.2
+2.39.5
 

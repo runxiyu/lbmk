@@ -1,7 +1,7 @@
-From f8c8ab28f22c90e4104b272cb33c890d6fa1e940 Mon Sep 17 00:00:00 2001
+From bc9836ac2708687dfe43656adba2833493fa4199 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Thu, 26 Sep 2024 19:51:25 -0600
-Subject: [PATCH 63/63] mb/dell/gm45_latitudes: Add E4300 variant
+Subject: [PATCH 63/65] mb/dell/gm45_latitudes: Add E4300 variant
 
 Change-Id: I0f2059501b11be103187e3ce1a7c04ab85ae63d2
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -328,5 +328,5 @@ index 0000000000..20dfa245fb
 +	end
 +end
 -- 
-2.46.1
+2.39.5
 

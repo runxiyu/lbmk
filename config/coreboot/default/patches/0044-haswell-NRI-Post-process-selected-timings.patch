@@ -1,7 +1,7 @@
-From adde2e8d038b2d07ab7287eedab5888d92a56a60 Mon Sep 17 00:00:00 2001
+From 876011559681881d950ad3b6742b40322f1f5a6d Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 16:29:55 +0200
-Subject: [PATCH 02/17] haswell NRI: Post-process selected timings
+Subject: [PATCH 44/65] haswell NRI: Post-process selected timings
 
 Once the MPLL has been initialised, convert the timings from the SPD to
 be in DCLKs, which is what the hardware expects. In addition, calculate
@@ -245,5 +245,5 @@ index eff993800b..4f7fe46494 100644
 +	return RAMINIT_STATUS_SUCCESS;
 +}
 -- 
-2.39.2
+2.39.5
 

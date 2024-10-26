@@ -1,7 +1,7 @@
-From 406e474c7f9f83dc10c7c0fa7cd9765ae822ad4e Mon Sep 17 00:00:00 2001
+From 70d7333e1e0c2b0ce0f2a7e4c4c3ac5c1aca2094 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 21:24:50 +0200
-Subject: [PATCH 05/17] haswell NRI: Program memory map
+Subject: [PATCH 47/65] haswell NRI: Program memory map
 
 This is very similar to Sandy/Ivy Bridge, except that there's several
 registers to program in GDXCBAR. One of these GDXCBAR registers has a
@@ -259,5 +259,5 @@ index 1ee0ab2890..0228cf6bb9 100644
  #define PAM0		0x80
  #define PAM1		0x81
 -- 
-2.39.2
+2.39.5
 

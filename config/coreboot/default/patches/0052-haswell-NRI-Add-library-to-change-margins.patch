@@ -1,7 +1,7 @@
-From 66db8447d6cf724c4b25618c94d5a53d501f214e Mon Sep 17 00:00:00 2001
+From f6d7bd420640a9ccb137113d69b97bc13fe6b0da Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 01:11:03 +0200
-Subject: [PATCH 10/17] haswell NRI: Add library to change margins
+Subject: [PATCH 52/65] haswell NRI: Add library to change margins
 
 Implement a library to change Rx/Tx margins. It will be expanded later.
 
@@ -290,5 +290,5 @@ index 817a9f8bf8..a81559bb1e 100644
  
  #define REUT_ch_SEQ_ADDR_INC_CTL(ch)		(0x4910 + 8 * (ch))
 -- 
-2.39.2
+2.39.5
 

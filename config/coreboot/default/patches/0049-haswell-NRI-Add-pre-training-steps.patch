@@ -1,7 +1,7 @@
-From 19890277e3a0d411b016efbe1b54e511d4f36c0d Mon Sep 17 00:00:00 2001
+From 0f160dee563155e93422fc77c53251419043d4dc Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 23:12:18 +0200
-Subject: [PATCH 07/17] haswell NRI: Add pre-training steps
+Subject: [PATCH 49/65] haswell NRI: Add pre-training steps
 
 Implement pre-training steps, which consist of enabling ECC I/O and
 filling the WDB (Write Data Buffer, stores test patterns) through a
@@ -388,5 +388,5 @@ index 4fc78a7f43..f8408e51a0 100644
  
  #define REUT_ch_SEQ_CFG(ch)			(0x48a8 + 8 * (ch))
 -- 
-2.39.2
+2.39.5
 

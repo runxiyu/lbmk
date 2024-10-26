@@ -1,7 +1,7 @@
-From 87015f060aa208f37481deef460b3545ce2d757f Mon Sep 17 00:00:00 2001
+From 0a557e3d09a9a53bb085c43e6bdb99fa4cd78b85 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 11:35:49 +0200
-Subject: [PATCH 13/17] haswell NRI: Add read MPR training
+Subject: [PATCH 55/65] haswell NRI: Add read MPR training
 
 Implement read training using DDR3 MPR (Multi-Purpose Register).
 
@@ -328,5 +328,5 @@ index 0acafbc826..6a31d3a32c 100644
  #define REUT_ch_PAT_CADB_MRS(ch)		_MCMAIN_C(0x419c, ch)
  #define REUT_ch_PAT_CADB_MUX_CTRL(ch)		_MCMAIN_C(0x41a0, ch)
 -- 
-2.39.2
+2.39.5
 

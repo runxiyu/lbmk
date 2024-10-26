@@ -1,7 +1,7 @@
-From e60ec1c7304e3f167fd2bf762f28b7eacd0b169a Mon Sep 17 00:00:00 2001
+From 2533ed49003c470a8dbfbf17f6c6a5ef0672c2e2 Mon Sep 17 00:00:00 2001
 From: Vitali64 <5405891-vitali64yt@users.noreply.gitlab.com>
 Date: Wed, 27 Oct 2021 13:36:01 +0200
-Subject: [PATCH 02/39] add c3 and clockgen to apple/macbook21
+Subject: [PATCH 02/65] add c3 and clockgen to apple/macbook21
 
 ---
  src/mainboard/apple/macbook21/Kconfig       |  1 +
@@ -64,5 +64,5 @@ index fd86e939b9..263fbabcd1 100644
  	end
  end
 -- 
-2.39.2
+2.39.5
 

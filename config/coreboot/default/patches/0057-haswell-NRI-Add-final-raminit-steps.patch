@@ -1,7 +1,7 @@
-From e30c9c431ef11d87c6f46071ec43cc34391b8349 Mon Sep 17 00:00:00 2001
+From 990ee284d48b66f06adb6c43a96439f7628390f5 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sun, 8 May 2022 14:29:05 +0200
-Subject: [PATCH 15/17] haswell NRI: Add final raminit steps
+Subject: [PATCH 57/65] haswell NRI: Add final raminit steps
 
 Implement the remaining raminit steps. Although many training steps are
 missing, this is enough to boot on the Asrock B85M Pro4.
@@ -566,5 +566,5 @@ index 7c0b5a49de..49a215aa71 100644
  #define RCOMP_TIMER		0x5084
  
 -- 
-2.39.2
+2.39.5
 

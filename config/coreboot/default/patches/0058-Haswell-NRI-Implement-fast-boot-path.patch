@@ -1,7 +1,7 @@
-From 50c9d184cc89cd718c1cb95e1a3cabed24e09e1e Mon Sep 17 00:00:00 2001
+From 63e9aa1f998ebd41b4c638fa66bdb1a6272a9e85 Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 13 Apr 2024 01:16:30 +0200
-Subject: [PATCH 16/17] Haswell NRI: Implement fast boot path
+Subject: [PATCH 58/65] Haswell NRI: Implement fast boot path
 
 When the memory configuration hasn't changed, there is no need to do
 full memory training. Instead, boot firmware can use saved training
@@ -718,5 +718,5 @@ index 0000000000..f1f50e3ff8
 +	return RAMINIT_STATUS_SUCCESS;
 +}
 -- 
-2.39.2
+2.39.5
 

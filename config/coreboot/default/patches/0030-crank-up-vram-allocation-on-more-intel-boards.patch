@@ -1,7 +1,7 @@
-From c1065a638f2af40d8ef2c8586074bb82b96c02db Mon Sep 17 00:00:00 2001
+From 253f8eeb895e50b3394b58268594acf9e9596bd2 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 31 Oct 2023 18:24:39 +0000
-Subject: [PATCH 30/39] crank up vram allocation on more intel boards
+Subject: [PATCH 30/65] crank up vram allocation on more intel boards
 
 these were added to libreboot, and it's a policy of
 libreboot to max out the vram settings. this was
@@ -138,5 +138,5 @@ index b318ab9772..82292ea5d6 100644
  me_state=Disabled
 +gfx_uma_size=224M
 -- 
-2.39.2
+2.39.5
 

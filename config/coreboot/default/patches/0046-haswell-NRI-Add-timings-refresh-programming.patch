@@ -1,7 +1,7 @@
-From 44032c7df6f4537c43ba80ae2f4a239616bd8d2d Mon Sep 17 00:00:00 2001
+From 694d1650cad8573e899916c0d0a25604885f6e3b Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Sat, 7 May 2022 20:59:58 +0200
-Subject: [PATCH 04/17] haswell NRI: Add timings/refresh programming
+Subject: [PATCH 46/65] haswell NRI: Add timings/refresh programming
 
 Program the registers with timing and refresh parameters.
 
@@ -537,5 +537,5 @@ index 4c3f399b5d..2acc5cbbc8 100644
  /* MCMAIN broadcast */
  #define MCSCHEDS_CBIT		0x4c20
 -- 
-2.39.2
+2.39.5
 

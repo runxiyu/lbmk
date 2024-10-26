@@ -1,7 +1,7 @@
-From fbe48205a55b4a03082affe9f66e81ee509d5f44 Mon Sep 17 00:00:00 2001
+From 817b0d543444e52ddfde536ded52509456dcbbf2 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 8 Mar 2024 09:27:36 -0700
-Subject: [PATCH 25/39] mb/dell: Add Latitude E6220 (Sandy Bridge)
+Subject: [PATCH 25/65] mb/dell: Add Latitude E6220 (Sandy Bridge)
 
 Mainboard is codenamed Vida. I do not physically have this system;
 someone with physical access to one sent me the output of autoport which
@@ -434,5 +434,5 @@ index 0000000000..9faf27e27b
 +	end
 +end
 -- 
-2.39.2
+2.39.5
 

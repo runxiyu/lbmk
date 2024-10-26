@@ -1,7 +1,7 @@
-From adb6121970034aa63da8c6303292ff81f340d9db Mon Sep 17 00:00:00 2001
+From b769a682016b7d231bb3d004698c8a2059bbf363 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 22:57:08 +0000
-Subject: [PATCH 32/39] use mirrorservice.org for gcc downloads
+Subject: [PATCH 32/65] use mirrorservice.org for gcc downloads
 
 the gnu.org 302 redirect often fails
 
@@ -32,5 +32,5 @@ index 5faff337b4..2743f96903 100755
  # CLANG toolchain archive locations
  LLVM_BASE_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}"
 -- 
-2.39.2
+2.39.5
 

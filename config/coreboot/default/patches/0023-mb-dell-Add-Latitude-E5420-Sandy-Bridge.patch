@@ -1,7 +1,7 @@
-From 948221e226340c1c5852a73d005ada18120de393 Mon Sep 17 00:00:00 2001
+From f781a8bac250d4902ec3e7caa0628c77836a8ae3 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Mon, 4 Mar 2024 18:05:43 -0700
-Subject: [PATCH 23/39] mb/dell: Add Latitude E5420 (Sandy Bridge)
+Subject: [PATCH 23/65] mb/dell: Add Latitude E5420 (Sandy Bridge)
 
 Mainboard is Krug 14". I do not physically have this system; someone
 with physical access to one sent me the output of autoport which I then
@@ -438,5 +438,5 @@ index 0000000000..3f55bfd49d
 +	end
 +end
 -- 
-2.39.2
+2.39.5
 
