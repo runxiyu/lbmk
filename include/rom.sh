@@ -122,10 +122,9 @@ mkcorebootbin()
 
 add_seabios()
 {
-	[ -n "$seabiosname" ] || seabiosname="fallback/payload"
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 
-	cbfs "$tmprom" "$_seabioself" "$seabiosname"
+	cbfs "$tmprom" "$_seabioself" "fallback/payload"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	_z="2"; [ "$initmode" = "vgarom" ] && _z="0"
@@ -139,14 +138,12 @@ add_seabios()
 
 	[ "$payload_grub" = "y" ] && add_grub
 
-	[ "$seabiosname" = "fallback/payload" ] && cprom
-	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
+	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
 add_grub()
 {
-	[ -n "$grubname" ] || grubname="img/grub2"
-	cbfs "$tmprom" "$grubelf" "$grubname"
+	cbfs "$tmprom" "$grubelf" "img/grub2"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
 	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
@@ -154,7 +151,6 @@ add_grub()
 
 mkseagrub()
 {
-	[ "$grubname" = "fallback/payload" ] && pname="grub"
 	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	for keymap in config/data/grub/keymap/*.gkb; do
 		[ -f "$keymap" ] && cprom "${keymap##*/}"; :
