@@ -1,7 +1,7 @@
-From 60de0b27075ef9cc8339896e769e4231a43ceeea Mon Sep 17 00:00:00 2001
+From e8c7028be21084ef2f89140cccb393ca7a0ff327 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 6 Oct 2024 23:48:05 +0100
-Subject: [PATCH 65/65] dell/optiplex_3050: Add data.vbt
+Subject: [PATCH 3/4] dell/optiplex_3050: Add data.vbt
 
 Signed-off-by: Leah Rowe <info@minifree.org>
 ---

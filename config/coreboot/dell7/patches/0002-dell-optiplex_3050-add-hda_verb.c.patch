@@ -1,7 +1,7 @@
-From 782562bca3d9904e1e34f2cc6089876412b276cd Mon Sep 17 00:00:00 2001
+From 6140f780837726a24d6c473ac50a62fdd5ee8f2d Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 6 Oct 2024 17:25:27 +0100
-Subject: [PATCH 64/65] dell/optiplex_3050: add hda_verb.c
+Subject: [PATCH 2/4] dell/optiplex_3050: add hda_verb.c
 
 Configured for the line jack at the front of the machine.
 

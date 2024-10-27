@@ -1,7 +1,7 @@
-From 66896f156eaade2c01636ac445cfd47afa6a32cc Mon Sep 17 00:00:00 2001
+From 2d266c50e2062dc202209494e9c1532ce8debd29 Mon Sep 17 00:00:00 2001
 From: Mate Kukri <kukri.mate@gmail.com>
 Date: Thu, 24 Oct 2024 18:05:19 +0100
-Subject: [PATCH 61/65] [WIP] OptiPlex 3050 Micro port
+Subject: [PATCH 1/4] [WIP] OptiPlex 3050 Micro port
 
 - Boots Linux
 - SMSC SCH5553 SIO/EC
