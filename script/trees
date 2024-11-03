@@ -199,10 +199,12 @@ check_cross_compiler()
 		export CROSS_COMPILE="${xarch% *}-"
 		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
+		xfix="${_xarch%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
+
 		# sometimes buildgcc fails for like no reason. try twice.
-		make -C "$cbdir" crossgcc-${_xarch%-*} $xgccargs || \
-		    make -C "$cbdir" crossgcc-${_xarch%-*} $xgccargs || \
-		    $err "!mkxgcc $project/$xtree '${_xarch%-*}' '$xgccargs'"
+		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
+		    make -C "$cbdir" crossgcc-$xfix $xgccargs || \
+		    $err "!mkxgcc $project/$xtree '$xfix' '$xgccargs'"
 	done; return 0
 }
 

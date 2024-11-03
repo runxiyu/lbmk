@@ -111,6 +111,7 @@ mkcorebootbin()
 
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
+
 	if $dry grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		[ "$payload_seabios" = "y" ] && pname="seabios" && \
 		    $dry add_seabios
@@ -136,6 +137,8 @@ add_seabios()
 	[ "$payload_memtest" = "y" ] && cbfs "$tmprom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
 
+	[ "$payload_uboot_i386" = "y" ] && $dry add_uboot
+
 	[ "$payload_grub" = "y" ] && add_grub
 
 	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
@@ -159,12 +162,26 @@ mkseagrub()
 
 add_uboot()
 {
-	ubdir="elf/u-boot/$target/$uboot_config"
+	# TODO: re-work to allow each coreboot target to say which ub tree
+	# instead of hardcoding as in the current logic below:
+
+	ubcbfsargs=""
+	[ "$payload_uboot_i386" = "y" ] && \
+	    ubcbfsargs="-l 0x1110000 -e 0x1110000"
+
+	ubpath="fallback/payload"
+	[ "$payload_uboot_i386" = "y" ] && ubpath="u-boot"
+
+	ubtarget="$target"
+	[ "$payload_uboot_i386" = "y" ] && ubtarget="i386coreboot"
+
+	ubdir="elf/u-boot/$ubtarget/$uboot_config"
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
 	    ubootelf="$ubdir/u-boot"
-	[ -f "$ubootelf" ] || $err "cb/$target: Can't find u-boot"
+	[ "$payload_uboot_i386" = "y" ] && ubootelf="$ubdir/u-boot-dtb.bin"
 
-	cbfs "$tmprom" "$ubootelf" "fallback/payload"; cprom
+	[ -f "$ubootelf" ] || $err "cb/$ubtarget: Can't find u-boot"
+	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs; cprom
 }
 
 cprom()

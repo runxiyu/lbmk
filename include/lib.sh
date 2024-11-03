@@ -209,9 +209,24 @@ vendor_checksum()
 
 cbfs()
 {
+	fRom="$1" # image to operate on
+	fAdd="$2" # file to add
+	fName="$3" # filename when added in CBFS
+
 	ccmd="add-payload" && [ $# -gt 3 ] && ccmd="add"
-	lzma="-c lzma" && [ $# -gt 3 ] && lzma="-t raw"
-	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
+	lzma="-c lzma" && [ $# -gt 3 ] && [ $# -lt 5 ] && lzma="-t $4"
+
+	# hack. TODO: do it better. this whole function is cursed
+	if [ $# -gt 4 ]; then
+		# add flat binary for U-Boot (u-boot.bin) on x86
+		if [ "$5" = "0x1110000" ]; then
+			ccmd="add-flat-binary"
+			lzma="-c lzma -l 0x1110000 -e 0x1110000"
+		fi
+	fi
+
+	"$cbfstool" "$fRom" $ccmd -f "$fAdd" -n "$fName" $lzma || \
+	    $err "CBFS fail: $fRom $ccmd -f '$fAdd' -n '$fName' $lzma"; :
 }
 
 mk()

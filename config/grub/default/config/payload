@@ -216,6 +216,12 @@ menuentry 'Load test configuration (grubtest.cfg) inside of CBFS  [t]' --hotkey=
 	fi
 }
 fi
+if [ -f (cbfsdisk)/u-boot ]; then
+menuentry 'Load U-Boot (payload) [b]' --hotkey='u' {
+	set root='cbfsdisk'
+	chainloader /u-boot
+}
+fi
 if [ -f (cbfsdisk)/seabios.elf ]; then
 menuentry 'Load SeaBIOS (payload) [b]' --hotkey='b' {
 	set root='cbfsdisk'
