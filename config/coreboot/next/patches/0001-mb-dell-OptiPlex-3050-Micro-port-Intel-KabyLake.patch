@@ -1,9 +1,10 @@
-From 2d266c50e2062dc202209494e9c1532ce8debd29 Mon Sep 17 00:00:00 2001
+From 496cdb9ccfe8908ec0fe7f703ce6f25e5abf1c18 Mon Sep 17 00:00:00 2001
 From: Mate Kukri <kukri.mate@gmail.com>
 Date: Thu, 24 Oct 2024 18:05:19 +0100
-Subject: [PATCH 1/4] [WIP] OptiPlex 3050 Micro port
+Subject: [PATCH 1/5] mb/dell: OptiPlex 3050 Micro port (Intel KabyLake)
 
-- Boots Linux
+- Boots Linux 6.11 (Debian)
+- GRUB and SeaBIOS payloads work
 - SMSC SCH5553 SIO/EC
   + Serial port works
   + PWM fan control works
@@ -17,34 +18,36 @@ Subject: [PATCH 1/4] [WIP] OptiPlex 3050 Micro port
     FIXME: add documentation about this
 - Needs 'deguard' to bypass BootGuard
   + See https://review.coreboot.org/plugins/gitiles/deguard
-- TODO: HDA verbs
-- TODO: USB ports
-- TODO: Add VBT
+- Audio works
+- All USB ports work
 - Currently limited to the Micro form factor, but others are very
   similar
+- HDA verbs and VBT by Leah Rowe
 
 Change-Id: I8d443e39ee684a4eaa19c835a945cfe569c051e2
 Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
 ---
- src/mainboard/dell/optiplex_3050/Kconfig      |  32 ++
+ src/mainboard/dell/optiplex_3050/Kconfig      |  37 ++
  src/mainboard/dell/optiplex_3050/Kconfig.name |   4 +
- src/mainboard/dell/optiplex_3050/Makefile.mk  |   9 +
+ src/mainboard/dell/optiplex_3050/Makefile.mk  |  12 +
  src/mainboard/dell/optiplex_3050/acpi/ec.asl  |   3 +
  .../dell/optiplex_3050/acpi/superio.asl       |   3 +
  .../dell/optiplex_3050/board_info.txt         |   7 +
  src/mainboard/dell/optiplex_3050/bootblock.c  | 107 ++++
  src/mainboard/dell/optiplex_3050/cmos.default |   5 +
  src/mainboard/dell/optiplex_3050/cmos.layout  |  54 ++
- .../dell/optiplex_3050/devicetree.cb          | 119 ++++
+ src/mainboard/dell/optiplex_3050/data.vbt     | Bin 0 -> 4300 bytes
+ .../dell/optiplex_3050/devicetree.cb          | 103 ++++
  src/mainboard/dell/optiplex_3050/dsdt.asl     |  27 +
  .../dell/optiplex_3050/gma-mainboard.ads      |  19 +
+ src/mainboard/dell/optiplex_3050/hda_verb.c   |  90 +++
  .../dell/optiplex_3050/include/early_gpio.h   |  11 +
- .../dell/optiplex_3050/include/gpio.h         | 241 ++++++++
- src/mainboard/dell/optiplex_3050/ramstage.c   | 513 ++++++++++++++++++
- src/mainboard/dell/optiplex_3050/romstage.c   |  26 +
+ .../dell/optiplex_3050/include/gpio.h         | 241 +++++++++
+ src/mainboard/dell/optiplex_3050/ramstage.c   | 512 ++++++++++++++++++
+ src/mainboard/dell/optiplex_3050/romstage.c   |  18 +
  src/mainboard/dell/optiplex_3050/sch5555_ec.c |  54 ++
  src/mainboard/dell/optiplex_3050/sch5555_ec.h |  10 +
- 18 files changed, 1244 insertions(+)
+ 20 files changed, 1317 insertions(+)
  create mode 100644 src/mainboard/dell/optiplex_3050/Kconfig
  create mode 100644 src/mainboard/dell/optiplex_3050/Kconfig.name
  create mode 100644 src/mainboard/dell/optiplex_3050/Makefile.mk
@@ -54,9 +57,11 @@ Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
  create mode 100644 src/mainboard/dell/optiplex_3050/bootblock.c
  create mode 100644 src/mainboard/dell/optiplex_3050/cmos.default
  create mode 100644 src/mainboard/dell/optiplex_3050/cmos.layout
+ create mode 100644 src/mainboard/dell/optiplex_3050/data.vbt
  create mode 100644 src/mainboard/dell/optiplex_3050/devicetree.cb
  create mode 100644 src/mainboard/dell/optiplex_3050/dsdt.asl
  create mode 100644 src/mainboard/dell/optiplex_3050/gma-mainboard.ads
+ create mode 100644 src/mainboard/dell/optiplex_3050/hda_verb.c
  create mode 100644 src/mainboard/dell/optiplex_3050/include/early_gpio.h
  create mode 100644 src/mainboard/dell/optiplex_3050/include/gpio.h
  create mode 100644 src/mainboard/dell/optiplex_3050/ramstage.c
@@ -66,10 +71,10 @@ Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
 
 diff --git a/src/mainboard/dell/optiplex_3050/Kconfig b/src/mainboard/dell/optiplex_3050/Kconfig
 new file mode 100644
-index 0000000000..2f0dccb98d
+index 0000000000..6c8e72956e
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3050/Kconfig
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,37 @@
 +## SPDX-License-Identifier: GPL-2.0-only
 +
 +if BOARD_DELL_OPTIPLEX_3050
@@ -81,11 +86,13 @@ index 0000000000..2f0dccb98d
 +	select HAVE_ACPI_TABLES
 +	select HAVE_CMOS_DEFAULT
 +	select HAVE_OPTION_TABLE
-+	# select INTEL_GMA_HAVE_VBT
++	select INTEL_GMA_ADD_VBT
++	select INTEL_GMA_HAVE_VBT
 +	select MAINBOARD_HAS_LIBGFXINIT
 +	select MAINBOARD_SUPPORTS_KABYLAKE_CPU
 +	select MAINBOARD_SUPPORTS_SKYLAKE_CPU
 +	select SKYLAKE_SOC_PCH_H
++	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
 +	select SOC_INTEL_KABYLAKE
 +	select SUPERIO_SMSC_SCH555x
 +
@@ -97,6 +104,9 @@ index 0000000000..2f0dccb98d
 +
 +config MAINBOARD_PART_NUMBER
 +	default "OptiPlex 3050 Micro"
++
++config INTEL_GMA_VBT_FILE
++	default "src/mainboard/\$(MAINBOARDDIR)/data.vbt"
 +
 +config DIMM_SPD_SIZE
 +	default 512	# DDR4
@@ -114,10 +124,10 @@ index 0000000000..14eab7f52c
 +	bool "OptiPlex 3050 Micro"
 diff --git a/src/mainboard/dell/optiplex_3050/Makefile.mk b/src/mainboard/dell/optiplex_3050/Makefile.mk
 new file mode 100644
-index 0000000000..d50ea40879
+index 0000000000..0bd72fe691
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3050/Makefile.mk
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,12 @@
 +## SPDX-License-Identifier: GPL-2.0-only
 +
 +bootblock-y += bootblock.c
@@ -125,7 +135,10 @@ index 0000000000..d50ea40879
 +
 +romstage-y += romstage.c
 +
-+ramstage-y += ramstage.c sch5555_ec.c
++ramstage-y += ramstage.c
++ramstage-y += sch5555_ec.c
++ramstage-y += hda_verb.c
++
 +ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
 diff --git a/src/mainboard/dell/optiplex_3050/acpi/ec.asl b/src/mainboard/dell/optiplex_3050/acpi/ec.asl
 new file mode 100644
@@ -342,12 +355,48 @@ index 0000000000..54a5147b7d
 +checksums
 +
 +checksum 392 415 984
+diff --git a/src/mainboard/dell/optiplex_3050/data.vbt b/src/mainboard/dell/optiplex_3050/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..6dc40cd99563bcd957ec2a9c4567e3b21e5d1d1f
+GIT binary patch
+literal 4300
+zcmeHJZ)_A*5TD(>zi)T1ds~!pU>y<RuF$e~N-bJsuXmJ|7P*63&uGGx+#w{DmbQ?B
+ze^_HpNECA))Sw}xiC;|p(!}^ljU+}T!9QpeKH4uPN;EMM;}_tZeY@?IBiNH@l!V#L
+zn>X`jfBW9Nd2eS$e@7qg=y|L+*|P~<Du4l>Ybk24rH<}xJ9eg%eaW32z1vbf_%+-P
+zC$uXU01ASzM2Q>g;@$hkii6SZG3@E+#eVw*w9N;N1g6_?YiB3s;_)?@>DbVf-r9}P
+zO`Vx|jP%robSBQ#gsrAYO>p&IQpqWSxVK|yXmkvV`v!Im77N$TZXru*X!y{`-Y55r
+zVKf!Pgkc!X2_qgyK4nY|jSRP7a&Qp0+diYXy*OGNIan;Ts7z%5ry$@FKoGo8XMq5h
+z6OcC{V?x>l17U>+7I|RUgn|iuCftWGW>(Kf196=odH`0=A3;(GULp|y6Ks_T0R#_x
+zlLt);9A0GWnQsLE?*|8{0RgE`gv2JC<6bXwubJ}!0Qv+3{3xJE9q#3H2<s&G0tf>5
+z>@mL~p#5nF3*pl}^hKC<v1C31Ae!^M&^2;#l`=O_ZLQWF$7*Y}Uh$G>xt9(*`c-X6
+zFkpAE5jIOv7?VVJPHKbYp3@KrBCHN-@DOp9_>7mqcf{Wl|3v&7@nvGak3pDtDe*nT
+zYl+trr--)_KT146>^lIL%Ay5+{&h=mW!RCRdEk{8SSMWj3D+L{)!qr(URTPl<i;AB
+za@p^PE9Ea6pj-}YuxDTr0>wf|yGUKG?B!CDGOpf7(oT__tC!2cJgEtK{*6}R$n1=r
+z$PSguH+xU1hb?rHq(J+G2P}V^ryazPkEs%j0}In3b4gctpl8)ZC&3qS6o31yv0DC@
+zBN6*5So*Vg*3aOq|DtfT{{PvtW2P<e%*HkB(yV?<-ipBd2rTP@b3v<wGk0i#{Bmcc
+z@y0B7K0!Gt2Iyi?fd2i^HUB$v{Q!tv^fz~$94j}a>75FZ$;1Eo6%!)V*$4D5C>nt}
+z7_D}&ricJyuY&X-!vUs`GWIOPx0wDOV;?d6f$4uRCdjx-*4N7{CF5RMe_CcQ%J`0~
+ze<-uhWc)?e%Q6cpxK`1V3hPmDzoNgOuwx3otLUF7>?;L-S9HJ1!Ybac>fI{aq2eJ`
+ze@SJpsrbICf1$GTDqdFgx)56u!i^z48)A=#)F$0)i8F!~4)H=KFrv`ilM@v#FA5q-
+zZ`~^T%U!!Etw*TnvRA91loJ<5n5;vH=aymAq8i4g#?~Vu@R%z0b-pk{VF{Q?SZOpI
+zZFLYDT8~J)KBGPNg2zT^r<&>dt1z12coq!P7_N5^Xb$wE-B-rFk(v<3F&oiLZ61P9
+z^8O8kx7Uu(WFsrh-0{jBgc7g$6w^0d!yLLcn#Qi_glV3tAo!dLNa^?163N|n^-pD?
+z(daC>dtpbi#Q&W%m0IHPOiO7pA89lVboYWH=_yh1N|ChuwX7oAZcPqP-%SWj_FFt3
+zyd_?zD3jia8uH=I*yP#l#Bw9^#^N~y33zEtk*o#5XfjXdCkjSG)~N^WoRlb;h;B3|
+zIfCjSc(I06T!_GA1{WKOk*chsMCXx5vW@41o#fZgYViT9VSih*nQN}>g+zCejX>9!
+zZ{c$hGa+w5eO}YT_FH@}B)U(Dl-|zF&dk8R;^4yrPZe)YrI^k%j}0~VZ%*1PT98&h
+z556thD#%T3IZc)NKi{(4RJn@8Dq3?JywFKA?WW585y(IR)(Ee|k5bDtz|lFnDY}0G
+Ds8qe3
+
+literal 0
+HcmV?d00001
+
 diff --git a/src/mainboard/dell/optiplex_3050/devicetree.cb b/src/mainboard/dell/optiplex_3050/devicetree.cb
 new file mode 100644
-index 0000000000..eb731fe48f
+index 0000000000..039709aa4a
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3050/devicetree.cb
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,103 @@
 +## SPDX-License-Identifier: GPL-2.0-only
 +
 +chip soc/intel/skylake
@@ -356,8 +405,6 @@ index 0000000000..eb731fe48f
 +	# Enable Enhanced Intel SpeedStep
 +	register "eist_enable" = "1"
 +
-+	device cpu_cluster 0 on end
-+
 +	device domain 0 on
 +		device ref igpu on
 +			register "PrimaryDisplay" = "Display_iGFX"
@@ -365,32 +412,19 @@ index 0000000000..eb731fe48f
 +
 +		device ref south_xhci on
 +			register "usb2_ports" = "{
-+				[0] = USB2_PORT_MID(OC0),
-+				[1] = USB2_PORT_MID(OC0),
-+				[2] = USB2_PORT_MID(OC4),
-+				[3] = USB2_PORT_MID(OC4),
-+				[4] = USB2_PORT_MID(OC2),
-+				[5] = USB2_PORT_MID(OC2),
-+				[6] = USB2_PORT_MID(OC0),
-+				[7] = USB2_PORT_MID(OC0),
-+				[8] = USB2_PORT_MID(OC0),
-+				[9] = USB2_PORT_MID(OC0),
-+				[10] = USB2_PORT_MID(OC1),
-+				[11] = USB2_PORT_MID(OC1),
-+				[12] = USB2_PORT_MID(OC_SKIP),
-+				[13] = USB2_PORT_MID(OC_SKIP),
++				[0] = USB2_PORT_MID(OC0),	// Front panel (blue)
++				[1] = USB2_PORT_MID(OC0),	// Front panel (blue)
++				[2] = USB2_PORT_MID(OC3),	// Back panel (black)
++				[3] = USB2_PORT_MID(OC2),	// Back panel (blue)
++				[4] = USB2_PORT_MID(OC1),	// Back panel (blue)
++				[6] = USB2_PORT_MID(OC1),	// Back panel (black)
++				[8] = USB2_PORT_MID(OC_SKIP),	// WiFi slot
 +			}"
 +			register "usb3_ports" = "{
-+				[0] = USB3_PORT_DEFAULT(OC0),
-+				[1] = USB3_PORT_DEFAULT(OC0),
-+				[2] = USB3_PORT_DEFAULT(OC3),
-+				[3] = USB3_PORT_DEFAULT(OC3),
-+				[4] = USB3_PORT_DEFAULT(OC1),
-+				[5] = USB3_PORT_DEFAULT(OC1),
-+				[6] = USB3_PORT_DEFAULT(OC_SKIP),
-+				[7] = USB3_PORT_DEFAULT(OC_SKIP),
-+				[8] = USB3_PORT_DEFAULT(OC_SKIP),
-+				[9] = USB3_PORT_DEFAULT(OC_SKIP),
++				[0] = USB3_PORT_DEFAULT(OC0),	// Front panel (blue)
++				[1] = USB3_PORT_DEFAULT(OC0),	// Front panel (blue)
++				[2] = USB3_PORT_DEFAULT(OC2),	// Back panel (blue)
++				[3] = USB3_PORT_DEFAULT(OC1),	// Back panel (blue)
 +			}"
 +		end
 +
@@ -402,6 +436,7 @@ index 0000000000..eb731fe48f
 +			register "SataPortsEnable[0]" = "1"
 +		end
 +
++		# M.2 SSD
 +		device ref pcie_rp21 on
 +			register "PcieRpEnable[20]"                     = "1"
 +			register "PcieRpClkReqSupport[20]"              = "1"
@@ -460,9 +495,7 @@ index 0000000000..eb731fe48f
 +			end
 +		end
 +
-+		device ref hda on
-+			register "PchHdaVcType" = "Vc1"
-+		end
++		device ref hda on end
 +
 +		device ref smbus on end
 +	end
@@ -525,6 +558,102 @@ index 0000000000..cb4c22f285
 +       others => Disabled);
 +
 +end GMA.Mainboard;
+diff --git a/src/mainboard/dell/optiplex_3050/hda_verb.c b/src/mainboard/dell/optiplex_3050/hda_verb.c
+new file mode 100644
+index 0000000000..621e4f7a52
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3050/hda_verb.c
+@@ -0,0 +1,90 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++	/* coreboot specific header, codec 0 */
++	0x10ec0255, /* Realtek ALC3234 */
++	0x102807a3, /* Subsystem ID */
++	11,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(0, 0x102807a3),
++
++	AZALIA_PIN_CFG(0, 0x12, 0x40000000), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x14, AZALIA_PIN_DESC(
++		AZALIA_INTEGRATED,
++		AZALIA_INTERNAL,
++		AZALIA_SPEAKER,
++		AZALIA_OTHER_ANALOG,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_NO_JACK_PRESENCE_DETECT,
++		5, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x17, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1b, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_LINE_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		2, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x1d, 0x4054c029), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x21, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_HP_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		5, 15
++	)),
++
++	/* coreboot specific header, codec 2 */
++	0x80862809, /* Intel Skylake HDMI */
++	0x80860101, /* Subsystem ID */
++	4,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(2, 0x80860101),
++
++	AZALIA_PIN_CFG(2, 0x05, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x06, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x07, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++};
++
++const u32 pc_beep_verbs[] = {};
++
++AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/dell/optiplex_3050/include/early_gpio.h b/src/mainboard/dell/optiplex_3050/include/early_gpio.h
 new file mode 100644
 index 0000000000..17a16371e3
@@ -791,10 +920,10 @@ index 0000000000..83293c32a9
 +#endif
 diff --git a/src/mainboard/dell/optiplex_3050/ramstage.c b/src/mainboard/dell/optiplex_3050/ramstage.c
 new file mode 100644
-index 0000000000..5cf2c81e50
+index 0000000000..94778f60c9
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3050/ramstage.c
-@@ -0,0 +1,513 @@
+@@ -0,0 +1,512 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +
 +#include <bootstate.h>
@@ -812,7 +941,7 @@ index 0000000000..5cf2c81e50
 +
 +#define FORM_FACTOR_MICRO	0
 +#define FORM_FACTOR_SFF		1
-+// NOTE: one of these is MT, but 2 and 3 both get the same table anyways
++// Probably DT and MT
 +#define FORM_FACTOR_UNK2	2
 +#define FORM_FACTOR_UNK3	3
 +
@@ -1260,7 +1389,6 @@ index 0000000000..5cf2c81e50
 +
 +		// Perform write
 +		sch5555_mbox_write(1, arr[i].addr, val);
-+
 +	}
 +}
 +
@@ -1298,7 +1426,7 @@ index 0000000000..5cf2c81e50
 +
 +	core_cnt = get_core_cnt();
 +	printk(BIOS_DEBUG, "CPU Core Count = %#x\n", core_cnt);
-+	if (get_core_cnt() > 2) {
++	if (core_cnt > 2) {
 +		sch5555_mbox_write(1, 0x9e, 0x30);
 +		sch5555_mbox_write(1, 0xeb, sch5555_mbox_read(1, 0xea));
 +	}
@@ -1310,18 +1438,14 @@ index 0000000000..5cf2c81e50
 +BOOT_STATE_INIT_ENTRY(BS_POST_DEVICE, BS_ON_EXIT, sch5555_ec_hwm_init, NULL);
 diff --git a/src/mainboard/dell/optiplex_3050/romstage.c b/src/mainboard/dell/optiplex_3050/romstage.c
 new file mode 100644
-index 0000000000..a4734e5d61
+index 0000000000..501b254232
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3050/romstage.c
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,18 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +
-+#include <assert.h>
 +#include <soc/romstage.h>
-+#include <stdint.h>
-+#include <string.h>
 +#include <spd_bin.h>
-+#include <cbfs.h>
 +
 +void mainboard_memory_init_params(FSPM_UPD *mupd)
 +{
@@ -1335,10 +1459,6 @@ index 0000000000..a4734e5d61
 +	mem_cfg->MemorySpdDataLen  = blk.len;
 +	mem_cfg->MemorySpdPtr00    = (uintptr_t)blk.spd_array[0];
 +	mem_cfg->MemorySpdPtr10    = (uintptr_t)blk.spd_array[1];
-+
-+	/* use virtual channel 1 for the dmi interface of the PCH
-+	 * FIXME: do we need this? */
-+	mupd->FspmTestConfig.DmiVc1 = 1;
 +}
 diff --git a/src/mainboard/dell/optiplex_3050/sch5555_ec.c b/src/mainboard/dell/optiplex_3050/sch5555_ec.c
 new file mode 100644
