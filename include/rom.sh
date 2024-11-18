@@ -98,11 +98,21 @@ mkcorebootbin()
 	[ -n "$displaymode" ] && displaymode="_$displaymode"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 
+	[ "$payload_uboot_i386" = "y" ] && \
+	    [ "$payload_uboot_amd64" = "y" ] && \
+		$err "'$target' enables 32- and 64-bit x86 U-Boot"
+
+	if [ "$payload_uboot_i386" = "y" ] || \
+	    [ "$payload_uboot_amd64" = "y" ]; then
+		printf "'$target' has x86 U-Boot; assuming SeaBIOS=y\n" 1>&2
+		payload_seabios="y"
+	fi
+
 	[ -n "$uboot_config" ] || uboot_config="default"
 	[ "$payload_uboot" = "y" ] || payload_seabios="y"
 	[ "$payload_grub" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "y" ] && \
-	    $dry $err "$target: U-Boot and SeaBIOS/GRUB are both enabled."
+	    $dry $err "$target: U-Boot(arm64) and SeaBIOS/GRUB both enabled."
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
@@ -137,7 +147,10 @@ add_seabios()
 	[ "$payload_memtest" = "y" ] && cbfs "$tmprom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
 
-	[ "$payload_uboot_i386" = "y" ] && $dry add_uboot
+	if [ "$payload_uboot_i386" = "y" ] || \
+	    [ "$payload_uboot_amd64" = "y" ]; then
+		$dry add_uboot
+	fi
 
 	[ "$payload_grub" = "y" ] && add_grub
 
@@ -165,20 +178,29 @@ add_uboot()
 	# TODO: re-work to allow each coreboot target to say which ub tree
 	# instead of hardcoding as in the current logic below:
 
+	# aarch64 targets:
 	ubcbfsargs=""
-	[ "$payload_uboot_i386" = "y" ] && \
-	    ubcbfsargs="-l 0x1110000 -e 0x1110000"
-
 	ubpath="fallback/payload"
-	[ "$payload_uboot_i386" = "y" ] && ubpath="u-boot"
-
 	ubtarget="$target"
-	[ "$payload_uboot_i386" = "y" ] && ubtarget="i386coreboot"
+	# override for x86/x86_64 targets:
+	if [ "$payload_uboot_i386" = "y" ] || \
+	    [ "$payload_uboot_amd64" = "y" ]; then
+		ubcbfsargs="-l 0x1110000 -e 0x1110000" # 64-bit and 32-bit
+			# on 64-bit, 0x1120000 is the SPL, and stub before that
+		ubpath="img/u-boot"
+		ubtarget="amd64coreboot"
+		[ "$payload_uboot_i386" = "y" ] && ubtarget="i386coreboot"; :
+	fi
 
 	ubdir="elf/u-boot/$ubtarget/$uboot_config"
+
+	# aarch64 targets:
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
 	    ubootelf="$ubdir/u-boot"
+	# override for x86/x86_64 targets:
 	[ "$payload_uboot_i386" = "y" ] && ubootelf="$ubdir/u-boot-dtb.bin"
+	[ "$payload_uboot_amd64" = "y" ] && \
+	    ubootelf="$ubdir/u-boot-x86-with-spl.bin" # EFI-compatible
 
 	[ -f "$ubootelf" ] || $err "cb/$ubtarget: Can't find u-boot"
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs; cprom

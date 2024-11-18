@@ -213,7 +213,7 @@ cbfs()
 	fAdd="$2" # file to add
 	fName="$3" # filename when added in CBFS
 
-	ccmd="add-payload" && [ $# -gt 3 ] && ccmd="add"
+	ccmd="add-payload" && [ $# -gt 3 ] && [ $# -lt 5 ] && ccmd="add"
 	lzma="-c lzma" && [ $# -gt 3 ] && [ $# -lt 5 ] && lzma="-t $4"
 
 	# hack. TODO: do it better. this whole function is cursed
