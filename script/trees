@@ -73,6 +73,7 @@ build_targets()
 	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || $err "!o $configdir"
 
 	for x in $targets; do
+		unset CROSS_COMPILE
 		[ "$x" = "list" ] && x_ ls -1 "config/$project" && \
 		    listfile="" && break
 		target="$x"
