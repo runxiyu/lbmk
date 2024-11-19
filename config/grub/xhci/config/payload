@@ -236,7 +236,7 @@ menuentry 'Load test configuration (grubtest.cfg) in CBFS  [t]' --hotkey='t' {
 }
 fi
 if [ -f (cbfsdisk)/img/u-boot ]; then
-menuentry 'Load U-Boot (payload) [b]' --hotkey='u' {
+menuentry 'Highly experimental U-Boot payload [b]' --hotkey='u' {
 	set root='cbfsdisk'
 	chainloader /img/u-boot
 }
