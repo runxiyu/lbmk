@@ -236,7 +236,7 @@ menuentry 'Load test configuration (grubtest.cfg) in CBFS  [t]' --hotkey='t' {
 }
 fi
 if [ -f (cbfsdisk)/img/u-boot ]; then
-menuentry 'Highly experimental U-Boot payload [u]' --hotkey='u' {
+menuentry 'Experimental U-Boot UEFI payload (try from SeaBIOS ESC menu if GRUB fails) [u]' --hotkey='u' {
 	set root='cbfsdisk'
 	chainloader /img/u-boot
 }
