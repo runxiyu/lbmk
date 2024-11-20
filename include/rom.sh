@@ -187,8 +187,9 @@ add_uboot()
 	    [ "$payload_uboot_amd64" = "y" ]; then
 		ubcbfsargs="-l 0x1110000 -e 0x1110000" # 64-bit and 32-bit
 			# on 64-bit, 0x1120000 is the SPL, and stub before that
-		ubpath="img/u-boot"
+		ubpath="img/u-boot" # 64-bit
 		ubtarget="amd64coreboot"
+		[ "$payload_uboot_i386" = "y" ] && ubpath="u-boot" # 32-bit
 		[ "$payload_uboot_i386" = "y" ] && ubtarget="i386coreboot"; :
 	fi
 
