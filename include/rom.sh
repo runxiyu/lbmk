@@ -95,7 +95,6 @@ mkcorebootbin()
 
 	initmode="${defconfig##*/}"; displaymode="${initmode##*_}"
 	initmode="${initmode%%_*}"
-	[ -n "$displaymode" ] && displaymode="_$displaymode"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 
 	[ "$payload_uboot_i386" = "y" ] && \
@@ -155,7 +154,8 @@ add_seabios()
 	[ "$payload_grub" = "y" ] && add_grub
 
 	cprom
-	[ "$payload_uboot_amd64" = "y" ] && pname="seauboot" && cprom "seauboot"
+	[ "$payload_uboot_amd64" = "y" ] && [ "$displaymode" != "txtmode" ] && \
+	    pname="seauboot" && cprom "seauboot"
 	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
@@ -177,6 +177,11 @@ mkseagrub()
 
 add_uboot()
 {
+	if [ "$displaymode" = "txtmode" ]; then
+		printf "cb/$target: Cannot use U-Boot in text mode\n" 1>&2
+		return 0
+	fi
+
 	# TODO: re-work to allow each coreboot target to say which ub tree
 	# instead of hardcoding as in the current logic below:
 
@@ -211,7 +216,8 @@ add_uboot()
 
 cprom()
 {
-	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
+	newrom="bin/$target/${pname}_${target}_$initmode.rom"
+	[ -n "$displaymode" ] && newrom="${newrom%.rom}_$displaymode.rom"
 	[ $# -gt 0 ] && [ "$1" != "seauboot" ] && \
 	    newrom="${newrom%.rom}_${1%.gkb}.rom"
 
