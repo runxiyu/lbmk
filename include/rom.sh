@@ -155,7 +155,7 @@ add_seabios()
 
 	cprom
 	[ "$payload_uboot_amd64" = "y" ] && [ "$displaymode" != "txtmode" ] && \
-	    pname="seauboot" && cprom "seauboot"
+	    [ "$initmode" != "normal" ] && pname="seauboot" && cprom "seauboot"
 	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
@@ -179,6 +179,9 @@ add_uboot()
 {
 	if [ "$displaymode" = "txtmode" ]; then
 		printf "cb/$target: Cannot use U-Boot in text mode\n" 1>&2
+		return 0
+	elif [ "$initmode" = "normal" ]; then
+		printf "cb/$target: Cannot use U-Boot in normal initmode\n" 1>&2
 		return 0
 	fi
 
