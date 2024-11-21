@@ -154,7 +154,9 @@ add_seabios()
 
 	[ "$payload_grub" = "y" ] && add_grub
 
-	cprom && [ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
+	cprom
+	[ "$payload_uboot_amd64" = "y" ] && pname="seauboot" && cprom "seauboot"
+	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
 add_grub()
@@ -210,11 +212,14 @@ add_uboot()
 cprom()
 {
 	newrom="bin/$target/${pname}_${target}_$initmode$displaymode.rom"
-	[ $# -gt 0 ] && newrom="${newrom%.rom}_${1%.gkb}.rom"
+	[ $# -gt 0 ] && [ "$1" != "seauboot" ] && \
+	    newrom="${newrom%.rom}_${1%.gkb}.rom"
 
 	x_ mkdir -p "bin/$target"
-	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && \
+	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && [ "$1" != "seauboot" ] && \
 	    cbfs "$newrom" "config/data/grub/keymap/$1" keymap.gkb raw
+	[ $# -gt 0 ] && [ "$1" = "seauboot" ] && \
+	    cbfs "$newrom" "config/data/grub/bootorder_uboot" "bootorder" raw
 
 	[ "$XBMK_RELEASE" = "y" ] || return 0
 	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./vendor inject \
