@@ -132,6 +132,11 @@ mkcorebootbin()
 
 add_seabios()
 {
+	if [ "$payload_uboot_i386" = "y" ] || \
+	    [ "$payload_uboot_amd64" = "y" ]; then
+		$dry add_uboot
+	fi
+
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 
 	cbfs "$tmprom" "$_seabioself" "fallback/payload"
@@ -145,11 +150,6 @@ add_seabios()
 
 	[ "$payload_memtest" = "y" ] && cbfs "$tmprom" \
 	    "elf/memtest86plus/memtest.bin" img/memtest
-
-	if [ "$payload_uboot_i386" = "y" ] || \
-	    [ "$payload_uboot_amd64" = "y" ]; then
-		$dry add_uboot
-	fi
 
 	[ "$payload_grub" = "y" ] && add_grub
 
