@@ -1,4 +1,4 @@
-From 3e1e14e0b14539ca42db40488c7b1067eb01dea4 Mon Sep 17 00:00:00 2001
+From 03750188cbe305cd8383178a1ee476de2aa5953e Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:31 +0000
 Subject: [PATCH 1/3] video: Add cursor support for video consoles
@@ -156,13 +156,11 @@ index 8b5928dc5ebb..00c5ecb664b9 100644
  	char escape_buf[32];
  	char utf8_buf[5];
  };
-
-base-commit: 475aa8345a78396d39b42f96eccecd37ebe24e99
 -- 
 2.45.2
 
 
-From 0dd4fb08993b01d36e491705b24063834dcb618e Mon Sep 17 00:00:00 2001
+From f63a54996fdaac7ff995e26fd4318a09a9c14dff Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:36 +0000
 Subject: [PATCH 2/3] efi-selftest: Add international characters test
@@ -201,7 +199,7 @@ index a3023c82567c..2f8d8d323c2b 100644
 2.45.2
 
 
-From 13101947807bec7ceaf3231d94e943b9b29a7369 Mon Sep 17 00:00:00 2001
+From cc05aa26c43c35e9155d958400532005ae7eeede Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:37 +0000
 Subject: [PATCH 3/3] efi_selftest: Add box drawing character selftest

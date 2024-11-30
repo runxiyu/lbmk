@@ -1,4 +1,4 @@
-From f98475a64fcfe6ef710acb29391c33c17903e580 Mon Sep 17 00:00:00 2001
+From bc5204d0d28bb431186fd106f9a79f69bfad005d Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Fri, 8 Oct 2021 17:33:22 +0300
 Subject: [PATCH] clk: rockchip: rk3399: Set hardcoded clock rates same as
@@ -60,10 +60,10 @@ index d941a129f3e5..54035c0df1f3 100644
  #define PWM_CLOCK_HZ    PMU_PCLK_HZ
  
 diff --git a/drivers/clk/rockchip/clk_rk3399.c b/drivers/clk/rockchip/clk_rk3399.c
-index 67b2c05ec9ed..754b35c23197 100644
+index 24cefebd1b2a..6f874bd347e0 100644
 --- a/drivers/clk/rockchip/clk_rk3399.c
 +++ b/drivers/clk/rockchip/clk_rk3399.c
-@@ -54,10 +54,11 @@ struct pll_div {
+@@ -53,10 +53,11 @@ struct pll_div {
  	.fbdiv = (u32)((u64)hz * _refdiv * _postdiv1 * _postdiv2 / OSC_HZ),\
  	.postdiv1 = _postdiv1, .postdiv2 = _postdiv2};
  
@@ -78,7 +78,7 @@ index 67b2c05ec9ed..754b35c23197 100644
  #endif
  
  static const struct pll_div apll_l_1600_cfg = PLL_DIVISORS(1600 * MHz, 3, 1, 1);
-@@ -682,7 +683,7 @@ static ulong rk3399_spi_set_clk(struct rockchip_cru *cru, ulong clk_id, uint hz)
+@@ -681,7 +682,7 @@ static ulong rk3399_spi_set_clk(struct rockchip_cru *cru, ulong clk_id, uint hz)
  static ulong rk3399_vop_set_clk(struct rockchip_cru *cru, ulong clk_id, u32 hz)
  {
  	struct pll_div vpll_config = {0};
@@ -87,7 +87,7 @@ index 67b2c05ec9ed..754b35c23197 100644
  	void *aclkreg_addr, *dclkreg_addr;
  	u32 div;
  
-@@ -1395,6 +1396,7 @@ static void rkclk_init(struct rockchip_cru *cru)
+@@ -1394,6 +1395,7 @@ static void rkclk_init(struct rockchip_cru *cru)
  	/* configure gpll cpll */
  	rkclk_set_pll(&cru->gpll_con[0], &gpll_init_cfg);
  	rkclk_set_pll(&cru->cpll_con[0], &cpll_init_cfg);
