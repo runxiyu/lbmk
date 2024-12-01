@@ -79,10 +79,32 @@ getfiles()
 	    "$CONFIG_SMSC_SCH5545_EC_FW_FILE"
 	[ -z "$CONFIG_KBC1126_FIRMWARE" ] || fetch kbc1126ec "$EC_url" \
 	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW1"
-	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch e6400vga "$E6400_VGA_DL_url" \
-	  "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
+	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch_vgarom
 	[ -z "$CONFIG_HAVE_MRC" ] || fetch "mrc" "$MRC_url" "$MRC_url_bkup" \
 	    "$MRC_hash" "$CONFIG_MRC_FILE"; return 0
+}
+
+fetch_vgarom()
+{
+	if [ "$board" = "e6400_4mb" ] || [ "$board" = "e6400nvidia_4mb" ]; then
+		fetch_vgarom_e6400
+	elif [ "$board" = "t480_fsp_16mb" ]; then
+		fetch_vgarom_t480
+	else
+		$err "coreboot/$board: VGA ROM extraction not supported yet!"
+	fi
+}
+
+fetch_vgarom_e6400()
+{
+	fetch e6400vga "$E6400_VGA_DL_url" "$E6400_VGA_DL_url_bkup" \
+	    "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
+}
+
+fetch_vgarom_t480()
+{
+	fetch t480vga "$T480_VGA_DL_url" "$T480_VGA_DL_url_bkup" \
+	    "$T480_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 }
 
 fetch()
@@ -176,8 +198,12 @@ apply_me11_deguard_mod()
 
 extract_archive()
 {
-	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
+	geteltorito "$1" > "$2/vendor.img" || \
+	    innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
 	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
+
+	[ ! -d "${_dl}_extracted" ] || mv "${_dl}_extracted" "$2" || \
+	    $err "!mv '${_dl}_extracted' '$2'"; :
 }
 
 extract_kbc1126ec()
@@ -212,6 +238,34 @@ extract_e6400vga()
 	) || $err "can't extract e6400 vga rom"
 	cp "$appdir/$E6400_VGA_romname" "$_dest" || \
 	    $err "extract_e6400vga $board: can't copy vga rom to $_dest"
+}
+
+extract_t480vga()
+{
+	_img="$appdir/vendor.img"
+	_imgp1="$appdir/vendor_p1.img"
+	_imguefi="$appdir/update.cap"
+	_intelvga="$appdir/intelvga/body.bin"
+	_nvvga="$appdir/nvvga/body.bin"
+	_intelrom="pciroms/pci8086,5917.rom"
+	_nvrom="pciroms/pci10de,1d10.rom"
+
+	[ -f "$_nvrom" ] && [ "$_intelrom" ] && return 0
+
+	x_ mkdir -p pciroms
+
+	# extract the system rom (i.e. factory.rom)
+	dd skip=32 if="$appdir/vendor.img" of="$_imgp1"
+	mcopy -i "$_imgp1" ::/FLASH/N24ET77W/\$0AN2400.FL1 "$_imguefi"
+
+	# extract vga roms from system rom
+	$uefiextract "$_imguefi" 6A5F1EF9-C478-42BA-A4DB-C7846CC7DB57 \
+	    -m body -t 0x19 -o "${_intelvga%/body.bin}"
+	$uefiextract "$_imguefi" 8B9BEF90-5FAF-46CF-A32A-7E1B7D33CC87 \
+	    -m body -t 0x19 -o "${_nvvga%/body.bin}"
+
+	x_ mv "$_nvvga" "$_nvrom"
+	x_ mv "$_intelvga" "$_intelrom"
 }
 
 extract_sch5545ec()

@@ -6,7 +6,7 @@ dtc e2fsprogs flex freetype2 fuse2 gawk gcc-ada gdb gettext git \
 help2man innoextract libftdi libgpiod libjaylink libpciaccess libusb nasm \
 ncurses openssl p7zip ccache \
 pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
-sharutils subversion swig texinfo ttf-dejavu unarchiver unzip wget xz zlib \
+sharutils subversion swig texinfo ttf-dejavu unarchiver unzip wget xz zlib mtools \
 "
 
-aur_notice="bdf-unifont unifont cross-mipsel-linux-gnu-binutils cross-mipsel-linux-gnu-gcc"
+aur_notice="bdf-unifont unifont cross-mipsel-linux-gnu-binutils cross-mipsel-linux-gnu-gcc genisoimage"

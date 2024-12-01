@@ -1,0 +1,1175 @@
+From c4efef17d76623916f69de0bdaf24565e02f8e3e Mon Sep 17 00:00:00 2001
+From: Mate Kukri <kukri.mate@gmail.com>
+Date: Sat, 30 Nov 2024 19:44:36 +0000
+Subject: [PATCH 4/8] mb/lenovo: Add ThinkPad T480
+
+This machine has BootGuard fused and requires deguard to boot coreboot.
+
+Works:
+- Internal screen with VGA ROM executed by SeaBIOS
+- Intel iGPU
+- Nvidia dGPU (on some models)
+- Ethernet
+- USB
+- EC
+  + Fan control
+  + Keyboard
+  + Both batteries
+  + Charging via both Type-C ports
+  + Debug UART
+- WLAN card:
+  + WiFi works
+  + Bluetooth works
+- M.2 main SSD
+- Speakers, headphone jack
+- S3 sleep
+
+Known issues:
+- libgfxinit does not work
+- VGA ROM executed by coreboot does not work
+- Alpine Ridge Thunderbolt 3 controller does not work
+- Missing HDA verbs, audio still works
+- Missing VBT
+- Function keys are handled differently from stock firmware
+  + These should inject XF86 keycodes instead of directly
+    controlling, volume, brightness, etc in hardware.
+
+Untested (should work):
+- SATA main SSD
+- WWAN slot
+  + PCIe x2 NVME drive
+  + WWAN card (bus)
+- SD reader (USB)
+- Webcam (USB)
+- External video outputs
+
+Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
+Change-Id: I19d421412c771c1f242f6ff39453f824fa866163
+---
+ src/ec/lenovo/h8/bluetooth.c                  |  12 +-
+ src/ec/lenovo/h8/wwan.c                       |  12 +-
+ src/mainboard/lenovo/sklkbl_thinkpad/Kconfig  |  29 ++-
+ .../lenovo/sklkbl_thinkpad/Kconfig.name       |   3 +
+ .../lenovo/sklkbl_thinkpad/Makefile.mk        |   8 +-
+ .../lenovo/sklkbl_thinkpad/acpi/ec.asl        |  13 +-
+ .../lenovo/sklkbl_thinkpad/bootblock.c        |  50 +++++
+ .../lenovo/sklkbl_thinkpad/devicetree.cb      |  36 ++++
+ src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl |   5 +
+ src/mainboard/lenovo/sklkbl_thinkpad/ec.c     | 151 +++++++++++++
+ src/mainboard/lenovo/sklkbl_thinkpad/ec.h     |  94 ++++++++
+ src/mainboard/lenovo/sklkbl_thinkpad/gpio.h   |   8 +
+ .../lenovo/sklkbl_thinkpad/ramstage.c         |  96 ++++++++-
+ .../lenovo/sklkbl_thinkpad/romstage.c         |  24 +++
+ .../variants/t480/gma-mainboard.ads           |  15 ++
+ .../sklkbl_thinkpad/variants/t480/gpio.c      | 203 ++++++++++++++++++
+ .../sklkbl_thinkpad/variants/t480/hda_verb.c  |  10 +
+ .../variants/t480/overridetree.cb             | 114 ++++++++++
+ 18 files changed, 860 insertions(+), 23 deletions(-)
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/ec.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/ec.h
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/gpio.h
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gma-mainboard.ads
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/hda_verb.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+
+diff --git a/src/ec/lenovo/h8/bluetooth.c b/src/ec/lenovo/h8/bluetooth.c
+index 16fc8dce39..ef4f6ad1f5 100644
+--- a/src/ec/lenovo/h8/bluetooth.c
++++ b/src/ec/lenovo/h8/bluetooth.c
+@@ -1,6 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
+-#include <southbridge/intel/common/gpio.h>
++// #include <southbridge/intel/common/gpio.h>
+ #include <console/console.h>
+ #include <device/device.h>
+ #include <ec/acpi/ec.h>
+@@ -28,16 +28,16 @@ bool h8_has_bdc(const struct device *dev)
+ {
+ 	struct ec_lenovo_h8_config *conf = dev->chip_info;
+ 
+-	if (!conf->has_bdc_detection) {
++	if (1 || !conf->has_bdc_detection) {
+ 		printk(BIOS_INFO, "H8: BDC detection not implemented. "
+ 				  "Assuming BDC installed\n");
+ 		return true;
+ 	}
+ 
+-	if (get_gpio(conf->bdc_gpio_num) == conf->bdc_gpio_lvl) {
+-		printk(BIOS_INFO, "H8: BDC installed\n");
+-		return true;
+-	}
++	// if (get_gpio(conf->bdc_gpio_num) == conf->bdc_gpio_lvl) {
++	// 	printk(BIOS_INFO, "H8: BDC installed\n");
++	// 	return true;
++	// }
+ 
+ 	printk(BIOS_INFO, "H8: BDC not installed\n");
+ 	return false;
+diff --git a/src/ec/lenovo/h8/wwan.c b/src/ec/lenovo/h8/wwan.c
+index 685886fcce..5e0ae030e2 100644
+--- a/src/ec/lenovo/h8/wwan.c
++++ b/src/ec/lenovo/h8/wwan.c
+@@ -1,6 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
+-#include <southbridge/intel/common/gpio.h>
++// #include <southbridge/intel/common/gpio.h>
+ #include <console/console.h>
+ #include <device/device.h>
+ #include <ec/acpi/ec.h>
+@@ -26,16 +26,16 @@ bool h8_has_wwan(const struct device *dev)
+ {
+ 	struct ec_lenovo_h8_config *conf = dev->chip_info;
+ 
+-	if (!conf->has_wwan_detection) {
++	if (1 || !conf->has_wwan_detection) {
+ 		printk(BIOS_INFO, "H8: WWAN detection not implemented. "
+ 				  "Assuming WWAN installed\n");
+ 		return true;
+ 	}
+ 
+-	if (get_gpio(conf->wwan_gpio_num) == conf->wwan_gpio_lvl) {
+-		printk(BIOS_INFO, "H8: WWAN installed\n");
+-		return true;
+-	}
++	// if (get_gpio(conf->wwan_gpio_num) == conf->wwan_gpio_lvl) {
++	// 	printk(BIOS_INFO, "H8: WWAN installed\n");
++	// 	return true;
++	// }
+ 
+ 	printk(BIOS_INFO, "H8: WWAN not installed\n");
+ 	return false;
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+index fcc80dffe3..08273c5d27 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+@@ -2,16 +2,19 @@
+ 
+ config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ 	bool
+-	select BOARD_ROMSIZE_KB_12288
++	select EC_LENOVO_H8
++	select EC_LENOVO_PMH7
++	select H8_HAS_BAT_THRESHOLDS_IMPL
++	select H8_HAS_LEDLOGO
++	select H8_HAS_PRIMARY_FN_KEYS
+ 	select HAVE_ACPI_RESUME
+ 	select HAVE_ACPI_TABLES
+ #	select HAVE_CMOS_DEFAULT
+ #	select INTEL_GMA_HAVE_VBT
+-	select INTEL_LPSS_UART_FOR_CONSOLE
++	select INTEL_INT15
+ 	select MAINBOARD_HAS_LIBGFXINIT
+ 	select MEMORY_MAPPED_TPM
+ 	select MAINBOARD_HAS_TPM2
+-	select NO_UART_ON_SUPERIO
+ 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+ 	select SPD_READ_BY_WORD
+ 	select SYSTEM_TYPE_LAPTOP
+@@ -19,8 +22,16 @@ config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ config BOARD_LENOVO_E460
+ 	bool
+ 	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	select BOARD_ROMSIZE_KB_12288
++	select INTEL_LPSS_UART_FOR_CONSOLE
+ 	select SOC_INTEL_SKYLAKE
+ 
++config BOARD_LENOVO_T480
++	bool
++	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	select BOARD_ROMSIZE_KB_16384
++	select SOC_INTEL_KABYLAKE
++
+ if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ 
+ config MAINBOARD_DIR
+@@ -28,19 +39,29 @@ config MAINBOARD_DIR
+ 
+ config VARIANT_DIR
+ 	default "e460" if BOARD_LENOVO_E460
++	default "t480" if BOARD_LENOVO_T480
++
++config OVERRIDE_DEVICETREE
++	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
+ 
+ config MAINBOARD_PART_NUMBER
+ 	default "E460" if BOARD_LENOVO_E460
++	default "T480" if BOARD_LENOVO_T480
+ 
+ config CBFS_SIZE
+ 	default 0x600000 if BOARD_LENOVO_E460
++	default 0x900000 if BOARD_LENOVO_T480
+ 
+ config DIMM_MAX
+-	default 4
++	default 2
+ 
+ config DIMM_SPD_SIZE
+ 	default 256
+ 
++endif
++
++if BOARD_LENOVO_E460
++
+ config UART_FOR_CONSOLE
+ 	default 2
+ 
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
+index 61d971fe8d..7b813be284 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
+@@ -2,3 +2,6 @@
+ 
+ config BOARD_LENOVO_E460
+ 	bool "ThinkPad E460"
++
++config BOARD_LENOVO_T480
++	bool "ThinkPad T480"
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk b/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
+index 6e544fd6b9..348e3d4582 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
+@@ -1,7 +1,9 @@
+ ## SPDX-License-Identifier: GPL-2.0-only
+ 
+-bootblock-y += bootblock.c
++bootblock-y += bootblock.c ec.c
+ 
+-ramstage-y += ramstage.c
+-ramstage-y += variants/$(VARIANT_DIR)/hda_verb.c
++romstage-y += romstage.c
++
++ramstage-y += ramstage.c ec.c
++ramstage-y += variants/$(VARIANT_DIR)/gpio.c variants/$(VARIANT_DIR)/hda_verb.c
+ ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += variants/$(VARIANT_DIR)/gma-mainboard.ads
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl b/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
+index 16990d45f4..514b95a60f 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
+@@ -1,3 +1,12 @@
+-/* SPDX-License-Identifier: CC-PDDC */
++/* SPDX-License-Identifier: GPL-2.0-only */
+ 
+-/* Please update the license if adding licensable material. */
++#define BRIGHTNESS_UP()
++#define BRIGHTNESS_DOWN()
++#define THINKPAD_EC_GPE 22
++
++Name(\TCRT, 100)
++Name(\TPSV, 90)
++Name(\FLVL, 0)
++
++#include <ec/lenovo/h8/acpi/ec.asl>
++#include <ec/lenovo/h8/acpi/thinkpad_bat_thresholds_b0.asl>
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c b/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
+index ccd8ec1b40..55afd3d048 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
+@@ -1,7 +1,57 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
++#include <arch/io.h>
+ #include <bootblock_common.h>
++#include <device/pci.h>
++#include <soc/pci_devs.h>
++#include "ec.h"
++
++static void configure_uart(uint16_t port, uint16_t iobase, uint8_t irqno)
++{
++	microchip_pnp_enter_conf_state(port);
++
++	// Select LPC I/F LDN
++	pnp_write(port, PNP_LDN_SELECT, LDN_LPCIF);
++	// Write UART BAR
++	pnp_write_le32(port, LPCIF_BAR_UART, (uint32_t) iobase << 16 | 0x8707);
++	// Set SIRQ4 to UART
++	pnp_write(port, LPCIF_SIRQ(irqno), LDN_UART);
++
++	// Configure UART LDN
++	pnp_write(port, PNP_LDN_SELECT, LDN_UART);
++	pnp_write(port, UART_ACTIVATE, 0x01);
++	pnp_write(port, UART_CONFIG_SELECT, 0x00);
++
++	microchip_pnp_exit_conf_state(port);
++
++	// NOTE: this is incredibly hacky and uses a debug backdoor in the EC
++	// firmware to control the UART GPIOs.
++	// Unfortunately production EC firmware has no way to do this via regular EC
++	// commands.
++
++	// Supply debug unlock key
++	debug_write_key(DEBUG_RW_KEY_IDX, debug_rw_key);
++
++	// Use debug writes to set UART_TX and UART_RX GPIOs
++	debug_write_dword(0xf0c400 + 0x110, 0x00001000);
++	debug_write_dword(0xf0c400 + 0x114, 0x00001000);
++}
++
++
++#define UART_PORT	0x3f8
++#define UART_IRQ	4
+ 
+ void bootblock_mainboard_early_init(void)
+ {
++	// Tell EC via BIOS Debug Port 1 that the world isn't on fire
++
++	// Let the EC know that BIOS code is running
++	outb(0x11, 0x86);
++	outb(0x6e, 0x86);
++
++	// Enable accesses to EC1 interface
++	ec0_write(0, ec0_read(0) | 0x20);
++
++	// Setup debug UART
++	configure_uart(EC_CFG_PORT, UART_PORT, UART_IRQ);
+ }
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
+index ddb6e8aaa5..745af8c8cd 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
+@@ -8,6 +8,42 @@ chip soc/intel/skylake
+ 		device ref south_xhci on end
+ 		device ref lpc_espi on
+ 			register "serirq_mode" = "SERIRQ_CONTINUOUS"
++
++			register "gen1_dec" = "0x007c1601"
++			register "gen2_dec" = "0x000c15e1"
++
++			chip ec/lenovo/pmh7
++				register "backlight_enable" = "true"
++				register "dock_event_enable" = "true"
++				device pnp ff.1 on end # dummy
++			end
++
++			chip ec/lenovo/h8
++				register "beepmask0" = "0x00"
++				register "beepmask1" = "0x86"
++				register "config0" = "0xa6"
++				register "config1" = "0x0d"
++				register "config2" = "0xa8"
++				register "config3" = "0xc4"
++				register "has_keyboard_backlight" = "1"
++				register "event2_enable" = "0xff"
++				register "event3_enable" = "0xff"
++				register "event4_enable" = "0xd0"
++				register "event5_enable" = "0x3c"
++				register "event7_enable" = "0x01"
++				register "event8_enable" = "0x7b"
++				register "event9_enable" = "0xff"
++				register "eventc_enable" = "0xff"
++				register "eventd_enable" = "0xff"
++				register "evente_enable" = "0x9d"
++				device pnp ff.2 on # dummy
++					io 0x60 = 0x62
++					io 0x62 = 0x66
++					io 0x64 = 0x1600
++					io 0x66 = 0x1604
++				end
++			end
++
+ 			chip drivers/pc80/tpm
+ 				device pnp 0c31.0 on end
+ 			end
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl b/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
+index 967b652853..e8dc4cbae2 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
+@@ -1,5 +1,10 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
++#define BRIGHTNESS_UP \_SB.PCI0.GFX0.INCB
++#define BRIGHTNESS_DOWN \_SB.PCI0.GFX0.DECB
++#define EC_LENOVO_H8_ME_WORKAROUND 1
++#define THINKPAD_EC_GPE 17
++
+ #include <acpi/acpi.h>
+ DefinitionBlock(
+ 	"dsdt.aml",
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/ec.c b/src/mainboard/lenovo/sklkbl_thinkpad/ec.c
+new file mode 100644
+index 0000000000..47449eabd6
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/ec.c
+@@ -0,0 +1,151 @@
++#include <arch/io.h>
++#include "ec.h"
++
++#define MICROCHIP_CONFIGURATION_ENTRY_KEY	0x55
++#define MICROCHIP_CONFIGURATION_EXIT_KEY	0xaa
++
++void microchip_pnp_enter_conf_state(uint16_t port)
++{
++	outb(MICROCHIP_CONFIGURATION_ENTRY_KEY, port);
++}
++
++void microchip_pnp_exit_conf_state(uint16_t port)
++{
++	outb(MICROCHIP_CONFIGURATION_EXIT_KEY, port);
++}
++
++uint8_t pnp_read(uint16_t port, uint8_t index)
++{
++	outb(index, port);
++	return inb(port + 1);
++}
++
++uint32_t pnp_read_le32(uint16_t port, uint8_t index)
++{
++	return (uint32_t) pnp_read(port, index) |
++			(uint32_t) pnp_read(port, index + 1) << 8 |
++			(uint32_t) pnp_read(port, index + 2) << 16 |
++			(uint32_t) pnp_read(port, index + 3) << 24;
++}
++
++void pnp_write(uint16_t port, uint8_t index, uint8_t value)
++{
++	outb(index, port);
++	outb(value, port + 1);
++}
++
++void pnp_write_le32(uint16_t port, uint8_t index, uint32_t value)
++{
++	pnp_write(port, index, value & 0xff);
++	pnp_write(port, index + 1, value >> 8 & 0xff);
++	pnp_write(port, index + 2, value >> 16 & 0xff);
++	pnp_write(port, index + 3, value >> 24 & 0xff);
++}
++
++static void ecN_clear_out_queue(uint16_t cmd_port, uint16_t data_port)
++{
++	while (inb(cmd_port) & EC_OBF)
++		inb(data_port);
++}
++
++static void ecN_wait_to_send(uint16_t cmd_port, uint16_t data_port)
++{
++	while (inb(cmd_port) & EC_IBF)
++		;
++}
++
++static void ecN_wait_to_recv(uint16_t cmd_port, uint16_t data_port)
++{
++	while (!(inb(cmd_port) & EC_OBF))
++		;
++}
++
++uint8_t ecN_read(uint16_t cmd_port, uint16_t data_port, uint8_t addr)
++{
++	ecN_clear_out_queue(cmd_port, data_port);
++	ecN_wait_to_send(cmd_port, data_port);
++	outb(EC_READ, cmd_port);
++	ecN_wait_to_send(cmd_port, data_port);
++	outb(addr, data_port);
++	ecN_wait_to_recv(cmd_port, data_port);
++	return inb(data_port);
++}
++
++void ecN_write(uint16_t cmd_port, uint16_t data_port, uint8_t addr, uint8_t val)
++{
++	ecN_clear_out_queue(cmd_port, data_port);
++	ecN_wait_to_send(cmd_port, data_port);
++	outb(EC_WRITE, cmd_port);
++	ecN_wait_to_send(cmd_port, data_port);
++	outb(addr, data_port);
++	ecN_wait_to_send(cmd_port, data_port);
++	outb(val, data_port);
++}
++
++uint8_t eeprom_read(uint16_t addr)
++{
++	ecN_clear_out_queue(EC2_CMD, EC2_DATA);
++	ecN_wait_to_send(EC2_CMD, EC2_DATA);
++	outl(1, EC2_CMD);
++	ecN_wait_to_send(EC2_CMD, EC2_DATA);
++	outl(addr, EC2_DATA);
++	ecN_wait_to_recv(EC2_CMD, EC2_DATA);
++	return inl(EC2_DATA);
++}
++
++void eeprom_write(uint16_t addr, uint8_t val)
++{
++	ecN_clear_out_queue(EC2_CMD, EC2_DATA);
++	ecN_wait_to_send(EC2_CMD, EC2_DATA);
++	outl(2, EC2_CMD);
++	ecN_wait_to_send(EC2_CMD, EC2_DATA);
++	outl((uint32_t) addr | (uint32_t) val << 16, EC2_DATA);
++	ecN_wait_to_recv(EC2_CMD, EC2_DATA);
++	inl(EC2_DATA);
++}
++
++uint16_t debug_loaded_keys(void)
++{
++	return (uint16_t) ec0_read(0x87) << 8 | (uint16_t) ec0_read(0x86);
++}
++
++static void debug_cmd(uint8_t cmd)
++{
++	ec0_write(EC_DEBUG_CMD, cmd);
++	while (ec0_read(EC_DEBUG_CMD) & 0x80)
++		;
++}
++
++void debug_read_key(uint8_t i, uint8_t *key)
++{
++	debug_cmd(0x80 | (i & 0xf));
++	for (int j = 0; j < 8; ++j)
++		key[j] = ec0_read(0x3e + j);
++}
++
++void debug_write_key(uint8_t i, const uint8_t *key)
++{
++	for (int j = 0; j < 8; ++j)
++		ec0_write(0x3e + j, key[j]);
++	debug_cmd(0xc0 |  (i & 0xf));
++}
++
++uint32_t debug_read_dword(uint32_t addr)
++{
++	ecN_clear_out_queue(EC3_CMD, EC3_DATA);
++	ecN_wait_to_send(EC3_CMD, EC3_DATA);
++	outl(addr << 8 | 0xE2, EC3_DATA);
++	ecN_wait_to_recv(EC3_CMD, EC3_DATA);
++	return inl(EC3_DATA);
++}
++
++void debug_write_dword(uint32_t addr, uint32_t val)
++{
++	ecN_clear_out_queue(EC3_CMD, EC3_DATA);
++	ecN_wait_to_send(EC3_CMD, EC3_DATA);
++	outl(addr << 8 | 0xEA, EC3_DATA);
++	ecN_wait_to_send(EC3_CMD, EC3_DATA);
++	outl(val, EC3_DATA);
++}
++
++const uint8_t debug_rw_key[8] = { 0x7a, 0x41, 0xb1, 0x49, 0xfe, 0x21, 0x01, 0xcf };
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/ec.h b/src/mainboard/lenovo/sklkbl_thinkpad/ec.h
+new file mode 100644
+index 0000000000..aa5582f30b
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/ec.h
+@@ -0,0 +1,94 @@
++#pragma once
++
++// EC configuration base address
++#define EC_CFG_PORT		0x4e
++
++// Chip global registers
++#define PNP_LDN_SELECT		0x07
++# define LDN_UART		0x07
++# define LDN_LPCIF		0x0c
++#define EC_DEVICE_ID		0x20
++#define EC_DEVICE_REV		0x21
++
++// LPC I/F registers
++#define LPCIF_SIRQ(i)		(0x40 + (i))
++
++#define LPCIF_BAR_CFG		0x60
++#define LPCIF_BAR_MAILBOX	0x64
++#define LPCIF_BAR_8042		0x68
++#define LPCIF_BAR_ACPI_EC0	0x6c
++#define LPCIF_BAR_ACPI_EC1	0x70
++#define LPCIF_BAR_ACPI_EC2	0x74
++#define LPCIF_BAR_ACPI_EC3	0x78
++#define LPCIF_BAR_ACPI_PM0	0x7c
++#define LPCIF_BAR_UART		0x80
++#define LPCIF_BAR_FAST_KYBD	0x84
++#define LPCIF_BAR_EMBED_FLASH	0x88
++#define LPCIF_BAR_GP_SPI	0x8c
++#define LPCIF_BAR_EMI		0x90
++#define LPCIF_BAR_PMH7		0x94
++#define LPCIF_BAR_PORT80_DBG0	0x98
++#define LPCIF_BAR_PORT80_DBG1	0x9c
++#define LPCIF_BAR_RTC		0xa0
++
++// UART registers
++#define UART_ACTIVATE		0x30
++#define UART_CONFIG_SELECT	0xf0
++
++void microchip_pnp_enter_conf_state(uint16_t port);
++void microchip_pnp_exit_conf_state(uint16_t port);
++uint8_t pnp_read(uint16_t port, uint8_t index);
++uint32_t pnp_read_le32(uint16_t port, uint8_t index);
++void pnp_write(uint16_t port, uint8_t index, uint8_t value);
++void pnp_write_le32(uint16_t port, uint8_t index, uint32_t value);
++
++#define EC0_CMD		0x0066
++#define EC0_DATA	0x0062
++#define EC1_CMD		0x1604
++#define EC1_DATA	0x1600
++#define EC2_CMD		0x1634
++#define EC2_DATA	0x1630
++#define EC3_CMD		0x161c
++#define EC3_DATA	0x1618
++
++#define EC_OBF		(1 << 0)
++#define EC_IBF		(1 << 1)
++
++#define EC_READ		0x80
++#define EC_WRITE	0x81
++
++uint8_t ecN_read(uint16_t cmd_port, uint16_t data_port, uint8_t addr);
++
++void ecN_write(uint16_t cmd_port, uint16_t data_port, uint8_t addr, uint8_t val);
++
++// EC0 and EC1 mostly are useful with the READ/WRITE commands
++#define ec0_read(addr) ecN_read(EC0_CMD, EC0_DATA, addr)
++#define ec0_write(addr, val) ecN_write(EC0_CMD, EC0_DATA, addr, val)
++#define ec1_read(addr) ecN_read(EC1_CMD, EC1_DATA, addr)
++#define ec1_write(addr, val) ecN_write(EC1_CMD, EC1_DATA, addr, val)
++
++// Read from the emulated EEPROM
++uint8_t eeprom_read(uint16_t addr);
++
++// Write to the emulated EEPROM
++void eeprom_write(uint16_t addr, uint8_t val);
++
++// Read loaded debug key mask
++uint16_t debug_loaded_keys(void);
++
++// The following location (via either EC0 or EC1) can be used to interact with the debug interface
++#define EC_DEBUG_CMD 0x3d
++
++void debug_read_key(uint8_t i, uint8_t *key);
++
++void debug_write_key(uint8_t i, const uint8_t *key);
++
++uint32_t debug_read_dword(uint32_t addr);
++
++void debug_write_dword(uint32_t addr, uint32_t val);
++
++// RW unlock key index
++#define DEBUG_RW_KEY_IDX 1
++
++// RW unlock key for EC version N24HT37W
++extern const uint8_t debug_rw_key[8];
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/gpio.h b/src/mainboard/lenovo/sklkbl_thinkpad/gpio.h
+new file mode 100644
+index 0000000000..d89ed712d4
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/gpio.h
+@@ -0,0 +1,8 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#ifndef GPIO_H
++#define GPIO_H
++
++void variant_config_gpios(void);
++
++#endif
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c b/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
+index 6c3b077cc4..9526642c57 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
+@@ -1,11 +1,103 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
++#include <arch/io.h>
+ #include <device/device.h>
++#include <drivers/intel/gma/int15.h>
++#include <option.h>
++#include <soc/ramstage.h>
++#include "ec.h"
++#include "gpio.h"
+ 
+-static void init_mainboard(void *chip_info)
++#define GPIO_GPU_RST		GPP_E22 // active low
++#define GPIO_1R8VIDEO_AON_ON	GPP_E23
++
++#define GPIO_DGFX_PWRGD		GPP_F3
++
++#define GPIO_DISCRETE_PRESENCE	GPP_D9	// active low
++#define GPIO_DGFX_VRAM_ID0	GPP_D11
++#define GPIO_DGFX_VRAM_ID1	GPP_D12
++
++void mainboard_silicon_init_params(FSP_SIL_UPD *params)
++{
++	static const char *dgfx_vram_id_str[] = { "1GB", "2GB", "4GB", "N/A" };
++
++	int dgfx_vram_id;
++
++	// Setup GPIOs
++	variant_config_gpios();
++
++	// Detect and enable dGPU
++	if (gpio_get(GPIO_DISCRETE_PRESENCE) == 0) { // active low
++		dgfx_vram_id = gpio_get(GPIO_DGFX_VRAM_ID0) | gpio_get(GPIO_DGFX_VRAM_ID1) << 1;
++		printk(BIOS_DEBUG, "Discrete GPU present with %s VRAM\n", dgfx_vram_id_str[dgfx_vram_id]);
++
++		if (get_uint_option("dgpu_enable", 1)) {
++			printk(BIOS_DEBUG, "Enabling discrete GPU\n");
++			// NOTE: i pulled this GPU enable sequence from thin air but it seems to work
++			gpio_set(GPIO_1R8VIDEO_AON_ON, 1);	// Enable GPU power rail
++			while (!gpio_get(GPIO_DGFX_PWRGD))	// Wait for power good signal from GPU
++				;
++			gpio_set(GPIO_GPU_RST, 1);		// Release GPU from reset
++		} else {
++			printk(BIOS_DEBUG, "Discrete GPU will remain disabled\n");
++		}
++
++	} else {
++		printk(BIOS_DEBUG, "Discrete GPU not present\n");
++	}
++}
++
++static void dump_ec_cfg(uint16_t port)
++{
++	microchip_pnp_enter_conf_state(port);
++
++	// Device info
++	printk(BIOS_DEBUG, "Device id  %02x\n", pnp_read(port, EC_DEVICE_ID));
++	printk(BIOS_DEBUG, "Device rev %02x\n", pnp_read(port, EC_DEVICE_REV));
++
++	// Switch to LPCIF LDN
++	pnp_write(port, PNP_LDN_SELECT, LDN_LPCIF);
++
++	// Dump SIRQs
++	for (int i = 0; i <= 15; i += 1)
++		printk(BIOS_DEBUG, "SIRQ%d = %02x\n", i, pnp_read(port, LPCIF_SIRQ(i)));
++
++	// Dump BARs
++	printk(BIOS_DEBUG, "BAR CFG = %08x\n", pnp_read_le32(port, LPCIF_BAR_CFG));
++	printk(BIOS_DEBUG, "BAR MAILBOX = %08x\n", pnp_read_le32(port, LPCIF_BAR_MAILBOX));
++	printk(BIOS_DEBUG, "BAR 8042 = %08x\n", pnp_read_le32(port, LPCIF_BAR_8042));
++	printk(BIOS_DEBUG, "BAR ACPI_EC0 = %08x\n", pnp_read_le32(port, LPCIF_BAR_ACPI_EC0));
++	printk(BIOS_DEBUG, "BAR ACPI_EC1 = %08x\n", pnp_read_le32(port, LPCIF_BAR_ACPI_EC1));
++	printk(BIOS_DEBUG, "BAR ACPI_EC2 = %08x\n", pnp_read_le32(port, LPCIF_BAR_ACPI_EC2));
++	printk(BIOS_DEBUG, "BAR ACPI_EC3 = %08x\n", pnp_read_le32(port, LPCIF_BAR_ACPI_EC3));
++	printk(BIOS_DEBUG, "BAR ACPI_PM0 = %08x\n", pnp_read_le32(port, LPCIF_BAR_ACPI_PM0));
++	printk(BIOS_DEBUG, "BAR UART = %08x\n", pnp_read_le32(port, LPCIF_BAR_UART));
++	printk(BIOS_DEBUG, "BAR FAST_KYBD = %08x\n", pnp_read_le32(port, LPCIF_BAR_FAST_KYBD));
++	printk(BIOS_DEBUG, "BAR EMBED_FLASH = %08x\n", pnp_read_le32(port, LPCIF_BAR_EMBED_FLASH));
++	printk(BIOS_DEBUG, "BAR GP_SPI = %08x\n", pnp_read_le32(port, LPCIF_BAR_GP_SPI));
++	printk(BIOS_DEBUG, "BAR EMI = %08x\n", pnp_read_le32(port, LPCIF_BAR_EMI));
++	printk(BIOS_DEBUG, "BAR PMH7 = %08x\n", pnp_read_le32(port, LPCIF_BAR_PMH7));
++	printk(BIOS_DEBUG, "BAR PORT80_DBG0 = %08x\n", pnp_read_le32(port, LPCIF_BAR_PORT80_DBG0));
++	printk(BIOS_DEBUG, "BAR PORT80_DBG1 = %08x\n", pnp_read_le32(port, LPCIF_BAR_PORT80_DBG1));
++	printk(BIOS_DEBUG, "BAR RTC = %08x\n", pnp_read_le32(port, LPCIF_BAR_RTC));
++
++	microchip_pnp_exit_conf_state(port);
++}
++
++static void mainboard_enable(struct device *dev)
++{
++	if (CONFIG(VGA_ROM_RUN))
++		install_intel_vga_int15_handler(GMA_INT15_ACTIVE_LFP_EDP,
++						GMA_INT15_PANEL_FIT_DEFAULT,
++						GMA_INT15_BOOT_DISPLAY_DEFAULT, 0);
++}
++
++static void mainboard_init(void *chip_info)
+ {
++	dump_ec_cfg(EC_CFG_PORT);
+ }
+ 
+ struct chip_operations mainboard_ops = {
+-	.init = init_mainboard,
++	.enable_dev = mainboard_enable,
++	.init = mainboard_init,
+ };
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c b/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c
+index 59a62f484e..4cc0591b4f 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c
+@@ -1,7 +1,31 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
+ #include <soc/romstage.h>
++#include <spd_bin.h>
++
++// FIXME: verify SPD addrs, DQ interleave, and CA vref for other SKL/KBL ThinkPads
+ 
+ void mainboard_memory_init_params(FSPM_UPD *mupd)
+ {
++	/* T480
++	 *  JDDR1 - 0x50
++	 *  JDDR2 - 0x51 */
++	struct spd_block blk = { .addr_map = { 0x50, 0x51, } };
++	get_spd_smbus(&blk);
++	dump_spd_info(&blk);
++
++	FSP_M_CONFIG *mem_cfg = &mupd->FspmConfig;
++
++	/* T480 (DDR_DQ pins wired in interleave mode) */
++	mem_cfg->DqPinsInterleaved = true;
++
++	/* T480 (VREF_CA to CH_A and VREF_DQ_B to CH_B)
++	 *  DDR_VREF_CA  -> M_A_VREF_CA_CPU
++	 *  DDR0_VREF_DQ -> NC
++	 *  DDR1_VREF_DQ -> M_B_VREF_CA_CPU */
++	mem_cfg->CaVrefConfig      = 2;
++
++	mem_cfg->MemorySpdDataLen  = blk.len;
++	mem_cfg->MemorySpdPtr00    = (uintptr_t)blk.spd_array[0];
++	mem_cfg->MemorySpdPtr10    = (uintptr_t)blk.spd_array[1];
+ }
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gma-mainboard.ads b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gma-mainboard.ads
+new file mode 100644
+index 0000000000..e0a166fe55
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gma-mainboard.ads
+@@ -0,0 +1,15 @@
++-- SPDX-License-Identifier: GPL-2.0-or-later
++
++with HW.GFX.GMA;
++with HW.GFX.GMA.Display_Probing;
++
++use HW.GFX.GMA;
++use HW.GFX.GMA.Display_Probing;
++
++private package GMA.Mainboard is
++
++   ports : constant Port_List :=
++     (eDP,
++      others => Disabled);
++
++end GMA.Mainboard;
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
+new file mode 100644
+index 0000000000..f7c29e1f39
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
+@@ -0,0 +1,203 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/gpio.h>
++#include "../../gpio.h"
++
++/* FIXME: There are multiple GPIOs here that should be locked to prevent "TPM GPIO fail" style
++ * attacks. Unfortunately SKL/KBL GPIO locking *does not* work currently. */
++
++static const struct pad_config gpio_table[] = {
++
++	/* ------- GPIO Community 0 ------- */
++
++	/* ------- GPIO Group GPP_A ------- */
++	PAD_CFG_NF(GPP_A0, NONE, DEEP, NF1),				/* -KBRC */
++	PAD_CFG_NF(GPP_A1, NATIVE, DEEP, NF1),				/* LPC_AD0 */
++	PAD_CFG_NF(GPP_A2, NATIVE, DEEP, NF1),				/* LPC_AD1 */
++	PAD_CFG_NF(GPP_A3, NATIVE, DEEP, NF1),				/* LPC_AD2 */
++	PAD_CFG_NF(GPP_A4, NATIVE, DEEP, NF1),				/* LPC_AD3 */
++	PAD_CFG_NF(GPP_A5, NONE, DEEP, NF1),				/* -LPC_FRAME */
++	PAD_CFG_NF(GPP_A6, NONE, DEEP, NF1),				/* IRQSER */
++	PAD_CFG_NF(GPP_A7, NONE, DEEP, NF1),				/* -TPM_IRQ */
++	PAD_CFG_NF(GPP_A8, NONE, DEEP, NF1),				/* -CLKRUN */
++	PAD_CFG_NF(GPP_A9, NATIVE, DEEP, NF1),				/* LPCCLK_EC_24M */
++	PAD_CFG_NF(GPP_A10, NATIVE, DEEP, NF1),				/* LPCCLK_DEBUG_24M */
++	PAD_NC(GPP_A11, NONE),
++	PAD_NC(GPP_A12, NONE),
++	PAD_CFG_NF(GPP_A13, NATIVE, DEEP, NF1),				/* -SUSWARN */
++	PAD_CFG_NF(GPP_A14, NATIVE, DEEP, NF1),				/* -SUS_STAT */
++	PAD_CFG_NF(GPP_A15, NATIVE, DEEP, NF1),				/* -SUSWARN */
++	PAD_NC(GPP_A16, NONE),
++	PAD_NC(GPP_A17, NONE),
++	PAD_NC(GPP_A18, NONE),
++	PAD_NC(GPP_A19, NONE),
++	PAD_NC(GPP_A20, NONE),
++	PAD_NC(GPP_A21, NONE),
++	PAD_NC(GPP_A22, NONE),
++	PAD_NC(GPP_A23, NONE),
++
++	/* ------- GPIO Group GPP_B ------- */
++	PAD_NC(GPP_B0, NONE),
++	PAD_NC(GPP_B1, NONE),
++	PAD_NC(GPP_B2, NONE),
++	PAD_NC(GPP_B3, NONE),
++	PAD_CFG_GPI_SCI(GPP_B4, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -TBT_PLUG_EVENT */
++	PAD_CFG_NF(GPP_B5, NONE, DEEP, NF1),				/* -CLKREQ_PCIE0 */
++	PAD_CFG_NF(GPP_B6, NONE, DEEP, NF1),				/* -CLKREQ_PCIE4 */
++	PAD_CFG_NF(GPP_B7, NONE, DEEP, NF1),				/* -CLKREQ_PCIE5 */
++	PAD_CFG_NF(GPP_B8, NONE, DEEP, NF1),				/* -CLKREQ_PCIE6 */
++	PAD_CFG_NF(GPP_B9, NONE, DEEP, NF1),				/* -CLKREQ_PCIE8 */
++	PAD_CFG_NF(GPP_B10, NONE, DEEP, NF1),				/* -CLKREQ_PCIE10 */
++	PAD_NC(GPP_B11, NONE),
++	PAD_CFG_NF(GPP_B12, NONE, DEEP, NF1),				/* -PCH_SLP_S0 */
++	PAD_CFG_NF(GPP_B13, NONE, DEEP, NF1),				/* -PLTRST */
++	PAD_CFG_NF(GPP_B14, NATIVE, DEEP, NF1),				/* PCH_SPKR */
++	PAD_CFG_GPO(GPP_B15, 1, DEEP),					/* NFC_DLREQ */
++	PAD_NC(GPP_B16, NONE),
++	PAD_NC(GPP_B17, NONE),
++	PAD_NC(GPP_B18, NONE),
++	PAD_NC(GPP_B19, NONE),
++	PAD_NC(GPP_B20, NONE),
++	PAD_NC(GPP_B21, NONE),
++	PAD_NC(GPP_B22, NONE),
++	PAD_NC(GPP_B23, NONE),
++
++	/* ------- GPIO Community 1 ------- */
++
++	/* ------- GPIO Group GPP_C ------- */
++	PAD_CFG_NF(GPP_C0, NONE, DEEP, NF1),				/* SMB_CLK */
++	PAD_CFG_NF(GPP_C1, NONE, DEEP, NF1),				/* SMB_DATA */
++	PAD_NC(GPP_C2, NONE),
++	PAD_CFG_NF(GPP_C3, NONE, DEEP, NF1),				/* SML0_CLK */
++	PAD_CFG_NF(GPP_C4, NONE, DEEP, NF1),				/* SML0_DATA */
++	PAD_NC(GPP_C5, NONE),
++	PAD_CFG_NF(GPP_C6, NONE, DEEP, NF1),				/* EC_SCL2 */
++	PAD_CFG_NF(GPP_C7, NONE, DEEP, NF1),				/* EC_SDA2 */
++	PAD_NC(GPP_C8, NONE),
++	PAD_NC(GPP_C9, NONE),
++	PAD_NC(GPP_C10, NONE),
++	PAD_NC(GPP_C11, NONE),
++	PAD_NC(GPP_C12, NONE),
++	PAD_NC(GPP_C13, NONE),
++	PAD_NC(GPP_C14, NONE),
++	PAD_NC(GPP_C15, NONE),
++	PAD_CFG_NF(GPP_C16, NONE, DEEP, NF1),				/* I2C0_DATA */
++	PAD_CFG_NF(GPP_C17, NONE, DEEP, NF1),				/* I2C0_CLK */
++	PAD_NC(GPP_C18, NONE),
++	PAD_NC(GPP_C19, NONE),
++	PAD_CFG_GPO(GPP_C20, 0, DEEP),					/* EPRIVACY_ON */
++	PAD_CFG_GPO(GPP_C21, 0, DEEP),					/* TBT_FORCE_PWR */
++	PAD_CFG_GPI_SCI(GPP_C22, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_SCI */
++	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_WAKE */
++
++	/* ------- GPIO Group GPP_D ------- */
++	PAD_NC(GPP_D0, NONE),
++	PAD_NC(GPP_D1, NONE),
++	PAD_NC(GPP_D2, NONE),
++	PAD_NC(GPP_D3, NONE),
++	PAD_NC(GPP_D4, NONE),
++	PAD_NC(GPP_D5, NONE),
++	PAD_NC(GPP_D6, NONE),
++	PAD_NC(GPP_D7, NONE),
++	PAD_NC(GPP_D8, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_D9, UP_20K, DEEP, OFF, ACPI),		/* -DISCRETE_PRESENCE */
++	PAD_NC(GPP_D10, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_D11, UP_20K, DEEP, OFF, ACPI),		/* DGFX_VRAM_ID0 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_D12, UP_20K, DEEP, OFF, ACPI),		/* DGFX_VRAM_ID1 */
++	PAD_NC(GPP_D13, NONE),
++	PAD_NC(GPP_D14, NONE),
++	PAD_NC(GPP_D15, NONE),
++	PAD_NC(GPP_D16, NONE),
++	PAD_CFG_GPO(GPP_D17, 0, DEEP),					/* DDI_PRIORITY1 */
++	PAD_NC(GPP_D18, NONE),
++	PAD_NC(GPP_D19, NONE),
++	PAD_NC(GPP_D20, NONE),
++	PAD_NC(GPP_D21, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_D22, UP_20K, DEEP, OFF, ACPI),		/* -NFC_DTCT */
++	PAD_NC(GPP_D23, NONE),
++
++	/* ------- GPIO Group GPP_E ------- */
++	PAD_NC(GPP_E0, NONE),
++	PAD_CFG_NF(GPP_E1, NONE, DEEP, NF1),				/* -WWAN_SATA_DTCT (always HIGH) */
++	PAD_CFG_NF(GPP_E2, NONE, DEEP, NF1),				/* -PE_DTCT */
++	PAD_CFG_GPI_TRIG_OWN(GPP_E3, NONE, DEEP, EDGE_SINGLE, ACPI),	/* -TBT_PLUG_EVENT */
++	PAD_CFG_GPO(GPP_E4, 1, DEEP),					/* NFC_ON */
++	PAD_NC(GPP_E5, NONE),
++	PAD_CFG_NF(GPP_E6, NONE, RSMRST, NF1),				/* SATA2_DEVSLP */
++	PAD_NC(GPP_E7, NONE),
++	PAD_NC(GPP_E8, NONE),
++	PAD_CFG_NF(GPP_E9, NONE, DEEP, NF1),				/* -USB_PORT0_OC0 (AON port) */
++	PAD_CFG_NF(GPP_E10, NONE, DEEP, NF1),				/* -USB_PORT1_OC1 (regular port) */
++	PAD_NC(GPP_E11, NONE),
++	PAD_CFG_GPI_APIC_HIGH(GPP_E12, NONE, DEEP),			/* NFC_INT */
++	PAD_CFG_NF(GPP_E13, NONE, DEEP, NF1),				/* DDIP1_HPD */
++	PAD_CFG_NF(GPP_E14, NONE, DEEP, NF1),				/* DDIP2_HPD */
++	PAD_NC(GPP_E15, NONE),
++	PAD_NC(GPP_E16, NONE),
++	PAD_CFG_NF(GPP_E17, NONE, DEEP, NF1),				/* EDP_HPD */
++	PAD_NC(GPP_E18, NONE),
++	PAD_NC(GPP_E19, NONE),
++	PAD_CFG_NF(GPP_E20, NONE, DEEP, NF1),				/* DDIP2_CTRLCLK */
++	PAD_CFG_NF(GPP_E21, NONE, DEEP, NF1),				/* DDIP2_CTRLDATA */
++	PAD_CFG_TERM_GPO(GPP_E22, 0, UP_20K, RSMRST),			/* -GPU_RST */
++	PAD_CFG_TERM_GPO(GPP_E23, 0, UP_20K, RSMRST),			/* 1R8VIDEO_AON_ON */
++
++	/* ------- GPIO Community 2 ------- */
++
++	/* -------- GPIO Group GPD -------- */
++	PAD_CFG_NF(GPD0, NONE, PWROK, NF1),				/* -BATLOW */
++	PAD_CFG_NF(GPD1, NATIVE, PWROK, NF1),				/* AC_PRESENT */
++	PAD_CFG_NF(GPD2, NATIVE, PWROK, NF1),				/* -LANWAKE */
++	PAD_CFG_NF(GPD3, UP_20K, PWROK, NF1),				/* -PWRSW_EC */
++	PAD_CFG_NF(GPD4, NONE, PWROK, NF1),				/* -PCH_SLP_S3 */
++	PAD_CFG_NF(GPD5, NONE, PWROK, NF1),				/* -PCH_SLP_S4 */
++	PAD_CFG_NF(GPD6, NONE, PWROK, NF1),				/* -PCH_SLP_M */
++	PAD_NC(GPD7, NONE),
++	PAD_CFG_NF(GPD8, NONE, PWROK, NF1),				/* SUSCLK_32K */
++	PAD_CFG_NF(GPD9, NONE, PWROK, NF1),				/* -PCH_SLP_WLAN */
++	PAD_CFG_NF(GPD10, NONE, PWROK, NF1),				/* -PCH_SLP_S5 */
++	PAD_CFG_NF(GPD11, NONE, PWROK, NF1),				/* LANPHYPC */
++
++	/* ------- GPIO Community 3 ------- */
++
++	/* ------- GPIO Group GPP_F ------- */
++	PAD_NC(GPP_F0, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_F1, NONE, DEEP, OFF, ACPI),		/* GC6_FB_EN */
++	PAD_CFG_GPO(GPP_F2, 1, DEEP),					/* -GPU_EVENT */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F3, NONE, DEEP, OFF, ACPI),		/* DGFX_PWRGD */
++	PAD_CFG_GPO(GPP_F4, 1, DEEP),					/* -WWAN_RESET */
++	PAD_NC(GPP_F5, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_F6, UP_20K, DEEP, OFF, ACPI),		/* -MIC_HW_EN (R961 to GND) */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F7, UP_20K, DEEP, OFF, ACPI),		/* -INT_MIC_DTCT */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F8, UP_20K, DEEP, OFF, ACPI),		/* WWAN_CFG0 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F9, UP_20K, DEEP, OFF, ACPI),		/* WWAN_CFG1 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F10, UP_20K, DEEP, OFF, ACPI),		/* WWAN_CFG2 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F11, UP_20K, DEEP, OFF, ACPI),		/* WWAN_CFG3 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F12, UP_20K, DEEP, OFF, ACPI),		/* PLANARID0 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F13, UP_20K, DEEP, OFF, ACPI),		/* PLANARID1 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F14, UP_20K, DEEP, OFF, ACPI),		/* PLANARID2 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F15, UP_20K, DEEP, OFF, ACPI),		/* PLANARID3 */
++	PAD_NC(GPP_F16, NONE),
++	PAD_NC(GPP_F17, NONE),
++	PAD_NC(GPP_F18, NONE),
++	PAD_NC(GPP_F19, NONE),
++	PAD_NC(GPP_F20, NONE),
++	PAD_NC(GPP_F21, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_F22, UP_20K, DEEP, OFF, ACPI),		/* -INTRUDER_PCH */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F23, UP_20K, DEEP, OFF, ACPI),		/* -SC_DTCT */
++
++	/* ------- GPIO Group GPP_G ------- */
++	PAD_NC(GPP_G0, NONE),
++	PAD_NC(GPP_G1, NONE),
++	PAD_NC(GPP_G2, NONE),
++	PAD_NC(GPP_G3, NONE),
++	PAD_CFG_GPO(GPP_G4, 0, DEEP),					/* TBT_RTD3_PWR_EN */
++	PAD_CFG_GPO(GPP_G5, 0, DEEP),					/* TBT_FORCE_USB_PWR */
++	PAD_CFG_GPO(GPP_G6, 0, DEEP),					/* -TBT_PERST */
++	PAD_CFG_GPI_SCI(GPP_G7, NONE, DEEP, LEVEL, INVERT),		/* -TBT_PCIE_WAKE */
++};
++
++void variant_config_gpios(void)
++{
++	gpio_configure_pads(gpio_table, ARRAY_SIZE(gpio_table));
++}
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/hda_verb.c
+new file mode 100644
+index 0000000000..d9d103f862
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/hda_verb.c
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++};
++
++const u32 pc_beep_verbs[] = {};
++
++AZALIA_ARRAY_SIZES;
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+new file mode 100644
+index 0000000000..f1f19bc3bf
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+@@ -0,0 +1,114 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++chip soc/intel/skylake
++        # Power
++        register "PmConfigSlpS3MinAssert" = "2"         # 50ms
++        register "PmConfigSlpS4MinAssert" = "1"         # 1s
++        register "PmConfigSlpSusMinAssert" = "3"        # 500ms
++        register "PmConfigSlpAMinAssert" = "3"          # 2s
++
++	device domain 0 on
++		device ref south_xhci on
++			register "usb2_ports" = "{
++				[0] = USB2_PORT_MID(OC1),		// USB-A
++				[1] = USB2_PORT_MID(OC0),		// USB-A (always on)
++				[2] = USB2_PORT_MID(OC_SKIP),		// JSC-1 (smartcard slot)
++				[3] = USB2_PORT_MID(OC_SKIP),		// USB-C (charging port)
++				[4] = USB2_PORT_MID(OC_SKIP),		// JCAM1 (IR camera)
++				[5] = USB2_PORT_MID(OC_SKIP),		// JWWAN1 (M.2 WWAN USB)
++				[6] = USB2_PORT_MID(OC_SKIP),		// JWLAN1 (M.2 WLAN USB)
++				[7] = USB2_PORT_MID(OC_SKIP),		// JCAM1 (webcam)
++				[8] = USB2_PORT_MID(OC_SKIP),		// JFPR1 (fingerprint reader)
++				[9] = USB2_PORT_MID(OC_SKIP),		// JLCD1 (touch panel)
++			}"
++			register "usb3_ports" = "{
++				[0] = USB3_PORT_DEFAULT(OC1),		// USB-A
++				[1] = USB3_PORT_DEFAULT(OC0),		// USB-A (always on)
++				[2] = USB3_PORT_DEFAULT(OC_SKIP),	// RTS5344S (SD card reader)
++				[3] = USB3_PORT_DEFAULT(OC_SKIP),	// USB-C (charging port)
++			}"
++		end
++
++		device ref sata on
++			# SATA_0  - NC
++			# SATA_1A - NC
++			# SATA_1B - NC
++			# SATA_2  - SATA caddy
++			register "SataPortsEnable[3]" = "1"
++			register "SataPortsDevSlp[3]" = "1"
++		end
++
++		# The PCIe lane routing is a bit convoluted on this board:
++		#
++		# PCIe controller 1 - 1x4
++		#   PCIE 1-4   - RP1  - dGPU - CLKOUT0 - CLKREQ0
++		#
++		# PCIe controller 2 - 2x1+1x2 (lane reversal)
++		#   PCIE 5     - GBE  - GBE  - CLKOUT1 - CLKREQ1 (clobbers RP8)
++		#   PCIE 6     - RP7  - WLAN - CLKOUT2 - CLKREQ2
++		#   PCIE 7-8   - RP5  - WWAN - CLKOUT3 - CLKREQ3
++		#
++		# PCIe controller 3 - 2x2
++		#   PCIE 9-10  - RP9  - TB3  - CLKOUT4 - CLKREQ4
++		#   PCIE 11-12 - RP11 - SSD  - CLKOUT5 - CLKREQ5
++
++		# dGPU - x4
++		device ref pcie_rp1 on
++			register "PcieRpEnable[0]"			= "1"
++			register "PcieRpClkReqSupport[0]"		= "1"
++			register "PcieRpClkReqNumber[0]"		= "0"
++			register "PcieRpClkSrcNumber[0]"		= "0"
++			register "PcieRpAdvancedErrorReporting[0]"	= "1"
++			register "PcieRpLtrEnable[0]"			= "1"
++		end
++
++		# Ethernet (clobbers RP8)
++		device ref gbe on
++			register "LanClkReqSupported"			= "1"
++			register "LanClkReqNumber"			= "1"
++			register "EnableLanLtr"				= "1"
++			register "EnableLanK1Off"			= "1"
++		end
++
++		# M.2 WLAN - x1
++		device ref pcie_rp7 on
++			register "PcieRpEnable[6]"			= "1"
++			register "PcieRpClkReqSupport[6]"		= "1"
++			register "PcieRpClkReqNumber[6]"		= "2"
++			register "PcieRpClkSrcNumber[6]"		= "2"
++			register "PcieRpAdvancedErrorReporting[6]"	= "1"
++			register "PcieRpLtrEnable[6]"			= "1"
++		end
++
++		# M.2 WWAN - x2
++		device ref pcie_rp5 on
++			register "PcieRpEnable[4]"			= "1"
++			register "PcieRpClkReqSupport[4]"		= "1"
++			register "PcieRpClkReqNumber[4]"		= "3"
++			register "PcieRpClkSrcNumber[4]"		= "3"
++			register "PcieRpAdvancedErrorReporting[4]"	= "1"
++			register "PcieRpLtrEnable[4]"			= "1"
++		end
++
++		# TB3 (Alpine Ridge LP) - x2
++		device ref pcie_rp9 on
++			register "PcieRpEnable[8]"			= "1"
++			register "PcieRpClkReqSupport[8]"		= "1"
++			register "PcieRpClkReqNumber[8]"		= "4"
++			register "PcieRpClkSrcNumber[8]"		= "4"
++			register "PcieRpAdvancedErrorReporting[8]"	= "1"
++			register "PcieRpLtrEnable[8]"			= "1"
++			register "PcieRpHotPlug[8]"			= "1"
++		end
++
++		# M.2 caddy - x2
++		device ref pcie_rp11 on
++			register "PcieRpEnable[10]"			= "1"
++			register "PcieRpClkReqSupport[10]"		= "1"
++			register "PcieRpClkReqNumber[10]"		= "5"
++			register "PcieRpClkSrcNumber[10]"		= "5"
++			register "PcieRpAdvancedErrorReporting[10]"	= "1"
++			register "PcieRpLtrEnable[10]"			= "1"
++		end
++	end
++end
+-- 
+2.39.5
+
