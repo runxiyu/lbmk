@@ -1,4 +1,4 @@
-From ba34d29274c23c52be957ea040539dccbab09765 Mon Sep 17 00:00:00 2001
+From ec8f5b8e949995eb34b7e54b9f06894eb38d02b4 Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Wed, 10 Jul 2024 17:37:56 +0300
 Subject: [PATCH] HACK: Makefile: Ignore missing input files for binman images
@@ -17,7 +17,7 @@ Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index 1c754ceb5953..fec8d9b2d2b1 100644
+index 34dd029d0cda..d5d89bd2e35c 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -1375,7 +1375,7 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
