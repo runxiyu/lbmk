@@ -23,7 +23,8 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest tree \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
-    verify _7ztest ME_bootguard IFD_platform ifdprefix $cv`
+    verify _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
+    IFD_platform ifdprefix cdir sdir _me _metmp mfs $cv`
 
 vendor_download()
 {
@@ -106,20 +107,31 @@ extract_intel_me()
 {
 	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing"
 
-	_me="$PWD/$_dest"; cdir="$PWD/$appdir"
-	if [ "$ME_bootguard" = "me11disreguard" ]; then
-		# run mkukri's util to extract me.bin and disable bootguard
-		# for Dell OptiPlex 3050 Micro, using the deguard util.
-		extract_deguard_me "$cdir" "$_me"
-		return 0
+	cdir="$PWD/$appdir"
+	_me="$PWD/$_dest"
+	_metmp="$PWD/tmp/me.bin"
+
+	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
+	    chkvars ME11delta ME11version ME11sku ME11pch
+	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
+
+	x_ mkdir -p tmp
+
+	extract_intel_me_bruteforce
+	if [ "$ME11bootguard" = "y" ]; then
+		apply_me11_deguard_mod
+	else
+		mv "$_metmp" "$_me" || $err "!mv $_metmp" "$_me"
 	fi
-	# All other ME setups are extracted with brute force and me_cleaner:
+}
 
-	[ $# -gt 0 ] && _me="${1}" && cdir="$2"
+extract_intel_me_bruteforce()
+{
+	[ $# -gt 0 ] && cdir="$1"
 
-	e "$_me" f && return 0
+	e "$_metmp" f && return 0
 
-	sdir="$(mktemp -d)"; [ -z "$sdir" ] && return 0
+	[ -z "$sdir" ] && sdir="$(mktemp -d)"
 	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
 
 	set +u +e
@@ -127,18 +139,19 @@ extract_intel_me()
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\""
 	for i in *; do
-		[ -f "$_me" ] && break
+		[ -f "$_metmp" ] && break
 		[ -L "$i" ] && continue
 		if [ -f "$i" ]; then
-			"$mecleaner" -r -t -O "$sdir/vendorfile" \
-			    -M "$_me" "$i" && break
-			"$mecleaner" -r -t -O "$_me" "$i" && break
-			"$me7updateparser" -O "$_me" "$i" && break
+			_r="-r" && [ -n "$mfs" ] && _r=""
+			"$mecleaner" $mfs $_r -t -O "$sdir/vendorfile" \
+			    -M "$_metmp" "$i" && break
+			"$mecleaner" $mfs $_r -t -O "$_metmp" "$i" && break
+			"$me7updateparser" -O "$_metmp" "$i" && break
 			_7ztest="${_7ztest}a"
 			extract_archive "$i" "$_7ztest" || continue
-			extract_intel_me "$_me" "$cdir/$_7ztest"
+			extract_intel_me_bruteforce "$cdir/$_7ztest"
 		elif [ -d "$i" ]; then
-			extract_intel_me "$_me" "$cdir/$i"
+			extract_intel_me_bruteforce "$cdir/$i"
 		else
 			continue
 		fi
@@ -149,27 +162,16 @@ extract_intel_me()
 	rm -Rf "$sdir" || $err "extract_intel_me: !rm -Rf $sdir"
 }
 
-extract_deguard_me()
+apply_me11_deguard_mod()
 {
-	x_ ./mk -f deguard
-	cp -R src/deguard "$1/disreguard" || \
-	    $err "Cannot make temporary deguard clone in $1/disreguard"
-	if [ ! -e "$1/disreguard/.git" ]; then
-		git -C "$1/disreguard" init || $err "!init $1/disreguard"
-		git -C "$1/disreguard" add -A . || $err "!add $1/disreguard"
-		git -C "$1/disreguard" commit -m "tmp" || \
-		    $err "!commit $1/disreguard"
-	fi
-	git -C "$1/disreguard" am "$PWD/config/data/deguard/appdir.patch" || \
-	    $err "Cannot temporarily patch deguard clone in $1/disreguard"
 	(
-	cd "$1/disreguard" || $err "Cannot cd to '$1/disreguard'"
-	x_ ./RUNME.sh
-	) || $err "$1/disreguard: RUNME.sh returned error status"
-	"$mecleaner" --whitelist MFS --truncate "$1/disreguard/me.bin" || \
-	    $err "extract_intel_me: Can't truncate disreguarded ME"
-	cp "$cdir/disreguard/me.bin" "$2" || \
-	    $err "extract_intel_me: Can't move disreguarded me.bin"
+	x_ cd src/deguard/
+	./finalimage.py --delta "data/delta/$ME11delta" \
+	    --version "$ME11version" \
+	    --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs data/fpfs/zero \
+	    --input "$_metmp" --output "$_me" || \
+	    $err "Error running deguard for $_me"
+	) || $err "Error running deguard for $_me"
 }
 
 extract_archive()
