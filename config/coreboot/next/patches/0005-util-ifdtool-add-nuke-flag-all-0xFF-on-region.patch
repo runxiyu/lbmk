@@ -1,7 +1,7 @@
-From c900ff6f05ee431c7bf6ab31bc0215faa4ad6971 Mon Sep 17 00:00:00 2001
+From 13da22a18b2c13b8676c69e929ba51f2d5d188cf Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
-Subject: [PATCH 6/8] util/ifdtool: add --nuke flag (all 0xFF on region)
+Subject: [PATCH 5/9] util/ifdtool: add --nuke flag (all 0xFF on region)
 
 When this option is used, the region's contents are overwritten
 with all ones (0xFF).
