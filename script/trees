@@ -14,7 +14,8 @@ XBMKPATH="$PATH"
 eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
-    defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs`; badhash="n"
+    defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs cleancmd`
+badhash="n"
 
 main()
 {
@@ -116,7 +117,7 @@ configure_project()
 {
 	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
 	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
-	    cleanargs`
+	    cleanargs cleancmd`
 	_tcfg="$1/target.cfg"; badhash="n"; [ -f "$_tcfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
 
@@ -231,7 +232,10 @@ elfcheck()
 
 handle_makefile()
 {
-	$dry check_makefile "$srcdir" && x_ make -C "$srcdir" $cleanargs clean
+	_cleancmd="clean"
+	[ -n "$cleancmd" ] && _cleancmd="$cleancmd"
+	$dry check_makefile "$srcdir" && \
+	    x_ make -C "$srcdir" $cleanargs $_cleancmd
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
 	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
 	    "$srcdir" silentoldconfig || make -C "$srcdir" oldconfig || :
