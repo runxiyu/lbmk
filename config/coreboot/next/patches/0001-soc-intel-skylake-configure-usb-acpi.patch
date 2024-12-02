@@ -1,7 +1,7 @@
-From b7b4f05005bfe46fc5ce67ae1f04d225e35cbd4d Mon Sep 17 00:00:00 2001
+From 18b68185f44599cf6ea6a20816bf6a5eb7aeda17 Mon Sep 17 00:00:00 2001
 From: Felix Singer <felixsinger@posteo.net>
 Date: Wed, 26 Jun 2024 04:24:31 +0200
-Subject: [PATCH 1/9] soc/intel/skylake: configure usb acpi
+Subject: [PATCH 1/8] soc/intel/skylake: configure usb acpi
 
 Change-Id: I53fc73046e4b107064fa8c3c617ba6d9b807b71d
 Signed-off-by: Felix Singer <felixsinger@posteo.net>

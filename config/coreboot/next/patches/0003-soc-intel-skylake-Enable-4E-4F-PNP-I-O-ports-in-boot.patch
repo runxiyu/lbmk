@@ -1,7 +1,7 @@
-From 46da5bb38caf3b5d523e79ca0e17b125179daaaf Mon Sep 17 00:00:00 2001
+From b3049cfd11aa0f3c124ed8f87e98a200201ecbdc Mon Sep 17 00:00:00 2001
 From: Mate Kukri <km@mkukri.xyz>
 Date: Fri, 22 Nov 2024 21:26:48 +0000
-Subject: [PATCH 3/9] soc/intel/skylake: Enable 4E/4F PNP I/O ports in
+Subject: [PATCH 3/8] soc/intel/skylake: Enable 4E/4F PNP I/O ports in
  bootblock
 
 Change-Id: I57c9d8a9513a268e2ca6a0abd1306cd038598173

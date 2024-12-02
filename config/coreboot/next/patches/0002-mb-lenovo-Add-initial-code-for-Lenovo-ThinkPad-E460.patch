@@ -1,7 +1,7 @@
-From 86a721209951605ad59aff31639a6be954a0fab8 Mon Sep 17 00:00:00 2001
+From a7cbcbc7037fe3473e5ebe475cbfd12f653e9827 Mon Sep 17 00:00:00 2001
 From: Felix Singer <felixsinger@posteo.net>
 Date: Wed, 26 Jun 2024 00:59:03 +0200
-Subject: [PATCH 2/9] mb/lenovo: Add initial code for Lenovo ThinkPad E460
+Subject: [PATCH 2/8] mb/lenovo: Add initial code for Lenovo ThinkPad E460
 
 Change-Id: Ia02f81750105c95c867d961dbdadcd5991ad371f
 Signed-off-by: Felix Singer <felixsinger@posteo.net>
