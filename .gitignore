@@ -35,4 +35,4 @@
 /lock
 /hash/
 /dump/
-/qrun.sh
+/qrun*.sh
