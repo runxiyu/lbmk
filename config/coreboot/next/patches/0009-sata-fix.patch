@@ -1,0 +1,54 @@
+From fb58f84592fbba25abafaccd9e868afa107c1051 Mon Sep 17 00:00:00 2001
+From: Mate Kukri <km@mkukri.xyz>
+Date: Thu, 5 Dec 2024 08:11:05 +0000
+Subject: [PATCH] sata fix
+
+Change-Id: I0eab7aaf9cf00085c97c637c9ffa14e38cf6d738
+---
+ .../lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb | 9 +++------
+ .../sklkbl_thinkpad/variants/t480s/overridetree.cb       | 9 +++------
+ 2 files changed, 6 insertions(+), 12 deletions(-)
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+index 4b68ec3f49..2f0b20d91a 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+@@ -42,12 +42,9 @@ chip soc/intel/skylake
+ 		end
+ 
+ 		device ref sata on
+-			# SATA_0  - NC
+-			# SATA_1A - NC
+-			# SATA_1B - NC
+-			# SATA_2  - SATA caddy
+-			register "SataPortsEnable[3]" = "1"
+-			register "SataPortsDevSlp[3]" = "1"
++			# SATA_2 - JHDD1 SATA SSD
++			register "SataPortsEnable[2]" = "1"
++			register "SataPortsDevSlp[2]" = "1"
+ 		end
+ 
+ 		# PCIe controller 1 - 1x4
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
+index 5f1c38bc03..cea5e485d2 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
+@@ -42,12 +42,9 @@ chip soc/intel/skylake
+ 		end
+ 
+ 		device ref sata on
+-			# SATA_0  - NC
+-			# SATA_1A - NC
+-			# SATA_1B - NC
+-			# SATA_2  - M.2 2280 SATA
+-			register "SataPortsEnable[3]" = "1"
+-			register "SataPortsDevSlp[3]" = "1"
++			# SATA_2 - Main M.2 SATA SSD
++			register "SataPortsEnable[2]" = "1"
++			register "SataPortsDevSlp[2]" = "1"
+ 		end
+ 
+ 		# PCIe controller 1 - 1x2+2x1
+-- 
+2.39.5
+
