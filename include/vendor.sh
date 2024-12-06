@@ -176,8 +176,12 @@ apply_me11_deguard_mod()
 
 extract_archive()
 {
-	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
+	geteltorito "$1" > "$2/vendor.img" || \
+	    innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
 	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
+
+	[ ! -d "${_dl}_extracted" ] || cp -R "${_dl}_extracted" "$2" || \
+	    $err "!mv '${_dl}_extracted' '$2'"; :
 }
 
 extract_kbc1126ec()
