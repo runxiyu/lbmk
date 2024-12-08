@@ -36,3 +36,4 @@
 /hash/
 /dump/
 /qrun*.sh
+*.tar.*
