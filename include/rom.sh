@@ -215,6 +215,7 @@ add_uboot()
 
 	[ -f "$ubootelf" ] || $err "cb/$ubtarget: Can't find u-boot"
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
+	[ "$payload_seabios" = "y" ] || cprom; :
 }
 
 cprom()
