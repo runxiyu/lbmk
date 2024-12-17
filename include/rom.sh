@@ -44,8 +44,7 @@ mkpayload_grub()
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
 	    "/boot/grub/grub_default.cfg=${srcdir}/.config" \
-	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" \
-	    "/background.png=$grubdata/background/background1280x800.png" || \
+	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" || \
 	    $err "$tree: cannot build grub.elf"; return 0
 }
 
@@ -165,6 +164,9 @@ add_grub()
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
 	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
+	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
+	    cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
+	    "background.png" raw; :
 }
 
 mkseagrub()
