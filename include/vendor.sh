@@ -242,6 +242,7 @@ extract_tbfw()
 {
 	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
 	x_ mkdir -p tmp
+	x_ rm -f tmp/tb.bin
 	find "$appdir" -type f -name "TBT.bin" > "tmp/tb.txt" || \
 	    $err "extract_tbfw $_dest: Can't extract TBT.bin"
 	while read -r f; do
