@@ -16,7 +16,8 @@ cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
     CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 \
     CONFIG_HAVE_MRC CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB \
-    CONFIG_REFCODE_BLOB_FILE CONFIG_GBE_BIN_PATH CONFIG_IFD_BIN_PATH"
+    CONFIG_REFCODE_BLOB_FILE CONFIG_GBE_BIN_PATH CONFIG_IFD_BIN_PATH \
+    CONFIG_LENOVO_TBFW_BIN"
 
 eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
@@ -24,7 +25,8 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
     verify _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
-    IFD_platform ifdprefix cdir sdir _me _metmp mfs $cv`
+    IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
+    TBFW_hash $cv`
 
 vendor_download()
 {
@@ -52,7 +54,8 @@ readkconfig()
 	eval `setcfg "$TMPDIR/tmpcbcfg"`
 
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
-	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW; do
+	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
+	    CONFIG_LENOVO_TBFW_BIN; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
 		eval `setcfg "config/vendor/$vcfg/pkg.cfg"`; return 0
@@ -82,7 +85,9 @@ getfiles()
 	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch e6400vga "$E6400_VGA_DL_url" \
 	  "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 	[ -z "$CONFIG_HAVE_MRC" ] || fetch "mrc" "$MRC_url" "$MRC_url_bkup" \
-	    "$MRC_hash" "$CONFIG_MRC_FILE"; return 0
+	    "$MRC_hash" "$CONFIG_MRC_FILE"
+	[ -z "$CONFIG_LENOVO_TBFW_BIN" ] || fetch "tbfw" "$TBFW_url" \
+	    "$TBFW_url_bkup" "$TBFW_hash" "$CONFIG_LENOVO_TBFW_BIN"; return 0
 }
 
 fetch()
@@ -229,6 +234,25 @@ extract_sch5545ec()
 
 	"$uefiextract" "$_bios" || $err "sch5545 !extract"
 	cp "$_sch5545ec_fw" "$_dest" || $err "$_dest: !sch5545 copy"
+}
+
+# Lenovo ThunderBolt firmware updates:
+# https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
+extract_tbfw()
+{
+	x_ mkdir -p tmp
+	find "$appdir" -type f -name "TBT.bin" > "tmp/tb.txt" || \
+	    $err "extract_tbfw $_dest: Can't extract TBT.bin"
+	while read -r f; do
+		[ -f "$f" ] || continue
+		[ -L "$f" ] && continue
+		cp "$f" "tmp/tb.bin" || \
+		    $err "extract_tbfw $_dest: Can't copy TBT.bin"
+		break
+	done < "tmp/tb.txt"
+	dd if=/dev/null of=tmp/tb.bin bs=1 seek=1048576 || \
+	    $err "extract_tbfw $_dest: Can't pad TBT.bin"
+	cp "tmp/tb.bin" "$_dest" || $err "extract_tbfw $_dest: copy error"; :
 }
 
 vendor_inject()
