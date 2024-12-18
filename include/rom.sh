@@ -120,6 +120,10 @@ mkcorebootbin()
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
 
+	[ "$payload_grubsea" = "y" ] && [ "$initmode" = "normal" ] && \
+	    payload_grubsea="n"
+	[ "$payload_grub" = "y" ] || payload_grubsea="n"
+
 	if $dry grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		[ "$payload_seabios" = "y" ] && pname="seabios" && \
 		    $dry add_seabios
@@ -138,7 +142,9 @@ add_seabios()
 
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 
-	cbfs "$tmprom" "$_seabioself" "fallback/payload"
+	_seaname="fallback/payload" && [ "$payload_grubsea" = "y" ] && \
+	    _seaname="seabios.elf"
+	cbfs "$tmprom" "$_seabioself" "$_seaname"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	_z="2"; [ "$initmode" = "vgarom" ] && _z="0"
@@ -152,15 +158,18 @@ add_seabios()
 
 	[ "$payload_grub" = "y" ] && add_grub
 
-	cprom
+	[ "$payload_grubsea" != "y" ] && cprom
 	[ "$payload_uboot_amd64" = "y" ] && [ "$displaymode" != "txtmode" ] && \
-	    [ "$initmode" != "normal" ] && pname="seauboot" && cprom "seauboot"
+	    [ "$initmode" != "normal" ] && [ "$payload_grubsea" != "y" ] && \
+	    pname="seauboot" && cprom "seauboot"
 	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
 }
 
 add_grub()
 {
-	cbfs "$tmprom" "$grubelf" "img/grub2"
+	_grubname="img/grub2" && [ "$payload_grubsea" = "y" ] && \
+	    _grubname="fallback/payload"
+	cbfs "$tmprom" "$grubelf" "$_grubname"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
 	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
@@ -171,7 +180,11 @@ add_grub()
 
 mkseagrub()
 {
-	cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
+	if [ "$payload_grubsea" = "y" ]; then
+		pname="grub"
+	else
+		cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
+	fi
 	for keymap in config/data/grub/keymap/*.gkb; do
 		[ -f "$keymap" ] && cprom "${keymap##*/}"; :
 	done; :
