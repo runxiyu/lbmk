@@ -26,7 +26,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
     verify _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash $cv`
+    TBFW_hash TBFW_size $cv`
 
 vendor_download()
 {
@@ -240,6 +240,7 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
+	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
 	x_ mkdir -p tmp
 	find "$appdir" -type f -name "TBT.bin" > "tmp/tb.txt" || \
 	    $err "extract_tbfw $_dest: Can't extract TBT.bin"
@@ -250,7 +251,7 @@ extract_tbfw()
 		    $err "extract_tbfw $_dest: Can't copy TBT.bin"
 		break
 	done < "tmp/tb.txt"
-	dd if=/dev/null of=tmp/tb.bin bs=1 seek=1048576 || \
+	dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size || \
 	    $err "extract_tbfw $_dest: Can't pad TBT.bin"
 	cp "tmp/tb.bin" "$_dest" || $err "extract_tbfw $_dest: copy error"; :
 }
