@@ -7,7 +7,7 @@ help2man innoextract libftdi libgpiod libjaylink libpciaccess libusb nasm \
 ncurses openssl p7zip \
 pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
 sharutils subversion swig texinfo ttf-dejavu unarchiver unifont-utils unzip \
-wget xz zlib ccache mtools \
+wget xz zlib ccache \
 "
 
-aur_notice="cross-mipsel-linux-gnu-binutils cross-mipsel-linux-gnu-gcc geteltorito"
+aur_notice="cross-mipsel-linux-gnu-binutils cross-mipsel-linux-gnu-gcc"
