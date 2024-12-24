@@ -272,7 +272,7 @@ vendor_inject()
 	done
 
 	check_board || return 0
-	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board
+	[ "$nukemode" = "nuke" ] || x_ ./mk download $board
 	if [ "$vrelease" = "y" ]; then
 		patch_release_roms
 	else

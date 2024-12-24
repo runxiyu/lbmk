@@ -55,7 +55,7 @@ mkvendorfiles()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    $err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
-	    x_ ./vendor download $target; return 0
+	    x_ ./mk download $target; return 0
 }
 
 cook_coreboot_config()
@@ -247,7 +247,7 @@ cprom()
 	    cbfs "$newrom" "config/data/grub/bootorder_uboot" "bootorder" raw
 
 	[ "$XBMK_RELEASE" = "y" ] || return 0
-	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./vendor inject \
+	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./mk inject \
 	    -r "$newrom" -b "$target" -n nuke || $err "!nuke $newrom"
 }
 
