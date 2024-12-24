@@ -69,7 +69,10 @@ install_packages()
 	[ -n "$aur_notice" ] && \
 	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
 }
-[ $# -gt 0 ] && [ "$1" = "dependencies" ] && install_packages $@ && exit 0
+if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
+	install_packages $@ || exit 1
+	exit 0
+fi
 
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
