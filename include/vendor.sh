@@ -259,7 +259,7 @@ extract_tbfw()
 vendor_inject()
 {
 	set +u +e; [ $# -lt 1 ] && $err "No options specified."
-	[ "$1" = "listboards" ] && eval "ls -1 config/coreboot || :; exit 0"
+	[ "$1" = "listboards" ] && eval "ls -1 config/coreboot || :; return 0"
 
 	archive="$1"; while getopts n:r:b:m: option; do
 		case "$option" in
@@ -273,8 +273,11 @@ vendor_inject()
 
 	check_board || return 0
 	[ "$nukemode" = "nuke" ] || x_ ./vendor download $board
-	[ "$vrelease" != "y" ] && patch_rom "$rom"
-	[ "$vrelease" = "y" ] && patch_release_roms; :
+	if [ "$vrelease" = "y" ]; then
+		patch_release_roms
+	else
+		patch_rom "$rom" || :
+	fi; :
 }
 
 check_board()
@@ -338,7 +341,7 @@ patch_release_roms()
 	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"tmp/romdir\""
 
 	for x in "tmp/romdir/bin/"*/*.rom ; do
-		patch_rom "$x"
+		patch_rom "$x" || return 0
 	done
 
 	(
@@ -363,7 +366,7 @@ patch_release_roms()
 patch_rom()
 {
 	rom="$1"
-	readkconfig || exit 0
+	readkconfig || return 1
 
 	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
 	    "mrc" "0xfffa0000"
