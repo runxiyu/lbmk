@@ -329,6 +329,8 @@ vendor_inject()
 	[ "$nukemode" = "nuke" ] || x_ ./mk download $board
 	if [ "$vrelease" = "y" ]; then
 		patch_release_roms
+		printf "\nPatched images saved to bin/release/%s/\n" \
+		    "$board"
 	else
 		patch_rom "$rom" || :
 	fi; :
