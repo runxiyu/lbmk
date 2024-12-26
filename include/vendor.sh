@@ -17,7 +17,9 @@ cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
     CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 \
     CONFIG_HAVE_MRC CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB \
     CONFIG_REFCODE_BLOB_FILE CONFIG_GBE_BIN_PATH CONFIG_IFD_BIN_PATH \
-    CONFIG_LENOVO_TBFW_BIN"
+    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_FD_PATH CONFIG_FSP_M_FILE \
+    CONFIG_FSP_S_FILE CONFIG_FSP_S_CBFS CONFIG_FSP_M_CBFS CONFIG_FSP_USE_REPO \
+    CONFIG_FSP_FULL_FD"
 
 eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
@@ -26,7 +28,7 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
     verify _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash TBFW_size $cv`
+    TBFW_hash TBFW_size FSPFD_hash $cv`
 
 vendor_download()
 {
@@ -55,7 +57,7 @@ readkconfig()
 
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
-	    CONFIG_LENOVO_TBFW_BIN; do
+	    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
 		eval `setcfg "config/vendor/$vcfg/pkg.cfg"`; return 0
@@ -87,21 +89,39 @@ getfiles()
 	[ -z "$CONFIG_HAVE_MRC" ] || fetch "mrc" "$MRC_url" "$MRC_url_bkup" \
 	    "$MRC_hash" "$CONFIG_MRC_FILE"
 	[ -z "$CONFIG_LENOVO_TBFW_BIN" ] || fetch "tbfw" "$TBFW_url" \
-	    "$TBFW_url_bkup" "$TBFW_hash" "$CONFIG_LENOVO_TBFW_BIN"; return 0
+	    "$TBFW_url_bkup" "$TBFW_hash" "$CONFIG_LENOVO_TBFW_BIN"
+	#
+	# in the future, we might have libre fsp-s and then fsp-m.
+	# therefore, handle them separately, in case one of them is libre; if
+	# one of them was, the path wouldn't be set.
+	#
+	[ -z "$CONFIG_FSP_M_FILE" ] || fetch "fspm" "$CONFIG_FSP_FD_PATH" \
+	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_M_FILE" copy
+	[ -z "$CONFIG_FSP_S_FILE" ] || fetch "fsps" "$CONFIG_FSP_FD_PATH" \
+	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_S_FILE" copy; :
 }
 
 fetch()
 {
 	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"; _dest="${5##*../}"
 	[ "$5" = "/dev/null" ] && return 0; _dl="$XBMK_CACHE/file/$dlsum"
+	if [ "$dl_type" = "fspm" ] || [ "$dl_type" = "fsps" ]; then
+		# HACK: if grabbing fsp from coreboot, fix the path for lbmk
+		for _cdl in dl dl_bkup; do
+			eval "$_cdl=\"\${$_cdl##*../}\"; _cdp=\"\$$_cdl\""
+			[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"
+			[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""
+		done
+	fi
 
-	download "$dl" "$dl_bkup" "$_dl" "$dlsum"
+	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
+	download "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
 
 	rm -Rf "${_dl}_extracted" || $err "!rm -Rf ${_ul}_extracted"
 	e "$_dest" f && return 0
 
 	mkdir -p "${_dest%/*}" || $err "mkdirs: !mkdir -p ${_dest%/*}"
-	remkdir "$appdir"; extract_archive "$_dl" "$appdir" || \
+	remkdir "$appdir"; extract_archive "$_dl" "$appdir" "$dl_type" || \
 	    [ "$dl_type" = "e6400vga" ] || $err "mkd $_dest $dl_type: !extract"
 
 	eval "extract_$dl_type"; set -u -e
@@ -181,11 +201,28 @@ apply_me11_deguard_mod()
 
 extract_archive()
 {
+	if [ $# -gt 2 ]; then
+		if [ "$3" = "fspm" ] || [ "$3" = "fsps" ]; then
+			decat_fspfd "$1" "$2"
+			return 0
+		fi
+	fi
+
 	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
 	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
 
 	[ ! -d "${_dl}_extracted" ] || cp -R "${_dl}_extracted" "$2" || \
 	    $err "!mv '${_dl}_extracted' '$2'"; :
+}
+
+decat_fspfd()
+{
+	_fspfd="$1"
+	_fspdir="$2"
+	_fspsplit="$cbdir/3rdparty/fsp/Tools/SplitFspBin.py"
+
+	$python "$_fspsplit" split -f "$_fspfd" -o "$_fspdir" -n "Fsp.fd" || \
+	    $err "decat_fspfd '$1' '$2': Cannot de-concatenate"; :
 }
 
 extract_kbc1126ec()
@@ -254,6 +291,23 @@ extract_tbfw()
 	dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size || \
 	    $err "extract_tbfw $_dest: Can't pad TBT.bin"
 	cp "tmp/tb.bin" "$_dest" || $err "extract_tbfw $_dest: copy error"; :
+}
+
+extract_fspm()
+{
+	copy_fsp M; :
+}
+
+extract_fsps()
+{
+	copy_fsp S; :
+}
+
+# this copies the fsp s/m; re-base is handled by ./mk inject
+copy_fsp()
+{
+	cp "$appdir/Fsp_$1.fd" "$_dest" || \
+	    $err "copy_fsp: Can't copy $1 to $_dest"; :
 }
 
 vendor_inject()
@@ -381,6 +435,23 @@ patch_rom()
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		inject sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
+	#
+	# coreboot adds FSP-M first. so we shall add it first, then S:
+	# NOTE:
+	# We skip the fetch if CONFIG_FSP_USE_REPO or CONFIG_FSP_FULL_FD is set
+	# but only for inject/nuke. we still run fetch (see above) because on
+	# _fsp targets, coreboot still needs them, but coreboot Kconfig uses
+	# makefile syntax and puts $(obj) in the path, which makes no sense
+	# in sh. So we modify the path there, but lbmk only uses the file
+	# in vendorfiles/ if neither CONFIG_FSP_USE_REPO nor CONFIG_FSP_FULL_FD
+	# are set
+	#
+	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
+	   [ -n "$CONFIG_FSP_M_FILE" ] && \
+		inject "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
+	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
+	   [ -n "$CONFIG_FSP_S_FILE" ] && \
+		inject "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
 	[ -n "$new_mac" ] && [ "$vrelease" != "y" ] && modify_gbe "$rom"
 
 	printf "ROM image successfully patched: %s\n" "$rom"
@@ -394,8 +465,12 @@ inject()
 	eval `setvars "" cbfsname _dest _t _offset`
 	cbfsname="$1"; _dest="${2##*../}"; _t="$3"
 
-	[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
-	    $err "inject $@, $rom: offset passed, but empty (not defined)"
+	if [ "$_t" = "fsp" ]; then
+		[ $# -gt 3 ] && _offset="$4"
+	else
+		[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
+		    $err "inject $@, $rom: offset given but empty (undefined)"
+	fi
 
 	e "$_dest" f n && [ "$nukemode" != "nuke" ] && $err "!inject $dl_type"
 

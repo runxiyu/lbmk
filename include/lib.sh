@@ -14,6 +14,16 @@ tmpgit="$PWD/tmp/gitclone"
 grubdata="config/data/grub"
 err="err_"
 
+pyver="2"
+python="python3"
+which python3 1>/dev/null || python="python"
+which $python 1>/dev/null || pyver=""
+[ -n "$pyver" ] && pyver="$($python --version | awk '{print $2}')"
+if [ "${pyver%%.*}" != "3" ]; then
+	printf "Wrong python version, or python missing. Must be v 3.x.\n" 1>&2
+	exit 1
+fi
+
 err_()
 {
 	printf "ERROR %s: %s\n" "$0" "$1" 1>&2; exit 1
@@ -185,8 +195,11 @@ singletree()
 	done; return 0
 }
 
+# can grab from the internet, or copy locally.
+# if copying locally, it can only copy a file.
 download()
 {
+	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
 	cached="$XBMK_CACHE/file/$4"
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
 	vendor_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
@@ -197,8 +210,21 @@ download()
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
 		rm -f "$cached" || $err "!rm -f '$cached'"
-		curl --location --retry 3 -A "$_ua" "$url" -o "$cached" || \
-		    wget --tries 3 -U "$_ua" "$url" -O "$cached" || continue
+		if [ "$_dlop" = "curl" ]; then
+			curl --location --retry 3 -A "$_ua" "$url" \
+			    -o "$cached" || wget --tries 3 -U "$_ua" "$url" \
+			    -O "$cached" || continue
+		elif [ "$_dlop" = "copy" ]; then
+			[ -L "$url" ] && \
+				printf "dl %s %s %s %s: '%s' is a symlink\n" \
+				    "$1" "$2" "$3" "$4" "$url" 1>&2 && continue
+			[ ! -f "$url" ] && \
+				printf "dl %s %s %s %s: '%s' not a file\n" \
+				    "$1" "$2" "$3" "$4" "$url" 1>&2 && continue
+			cp "$url" "$cached" || continue
+		else
+			$err "$1 $2 $3 $4: Unsupported dlop type: '$_dlop'"
+		fi
 		vendor_checksum "$4" "$cached" || dl_fail="n"
 	done; [ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
 	[ "$cached" = "$3" ] || cp "$cached" "$3" || $err "!d cp $cached $3"; :
