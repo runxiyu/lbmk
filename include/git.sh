@@ -91,10 +91,9 @@ fetch_submodule()
 	    "$mdir/${1##*/}/patches"
 }
 
-livepull="n"
 tmpclone()
 {
-	[ "$repofail" = "y" ] && \
+	livepull="n" && [ "$repofail" = "y" ] && \
 	    printf "Cached clone failed; trying online.\n" 1>&2 && livepull="y"
 
 	repofail="n"
