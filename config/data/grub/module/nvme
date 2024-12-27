@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Install modules (installed, but not automatically loaded)
 grub_install_modules=" \
 hexdump \
