@@ -8,6 +8,7 @@ set -u -e
 
 . "include/lib.sh"
 . "include/git.sh"
+. "include/path.sh"
 
 XBMKPATH="$PATH"
 
@@ -204,6 +205,8 @@ check_cross_compiler()
 		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
 		xfix="${_xarch%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
+
+		check_gnat_path
 
 		# sometimes buildgcc fails for like no reason. try twice.
 		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
