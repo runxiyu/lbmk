@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 pkg_add="dnf -y install"
 pkglist=" \
 acpica-tools arm-none-eabi-binutils arm-none-eabi-gcc \

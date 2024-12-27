@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 pkg_add="apt-get -y install"
 pkglist=" \
 acpica-tools autoconf autogen automake autopoint autotools-dev bc \
