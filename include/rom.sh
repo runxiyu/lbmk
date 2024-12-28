@@ -11,7 +11,14 @@ mkserprog()
 	basename -as .h "$serdir/"*.h > "$TMPDIR/ser" || $err "!mk $1 $TMPDIR"
 
 	while read -r sertarget; do
-		[ "$1" = "rp2040" ] && x_ cmake -DPICO_BOARD="$sertarget" \
+		[ "$1" = "rp2040" ] &&
+		    x_ rm -rf "$sersrc/build" \
+		    && (pt=$(x_ grep "pico_cmake_set" \
+		          "$picosdk/src/boards/include/boards/$sertarget.h" \
+		        | grep "PICO_PLATFORM" | cut -d= -f2 | tr -d [:blank:])
+		        mkdir -p "$sersrc/build_$pt"
+			ln -srf "$sersrc/build_$pt/" "$sersrc/build") \
+		    && x_ cmake -DPICO_BOARD="$sertarget" \
 		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc" \
 		    && x_ cmake --build "$sersrc/build"
 		[ "$1" = "stm32" ] && x_ make -C "$sersrc" \
