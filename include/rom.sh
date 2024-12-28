@@ -11,7 +11,7 @@ mkserprog()
 	basename -as .h "$serdir/"*.h > "$TMPDIR/ser" || $err "!mk $1 $TMPDIR"
 
 	while read -r sertarget; do
-		[ "$1" = "rp2040" ] &&
+		[ "$1" = "pico" ] &&
 		    x_ rm -rf "$sersrc/build" \
 		    && (pt=$(x_ grep "pico_cmake_set" \
 		          "$picosdk/src/boards/include/boards/$sertarget.h" \

@@ -375,7 +375,8 @@ detect_board()
 readcfg()
 {
 	if [ "$board" = "serprog_rp2040" ] || \
-	    [ "$board" = "serprog_stm32" ]; then
+	    [ "$board" = "serprog_stm32" ] || \
+	    [ "$board" = "serprog_pico" ]; then
 		return 1
 	fi; boarddir="$cbcfgsdir/$board"
 	eval `setcfg "$boarddir/target.cfg"`; chkvars vcfg tree
