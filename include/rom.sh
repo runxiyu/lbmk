@@ -3,7 +3,7 @@
 # Copyright (c) 2021-2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # Copyright (c) 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
-# Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+# Copyright (c) 2023-2024 Riku Viitanen <riku.viitanen@protonmail.com>
 
 mkserprog()
 {
