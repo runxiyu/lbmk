@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-pkg_add="xbps-install -y"
+pkg_add="xbps-install"
 pkglist=" \
 acpica-utils autogen base-devel bison cmake \
 cross-arm-none-eabi-binutils cross-arm-none-eabi-gcc \

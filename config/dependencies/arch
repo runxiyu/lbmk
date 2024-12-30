@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-pkg_add="pacman -S --needed --noconfirm"
+pkg_add="pacman -S --needed"
 pkglist=" \
 acpica arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-newlib \
 autogen base-devel bison cmake curl device-mapper doxygen \
