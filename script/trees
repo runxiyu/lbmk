@@ -216,7 +216,8 @@ check_cross_compiler()
 		    $err "!mkxgcc $project/$xtree '$xfix' '$xgccargs'"
 
 		# we only want to mess with hostcc to build xgcc
-		rm -f xbmkpath/* || $err "Cannot clear xbmkpath/"; :
+		rm -f "$XBMK_CACHE/xbmkpath/"* || \
+		    $err "Cannot clear xbmkpath/"; :
 	done; return 0
 }
 
@@ -253,8 +254,8 @@ check_gnu_path()
 	[ "$gnatfull" = "$gccfull" ] || return 1
 
 	(
-	rm -f xbmkpath/* || $err "Cannot clear xbmkpath/"
-	x_ cd xbmkpath
+	rm -f "$XBMK_CACHE/xbmkpath/"* || $err "Cannot clear xbmkpath/"
+	cd "$XBMK_CACHE/xbmkpath" || $err "Can't cd to xbmkpath/"
 	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
 		[ -e "$_gnubin" ] || continue; _gnuutil="${_gnubin##*/}"
 		x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"

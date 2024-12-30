@@ -87,20 +87,6 @@ fi
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
-[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || unset TMPDIR
-[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR"
-
-if [ -z "${TMPDIR+x}" ]; then
-	[ -f "lock" ] && $err "$PWD/lock exists. Is a build running?"
-	export TMPDIR="/tmp"
-	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
-	touch lock || $err "cannot create 'lock' file"
-	rm -Rf xbmkpath || $err "cannot remove xbmkpath"
-	mkdir -p xbmkpath || $err "cannot create xbmkpath"
-	export PATH="$PWD/xbmkpath:$PATH" || $err "Can't create xbmkpath"
-	xbmk_parent="y"
-fi
-
 # XBMK_CACHE is a directory, for caching downloads and git repositories
 [ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$PWD/cache"
 [ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$PWD/cache"
@@ -108,6 +94,21 @@ fi
     $err "cachedir is default, $PWD/cache, but it exists and is a symlink"
 [ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$PWD/cache"
 [ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' exists but it's a file"
+
+# unify all temporary files/directories in a single TMPDIR
+[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || unset TMPDIR
+[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR"
+if [ -z "${TMPDIR+x}" ]; then
+	[ -f "lock" ] && $err "$PWD/lock exists. Is a build running?"
+	export TMPDIR="/tmp"
+	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
+	touch lock || $err "cannot create 'lock' file"
+	rm -Rf "$XBMK_CACHE/xbmkpath" || $err "cannot remove xbmkpath"
+	mkdir -p "$XBMK_CACHE/xbmkpath" || $err "cannot create xbmkpath"
+	export PATH="$XBMK_CACHE/xbmkpath:$PATH" || \
+	    $err "Can't create xbmkpath"
+	xbmk_parent="y"
+fi
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)
