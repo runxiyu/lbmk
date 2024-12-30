@@ -45,7 +45,7 @@ chkvars()
 }
 
 eval `setvars "" _nogit board xbmk_parent versiondate projectsite projectname \
-    aur_notice configdir datadir version relname`
+    aur_notice configdir datadir version relname reinstall`
 
 for fv in projectname projectsite version versiondate; do
 	eval "[ ! -f "$fv" ] || read -r $fv < \"$fv\" || :"
@@ -72,6 +72,8 @@ e()
 install_packages()
 {
 	[ $# -lt 2 ] && $err "fewer than two arguments"
+	[ $# -gt 2 ] && reinstall="$3"
+
 	eval `setcfg "config/dependencies/$2"`
 
 	$pkg_add $pkglist || $err "Cannot install packages"
