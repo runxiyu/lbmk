@@ -1,10 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2024 Leah Rowe <leah@libreboot.org>
 
-# debian trixie/sid ship with gcc 14 when running "gcc",
-# but (as of December 2024) gnat is gnat-13. we must create
-# a symlink accordingly.
-# however, the user may also have gcc 13+14, but only gnat 13
+# fix mismatching gcc/gnat versions on debian trixie/sid
 check_gnat_path()
 {
 	eval `setvars "" gccver gnatver gccdir`
@@ -21,18 +18,14 @@ check_gnat_path()
 	[ "$gnatver" = "$gccver" ] && return 0
 
 	gccdir="$(dirname "$(command -v gcc)")"
-
 	for _gnatbin in "$gccdir/gnat-"*; do
 		[ -f "$_gnatbin" ] || continue
 		[ "${_gnatbin#"$gccdir/gnat-"}" = "$gccver" ] || continue
 		gnatver="${_gnatbin#"$gccdir/gnat-"}"
 		break
 	done
-
 	[ "$gnatver" = "$gccver" ] || $err "GCC/GNAT versions do not match."
 
-	# we already established that the versions match, but if gnat isn't
-	# in path, then we assume it's in e.g. /usr/bin/gnat-14
 	(
 	x_ cd xbmkpath
 	for _gnatbin in "$gccdir/gnat"*"-$gccver"; do
