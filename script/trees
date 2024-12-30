@@ -294,6 +294,6 @@ copy_elf()
 	done < "$listfile"; x_ make clean -C "$srcdir" $cleanargs
 }
 
-main $@ || exit 0
+main "$@" || exit 0
 . "$mkhelpercfg"
 $cmd

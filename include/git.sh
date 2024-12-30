@@ -115,7 +115,7 @@ tmpclone()
 	git_am_patches "$3" "$5"
 	) || repofail="y"
 
-	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone $@ retry
+	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
 	[ "$repofail" = "y" ] && $err "!clone $1 $2 $3 $4 $5"; :
 }
 

@@ -32,16 +32,16 @@ main()
 
 	case "${spath#script/}" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
-	release) shift 1; mkrelease $@ ;;
-	inject) shift 1; vendor_inject $@ ;;
-	download) shift 1; vendor_download $@ ;;
+	release) shift 1; mkrelease "$@" ;;
+	inject) shift 1; vendor_inject "$@" ;;
+	download) shift 1; vendor_download "$@" ;;
 	roms)
 		[ $# -gt 1 ] && [ "$2" = "serprog" ] && \
 		    mk -b stm32-vserprog pico-serprog && return 0
-		shift 1; x_ ./mk -b coreboot $@ ;;
+		shift 1; x_ ./mk -b coreboot "$@" ;;
 	*)
 		[ -f "$spath" ] || $err "bad command"
-		$shcmd; "$spath" $@ || $err "excmd: $spath $(echo "$@")" ;;
+		$shcmd; "$spath" "$@" || $err "excmd: $spath $(echo "$@")" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
@@ -128,5 +128,5 @@ tmp_cleanup()
 	rm -f lock || return 1
 }
 
-main $@
+main "$@"
 tmp_cleanup || err_ "can't rm TMPDIR upon non-zero exit: $TMPDIR"

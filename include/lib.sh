@@ -80,7 +80,7 @@ install_packages()
 	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
 }
 if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
-	install_packages $@ || exit 1
+	install_packages "$@" || exit 1
 	exit 0
 fi
 
@@ -119,7 +119,7 @@ expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
     1>/dev/null 2>/dev/null || export XBMK_THREADS=1 # user gave a non-integer
 
 x_() {
-	[ $# -lt 1 ] || $@ || \
+	[ $# -lt 1 ] || "$@" || \
 	    $err "Unhandled non-zero exit: $(echo "$@")"; return 0
 }
 
