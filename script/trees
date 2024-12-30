@@ -17,7 +17,7 @@ eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
     gnatver gnatfull gccdir gnatdir`; badhash="n"
 
-main()
+tree()
 {
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
@@ -302,7 +302,8 @@ handle_makefile()
 	    $dry x_ cp "$srcdir/$_copy" "$defconfig"
 
 	[ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && $dry x_ git -C "$srcdir" $cleanargs clean -fdx; :
+	    [ "$mode" = "distclean" ] && \
+		$dry x_ git -C "$srcdir" $cleanargs clean -fdx; :
 }
 
 run_make_command()
@@ -350,6 +351,6 @@ copy_elf()
 	done < "$listfile"; x_ make clean -C "$srcdir" $cleanargs
 }
 
-main "$@" || exit 0
+tree "$@" || exit 0
 . "$mkhelpercfg"
 $cmd

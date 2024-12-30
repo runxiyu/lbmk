@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (c) 2014-2015,2020-2024 Leah Rowe <leah@libreboot.org>
-# Copyright (c) 2015 Patrick "P. J." McDermott <pj@pehjota.net>
-# Copyright (c) 2015-2016 Klemens Nanni <contact@autoboot.org>
+# Copyright (c) 2020-2024 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 set -u -e
