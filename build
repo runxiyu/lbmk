@@ -25,7 +25,7 @@ main()
 	spath="script/$1"; shcmd="shift 1"
 	[ "${1#-*}" != "$1" ] && spath="script/trees" && shcmd=":"
 
-	for g in "which git" "git config --global user.name" \
+	for g in "command -v git" "git config --global user.name" \
 	    "git config --global user.email" "git_init"; do
 		eval "$g 1>/dev/null 2>/dev/null || $err \"Unconfigured: $g\""
 	done
