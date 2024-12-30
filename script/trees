@@ -232,7 +232,7 @@ check_gnu_path()
 		eval "[ \"\$$_gnuarg\" = \"gnat\" ] && continue"
 		$err "check_gnu_path: Invalid argument \"$_gnuarg\""
 	done
-	command -v $1 1>/dev/null || $err "Host gcc unavailable"
+	command -v $1 1>/dev/null || $err "Host '$1' unavailable"
 
 	eval `setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`
 	gnu_setver "$1" "$1" || $err "Command '$1' unavailable."
@@ -246,7 +246,7 @@ check_gnu_path()
 	for _gnubin in "$_gnudir/$2-"*; do
 		[ -f "$_gnubin" ] || continue
 		[ "${_gnubin#"$_gnudir/$2-"}" = "$_gnuver" ] || continue
-		gnatver="${_gnubin#"$_gnudir/$2-"}"; break
+		_gnuver="${_gnubin#"$_gnudir/$2-"}"; break
 	done
 	gnu_setver "$2" "$_gnudir/$2-$_gnuver" || return 1
 	[ "$gnatfull" = "$gccfull" ] || return 1
