@@ -95,7 +95,7 @@ if [ -z "${TMPDIR+x}" ]; then
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	touch lock || $err "cannot create 'lock' file"
-	rm -Rf xbmkpath || $err "cannot create xbmkpath"
+	rm -Rf xbmkpath || $err "cannot remove xbmkpath"
 	mkdir -p xbmkpath || $err "cannot create xbmkpath"
 	export PATH="$PWD/xbmkpath:$PATH" || $err "Can't create xbmkpath"
 	xbmk_parent="y"
