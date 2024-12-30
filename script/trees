@@ -216,6 +216,9 @@ check_cross_compiler()
 		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
 		    make -C "$cbdir" crossgcc-$xfix $xgccargs || \
 		    $err "!mkxgcc $project/$xtree '$xfix' '$xgccargs'"
+
+		# we only want to mess with hostcc to build xgcc
+		rm -f xbmkpath/* || $err "Cannot clear xbmkpath/"; :
 	done; return 0
 }
 
