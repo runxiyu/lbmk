@@ -207,10 +207,8 @@ check_cross_compiler()
 		xfix="${_xarch%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
 
 		# match gnat-X to gcc
-		(
 		check_gnu_path gcc gnat || check_gnu_path gnat gcc || \
-		    $err "Host GCC/GNAT mismatch"
-		) || $err "Cannot match host GCC/GNAT versions"
+		    $err "Cannot match host GCC/GNAT versions"
 
 		# sometimes buildgcc fails for like no reason. try twice.
 		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
