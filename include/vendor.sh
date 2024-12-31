@@ -383,6 +383,7 @@ readcfg()
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
+	rmodtool="elf/cbfstool/$tree/rmodtool"
 	mecleaner="$PWD/$cbdir/util/me_cleaner/me_cleaner.py"
 	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
@@ -425,10 +426,10 @@ patch_rom()
 	rom="$1"
 	readkconfig || return 1
 
-	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
-	    "mrc" "0xfffa0000"
 	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && inject "fallback/refcode" \
 	    "$CONFIG_REFCODE_BLOB_FILE" "stage"
+	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
+	    "mrc" "0xfffa0000"
 	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && inject IFD "$CONFIG_ME_BIN_PATH" me
 	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && inject ecfw1.bin \
 	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && inject \
@@ -487,10 +488,15 @@ inject()
 		"$cbfstool" "$rom" remove -n "$cbfsname" || \
 		    $err "inject $rom: can't remove $cbfsname"; return 0
 	fi
-	[ "$_t" != "stage" ] || "$cbfstool" "$rom" add-stage -f \
-	    "$_dest" -n "$cbfsname" -t stage -c lzma || $err "$rom: !add ref"
-	[ "$_t" = "stage" ] || "$cbfstool" "$rom" add -f "$_dest" \
-	    -n "$cbfsname" -t $_t $_offset || $err "$rom !add $_t ($_dest)"; :
+	if [ "$_t" = "stage" ]; then # the only stage we handle in refcode
+		x_ mkdir -p tmp; x_ rm -f "tmp/refcode"
+		"$rmodtool" -i "$_dest" -o "tmp/refcode" || "!reloc refcode"
+		"$cbfstool" "$rom" add-stage -f "tmp/refcode" -n "$cbfsname" \
+		    -t stage || $err "$rom: !add ref"
+	else
+		"$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
+		    -t $_t $_offset || $err "$rom !add $_t ($_dest)"
+	fi; :
 }
 
 modify_gbe()

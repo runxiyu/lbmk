@@ -84,10 +84,14 @@ check_coreboot_utils()
 
 		utilmode="" && [ -n "$mode" ] && utilmode="clean"
 		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
-		[ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ] && \
-			x_ mkdir -p "$utilelfdir" && \
-			x_ cp "$utilsrcdir/$util" "elf/$util/$1"
-		[ -z "$mode" ] || x_ rm -Rf "$utilelfdir"; continue
+		if [ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ]; then
+			x_ mkdir -p "$utilelfdir"
+			x_ cp "$utilsrcdir/$util" "$utilelfdir"
+			[ "$util" = "cbfstool" ] || continue
+			x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
+		elif [ -n "$mode" ]; then
+			x_ rm -Rf "$utilelfdir"
+		fi; continue
 	done; return 0
 }
 
