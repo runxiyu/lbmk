@@ -1,4 +1,4 @@
-From c988b6b3bb7567f9ed6bb0332b992577011970c2 Mon Sep 17 00:00:00 2001
+From 58e0d7b7bcec2392b81dda613d070804f7c68cf5 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 04/22] Define GRUB_UINT32_MAX
@@ -35,5 +35,5 @@ index 45079bf65..8c0b30395 100644
  
  #define GRUB_PROPERLY_ALIGNED_ARRAY(name, size) grub_properly_aligned_t name[((size) + sizeof (grub_properly_aligned_t) - 1) / sizeof (grub_properly_aligned_t)]
 -- 
-2.39.2
+2.39.5
 

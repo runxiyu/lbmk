@@ -1,4 +1,4 @@
-From 09cbe5c71236987605cd375c4f69c6a36401e81c Mon Sep 17 00:00:00 2001
+From 689c09a6b675ba52318cd879b289ac3d67073cd4 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 03/13] Add CC0 license
@@ -10,10 +10,10 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  2 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/grub-core/kern/dl.c b/grub-core/kern/dl.c
-index 0bf40caa6..4011e2d15 100644
+index 8ad015b07..9980bae90 100644
 --- a/grub-core/kern/dl.c
 +++ b/grub-core/kern/dl.c
-@@ -470,7 +470,8 @@ grub_dl_check_license (grub_dl_t mod, Elf_Ehdr *e)
+@@ -494,7 +494,8 @@ grub_dl_check_license (grub_dl_t mod, Elf_Ehdr *e)
  
    if (grub_strcmp ((char *) e + s->sh_offset, "LICENSE=GPLv3") == 0
        || grub_strcmp ((char *) e + s->sh_offset, "LICENSE=GPLv3+") == 0
@@ -38,5 +38,5 @@ index a42c20bd1..7157a30aa 100644
    grub_util_error ("%s: incompatible license", filename);
  }
 -- 
-2.39.2
+2.39.5
 

@@ -1,4 +1,4 @@
-From 7090ad00b4c3b4a9af3d7e9df245aed5969da79d Mon Sep 17 00:00:00 2001
+From 39f620fbe7c4a791062b59d4a8d26c35408aca45 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 06/13] Error on missing Argon2id parameters
@@ -54,5 +54,5 @@ index d5106402f..bc818ea69 100644
  	goto err;
        case LUKS2_KDF_TYPE_PBKDF2:
 -- 
-2.39.2
+2.39.5
 

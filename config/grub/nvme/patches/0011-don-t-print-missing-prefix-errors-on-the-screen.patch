@@ -1,4 +1,4 @@
-From d14c9af2656ee6b63b029ac28816f38d4ae26946 Mon Sep 17 00:00:00 2001
+From 233c4f1a1182fd10ef60da98dd00b687c9edbee4 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 16:14:58 +0000
 Subject: [PATCH 11/14] don't print missing prefix errors on the screen
@@ -85,10 +85,10 @@ index 18de52562..2a0fea6c8 100644
  	    }
  	  file = try_open_from_prefix (prefix, filename);
 diff --git a/grub-core/kern/dl.c b/grub-core/kern/dl.c
-index 4011e2d15..af3bd00d0 100644
+index 9980bae90..4457cad7c 100644
 --- a/grub-core/kern/dl.c
 +++ b/grub-core/kern/dl.c
-@@ -758,7 +758,7 @@ grub_dl_load (const char *name)
+@@ -871,7 +871,7 @@ grub_dl_load (const char *name)
      return 0;
  
    if (! grub_dl_dir) {
@@ -98,5 +98,5 @@ index 4011e2d15..af3bd00d0 100644
    }
  
 -- 
-2.39.2
+2.39.5
 

@@ -1,4 +1,4 @@
-From 9e9c69a74e5c14fd87ae56c8b9171a808d89742e Mon Sep 17 00:00:00 2001
+From 3f69e2c35ccf2a37fd35f1821c7b85cc6df07ca7 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 30 Oct 2023 22:19:21 +0000
 Subject: [PATCH 09/22] at_keyboard coreboot: force scancodes2+translate
@@ -103,5 +103,5 @@ index f8a129eb7..8207225c2 100644
    grub_dprintf ("atkeyb", "returned set %d\n", ps2_state.current_set);
    if (ps2_state.current_set == 2)
 -- 
-2.39.2
+2.39.5
 

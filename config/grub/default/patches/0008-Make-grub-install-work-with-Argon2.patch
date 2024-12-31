@@ -1,4 +1,4 @@
-From a04a61ac008379d14749b0a1c47a8c9641c9eed5 Mon Sep 17 00:00:00 2001
+From 2887e35e882a86e474052112a23608570b3f41b2 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 08/13] Make grub-install work with Argon2
@@ -22,5 +22,5 @@ index 7dc5657bb..cf7315891 100644
        have_cryptodisk = 1;
      }
 -- 
-2.39.2
+2.39.5
 

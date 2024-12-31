@@ -1,4 +1,4 @@
-From e2cfe7dcdb384ce5268a7c6e5cc8a6e8e01fc05f Mon Sep 17 00:00:00 2001
+From 65a9b252b79d5d1fa022e3da9ef91459ad8efb94 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 05/22] Add Argon2 algorithm
@@ -30,10 +30,10 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  create mode 100644 grub-core/lib/argon2/ref.c
 
 diff --git a/docs/grub-dev.texi b/docs/grub-dev.texi
-index 1276c5930..cd6fb0e1e 100644
+index 3ad8e3efa..d7c6232af 100644
 --- a/docs/grub-dev.texi
 +++ b/docs/grub-dev.texi
-@@ -503,11 +503,75 @@ GRUB includes some code from other projects, and it is sometimes necessary
+@@ -503,12 +503,76 @@ GRUB includes some code from other projects, and it is sometimes necessary
  to update it.
  
  @menu
@@ -41,6 +41,7 @@ index 1276c5930..cd6fb0e1e 100644
  * Gnulib::
  * jsmn::
  * minilzo::
+ * libtasn1::
  @end menu
  
 +@node Argon2
@@ -110,7 +111,7 @@ index 1276c5930..cd6fb0e1e 100644
  @section Gnulib
  
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 705d73fab..452f11b20 100644
+index f70e02e69..f5f9b040c 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
 @@ -1219,6 +1219,14 @@ module = {
@@ -2607,5 +2608,5 @@ index 000000000..c933df80d
 +    }
 +}
 -- 
-2.39.2
+2.39.5
 

@@ -1,4 +1,4 @@
-From 268da8d0ccce822ffa4c2d9d35fe717245daa726 Mon Sep 17 00:00:00 2001
+From 26ae5da9ed8382869b699a653988e6c8f32bd3d1 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 07/22] Compile with Argon2id support
@@ -11,7 +11,7 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  3 files changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index 0f74a1680..5a15e5637 100644
+index 038253b37..2f19569c9 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
 @@ -3,7 +3,7 @@ AutoGen definitions Makefile.tpl;
@@ -35,7 +35,7 @@ index 0f74a1680..5a15e5637 100644
    common = grub-core/disk/luks.c;
    common = grub-core/disk/luks2.c;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 452f11b20..5c1af8682 100644
+index f5f9b040c..f1f38d8d3 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
 @@ -1242,7 +1242,7 @@ module = {
@@ -79,5 +79,5 @@ index bc818ea69..5b9eaa599 100644
  	hash = grub_crypto_lookup_md_by_name (k->kdf.u.pbkdf2.hash);
  	if (!hash)
 -- 
-2.39.2
+2.39.5
 

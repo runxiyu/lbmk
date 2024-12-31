@@ -1,4 +1,4 @@
-From 246a626a369fc3730c6b5c21982fd89ed19c6fe0 Mon Sep 17 00:00:00 2001
+From 0e358c800b58f8122e8d333541eba08cf1b4dbef Mon Sep 17 00:00:00 2001
 From: Mate Kukri <km@mkukri.xyz>
 Date: Mon, 20 May 2024 11:43:35 +0100
 Subject: [PATCH 14/14] Add native NVMe driver based on SeaBIOS
@@ -31,19 +31,20 @@ index 43635d5ff..2c86dbbf6 100644
  
  endif
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 5c1af8682..02967d3ff 100644
+index f1f38d8d3..d09f9ffbc 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -2614,3 +2614,9 @@ module = {
-   enable = efi;
-   depends = part_gpt;
- };
+@@ -2676,4 +2676,10 @@ module = {
+   common = tests/asn1/asn1_test.c;
+   cflags = '-Wno-uninitialized';
+   cppflags = '-I$(srcdir)/lib/libtasn1-grub -I$(srcdir)/tests/asn1/';
++}
 +
 +module = {
 +  name = nvme;
 +  common = disk/nvme.c;
 +  enable = pci;
-+};
+ };
 diff --git a/grub-core/commands/nativedisk.c b/grub-core/commands/nativedisk.c
 index 6806bff9c..fd68a513e 100644
 --- a/grub-core/commands/nativedisk.c
@@ -1070,5 +1071,5 @@ index fbf23df7f..186e76f0b 100644
  
  struct grub_disk;
 -- 
-2.39.2
+2.39.5
 

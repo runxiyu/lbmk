@@ -1,4 +1,4 @@
-From bf4fbc14d4d9a4612b70531b9678676571a46818 Mon Sep 17 00:00:00 2001
+From e8e419fe16843e7b7d8c614531df9447db689d28 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 16:36:22 +0000
 Subject: [PATCH 12/13] don't print error if module not found
@@ -17,10 +17,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/grub-core/kern/dl.c b/grub-core/kern/dl.c
-index af3bd00d0..21d0cedb1 100644
+index 4457cad7c..ea9fe8019 100644
 --- a/grub-core/kern/dl.c
 +++ b/grub-core/kern/dl.c
-@@ -486,7 +486,7 @@ grub_dl_resolve_name (grub_dl_t mod, Elf_Ehdr *e)
+@@ -510,7 +510,7 @@ grub_dl_resolve_name (grub_dl_t mod, Elf_Ehdr *e)
  
    s = grub_dl_find_section (e, ".modname");
    if (!s)
@@ -30,5 +30,5 @@ index af3bd00d0..21d0cedb1 100644
    mod->name = grub_strdup ((char *) e + s->sh_offset);
    if (! mod->name)
 -- 
-2.39.2
+2.39.5
 

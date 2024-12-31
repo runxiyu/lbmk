@@ -1,4 +1,4 @@
-From 3273128b6dc6df83ef6b1d54d009a1ae26844bff Mon Sep 17 00:00:00 2001
+From 85fdf29d37b58be96042d6df24f8bc08bba9906d Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Sun, 15 Nov 2020 19:00:27 +0100
 Subject: [PATCH 14/22] grub-core/bus/usb: Parse SuperSpeed companion
@@ -242,5 +242,5 @@ index aac5ab05a..bb2ab2e27 100644
  {
    grub_uint8_t length;
 -- 
-2.39.2
+2.39.5
 

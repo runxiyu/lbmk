@@ -1,4 +1,4 @@
-From 8d46c537d4df8c785af4b85644d311ba53af5964 Mon Sep 17 00:00:00 2001
+From 040942842dc05c9b94c9be21f01b08da3e25fe6d Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Wed, 24 Feb 2021 08:25:41 +0100
 Subject: [PATCH 21/22] Fix compilation on x86_64
@@ -86,5 +86,5 @@ index f4591ffb5..3495bb919 100644
  	  }
  	else
 -- 
-2.39.2
+2.39.5
 
