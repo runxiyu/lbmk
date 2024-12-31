@@ -1,4 +1,4 @@
-From 9d8c79eecf760e4f963a0a7f29b577cd84962a2a Mon Sep 17 00:00:00 2001
+From 9d7b97a0f08a3f0f62c389aee61e92377d82d645 Mon Sep 17 00:00:00 2001
 From: consts <grudnevkv@gmail.com>
 Date: Fri, 2 Mar 2018 07:03:37 +0000
 Subject: [PATCH 1/1] Workaround for MX25 chips
@@ -17,10 +17,10 @@ Change-Id: I43a306b67862b59c1dcd02729e189f3bf73f481b
  3 files changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/cli_classic.c b/cli_classic.c
-index ab5f8b1..2825033 100644
+index 26253dc..5a80394 100644
 --- a/cli_classic.c
 +++ b/cli_classic.c
-@@ -67,6 +67,7 @@ static void cli_classic_usage(const char *name)
+@@ -68,6 +68,7 @@ static void cli_classic_usage(const char *name)
  	       " -o | --output <logfile>            log output to <logfile>\n"
  	       "      --flash-contents <ref-file>   assume flash contents to be <ref-file>\n"
  	       " -L | --list-supported              print supported devices\n"
@@ -28,7 +28,7 @@ index ab5f8b1..2825033 100644
  #if CONFIG_PRINT_WIKI == 1
  	       " -z | --list-supported-wiki         print supported devices in wiki syntax\n"
  #endif
-@@ -262,6 +263,7 @@ int main(int argc, char *argv[])
+@@ -231,6 +232,7 @@ int flashprog_classic_main(int argc, char *argv[])
  		{"version",		0, NULL, 'R'},
  		{"output",		1, NULL, 'o'},
  		{"progress",		0, NULL, OPTION_PROGRESS},
@@ -36,9 +36,9 @@ index ab5f8b1..2825033 100644
  		{NULL,			0, NULL, 0},
  	};
  
-@@ -478,6 +480,9 @@ int main(int argc, char *argv[])
- 				cli_classic_abort_usage("No log filename specified.\n");
- 			}
+@@ -357,6 +359,9 @@ int flashprog_classic_main(int argc, char *argv[])
+ 			cli_classic_usage(argv[0]);
+ 			exit(0);
  			break;
 +		case 'm': /* --workaround-mx */
 +			workaround_mx = 1;
@@ -47,12 +47,12 @@ index ab5f8b1..2825033 100644
  			show_progress = true;
  			break;
 diff --git a/include/programmer.h b/include/programmer.h
-index 873dc37..2007fd6 100644
+index 11d15a8..3b33d5a 100644
 --- a/include/programmer.h
 +++ b/include/programmer.h
-@@ -364,6 +364,7 @@ enum ich_chipset {
- 	CHIPSET_GEMINI_LAKE,
- 	CHIPSET_ELKHART_LAKE,
+@@ -372,6 +372,7 @@ enum ich_chipset {
+ 	CHIPSET_LUNAR_LAKE,
+ 	CHIPSET_ARROW_LAKE,
  };
 +extern int workaround_mx; /* workaround for MX25* chips, makes flash operations more reliable, less failures */
  
@@ -87,5 +87,5 @@ index 748ef99..9bbdee9 100644
  				       readarr);
  }
 -- 
-2.39.2
+2.39.5
 
