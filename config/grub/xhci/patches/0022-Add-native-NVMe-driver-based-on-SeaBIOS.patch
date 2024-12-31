@@ -38,7 +38,7 @@ index fda723f0c..27a707fda 100644
    common = tests/asn1/asn1_test.c;
    cflags = '-Wno-uninitialized';
    cppflags = '-I$(srcdir)/lib/libtasn1-grub -I$(srcdir)/tests/asn1/';
-+}
++};
 +
 +module = {
 +  name = nvme;
