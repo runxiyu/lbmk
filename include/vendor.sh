@@ -488,7 +488,7 @@ inject()
 		"$cbfstool" "$rom" remove -n "$cbfsname" || \
 		    $err "inject $rom: can't remove $cbfsname"; return 0
 	fi
-	if [ "$_t" = "stage" ]; then # the only stage we handle in refcode
+	if [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ mkdir -p tmp; x_ rm -f "tmp/refcode"
 		"$rmodtool" -i "$_dest" -o "tmp/refcode" || "!reloc refcode"
 		"$cbfstool" "$rom" add-stage -f "tmp/refcode" -n "$cbfsname" \
