@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-/* SPDX-FileCopyrightText: 2022, 2023, 2025 Leah Rowe <leah@libreboot.org> */
-/* SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
+/* Copyright (c) 2022-2025 Leah Rowe <leah@libreboot.org> */
+/* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
 #include <sys/stat.h>
 
