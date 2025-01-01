@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* SPDX-FileCopyrightText: 2022, 2023 Leah Rowe <leah@libreboot.org> */
+/* SPDX-FileCopyrightText: 2022, 2023, 2025 Leah Rowe <leah@libreboot.org> */
 /* SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
 #include <sys/stat.h>
@@ -76,10 +76,11 @@ main(int argc, char *argv[])
 	filename = argv[1];
 #ifdef __OpenBSD__
 	err_if(unveil("/dev/urandom", "r") == -1);
-	err_if(unveil(filename, flags == O_RDONLY ? "r" : "rw") == -1);
 	if (flags == O_RDONLY) {
+		err_if(unveil(filename, "r") == -1);
 		err_if(pledge("stdio rpath", NULL) == -1);
 	} else {
+		err_if(unveil(filename, "rw") == -1);
 		err_if(pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
