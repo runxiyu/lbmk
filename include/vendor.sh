@@ -26,14 +26,14 @@ cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
     CONFIG_FSP_S_FILE CONFIG_FSP_S_CBFS CONFIG_FSP_M_CBFS CONFIG_FSP_USE_REPO \
     CONFIG_FSP_FULL_FD"
 
-eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
+eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest tree \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash TBFW_size hashfile has_hashes xromsize xchanged $cv`
+    TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup $cv`"
 
 vendor_download()
 {
@@ -58,14 +58,14 @@ readkconfig()
 		done
 	done < "$TMPDIR/vendorcfg.list"
 
-	eval `setcfg "$TMPDIR/tmpcbcfg"`
+	eval "`setcfg "$TMPDIR/tmpcbcfg"`"
 
 	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
 	    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
-		eval `setcfg "config/vendor/$vcfg/pkg.cfg"`; return 0
+		eval "`setcfg "config/vendor/$vcfg/pkg.cfg"`"; return 0
 	done
 	printf "Vendor files not needed for: %s\n" "$board" 1>&2; return 1
 }
@@ -77,7 +77,7 @@ bootstrap()
 	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
-	    x_ ./mk -d coreboot $MRC_refcode_cbtree; return 0
+	    x_ ./mk -d coreboot "$MRC_refcode_cbtree"; return 0
 }
 
 getfiles()
@@ -345,7 +345,7 @@ vendor_inject()
 	remkdir "$tmpromdel"
 
 	set +u +e; [ $# -lt 1 ] && $err "No options specified. - $dontflash"
-	eval `setvars "" nukemode new_mac xchanged`
+	eval "`setvars "" nukemode new_mac xchanged`"
 
 	archive="$1";
 	[ $# -gt 1 ] && case "$2" in
@@ -359,7 +359,7 @@ vendor_inject()
 	check_release "$archive" || \
 	    $err "You must run this script on a release archive. - $dontflash"
 	if readcfg; then
-		[ "$nukemode" = "nuke" ] || x_ ./mk download $board
+		[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
 		patch_release_roms
 	else
 		printf "Tarball '%s' (board '%s) doesn't need vendorfiles.\n" \
@@ -407,7 +407,7 @@ readcfg()
 	    [ "$board" = "serprog_pico" ]; then
 		return 1
 	fi; boarddir="$cbcfgsdir/$board"
-	eval `setcfg "$boarddir/target.cfg"`; chkvars vcfg tree
+	eval "`setcfg "$boarddir/target.cfg"`"; chkvars vcfg tree
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
@@ -418,7 +418,7 @@ readcfg()
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"
 
-	x_ ./mk -d coreboot $tree
+	x_ ./mk -d coreboot "$tree"
 }
 
 patch_release_roms()
@@ -454,7 +454,7 @@ patch_release_roms()
 		    printf "Make sure you inserted vendor files: %s\n" \
 		    "$vguide" > "$tmpromdir/README.md" || :
 	else
-		printf "Skipping vendorfiles on '$archive'"
+		printf "Skipping vendorfiles on '%s'\n" "$archive" 1>&2
 	fi
 
 	(
@@ -471,7 +471,7 @@ patch_release_roms()
 
 	if [ -n "$new_mac" ]; then
 		if ! modify_mac_addresses; then
-			printf "\nNo GbE region defined for '$board'\n" \
+			printf "\nNo GbE region defined for '%s'\n" "$board" \
 			    1>&2
 			printf "Therefore, changing the MAC is impossible.\n" \
 			    1>&2
@@ -596,17 +596,17 @@ patch_rom()
 
 inject()
 {
-	[ $# -lt 3 ] && $err "$@, $rom: usage: inject name path type (offset)"
+	[ $# -lt 3 ] && $err "$*, $rom: usage: inject name path type (offset)"
 	[ "$2" = "/dev/null" ] && return 0
 
-	eval `setvars "" cbfsname _dest _t _offset`
+	eval "`setvars "" cbfsname _dest _t _offset`"
 	cbfsname="$1"; _dest="${2##*../}"; _t="$3"
 
 	if [ "$_t" = "fsp" ]; then
 		[ $# -gt 3 ] && _offset="$4"
 	else
 		[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
-		    $err "inject $@, $rom: offset given but empty (undefined)"
+		    $err "inject $*, $rom: offset given but empty (undefined)"
 	fi
 
 	e "$_dest" f n && [ "$nukemode" != "nuke" ] && $err "!inject $dl_type"
@@ -666,6 +666,7 @@ modify_mac_addresses()
 		    "$_xrom" || $err "'$_xrom': Can't insert new GbE file"
 		xchanged="y"
 	done < "tmp/rom.list"
-	printf "\nThe following GbE NVM words were written in '$archive':\n"
+	printf "\nThe following GbE NVM words were written in '%s':\n" \
+	    "$archive"
 	x_ util/nvmutil/nvm tmp/gbe dump
 }

@@ -2,8 +2,8 @@
 # Copyright (c) 2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval `setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
-    depend subfile_bkup repofail`
+eval "`setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
+    depend subfile_bkup repofail`"
 
 fetch_targets()
 {
@@ -18,8 +18,8 @@ fetch_targets()
 
 fetch_project()
 {
-	eval `setvars "" xtree tree_depend`
-	eval `setcfg "config/git/$project/pkg.cfg"`
+	eval "`setvars "" xtree tree_depend`"
+	eval "`setcfg "config/git/$project/pkg.cfg"`"
 
 	chkvars url
 
@@ -71,7 +71,8 @@ prep_submodules()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
-	eval `setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st`
+	eval "`setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup \
+	    st`"
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
@@ -103,7 +104,7 @@ tmpclone()
 	mkdir -p "$XBMK_CACHE/repo" || $err "!rmdir $XBMK_CACHE/repo"
 
 	if [ "$livepull" = "y" ] && [ ! -d "$repodir" ]; then
-		git clone $1 "$repodir" || git clone $2 "$repodir" || \
+		git clone "$1" "$repodir" || git clone $2 "$repodir" || \
 		    $err "!clone $1 $2 $repodir $4 $5" #
 	elif [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \

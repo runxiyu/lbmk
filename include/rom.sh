@@ -43,8 +43,9 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	eval `setvars "" grub_modules grub_install_modules`
-	$dry eval `setcfg "$grubdata/module/$tree"`
+	eval "`setvars "" grub_modules grub_install_modules`"
+	$dry eval "`setcfg "$grubdata/module/$tree"`"
+	$dry chkvars grub_modules grub_install_modules
 	$dry x_ rm -f "$srcdir/grub.elf"; $dry \
 	"$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
@@ -62,7 +63,7 @@ mkvendorfiles()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    $err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
-	    x_ ./mk download $target; return 0
+	    x_ ./mk download "$target"; return 0
 }
 
 cook_coreboot_config()
@@ -113,7 +114,8 @@ mkcorebootbin()
 
 	if [ "$payload_uboot_i386" = "y" ] || \
 	    [ "$payload_uboot_amd64" = "y" ]; then
-		printf "'$target' has x86 U-Boot; assuming SeaBIOS=y\n" 1>&2
+		printf "'%s' has x86 U-Boot; assuming SeaBIOS=y\n" \
+		    "$target" 1>&2
 		payload_seabios="y"
 	fi
 
@@ -204,10 +206,12 @@ mkseagrub()
 add_uboot()
 {
 	if [ "$displaymode" = "txtmode" ]; then
-		printf "cb/$target: Cannot use U-Boot in text mode\n" 1>&2
+		printf "cb/%s: Cannot use U-Boot in text mode\n" \
+		    "$target" 1>&2
 		return 0
 	elif [ "$initmode" = "normal" ]; then
-		printf "cb/$target: Cannot use U-Boot in normal initmode\n" 1>&2
+		printf "cb/%s: Cannot use U-Boot in normal initmode\n" \
+		    "$target" 1>&2
 		return 0
 	fi
 

@@ -11,13 +11,13 @@ set -u -e
 
 XBMKPATH="$PATH"
 
-eval `setvars "" xarch srcdir premake cmakedir xlang mode makeargs elfdir cmd \
+eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull gccdir gnatdir`; badhash="n"
+    gnatver gnatfull gccdir cmakedir`"; badhash="n"
 
-tree()
+main()
 {
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
@@ -53,7 +53,7 @@ tree()
 	e "$mkhelpercfg" f missing && mkhelpercfg="$TMPDIR/mkhelper.cfg" && \
 	    x_ touch "$mkhelpercfg"
 
-	targets="$@"; cmd="build_targets $targets"
+	targets="$*"; cmd="build_targets $targets"
 	singletree "$project" && cmd="build_project"
 
 	remkdir "${tmpgit%/*}"
@@ -115,14 +115,15 @@ handle_defconfig()
 
 configure_project()
 {
-	eval `setvars "" xarch xlang build_depend autoconfargs xtree postmake \
+	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
 	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
-	    cleanargs`
+	    xarch xlang`"
 	_tcfg="$1/target.cfg"; badhash="n"; [ -f "$_tcfg" ] || btype="auto"
-	[ -f "$datadir/mkhelper.cfg" ] && eval `setcfg "$datadir/mkhelper.cfg"`
+	[ -f "$datadir/mkhelper.cfg" ] && \
+	    eval "`setcfg "$datadir/mkhelper.cfg"`"
 
 	while [ -f "$_tcfg" ] || [ "$cmd" != "build_project" ]; do
-		eval `setvars "" rev tree`; eval `setcfg "$_tcfg"`
+		eval "`setvars "" rev tree`"; eval "`setcfg "$_tcfg"`"
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 
 		[ "$_f" = "-d" ] && build_depend="" # dry run
@@ -140,7 +141,7 @@ configure_project()
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 	[ -f "CHANGELOG" ] || check_project_hashes
 
-	[ "$mode" = "fetch" ] || x_ ./mk -f "$project" $target
+	[ "$mode" = "fetch" ] || x_ ./mk -f "$project" "$target"
 	[ "$mode" = "fetch" ] || return 0
 	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
 }
@@ -198,7 +199,7 @@ check_cross_compiler()
 		[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 		[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
-		x_ ./mk -f coreboot ${cbdir#src/coreboot/}
+		x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
 
 		export PATH="$PWD/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 		export CROSS_COMPILE="${xarch% *}-"
@@ -234,16 +235,16 @@ check_gnu_path()
 		eval "[ \"\$$_gnuarg\" = \"gnat\" ] && continue"
 		$err "check_gnu_path: Invalid argument \"$_gnuarg\""
 	done
-	command -v $1 1>/dev/null || $err "Host '$1' unavailable"
+	command -v "$1" 1>/dev/null || $err "Host '$1' unavailable"
 
-	eval `setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`
+	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
 	gnu_setver "$1" "$1" || $err "Command '$1' unavailable."
 	gnu_setver "$2" "$2" || :
 
 	eval "[ -z \"\$$1ver\" ] && $err \"Cannot detect host '$1' version\""
 	[ "$gnatfull" = "$gccfull" ] && return 0
 
-	eval "$1dir="$(dirname "$(command -v $1)")""
+	eval "$1dir=\"$(dirname "$(command -v "$1")")\""
 	eval "_gnudir=\"\$$1dir\"; _gnuver=\"\$$1ver\""
 	for _gnubin in "$_gnudir/$2-"*; do
 		[ -f "$_gnubin" ] || continue
@@ -266,7 +267,7 @@ check_gnu_path()
 gnu_setver()
 {
 	eval "$2 --version 1>/dev/null 2>/dev/null || return 1"
-	eval "$1ver=\"`$2 --version 2>/dev/null | head -n1`\""
+	eval "$1ver=\"`"$2" --version 2>/dev/null | head -n1`\""
 	eval "$1ver=\"\${$1ver##* }\""
 	eval "$1full=\"\$$1ver\""
 	eval "$1ver=\"\${$1ver%%.*}\""; :
@@ -316,7 +317,7 @@ run_make_command()
 	$dry make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs || $err "!$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
 
-	[ "$mode" = "clean" ] && \
+	[ "$mode" != "clean" ] || \
 	    $dry make -C "$srcdir" $cleanargs distclean || :; :
 }
 
@@ -352,6 +353,6 @@ copy_elf()
 	done < "$listfile"; x_ make clean -C "$srcdir" $cleanargs
 }
 
-tree "$@" || exit 0
+main "$@" || exit 0
 . "$mkhelpercfg"
 $cmd

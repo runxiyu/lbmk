@@ -33,23 +33,23 @@ err_()
 setvars()
 {
 	_setvars="" && [ $# -lt 2 ] && $err "setvars: too few arguments"
-	val="$1" && shift 1 && for var in $@; do
+	val="$1" && shift 1 && for var in "$@"; do
 		_setvars="$var=\"$val\"; $_setvars"
 	done; printf "%s\n" "${_setvars% }"
 }
 chkvars()
 {
-	for var in $@; do
+	for var in "$@"; do
 		eval "[ -n "\${$var+x}" ] || \$err \"$var unset\""
 		eval "[ -n "\$$var" ] || \$err \"$var unset\""
 	done; return 0
 }
 
-eval `setvars "" _nogit board xbmk_parent versiondate projectsite projectname \
-    aur_notice configdir datadir version relname reinstall`
+eval "`setvars "" _nogit board reinstall versiondate projectsite projectname \
+    aur_notice configdir datadir version relname xbmk_parent`"
 
 for fv in projectname projectsite version versiondate; do
-	eval "[ ! -f "$fv" ] || read -r $fv < \"$fv\" || :"
+	eval "[ ! -f \"$fv\" ] || read -r $fv < \"$fv\" || :"
 done; chkvars projectname projectsite
 
 setcfg()
@@ -75,12 +75,13 @@ install_packages()
 	[ $# -lt 2 ] && $err "fewer than two arguments"
 	[ $# -gt 2 ] && reinstall="$3"
 
-	eval `setcfg "config/dependencies/$2"`
+	eval "`setcfg "config/dependencies/$2"`"
 
+	chkvars pkg_add pkglist
 	$pkg_add $pkglist || $err "Cannot install packages"
 
 	[ -n "$aur_notice" ] && \
-	printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; return 0
+	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
 if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 	install_packages "$@" || exit 1
@@ -267,7 +268,7 @@ cbfs()
 mk()
 {
 	mk_flag="$1" || $err "No argument given"
-	shift 1 && for mk_arg in $@; do
+	shift 1 && for mk_arg in "$@"; do
 		./mk $mk_flag $mk_arg || $err "./mk $mk_flag $mk_arg"; :
 	done; :
 }

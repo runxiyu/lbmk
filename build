@@ -14,7 +14,7 @@ fi
 . "include/vendor.sh"
 . "include/mrc.sh"
 
-eval `setvars "" vdir src_dirname srcdir mode xp ser`
+eval "`setvars "" vdir src_dirname srcdir mode xp ser`"
 err="fail"
 
 main()
@@ -48,7 +48,7 @@ git_init()
 {
 	[ -L ".git" ] && return 1
 	[ -e ".git" ] && return 0
-	eval `setvars "$(date -Rud @$versiondate)" cdate _nogit`
+	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
 
 	git init || return 1
 	git add -A . || return 1
