@@ -173,7 +173,6 @@ mktarball()
 		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
 	printf "\nCreating archive: %s\n\n" "$2"
 	tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball 2, $1"
-	mksha512sum "$2" "${2##*/}.sha512"
 }
 
 mksha512sum()

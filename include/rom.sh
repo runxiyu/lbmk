@@ -255,15 +255,16 @@ cprom()
 	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && [ "$1" != "seauboot" ] && \
 	    cbfs "$newrom" "config/data/grub/keymap/$1" keymap.gkb raw
 	[ $# -gt 0 ] && [ "$1" = "seauboot" ] && \
-	    cbfs "$newrom" "config/data/grub/bootorder_uboot" "bootorder" raw
-
-	[ "$XBMK_RELEASE" = "y" ] || return 0
-	$dry mksha512sum "$newrom" "vendorhashes"; $dry ./mk inject \
-	    -r "$newrom" -b "$target" -n nuke || $err "!nuke $newrom"
+	    cbfs "$newrom" "config/data/grub/bootorder_uboot" bootorder raw; :
 }
 
 mkcoreboottar()
 {
-	[ "$target" = "$tree" ] && return 0; [ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$release" != "n" ] && $dry mkrom_tarball "bin/$target"; :
+	[ "$target" = "$tree" ] && return 0
+	[ "$XBMK_RELEASE" = "y" ] || return 0
+	[ "$release" != "n" ] || return 0
+	$dry mkrom_tarball "bin/$target"
+	$dry ./mk inject "bin/${relname}_${target}.tar.xz" nuke || \
+	    $err "Can't delete vendorfiles in 'bin/${relname}_$target.tar.xz'"
+	return 0
 }

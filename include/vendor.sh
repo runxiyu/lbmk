@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# Copyright (c) 2023-2024 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
 e6400_unpack="$PWD/src/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$PWD/util/me7_update_parser/me7_update_parser.py"
@@ -10,6 +10,11 @@ uefiextract="$PWD/elf/uefitool/uefiextract"
 vendir="vendorfiles"
 appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
+hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
+dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
+vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_BLOBS_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
+vguide="https://libreboot.org/docs/install/ivy_has_common.html"
+tmpromdel="$PWD/tmp/DO_NOT_FLASH"
 
 cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
     CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
@@ -25,10 +30,10 @@ eval `setvars "" EC_url_bkup EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest tree \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
-    archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref vrelease \
-    verify _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
+    archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
+    _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash TBFW_size FSPFD_hash $cv`
+    TBFW_hash TBFW_size hashfile has_hashes xromsize xchanged $cv`
 
 vendor_download()
 {
@@ -40,16 +45,16 @@ readkconfig()
 {
 	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
 
-	rm -f "$TMPDIR/tmpcbcfg" || $err "!rm -f \"$TMPDIR/tmpcbcfg\""
+	rm -f "$TMPDIR/tmpcbcfg" || $err "!rm $TMPDIR/tmpcbcfg - $dontflash"
 	while read -r cbcfgfile; do
 		for cbc in $cv; do
 			rm -f "$TMPDIR/tmpcbcfg2" || \
-			    $err "!rm $TMPDIR/tmpcbcfg2"
+			    $err "!rm $TMPDIR/tmpcbcfg2 - $dontflash"
 			grep "$cbc" "$cbcfgfile" 1>"$TMPDIR/tmpcbcfg2" \
 			    2>/dev/null || :
 			[ -f "$TMPDIR/tmpcbcfg2" ] || continue
 			cat "$TMPDIR/tmpcbcfg2" >> "$TMPDIR/tmpcbcfg" || \
-			    $err "!cat $TMPDIR/tmpcbcfg2"
+			    $err "!cat $TMPDIR/tmpcbcfg2 - $dontflash"
 		done
 	done < "$TMPDIR/vendorcfg.list"
 
@@ -117,20 +122,22 @@ fetch()
 	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
 	download "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
 
-	rm -Rf "${_dl}_extracted" || $err "!rm -Rf ${_ul}_extracted"
+	rm -Rf "${_dl}_extracted" || $err "!rm ${_ul}_extracted. $dontflash"
 	e "$_dest" f && return 0
 
-	mkdir -p "${_dest%/*}" || $err "mkdirs: !mkdir -p ${_dest%/*}"
+	mkdir -p "${_dest%/*}" || \
+	    $err "mkdirs: !mkdir -p ${_dest%/*} - $dontflash"
 	remkdir "$appdir"; extract_archive "$_dl" "$appdir" "$dl_type" || \
-	    [ "$dl_type" = "e6400vga" ] || $err "mkd $_dest $dl_type: !extract"
+	    [ "$dl_type" = "e6400vga" ] || \
+	    $err "mkd $_dest $dl_type: !extract. $dontflash"
 
 	eval "extract_$dl_type"; set -u -e
-	e "$_dest" f missing && $err "!extract_$dl_type"; :
+	e "$_dest" f missing && $err "!extract_$dl_type. $dontflash"; :
 }
 
 extract_intel_me()
 {
-	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing"
+	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing. $dontflash"
 
 	cdir="$PWD/$appdir"
 	_me="$PWD/$_dest"
@@ -146,7 +153,7 @@ extract_intel_me()
 	if [ "$ME11bootguard" = "y" ]; then
 		apply_me11_deguard_mod
 	else
-		mv "$_metmp" "$_me" || $err "!mv $_metmp" "$_me"
+		mv "$_metmp" "$_me" || $err "!mv $_metmp $_me - $dontflash"
 	fi
 }
 
@@ -157,12 +164,13 @@ extract_intel_me_bruteforce()
 	e "$_metmp" f && return 0
 
 	[ -z "$sdir" ] && sdir="$(mktemp -d)"
-	mkdir -p "$sdir" || $err "extract_intel_me: !mkdir -p \"$sdir\""
+	mkdir -p "$sdir" || \
+	    $err "extract_intel_me: !mkdir -p \"$sdir\" - $dontflash"
 
 	set +u +e
 	(
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\""
+	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\" - $dontflash"
 	for i in *; do
 		[ -f "$_metmp" ] && break
 		[ -L "$i" ] && continue
@@ -184,7 +192,7 @@ extract_intel_me_bruteforce()
 		cd "$cdir" || :
 	done
 	)
-	rm -Rf "$sdir" || $err "extract_intel_me: !rm -Rf $sdir"
+	rm -Rf "$sdir" || $err "extract_intel_me: !rm -Rf $sdir - $dontflash"
 }
 
 apply_me11_deguard_mod()
@@ -195,8 +203,8 @@ apply_me11_deguard_mod()
 	    --version "$ME11version" \
 	    --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs data/fpfs/zero \
 	    --input "$_metmp" --output "$_me" || \
-	    $err "Error running deguard for $_me"
-	) || $err "Error running deguard for $_me"
+	    $err "Error running deguard for $_me - $dontflash"
+	) || $err "Error running deguard for $_me - $dontflash"
 }
 
 extract_archive()
@@ -212,7 +220,7 @@ extract_archive()
 	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
 
 	[ ! -d "${_dl}_extracted" ] || cp -R "${_dl}_extracted" "$2" || \
-	    $err "!mv '${_dl}_extracted' '$2'"; :
+	    $err "!mv '${_dl}_extracted' '$2' - $dontflash"; :
 }
 
 decat_fspfd()
@@ -222,27 +230,34 @@ decat_fspfd()
 	_fspsplit="$cbdir/3rdparty/fsp/Tools/SplitFspBin.py"
 
 	$python "$_fspsplit" split -f "$_fspfd" -o "$_fspdir" -n "Fsp.fd" || \
-	    $err "decat_fspfd '$1' '$2': Cannot de-concatenate"; :
+	    $err "decat_fspfd '$1' '$2': Can't de-concatenate; $dontflash"; :
 }
 
 extract_kbc1126ec()
 {
-	e "$kbc1126_ec_dump" f missing && $err "$cbdir: kbc1126 util missing"
+	e "$kbc1126_ec_dump" f missing && \
+	    $err "$cbdir: kbc1126 util missing - $dontflash"
 	(
 	x_ cd "$appdir/"; mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f "ec.bin" ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || $err "can't extract Rom.bin"
+		    unar -D 68*.CAB Rom.bin || \
+		    $err "can't extract Rom.bin - $dontflash"
 		x_ mv Rom.bin ec.bin
 	fi
-	[ -f ec.bin ] || $err "extract_kbc1126_ec $board: can't extract"
-	"$kbc1126_ec_dump" ec.bin || $err "!1126ec $board extract ecfw"
-	) || $err "can't extract kbc1126 ec firmware"
+	[ -f ec.bin ] || \
+	    $err "extract_kbc1126_ec $board: can't extract - $dontflash"
+	"$kbc1126_ec_dump" ec.bin || \
+	    $err "!1126ec $board extract ecfw - $dontflash"
+	) || $err "can't extract kbc1126 ec firmware - $dontflash"
 
-	e "$appdir/ec.bin.fw1" f not && $err "$board: kbc1126ec fetch failed"
-	e "$appdir/ec.bin.fw2" f not && $err "$board: kbc1126ec fetch failed"
+	e "$appdir/ec.bin.fw1" f not && \
+	    $err "$board: kbc1126ec fetch failed - $dontflash"
+	e "$appdir/ec.bin.fw2" f not && \
+	    $err "$board: kbc1126ec fetch failed - $dontflash"
 
-	cp "$appdir/"ec.bin.fw* "${_dest%/*}/" || $err "!cp 1126ec $_dest"
+	cp "$appdir/"ec.bin.fw* "${_dest%/*}/" || \
+	    $err "!cp 1126ec $_dest - $dontflash"; :
 }
 
 extract_e6400vga()
@@ -252,11 +267,12 @@ extract_e6400vga()
 	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
 	(
 	x_ cd "$appdir"
-	[ -f "bios.bin" ] || $err "extract_e6400vga: can't extract bios.bin"
+	[ -f "bios.bin" ] || \
+	    $err "extract_e6400vga: can't extract bios.bin - $dontflash"
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
-	) || $err "can't extract e6400 vga rom"
+	) || $err "can't extract e6400 vga rom - $dontflosh"
 	cp "$appdir/$E6400_VGA_romname" "$_dest" || \
-	    $err "extract_e6400vga $board: can't copy vga rom to $_dest"
+	    $err "extract_e6400vga $board: can't cp $_dest - $dontflash"; :
 }
 
 extract_sch5545ec()
@@ -268,8 +284,9 @@ extract_sch5545ec()
 	_sch5545ec_fw="$_sch5545ec_fw/54 D386BEB8-4B54-4E69-94F5-06091F67E0D3"
 	_sch5545ec_fw="$_sch5545ec_fw/0 Raw section/body.bin" # <-- this!
 
-	"$uefiextract" "$_bios" || $err "sch5545 !extract"
-	cp "$_sch5545ec_fw" "$_dest" || $err "$_dest: !sch5545 copy"
+	"$uefiextract" "$_bios" || $err "sch5545 !extract - $dontflash"
+	cp "$_sch5545ec_fw" "$_dest" || \
+	    $err "$_dest: !sch5545 copy - $dontflash"; :
 }
 
 # Lenovo ThunderBolt firmware updates:
@@ -280,17 +297,18 @@ extract_tbfw()
 	x_ mkdir -p tmp
 	x_ rm -f tmp/tb.bin
 	find "$appdir" -type f -name "TBT.bin" > "tmp/tb.txt" || \
-	    $err "extract_tbfw $_dest: Can't extract TBT.bin"
+	    $err "extract_tbfw $_dest: Can't extract TBT.bin - $dontflash"
 	while read -r f; do
 		[ -f "$f" ] || continue
 		[ -L "$f" ] && continue
 		cp "$f" "tmp/tb.bin" || \
-		    $err "extract_tbfw $_dest: Can't copy TBT.bin"
+		    $err "extract_tbfw $_dest: Can't copy TBT.bin - $dontflash"
 		break
 	done < "tmp/tb.txt"
 	dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size || \
-	    $err "extract_tbfw $_dest: Can't pad TBT.bin"
-	cp "tmp/tb.bin" "$_dest" || $err "extract_tbfw $_dest: copy error"; :
+	    $err "extract_tbfw $_dest: Can't pad TBT.bin - $dontflash"
+	cp "tmp/tb.bin" "$_dest" || \
+	    $err "extract_tbfw $_dest: copy error - $dontflash "; :
 }
 
 extract_fspm()
@@ -307,69 +325,76 @@ extract_fsps()
 copy_fsp()
 {
 	cp "$appdir/Fsp_$1.fd" "$_dest" || \
-	    $err "copy_fsp: Can't copy $1 to $_dest"; :
+	    $err "copy_fsp: Can't copy $1 to $_dest - $dontflash"; :
+}
+
+fail_inject()
+{
+	[ -L "$tmpromdel" ] || [ ! -d "$tmpromdel" ] || \
+	    rm -Rf "$tmpromdel" || :
+	printf "\n\n%s\n\n" "$dontflash" 1>&2
+	printf "WARNING: File '%s' was NOT modified.\n\n" "$archive" 1>&2
+	printf "Please MAKE SURE vendor files are inserted before flashing\n\n"
+	fail "$1"
 }
 
 vendor_inject()
 {
-	set +u +e; [ $# -lt 1 ] && $err "No options specified."
-	[ "$1" = "listboards" ] && eval "ls -1 config/coreboot || :; return 0"
+	err="fail_inject"
+	remkdir "$tmpromdel"
 
-	archive="$1"; while getopts n:r:b:m: option; do
-		case "$option" in
-		n) nukemode="$OPTARG" ;;
-		r) rom="$OPTARG" ;;
-		b) board="$OPTARG" ;;
-		m) new_mac="$OPTARG"; chkvars new_mac ;;
-		*) : ;;
-		esac
-	done
+	set +u +e; [ $# -lt 1 ] && $err "No options specified. - $dontflash"
+	eval `setvars "" nukemode new_mac xchanged`
 
-	check_board || return 0
-	[ "$nukemode" = "nuke" ] || x_ ./mk download $board
-	if [ "$vrelease" = "y" ]; then
+	archive="$1";
+	[ $# -gt 1 ] && case "$2" in
+	nuke) nukemode="nuke" ;;
+	setmac)
+		new_mac="??:??:??:??:??:??"
+		[ $# -gt 2 ] && new_mac="$3" ;;
+	*) $err "Unrecognised inject mode: '$2'"
+	esac
+
+	check_release "$archive" || \
+	    $err "You must run this script on a release archive. - $dontflash"
+	if readcfg; then
+		[ "$nukemode" = "nuke" ] || x_ ./mk download $board
 		patch_release_roms
-		printf "\nPatched images saved to bin/release/%s/\n" \
-		    "$board"
 	else
-		patch_rom "$rom" || :
-	fi; :
-}
-
-check_board()
-{
-	failcheck="y" && check_release "$archive" && failcheck="n"
-	if [ "$failcheck" = "y" ]; then
-		[ -f "$rom" ] || $err "check_board \"$rom\": invalid path"
-		[ -z "${rom+x}" ] && $err "check_board: no rom specified"
-		[ -n "${board+x}" ] || board="$(detect_board "$rom")"
-	else
-		vrelease="y"; board="$(detect_board "$archive")"
+		printf "Tarball '%s' (board '%s) doesn't need vendorfiles.\n" \
+		    "$archive" "$board"
+		return 0
 	fi
-	readcfg || return 1; return 0
+
+	xtype="patched" && [ "$nukemode" = "nuke" ] && xtype="nuked"
+	[ "$xchanged" = "y" ] || \
+		printf "\nRelease archive '%s' was not modified.\n" "$archive"
+	[ "$xchanged" = "y" ] && \
+		printf "\nRelease archive '%s' successfully %s.\n" \
+		    "$archive" "$xtype"
+	[ "$xchanged" = "y" ] && [ "$nukemode" = "nuke" ] && \
+		printf "!!!WARNING!!! -> Vendor files removed. DO NOT FLASH.\n"
+	return 0
 }
 
 check_release()
 {
+	[ -L "$archive" ] && \
+	    $err "'$archive' is a symlink, not a file - $dontflash"
 	[ -f "$archive" ] || return 1
-	[ "${archive##*.}" = "xz" ] || return 1
-	printf "%s\n" "Release archive $archive detected"
-}
+	archivename="`basename "$archive"`"
+	[ -z "$archivename" ] && \
+	    $err "Cannot determine archive file name - $dontflash"
 
-# This function tries to determine the board from the filename of the rom.
-# It will only succeed if the filename is not changed from the build/download
-detect_board()
-{
-	path="$1"; filename="$(basename "$path")"
-	case "$filename" in
-	grub_*|seagrub_*|custom_*)
-		board="$(echo "$filename" | cut -d '_' -f2-3)" ;;
-	seabios_withgrub_*)
-		board="$(echo "$filename" | cut -d '_' -f3-4)" ;;
-	*.tar.xz) _stripped_prefix="${filename#*_}"
+	case "$archivename" in
+	*_src.tar.xz)
+		$err "'$archive' is a src archive, silly!" ;;
+	grub_*|seagrub_*|custom_*|seauboot_*|seabios_withgrub_*)
+		return 1 ;;
+	*.tar.xz) _stripped_prefix="${archivename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
-	*) $err "detect_board $filename: could not detect board type"
-	esac; printf "%s\n" "$board"
+	*) $err "'$archive': could not detect board type - $dontflash"
+	esac; :
 }
 
 readcfg()
@@ -395,36 +420,139 @@ readcfg()
 
 patch_release_roms()
 {
-	remkdir "tmp/romdir"; tar -xf "$archive" -C "tmp/romdir" || \
-	    $err "patch_release_roms: !tar -xf \"$archive\" -C \"tmp/romdir\""
+	has_hashes="n"
 
-	for x in "tmp/romdir/bin/"*/*.rom ; do
-		patch_rom "$x" || return 0
+	tmpromdir="tmp/DO_NOT_FLASH/bin/$board"
+	remkdir "${tmpromdir%"/bin/$board"}"
+	tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}" || \
+		$err "Can't extract '$archive'"
+
+	for _hashes in $hashfiles; do
+		[ -L "$tmpromdir/$_hashes" ] && \
+		    $err "'$archive' -> the hashfile is a symlink. $dontflash"
+		[ -f "$tmpromdir/$_hashes" ] && has_hashes="y" && \
+		    hashfile="$_hashes" && break; :
 	done
+
+	x_ mkdir -p "tmp"; [ -L "tmp/rom.list" ] && \
+	    $err "'$archive' -> tmp/rom.list is a symlink - $dontflash"
+	x_ rm -f "tmp/rom.list" "tmp/zero.1b"
+	x_ dd if=/dev/zero of=tmp/zero.1b bs=1 count=1
+
+	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
+	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
+
+	if readkconfig; then
+		while read -r _xrom ; do
+			process_release_rom "$_xrom" || break
+		done < "tmp/rom.list"
+		rm -f "$tmpromdir/README.md" || :
+		[ "$nukemode" != "nuke" ] || \
+		    printf "Make sure you inserted vendor files: %s\n" \
+		    "$vguide" > "$tmpromdir/README.md" || :
+	else
+		printf "Skipping vendorfiles on '$archive'"
+	fi
 
 	(
-	cd "tmp/romdir/bin/"* || $err "patch roms: !cd tmp/romdir/bin/*"
-
+	cd "$tmpromdir" || $err "patch '$archive': can't cd $tmpromdir"
 	# NOTE: For compatibility with older rom releases, defer to sha1
-	[ "$verify" != "y" ] || [ "$nukemode" = "nuke" ] || \
-	    sha512sum --status -c vendorhashes || \
-	    sha1sum --status -c vendorhashes || sha512sum --status -c \
-	    blobhashes || sha1sum --status -c blobhashes || \
-	    $err "patch_release_roms: ROMs did not match expected hashes"
-	) || $err "can't verify vendor hashes"
+	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
+		sha512sum --status -c "$hashfile" || \
+		    sha1sum --status -c "$hashfile" || \
+		    $err "'$archive' -> Can't verify vendor hashes. $dontflash"
+		rm -f "$hashfile" || \
+		    $err "$archive: Can't rm hashfile. $dontflash"
+	fi
+	) || $err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
-	[ -n "$new_mac" ] && for x in "tmp/romdir/bin/"*/*.rom ; do
-		[ -f "$x" ] && modify_gbe "$x"
-	done
+	if [ -n "$new_mac" ]; then
+		if ! modify_mac_addresses; then
+			printf "\nNo GbE region defined for '$board'\n" \
+			    1>&2
+			printf "Therefore, changing the MAC is impossible.\n" \
+			    1>&2
+			printf "This board probably lacks Intel ethernet.\n" \
+			    1>&2
+		fi
+	fi
 
-	x_ mkdir -p bin/release
-	mv tmp/romdir/bin/* bin/release/ || $err "$board: !mv release roms"
+	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
+	[ "$xchanged" = "y" ] || return 0
+	(
+		cd "${tmpromdir%"/bin/$board"}" || \
+		    $err "Can't cd '${tmpromdir%"/bin/$board"}'; $dontflash"
+		# ../../ is the root of lbmk
+		mkrom_tarball "bin/$board"
+	) || $err "Cannot re-generate '$archive' - $dontflash"
+
+	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
+	    "$archive" || \
+	    $err "'$archive' -> Cannot overwrite - $dontflash"; :
+}
+
+process_release_rom()
+{
+	_xrom="$1"; _xromname="${1##*/}"
+	[ -L "$_xrom" ] && \
+	    $err "$archive -> '${_xrom#"tmp/DO_NOT_FLASH/"}' is a symlink"
+	[ -f "$_xrom" ] || return 0
+
+	[ -z "${_xromname#"$vfix"}" ] && \
+	    $err "'$_xromname'->'"${_xromname#"$vfix"}"' empty. $dontflash"
+	# Remove the prefix and 1-byte pad
+	if [ "$nukemode" != "nuke" ] && \
+	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
+		_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
+
+		# Remove the 1-byte padding
+		stat -c '%s' "$_xrom" > "tmp/rom.size" || \
+		    $err "$_xrom: Can't get rom size. $dontflash"
+		read -r xromsize < "tmp/rom.size" || \
+		    $err "$_xrom: Can't read rom size. $dontflash"
+
+		expr "X$xromsize" : "X-\{0,1\}[0123456789][0123456789]*$" \
+		    1>/dev/null 2>/dev/null || $err "$_xrom size non-integer"
+		[ $xromsize -lt 2 ] && $err \
+		    "$_xrom: Will not create empty file. $dontflash"
+
+		# TODO: check whether the size would be a multiple of 64KB
+		# the smallest rom images we do are 512kb	
+		xromsize="`expr $xromsize - 1`"
+		[ $xromsize -lt 524288 ] && \
+		    $err "$_xrom size too small; likely not a rom. $dontflash"
+
+		dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1 || \
+		    $err "$_xrom: Can't resize. $dontflash"
+		rm -f "$_xrom" || $err "Can't rm $_xrom - $dontflash"
+
+		_xrom="$_xromnew"
+	fi
+
+	[ "$nukemode" = "nuke" ] && \
+		mksha512sum "$_xrom" "vendorhashes"
+
+	patch_rom "$_xrom" || return 1 # if break return, can still change MAC
+	[ "$nukemode" != "nuke" ] && return 0
+
+	# Rename the file, prefixing a warning saying not to flash
+	# the target image, which now has vendor files removed. Also
+	# pad it so that flashprog returns an error if the user tries
+	# to flash it, due to mismatching ROM size vs chip size
+	cat "$_xrom" tmp/zero.1b > "${_xrom%/*}/$vfix${_xrom##*/}" || \
+	    $err "'$archive' -> can't pad/rename '$_xrom'. $dontflash"
+	rm -f "$_xrom" || $err "'$archive' -> can't rm '$_xrom'. $dontflash"
 }
 
 patch_rom()
 {
 	rom="$1"
-	readkconfig || return 1
+
+	if [ "$has_hashes" != "y" ] && [ "$nukemode" != "nuke" ]; then
+		printf "inject: '%s' has no hash file. Skipping.\n" \
+		    "$archive" 1>&2
+		return 1
+	fi
 
 	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && inject "fallback/refcode" \
 	    "$CONFIG_REFCODE_BLOB_FILE" "stage"
@@ -456,15 +584,17 @@ patch_rom()
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_S_FILE" ] && \
 		inject "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
-	[ -n "$new_mac" ] && [ "$vrelease" != "y" ] && modify_gbe "$rom"
+	# TODO: modify gbe *after checksum verification only*
+	# TODO: insert default gbe if doing -n nuke
 
 	printf "ROM image successfully patched: %s\n" "$rom"
+	xchanged="y"
 }
 
 inject()
 {
 	[ $# -lt 3 ] && $err "$@, $rom: usage: inject name path type (offset)"
-	[ "$2" = "/dev/null" ] && return 0; verify="y"
+	[ "$2" = "/dev/null" ] && return 0
 
 	eval `setvars "" cbfsname _dest _t _offset`
 	cbfsname="$1"; _dest="${2##*../}"; _t="$3"
@@ -483,10 +613,14 @@ inject()
 		    $_t:$_dest "$rom" -O "$rom" || \
 		    $err "failed: inject '$_t' '$_dest' on '$rom'"
 		[ "$nukemode" != "nuke" ] || "$ifdtool" $ifdprefix --nuke $_t \
-		    "$rom" -O "$rom" || $err "$rom: !nuke IFD/$_t"; return 0
+		    "$rom" -O "$rom" || $err "$rom: !nuke IFD/$_t"
+		xchanged="y"
+		return 0
 	elif [ "$nukemode" = "nuke" ]; then
 		"$cbfstool" "$rom" remove -n "$cbfsname" || \
-		    $err "inject $rom: can't remove $cbfsname"; return 0
+		    $err "inject $rom: can't remove $cbfsname"
+		xchanged="y"
+		return 0
 	fi
 	if [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ mkdir -p tmp; x_ rm -f "tmp/refcode"
@@ -496,18 +630,39 @@ inject()
 	else
 		"$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
 		    -t $_t $_offset || $err "$rom !add $_t ($_dest)"
-	fi; :
+	fi; xchanged="y"; :
 }
 
-modify_gbe()
+modify_mac_addresses()
 {
-	chkvars CONFIG_GBE_BIN_PATH
+	[ "$nukemode" = "nuke" ] && \
+	    $err "Cannot modify MAC addresses while nuking vendor files"
 
+	# chkvars CONFIG_GBE_BIN_PATH
+	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 	e "${CONFIG_GBE_BIN_PATH##*../}" f n && $err "missing gbe file"
-	x_ make -C util/nvmutil
 
-	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$TMPDIR/gbe"
-	x_ "util/nvmutil/nvm" "$TMPDIR/gbe" setmac $new_mac
-	"$ifdtool" $ifdprefix -i GbE:"$TMPDIR/gbe" "$1" -O "$1" || \
-	    $err "Cannot insert modified GbE region into target image."
+	x_ make -C util/nvmutil
+	x_ mkdir -p tmp
+	[ -L "tmp/gbe" ] && $err "tmp/gbe exists but is a symlink"
+	[ -d "tmp/gbe" ] && $err "tmp/gbe exists but is a directory"
+	if [ -e "tmp/gbe" ]; then
+		[ -f "tmp/gbe" ] || $err "tmp/gbe exists and is not a file"
+	fi
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "tmp/gbe"
+
+	x_ "util/nvmutil/nvm" "tmp/gbe" setmac "$new_mac"
+
+	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
+	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
+
+	while read -r _xrom; do
+		[ -L "$_xrom" ] && continue
+		[ -f "$_xrom" ] || continue
+		"$ifdtool" $ifdprefix -i GbE:"tmp/gbe" "$_xrom" -O \
+		    "$_xrom" || $err "'$_xrom': Can't insert new GbE file"
+		xchanged="y"
+	done < "tmp/rom.list"
+	printf "\nThe following GbE NVM words were written in '$archive':\n"
+	x_ util/nvmutil/nvm tmp/gbe dump
 }
