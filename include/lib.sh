@@ -170,9 +170,9 @@ mkrom_tarball()
 
 mktarball()
 {
-	[ "${2%/*}" = "$2" ] || \
+	if [ "${2%/*}" != "$2" ]; then
 		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
-	printf "\nCreating archive: %s\n\n" "$2"
+	fi
 	tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball 2, $1"
 }
 
