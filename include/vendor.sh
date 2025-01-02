@@ -340,6 +340,7 @@ fail_inject()
 
 vendor_inject()
 {
+	_olderr="$err"
 	err="fail_inject"
 	remkdir "$tmpromdel"
 
@@ -363,6 +364,7 @@ vendor_inject()
 	else
 		printf "Tarball '%s' (board '%s) doesn't need vendorfiles.\n" \
 		    "$archive" "$board"
+		err="$_olderr"
 		return 0
 	fi
 
@@ -374,6 +376,7 @@ vendor_inject()
 		    "$archive" "$xtype"
 	[ "$xchanged" = "y" ] && [ "$nukemode" = "nuke" ] && \
 		printf "!!!WARNING!!! -> Vendor files removed. DO NOT FLASH.\n"
+	err="$_olderr"
 	return 0
 }
 
