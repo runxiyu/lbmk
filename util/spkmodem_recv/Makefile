@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-CC ?= cc
-PREFIX  ?= /usr/local
-INSTALL ?= install
-CFLAGS ?= -Os -Wall -Wextra -Werror -pedantic
+CC?=cc
+CFLAGS?=-Os -Wall -Wextra -Werror -pedantic
+DESTDIR?=
+PREFIX?=/usr/local
+INSTALL?=install
 
 spkmodem-recv:
 	$(CC) $(CFLAGS) -o $@ $@.c
