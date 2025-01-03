@@ -407,7 +407,9 @@ readcfg()
 	    [ "$board" = "serprog_pico" ]; then
 		return 1
 	fi; boarddir="$cbcfgsdir/$board"
-	eval "`setcfg "$boarddir/target.cfg"`"; chkvars vcfg tree
+	eval "`setcfg "$boarddir/target.cfg"`"
+	[ -z "$vcfg" ] && return 1
+	chkvars tree
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
