@@ -40,7 +40,7 @@ setvars()
 chkvars()
 {
 	for var in "$@"; do
-		eval "[ -n "\${$var+x}" ] || \$err \"$var unset\""
+		eval "[ -n \"\${$var+x}\" ] || \$err \"$var unset\""
 		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
 	done; return 0
 }
