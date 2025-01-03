@@ -24,6 +24,7 @@ uint8_t hextonum(char chs), rhex(void);
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
 #define SIZE_4KB 0x1000
+#define NVM_CHECKSUM 0xbaba
 
 uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
@@ -235,7 +236,7 @@ cmd_setchecksum(void)
 	uint16_t val16 = 0;
 	for (int c = 0; c < 0x3F; c++)
 		val16 += word(c, part);
-	setWord(0x3F, part, 0xBABA - val16);
+	setWord(0x3F, part, NVM_CHECKSUM - val16);
 }
 
 void
@@ -258,7 +259,7 @@ goodChecksum(int partnum)
 	uint16_t total = 0;
 	for(int w = 0; w <= 0x3F; w++)
 		total += word(w, partnum);
-	if (total == 0xBABA)
+	if (total == NVM_CHECKSUM)
 		return 1;
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
 	return (errno = ECANCELED) & 0;
