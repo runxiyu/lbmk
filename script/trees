@@ -266,7 +266,7 @@ check_gnu_path()
 
 gnu_setver()
 {
-	eval "\"$2\" --version 1>/dev/null 2>/dev/null || return 1"
+	eval "$2 --version 1>/dev/null 2>/dev/null || return 1"
 	eval "$1ver=\"`"$2" --version 2>/dev/null | head -n1`\""
 	eval "$1ver=\"\${$1ver##* }\""
 	eval "$1full=\"\$$1ver\""
