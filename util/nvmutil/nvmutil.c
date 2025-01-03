@@ -219,10 +219,12 @@ void
 hexdump(int partnum)
 {
 	for (int row = 0; row < 8; row++) {
-		printf("%07x", row << 4);
+		printf("%08x ", row << 4);
 		for (int c = 0; c < 8; c++) {
 			uint16_t val16 = word((row << 3) + c, partnum);
-			printf(" %02x%02x", val16 & 0xff, val16 >> 8);
+			if (c == 4)
+				printf(" ");
+			printf(" %02x %02x", val16 & 0xff, val16 >> 8);
 		} printf("\n");
 	}
 }
