@@ -24,7 +24,7 @@ uint8_t hextonum(char chs), rhex(void);
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
 #define SIZE_4KB 0x1000
-#define NVM_CHECKSUM 0xbaba
+#define NVM_CHECKSUM 0xBABA
 
 uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
