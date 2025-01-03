@@ -6,12 +6,13 @@ CC?=cc
 CFLAGS?=-Os -Wall -Wextra -Werror -pedantic
 DESTDIR?=
 PREFIX?=/usr/local
+INSTALL?=install
 
 nvm: nvmutil.c
 	$(CC) $(CFLAGS) nvmutil.c -o nvm
 
 install:
-	install nvm $(DESTDIR)$(PREFIX)/bin/nvm
+	$(INSTALL) nvm $(DESTDIR)$(PREFIX)/bin/nvm
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/nvm
