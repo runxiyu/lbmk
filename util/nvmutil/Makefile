@@ -12,6 +12,9 @@ nvm: nvmutil.c
 install: nvm
 	install nvm $(PREFIX)/nvm
 
+uninstall: clean
+	rm -f $(PREFIX)/nvm
+
 distclean:
 	rm -f nvm
 
