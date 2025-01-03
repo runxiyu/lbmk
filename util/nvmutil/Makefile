@@ -15,7 +15,7 @@ install:
 	$(INSTALL) nvm $(DESTDIR)$(PREFIX)/bin/nvm
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/nvm
+	rm -f $(DESTDIR)$(PREFIX)/bin/nvm
 
 distclean:
 	rm -f nvm
