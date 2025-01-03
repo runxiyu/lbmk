@@ -222,7 +222,7 @@ hexdump(int partnum)
 		printf("%07x", row << 4);
 		for (int c = 0; c < 8; c++) {
 			uint16_t val16 = word((row << 3) + c, partnum);
-			printf(" %02x%02x", val16 >> 8, val16 & 0xff);
+			printf(" %02x%02x", val16 & 0xff, val16 >> 8);
 		} printf("\n");
 	}
 }
