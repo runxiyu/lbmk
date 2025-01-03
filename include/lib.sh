@@ -15,16 +15,6 @@ tmpgit="$PWD/tmp/gitclone"
 grubdata="config/data/grub"
 err="err_"
 
-pyver="2"
-python="python3"
-command -v python3 1>/dev/null || python="python"
-command -v $python 1>/dev/null || pyver=""
-[ -n "$pyver" ] && pyver="$($python --version | awk '{print $2}')"
-if [ "${pyver%%.*}" != "3" ]; then
-	printf "Wrong python version, or python missing. Must be v 3.x.\n" 1>&2
-	exit 1
-fi
-
 err_()
 {
 	printf "ERROR %s: %s\n" "$0" "$1" 1>&2; exit 1
@@ -86,6 +76,16 @@ install_packages()
 if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 	install_packages "$@" || exit 1
 	exit 0
+fi
+
+pyver="2"
+python="python3"
+command -v python3 1>/dev/null || python="python"
+command -v $python 1>/dev/null || pyver=""
+[ -n "$pyver" ] && pyver="$($python --version | awk '{print $2}')"
+if [ "${pyver%%.*}" != "3" ]; then
+	printf "Wrong python version, or python missing. Must be v 3.x.\n" 1>&2
+	exit 1
 fi
 
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
