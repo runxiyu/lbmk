@@ -45,7 +45,6 @@ mkpayload_grub()
 {
 	eval "`setvars "" grub_modules grub_install_modules`"
 	$dry eval "`setcfg "$grubdata/module/$tree"`"
-	$dry chkvars grub_modules grub_install_modules
 	$dry x_ rm -f "$srcdir/grub.elf"; $dry \
 	"$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
