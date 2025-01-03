@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (c) 2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 eval "`setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
