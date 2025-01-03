@@ -4,16 +4,17 @@
 
 CC?=cc
 CFLAGS?=-Os -Wall -Wextra -Werror -pedantic
-PREFIX?=/usr/bin
+DESTDIR?=
+PREFIX?=/usr/local
 
 nvm: nvmutil.c
 	$(CC) $(CFLAGS) nvmutil.c -o nvm
 
-install: nvm
-	install nvm $(PREFIX)/nvm
+install:
+	install nvm $(DESTDIR)$(PREFIX)/bin/nvm
 
 uninstall: clean
-	rm -f $(PREFIX)/nvm
+	rm -f $(DESTDIR)$(PREFIX)/nvm
 
 distclean:
 	rm -f nvm
