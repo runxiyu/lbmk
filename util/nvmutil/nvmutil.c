@@ -64,6 +64,7 @@ int
 main(int argc, char *argv[])
 {
 	if (argc < 3) {
+		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
 		fprintf(stderr, "USAGE:\n");
 		fprintf(stderr, " %s FILE dump\n", argv[0]);
 		fprintf(stderr, " %s FILE setmac [MAC]\n", argv[0]);
