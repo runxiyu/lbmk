@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2022 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2022,2025 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 CC=cc
@@ -11,6 +11,9 @@ nvm: nvmutil.c
 
 install: nvm
 	install nvm $(PREFIX)/nvm
+
+distclean:
+	rm -f nvm
 
 clean:
 	rm -f nvm
