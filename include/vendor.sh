@@ -386,6 +386,23 @@ vendor_inject()
 		printf "WARNING! Vendorfiles *removed*. DO NOT FLASH.\n" 1>&2 \
 		    && printf "DO NOT flash images from '%s'\n" \
 		    "$archive" 1>&2
+
+	#
+	# catch-all error handler, for libreboot release opsec:
+	#
+	# if vendor files defined, and a hash file was missing, that means
+	# a nuke must succeed, if specified. if no hashfile was present,
+	# that means vendorfiles had been injected, so a nuke must succeed.
+	# this check is here in case of future bugs in lbmk's handling
+	# of vendorfile deletions on release archives, which absolutely
+	# must always be 100% reliable, so paranoia is paramount:
+	#
+	if [ "$xchanged" != "y" ] && [ "$need_files" = "y" ] && \
+	    [ "$nukemode" = "nuke" ] && [ "$has_hashes" != "y" ]; then
+		printf "FAILED NUKE: tarball '$archive', board '$board'\n" 1>&2
+		$err "Unhandled vendorfile deletion: DO NOT RELEASE TO RSYNC"
+	fi # of course, we assume that those variables are also set right
+
 	err="$_olderr"
 	return 0
 }
