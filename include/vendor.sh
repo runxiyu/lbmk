@@ -375,7 +375,7 @@ vendor_inject()
 		    "$archive" && [ "$has_hashes" = "y" ] && \
 		    printf "WARNING: '%s' contains file '%s'. DO NOT FLASH!" \
 		    "$archive" "$hashfile" 1>&2 && \
-		    printf "(vendorfiles may be needed and weren't inserted)" \
+		    printf "(vendorfiles may be needed and aren't there)\n" \
 		    1>&2
 	[ "$xchanged" = "y" ] && \
 		printf "\nRelease archive '%s' successfully %s.\n" \
