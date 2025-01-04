@@ -570,7 +570,8 @@ patch_rom()
 	# if a hash file is missing, we only want to allow nuke.
 	# this logical rule prevents double-nuke and double-inject
 
-	# if injecting without a hash file
+	# if injecting without a hash file i.e. inject what was injected
+	# (or inject where no vendor files are needed, covered previously)
 	if [ "$has_hashes" != "y" ] && [ "$nukemode" != "nuke" ]; then
 		printf "inject: '%s' has no hash file. Skipping.\n" \
 		    "$archive" 1>&2
@@ -578,7 +579,7 @@ patch_rom()
 	fi
 	# nuking *with* a hash file, i.e. nuking what was nuked before
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" = "nuke" ]; then
-		printf "inject nuke: '%s' has a hash file. Skipping nuke." \
+		printf "inject nuke: '%s' has a hash file. Skipping nuke.\n" \
 		    "$archive" 1>&2
 		return 1
 	fi
