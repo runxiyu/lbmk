@@ -406,10 +406,14 @@ readcfg()
 	    [ "$board" = "serprog_stm32" ] || \
 	    [ "$board" = "serprog_pico" ]; then
 		return 1
-	fi; boarddir="$cbcfgsdir/$board"
+	fi
+	boarddir="$cbcfgsdir/$board"
+
 	eval "`setcfg "$boarddir/target.cfg"`"
-	[ -z "$vcfg" ] && return 1
 	chkvars tree
+	x_ ./mk -d coreboot "$tree" # even if vendorfiles not used, see: setmac
+
+	[ -z "$vcfg" ] && return 1
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
@@ -418,9 +422,7 @@ readcfg()
 	kbc1126_ec_dump="$PWD/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
-	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"
-
-	x_ ./mk -d coreboot "$tree"
+	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"; :
 }
 
 patch_release_roms()
