@@ -33,7 +33,8 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files $cv`"
+    TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files \
+    vfile $cv`"
 
 vendor_download()
 {
@@ -65,7 +66,7 @@ readkconfig()
 	    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
-		eval "`setcfg "config/vendor/$vcfg/pkg.cfg"`"; return 0
+		eval "`setcfg "$vfile"`"; return 0
 	done
 	printf "Vendor files not needed for: %s\n" "$board" 1>&2; return 1
 }
@@ -441,6 +442,9 @@ readcfg()
 	x_ ./mk -d coreboot "$tree" # even if vendorfiles not used, see: setmac
 
 	[ -z "$vcfg" ] && return 1
+	vfile="config/vendor/$vcfg/pkg.cfg"
+	[ -L "$vfile" ] && $err "'$archive', '$board': $vfile is a symlink"
+	[ -f "$vfile" ] || $err "'$archive', '$board': $vfile doesn't exist"
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
