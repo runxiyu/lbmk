@@ -364,8 +364,6 @@ vendor_inject()
 	else
 		printf "Tarball '%s' (board '%s) doesn't need vendorfiles.\n" \
 		    "$archive" "$board"
-		err="$_olderr"
-		return 0
 	fi
 
 	xtype="patched" && [ "$nukemode" = "nuke" ] && xtype="nuked"
