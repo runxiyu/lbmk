@@ -358,7 +358,7 @@ vendor_inject()
 
 	check_release "$archive" || \
 	    $err "You must run this script on a release archive. - $dontflash"
-	if readcfg; then
+	if readcfg || [ -n "$new_mac" ]; then
 		[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
 		patch_release_roms
 	else
