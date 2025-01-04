@@ -33,7 +33,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup $cv`"
+    TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files $cv`"
 
 vendor_download()
 {
@@ -340,6 +340,7 @@ fail_inject()
 
 vendor_inject()
 {
+	need_files="n" # will be set to "y" if vendorfiles needed
 	_olderr="$err"
 	err="fail_inject"
 	remkdir "$tmpromdel"
@@ -358,22 +359,33 @@ vendor_inject()
 
 	check_release "$archive" || \
 	    $err "You must run this script on a release archive. - $dontflash"
-	if readcfg || [ -n "$new_mac" ]; then
+
+	readcfg && need_files="y"
+	if [ "$need_files" = "y" ] || [ -n "$new_mac" ]; then
 		[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
 		patch_release_roms
-	else
-		printf "Tarball '%s' (board '%s) doesn't need vendorfiles.\n" \
-		    "$archive" "$board"
 	fi
+	[ "$need_files" != "y" ] && printf \
+	    "\nTarball '%s' (board '%s) doesn't need vendorfiles.\n" \
+	    "$archive" "$board" 1>&2
 
 	xtype="patched" && [ "$nukemode" = "nuke" ] && xtype="nuked"
-	[ "$xchanged" = "y" ] || \
-		printf "\nRelease archive '%s' was not modified.\n" "$archive"
+	[ "$xchanged" != "y" ] && \
+		printf "\nRelease archive '%s' was *NOT* modified.\n" \
+		    "$archive" && [ "$has_hashes" = "y" ] && \
+		    printf "WARNING: '%s' contains file '%s'. DO NOT FLASH!" \
+		    "$archive" "$hashfile" 1>&2 && \
+		    printf "(vendorfiles may be needed and weren't inserted)" \
+		    1>&2
 	[ "$xchanged" = "y" ] && \
 		printf "\nRelease archive '%s' successfully %s.\n" \
-		    "$archive" "$xtype"
+		    "$archive" "$xtype" && [ "$nukemode" != "nuke" ] && \
+		printf "You may now extract '%s' and flash images from it.\n" \
+		    "$archive"
 	[ "$xchanged" = "y" ] && [ "$nukemode" = "nuke" ] && \
-		printf "!!!WARNING!!! -> Vendor files removed. DO NOT FLASH.\n"
+		printf "WARNING! Vendorfiles *removed*. DO NOT FLASH.\n" 1>&2 \
+		    && printf "DO NOT flash images from '%s'\n" \
+		    "$archive" 1>&2
 	err="$_olderr"
 	return 0
 }
