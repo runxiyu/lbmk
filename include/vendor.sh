@@ -380,6 +380,9 @@ vendor_inject()
 	check_release "$archive" || \
 	    $err "You must run this script on a release archive. - $dontflash"
 
+	[ "$new_mac" = "restore" ] && \
+	    printf "Restoring default GbE for '$archive', board '$board'\n"
+
 	readcfg && need_files="y"
 	if [ "$need_files" = "y" ] || [ -n "$new_mac" ]; then
 		[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
@@ -714,7 +717,9 @@ modify_mac_addresses()
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 	e "${CONFIG_GBE_BIN_PATH##*../}" f n && $err "missing gbe file"
 
-	x_ make -C util/nvmutil
+	[ "$new_mac" != "restore" ] && \
+	    x_ make -C util/nvmutil
+
 	x_ mkdir -p tmp
 	[ -L "tmp/gbe" ] && $err "tmp/gbe exists but is a symlink"
 	[ -d "tmp/gbe" ] && $err "tmp/gbe exists but is a directory"
@@ -723,7 +728,8 @@ modify_mac_addresses()
 	fi
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "tmp/gbe"
 
-	x_ "util/nvmutil/nvm" "tmp/gbe" setmac "$new_mac"
+	[ "$new_mac" != "restore" ] && \
+	    x_ "util/nvmutil/nvm" "tmp/gbe" setmac "$new_mac"
 
 	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
 	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
@@ -738,4 +744,9 @@ modify_mac_addresses()
 	printf "\nThe following GbE NVM words were written in '%s':\n" \
 	    "$archive"
 	x_ util/nvmutil/nvm tmp/gbe dump
+
+	[ "$new_mac" = "restore" ] && \
+	    printf "\nNOTE: User specified setmac 'restore' argument.\n" && \
+	    printf "Default GbE file '%s' written without running nvmutil.\n" \
+	    "${CONFIG_GBE_BIN_PATH##*../}"; :
 }
