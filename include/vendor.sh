@@ -349,14 +349,33 @@ vendor_inject()
 	set +u +e; [ $# -lt 1 ] && $err "No options specified. - $dontflash"
 	eval "`setvars "" nukemode new_mac xchanged`"
 
+	# randomise the MAC address by default
+	# TODO: support setting CBFS MAC address for GA-G41M-ES2L
+	new_mac="??:??:??:??:??:??"
+
 	archive="$1";
 	[ $# -gt 1 ] && case "$2" in
-	nuke) nukemode="nuke" ;;
+	nuke)
+		new_mac=""
+		nukemode="nuke" ;;
 	setmac)
-		new_mac="??:??:??:??:??:??"
-		[ $# -gt 2 ] && new_mac="$3" ;;
+		[ $# -gt 2 ] && new_mac="$3" && \
+		    [ -z "$new_mac" ] && $err \
+		    "You set an empty MAC address string" ;;
 	*) $err "Unrecognised inject mode: '$2'"
 	esac
+
+	# allow the user to skip setting MAC addresses.
+	# if new_mac is empty, this script skips running nvmutil
+	[ "$new_mac" = "keep" ] && new_mac=""
+
+	# we don't allow the *user* to clear new_mac, in the setmac
+	# command, in case the build system is being integrated with
+	# another, where setmac is relied upon and is being set
+	# explicitly. this is a preventative error handle, as a courtes
+	# to that hypothetical user e.g. Linux distro package maintainer
+	# integrating this build system into their distro. if they used
+	# a variable for that, and they forgot to initialise it, they'll know.
 
 	check_release "$archive" || \
 	    $err "You must run this script on a release archive. - $dontflash"
