@@ -410,6 +410,10 @@ vendor_inject()
 		    && printf "DO NOT flash images from '%s'\n" \
 		    "$archive" 1>&2
 
+	[ "$need_files" = "n" ] && printf \
+	    "Board '%s' doesn't use vendorfiles, so none were inserted.\n" \
+	    "$board"
+
 	#
 	# catch-all error handler, for libreboot release opsec:
 	#
