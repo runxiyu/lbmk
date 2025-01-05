@@ -1,106 +1,87 @@
-From e905d7fd1ee1a791f27285715d420263e422ebee Mon Sep 17 00:00:00 2001
-From: Mate Kukri <kukri.mate@gmail.com>
-Date: Mon, 2 Dec 2024 16:10:22 +0000
-Subject: [PATCH 4/8] mb/lenovo: Add ThinkPad T480 and ThinkPad T480s
+From 1652c22825d3001e77159aa539dfa49d2389c775 Mon Sep 17 00:00:00 2001
+From: Mate Kukri <km@mkukri.xyz>
+Date: Tue, 31 Dec 2024 22:49:15 +0000
+Subject: [PATCH 03/11] mb/lenovo: Add ThinkPad T480 and ThinkPad T480s
 
-These machine have BootGuard fused and requires deguard to boot coreboot.
-
-Works:
-- Intel GPU
-- Internal screen
-- Ethernet
-- USB
-- EC
-  + Fan control
-  + Keyboard
-  + Battery (T480 has two)
-  + Charging via both Type-C ports
-  + Debug UART (on T480)
-- WLAN card:
-  + WiFi works
-  + Bluetooth works
-- M.2 main SSD
-- HDA verbs, Speakers, headphone jack
-- S3 sleep
+These machine have BootGuard fused and requires deguard to
+boot coreboot.
 
 Known issues:
 - Alpine Ridge Thunderbolt 3 controller does not work
-- Function keys are handled differently from stock firmware
-  + These should inject XF86 keycodes instead of directly
-    controlling, volume, brightness, etc in hardware.
-- Nvidia dGPU
+- Some Fn+F{1-12} keys aren't handled correctly
+- Nvidia dGPU is finicky
   - Needs option ROM
   - Power enable code is buggy
   - Nouveau only works on linux 6.8-6.9
-
-Untested (should work):
-- SATA main SSD
-- WWAN slot
-  + PCIe x2 NVME drive
-  + WWAN card (bus)
-- SD reader (USB)
-- Webcam (USB)
-- External video outputs
+- Headphone jack isn't detected as plugged in despite correct verbs
 
 Thanks to Leah Rowe for helping with the T480s.
 
-Signed-off-by: Mate Kukri <kukri.mate@gmail.com>
+Signed-off-by: Mate Kukri <km@mkukri.xyz>
 Change-Id: I19d421412c771c1f242f6ff39453f824fa866163
 ---
- src/device/pci_rom.c                          |  12 +-
+ src/device/pci_rom.c                          |   4 +-
  src/ec/lenovo/h8/acpi/ec.asl                  |   2 +-
- src/ec/lenovo/h8/bluetooth.c                  |  12 +-
- src/ec/lenovo/h8/wwan.c                       |  12 +-
- src/mainboard/lenovo/sklkbl_thinkpad/Kconfig  |  42 +++-
- .../lenovo/sklkbl_thinkpad/Kconfig.name       |   6 +
- .../lenovo/sklkbl_thinkpad/Makefile.mk        |  72 ++++++-
- .../lenovo/sklkbl_thinkpad/acpi/ec.asl        |  13 +-
- .../lenovo/sklkbl_thinkpad/bootblock.c        |  50 +++++
- .../lenovo/sklkbl_thinkpad/devicetree.cb      |  36 ++++
- src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl |  17 +-
+ src/ec/lenovo/h8/bluetooth.c                  |   6 +-
+ src/ec/lenovo/h8/wwan.c                       |   6 +-
+ src/mainboard/lenovo/sklkbl_thinkpad/Kconfig  |  57 +++++
+ .../lenovo/sklkbl_thinkpad/Kconfig.name       |   7 +
+ .../lenovo/sklkbl_thinkpad/Makefile.mk        |  73 +++++++
+ .../lenovo/sklkbl_thinkpad/acpi/ec.asl        |  12 ++
+ .../lenovo/sklkbl_thinkpad/acpi/superio.asl   |   3 +
+ .../lenovo/sklkbl_thinkpad/bootblock.c        |  60 ++++++
+ .../lenovo/sklkbl_thinkpad/devicetree.cb      |  71 ++++++
+ src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl |  33 +++
  src/mainboard/lenovo/sklkbl_thinkpad/ec.c     | 153 +++++++++++++
  src/mainboard/lenovo/sklkbl_thinkpad/ec.h     |  99 +++++++++
  src/mainboard/lenovo/sklkbl_thinkpad/gpio.h   |   8 +
- .../lenovo/sklkbl_thinkpad/ramstage.c         |  98 ++++++++-
- .../lenovo/sklkbl_thinkpad/romstage.c         |   7 -
+ .../lenovo/sklkbl_thinkpad/ramstage.c         | 105 +++++++++
  .../sklkbl_thinkpad/variants/t480/data.vbt    | Bin 0 -> 4106 bytes
  .../variants/t480/gma-mainboard.ads           |  19 ++
  .../sklkbl_thinkpad/variants/t480/gpio.c      | 203 ++++++++++++++++++
  .../sklkbl_thinkpad/variants/t480/hda_verb.c  |  90 ++++++++
  .../variants/t480/memory_init_params.c        |  20 ++
- .../variants/t480/overridetree.cb             | 124 +++++++++++
+ .../variants/t480/overridetree.cb             | 103 +++++++++
  .../sklkbl_thinkpad/variants/t480s/data.vbt   | Bin 0 -> 4106 bytes
  .../variants/t480s/gma-mainboard.ads          |  19 ++
  .../sklkbl_thinkpad/variants/t480s/gpio.c     | 199 +++++++++++++++++
  .../sklkbl_thinkpad/variants/t480s/hda_verb.c |  90 ++++++++
  .../variants/t480s/memory_init_params.c       |  44 ++++
- .../variants/t480s/overridetree.cb            | 124 +++++++++++
- .../sklkbl_thinkpad/variants/t480s/spd_0.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_1.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_10.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_11.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_12.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_13.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_14.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_15.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_16.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_17.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_18.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_19.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_2.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_20.bin | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_3.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_4.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_5.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_6.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_7.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_8.bin  | Bin 0 -> 512 bytes
- .../sklkbl_thinkpad/variants/t480s/spd_9.bin  | Bin 0 -> 512 bytes
- 49 files changed, 1531 insertions(+), 40 deletions(-)
+ .../variants/t480s/overridetree.cb            | 103 +++++++++
+ .../variants/t480s/spd/spd_0.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_1.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_10.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_11.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_12.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_13.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_14.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_15.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_16.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_17.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_18.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_19.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_2.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_20.bin             | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_3.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_4.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_5.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_6.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_7.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_8.bin              | Bin 0 -> 512 bytes
+ .../variants/t480s/spd/spd_9.bin              | Bin 0 -> 512 bytes
+ 49 files changed, 1583 insertions(+), 6 deletions(-)
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/acpi/superio.asl
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/ec.c
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/ec.h
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/gpio.h
- delete mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/romstage.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/data.vbt
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gma-mainboard.ads
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
@@ -113,50 +94,47 @@ Change-Id: I19d421412c771c1f242f6ff39453f824fa866163
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/hda_verb.c
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/memory_init_params.c
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_0.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_1.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_10.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_11.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_12.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_13.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_14.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_15.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_16.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_17.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_18.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_19.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_2.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_20.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_3.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_4.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_5.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_6.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_7.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_8.bin
- create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_9.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_0.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_1.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_10.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_11.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_12.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_13.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_14.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_15.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_16.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_17.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_18.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_19.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_2.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_20.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_3.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_4.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_5.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_6.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_7.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_8.bin
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_9.bin
 
 diff --git a/src/device/pci_rom.c b/src/device/pci_rom.c
-index d60720eb49..b18dfdd287 100644
+index d60720eb49..cc6b9b068a 100644
 --- a/src/device/pci_rom.c
 +++ b/src/device/pci_rom.c
-@@ -304,11 +304,11 @@ void pci_rom_ssdt(const struct device *device)
+@@ -304,11 +304,13 @@ void pci_rom_ssdt(const struct device *device)
  		return;
  	}
  
--	const char *scope = acpi_device_path(device);
--	if (!scope) {
--		printk(BIOS_ERR, "%s: Missing ACPI scope\n", dev_path(device));
--		return;
--	}
-+	// const char *scope = acpi_device_path(device);
-+	// if (!scope) {
-+	// 	printk(BIOS_ERR, "%s: Missing ACPI scope\n", dev_path(device));
-+	// 	return;
-+	// }
++#if 0
+ 	const char *scope = acpi_device_path(device);
+ 	if (!scope) {
+ 		printk(BIOS_ERR, "%s: Missing ACPI scope\n", dev_path(device));
+ 		return;
+ 	}
++#endif
  
  	/* Supports up to four devices. */
  	if ((CBMEM_ID_ROM0 + ngfx) > CBMEM_ID_ROM3) {
-@@ -336,7 +336,7 @@ void pci_rom_ssdt(const struct device *device)
+@@ -336,7 +338,7 @@ void pci_rom_ssdt(const struct device *device)
  	memcpy(cbrom, rom, cbrom_length);
  
  	/* write _ROM method */
@@ -179,7 +157,7 @@ index bc54d3b422..8f4a8e1986 100644
  #include "thinkpad.asl"
  }
 diff --git a/src/ec/lenovo/h8/bluetooth.c b/src/ec/lenovo/h8/bluetooth.c
-index 16fc8dce39..ef4f6ad1f5 100644
+index 16fc8dce39..be71a24ced 100644
 --- a/src/ec/lenovo/h8/bluetooth.c
 +++ b/src/ec/lenovo/h8/bluetooth.c
 @@ -1,6 +1,6 @@
@@ -190,7 +168,7 @@ index 16fc8dce39..ef4f6ad1f5 100644
  #include <console/console.h>
  #include <device/device.h>
  #include <ec/acpi/ec.h>
-@@ -28,16 +28,16 @@ bool h8_has_bdc(const struct device *dev)
+@@ -28,16 +28,18 @@ bool h8_has_bdc(const struct device *dev)
  {
  	struct ec_lenovo_h8_config *conf = dev->chip_info;
  
@@ -201,19 +179,17 @@ index 16fc8dce39..ef4f6ad1f5 100644
  		return true;
  	}
  
--	if (get_gpio(conf->bdc_gpio_num) == conf->bdc_gpio_lvl) {
--		printk(BIOS_INFO, "H8: BDC installed\n");
--		return true;
--	}
-+	// if (get_gpio(conf->bdc_gpio_num) == conf->bdc_gpio_lvl) {
-+	// 	printk(BIOS_INFO, "H8: BDC installed\n");
-+	// 	return true;
-+	// }
++#if 0
+ 	if (get_gpio(conf->bdc_gpio_num) == conf->bdc_gpio_lvl) {
+ 		printk(BIOS_INFO, "H8: BDC installed\n");
+ 		return true;
+ 	}
++#endif
  
  	printk(BIOS_INFO, "H8: BDC not installed\n");
  	return false;
 diff --git a/src/ec/lenovo/h8/wwan.c b/src/ec/lenovo/h8/wwan.c
-index 685886fcce..5e0ae030e2 100644
+index 685886fcce..5cdcf77406 100644
 --- a/src/ec/lenovo/h8/wwan.c
 +++ b/src/ec/lenovo/h8/wwan.c
 @@ -1,6 +1,6 @@
@@ -224,7 +200,7 @@ index 685886fcce..5e0ae030e2 100644
  #include <console/console.h>
  #include <device/device.h>
  #include <ec/acpi/ec.h>
-@@ -26,16 +26,16 @@ bool h8_has_wwan(const struct device *dev)
+@@ -26,16 +26,18 @@ bool h8_has_wwan(const struct device *dev)
  {
  	struct ec_lenovo_h8_config *conf = dev->chip_info;
  
@@ -235,110 +211,85 @@ index 685886fcce..5e0ae030e2 100644
  		return true;
  	}
  
--	if (get_gpio(conf->wwan_gpio_num) == conf->wwan_gpio_lvl) {
--		printk(BIOS_INFO, "H8: WWAN installed\n");
--		return true;
--	}
-+	// if (get_gpio(conf->wwan_gpio_num) == conf->wwan_gpio_lvl) {
-+	// 	printk(BIOS_INFO, "H8: WWAN installed\n");
-+	// 	return true;
-+	// }
++#if 0
+ 	if (get_gpio(conf->wwan_gpio_num) == conf->wwan_gpio_lvl) {
+ 		printk(BIOS_INFO, "H8: WWAN installed\n");
+ 		return true;
+ 	}
++#endif
  
  	printk(BIOS_INFO, "H8: WWAN not installed\n");
  	return false;
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-index fcc80dffe3..21076315ab 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+new file mode 100644
+index 0000000000..4998672943
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-@@ -2,16 +2,20 @@
- 
- config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
- 	bool
--	select BOARD_ROMSIZE_KB_12288
+@@ -0,0 +1,57 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	bool
++	select BOARD_ROMSIZE_KB_16384
 +	select EC_LENOVO_H8
 +	select EC_LENOVO_PMH7
 +	select H8_HAS_BAT_THRESHOLDS_IMPL
 +	select H8_HAS_LEDLOGO
 +	select H8_HAS_PRIMARY_FN_KEYS
- 	select HAVE_ACPI_RESUME
- 	select HAVE_ACPI_TABLES
- #	select HAVE_CMOS_DEFAULT
--#	select INTEL_GMA_HAVE_VBT
--	select INTEL_LPSS_UART_FOR_CONSOLE
++	select HAVE_ACPI_RESUME
++	select HAVE_ACPI_TABLES
 +	select INTEL_GMA_HAVE_VBT
 +	select INTEL_INT15
- 	select MAINBOARD_HAS_LIBGFXINIT
- 	select MEMORY_MAPPED_TPM
- 	select MAINBOARD_HAS_TPM2
--	select NO_UART_ON_SUPERIO
++	select MAINBOARD_HAS_LIBGFXINIT
++	select MAINBOARD_HAS_TPM2
 +	select MAINBOARD_USES_IFD_GBE_REGION
- 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
- 	select SPD_READ_BY_WORD
- 	select SYSTEM_TYPE_LAPTOP
-@@ -19,8 +23,22 @@ config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
- config BOARD_LENOVO_E460
- 	bool
- 	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
-+	select BOARD_ROMSIZE_KB_12288
-+	select INTEL_LPSS_UART_FOR_CONSOLE
- 	select SOC_INTEL_SKYLAKE
- 
++	select MEMORY_MAPPED_TPM
++	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
++	select SOC_INTEL_KABYLAKE
++	select SPD_READ_BY_WORD
++	select SYSTEM_TYPE_LAPTOP
++
 +config BOARD_LENOVO_T480
 +	bool
 +	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
-+	select BOARD_ROMSIZE_KB_16384
-+	select SOC_INTEL_KABYLAKE
 +
 +config BOARD_LENOVO_T480S
 +	bool
 +	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
-+	select BOARD_ROMSIZE_KB_16384
-+	select SOC_INTEL_KABYLAKE
 +
- if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
- 
- config MAINBOARD_DIR
-@@ -28,18 +46,30 @@ config MAINBOARD_DIR
- 
- config VARIANT_DIR
- 	default "e460" if BOARD_LENOVO_E460
++if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++
++config MAINBOARD_DIR
++	default "lenovo/sklkbl_thinkpad"
++
++config VARIANT_DIR
 +	default "t480" if BOARD_LENOVO_T480
 +	default "t480s" if BOARD_LENOVO_T480S
 +
 +config OVERRIDE_DEVICETREE
 +	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
- 
- config MAINBOARD_PART_NUMBER
- 	default "E460" if BOARD_LENOVO_E460
++
++config MAINBOARD_PART_NUMBER
 +	default "T480" if BOARD_LENOVO_T480
 +	default "T480s" if BOARD_LENOVO_T480S
- 
- config CBFS_SIZE
- 	default 0x600000 if BOARD_LENOVO_E460
-+	default 0x900000 if BOARD_LENOVO_T480 || BOARD_LENOVO_T480S
- 
- config DIMM_MAX
--	default 4
++
++config CBFS_SIZE
++	default 0x900000
++
++config DIMM_MAX
 +	default 2
- 
- config DIMM_SPD_SIZE
--	default 256
++
++config DIMM_SPD_SIZE
 +	default 512	# DDR4
 +
 +endif
-+
-+if BOARD_LENOVO_E460
- 
- config UART_FOR_CONSOLE
- 	default 2
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
-index 61d971fe8d..15441c4264 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
+new file mode 100644
+index 0000000000..abc273f387
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
-@@ -2,3 +2,9 @@
- 
- config BOARD_LENOVO_E460
- 	bool "ThinkPad E460"
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: GPL-2.0-only
 +
 +config BOARD_LENOVO_T480
 +	bool "ThinkPad T480"
@@ -346,97 +297,94 @@ index 61d971fe8d..15441c4264 100644
 +config BOARD_LENOVO_T480S
 +	bool "ThinkPad T480s"
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk b/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
-index 6e544fd6b9..49d6ebdb4e 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
+new file mode 100644
+index 0000000000..c308239177
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Makefile.mk
-@@ -1,7 +1,73 @@
- ## SPDX-License-Identifier: GPL-2.0-only
- 
--bootblock-y += bootblock.c
+@@ -0,0 +1,73 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
 +bootblock-y += bootblock.c ec.c
- 
--ramstage-y += ramstage.c
--ramstage-y += variants/$(VARIANT_DIR)/hda_verb.c
++
 +romstage-y += variants/$(VARIANT_DIR)/memory_init_params.c
 +
 +ramstage-y += ramstage.c ec.c
 +ramstage-y += variants/$(VARIANT_DIR)/gpio.c variants/$(VARIANT_DIR)/hda_verb.c
- ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += variants/$(VARIANT_DIR)/gma-mainboard.ads
++ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += variants/$(VARIANT_DIR)/gma-mainboard.ads
 +
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_0.bin
-+spd_0.bin-file := variants/$(VARIANT_DIR)/spd_0.bin
++spd_0.bin-file := variants/$(VARIANT_DIR)/spd/spd_0.bin
 +spd_0.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_1.bin
-+spd_1.bin-file := variants/$(VARIANT_DIR)/spd_1.bin
++spd_1.bin-file := variants/$(VARIANT_DIR)/spd/spd_1.bin
 +spd_1.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_2.bin
-+spd_2.bin-file := variants/$(VARIANT_DIR)/spd_2.bin
++spd_2.bin-file := variants/$(VARIANT_DIR)/spd/spd_2.bin
 +spd_2.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_3.bin
-+spd_3.bin-file := variants/$(VARIANT_DIR)/spd_3.bin
++spd_3.bin-file := variants/$(VARIANT_DIR)/spd/spd_3.bin
 +spd_3.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_4.bin
-+spd_4.bin-file := variants/$(VARIANT_DIR)/spd_4.bin
++spd_4.bin-file := variants/$(VARIANT_DIR)/spd/spd_4.bin
 +spd_4.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_5.bin
-+spd_5.bin-file := variants/$(VARIANT_DIR)/spd_5.bin
++spd_5.bin-file := variants/$(VARIANT_DIR)/spd/spd_5.bin
 +spd_5.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_6.bin
-+spd_6.bin-file := variants/$(VARIANT_DIR)/spd_6.bin
++spd_6.bin-file := variants/$(VARIANT_DIR)/spd/spd_6.bin
 +spd_6.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_7.bin
-+spd_7.bin-file := variants/$(VARIANT_DIR)/spd_7.bin
++spd_7.bin-file := variants/$(VARIANT_DIR)/spd/spd_7.bin
 +spd_7.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_8.bin
-+spd_8.bin-file := variants/$(VARIANT_DIR)/spd_8.bin
++spd_8.bin-file := variants/$(VARIANT_DIR)/spd/spd_8.bin
 +spd_8.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_9.bin
-+spd_9.bin-file := variants/$(VARIANT_DIR)/spd_9.bin
++spd_9.bin-file := variants/$(VARIANT_DIR)/spd/spd_9.bin
 +spd_9.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_10.bin
-+spd_10.bin-file := variants/$(VARIANT_DIR)/spd_10.bin
++spd_10.bin-file := variants/$(VARIANT_DIR)/spd/spd_10.bin
 +spd_10.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_11.bin
-+spd_11.bin-file := variants/$(VARIANT_DIR)/spd_11.bin
++spd_11.bin-file := variants/$(VARIANT_DIR)/spd/spd_11.bin
 +spd_11.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_12.bin
-+spd_12.bin-file := variants/$(VARIANT_DIR)/spd_12.bin
++spd_12.bin-file := variants/$(VARIANT_DIR)/spd/spd_12.bin
 +spd_12.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_13.bin
-+spd_13.bin-file := variants/$(VARIANT_DIR)/spd_13.bin
++spd_13.bin-file := variants/$(VARIANT_DIR)/spd/spd_13.bin
 +spd_13.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_14.bin
-+spd_14.bin-file := variants/$(VARIANT_DIR)/spd_14.bin
++spd_14.bin-file := variants/$(VARIANT_DIR)/spd/spd_14.bin
 +spd_14.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_15.bin
-+spd_15.bin-file := variants/$(VARIANT_DIR)/spd_15.bin
++spd_15.bin-file := variants/$(VARIANT_DIR)/spd/spd_15.bin
 +spd_15.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_16.bin
-+spd_16.bin-file := variants/$(VARIANT_DIR)/spd_16.bin
++spd_16.bin-file := variants/$(VARIANT_DIR)/spd/spd_16.bin
 +spd_16.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_17.bin
-+spd_17.bin-file := variants/$(VARIANT_DIR)/spd_17.bin
++spd_17.bin-file := variants/$(VARIANT_DIR)/spd/spd_17.bin
 +spd_17.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_18.bin
-+spd_18.bin-file := variants/$(VARIANT_DIR)/spd_18.bin
++spd_18.bin-file := variants/$(VARIANT_DIR)/spd/spd_18.bin
 +spd_18.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_19.bin
-+spd_19.bin-file := variants/$(VARIANT_DIR)/spd_19.bin
++spd_19.bin-file := variants/$(VARIANT_DIR)/spd/spd_19.bin
 +spd_19.bin-type := raw
 +cbfs-files-$(CONFIG_BOARD_LENOVO_T480S) += spd_20.bin
-+spd_20.bin-file := variants/$(VARIANT_DIR)/spd_20.bin
++spd_20.bin-file := variants/$(VARIANT_DIR)/spd/spd_20.bin
 +spd_20.bin-type := raw
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl b/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
-index 16990d45f4..514b95a60f 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
+new file mode 100644
+index 0000000000..3a949a2fca
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/acpi/ec.asl
-@@ -1,3 +1,12 @@
--/* SPDX-License-Identifier: CC-PDDC */
+@@ -0,0 +1,12 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
- 
--/* Please update the license if adding licensable material. */
-+#define BRIGHTNESS_UP()
-+#define BRIGHTNESS_DOWN()
++
++#define BRIGHTNESS_UP \_SB.PCI0.GFX0.INCB
++#define BRIGHTNESS_DOWN \_SB.PCI0.GFX0.DECB
 +#define THINKPAD_EC_GPE 22
 +
 +Name(\TCRT, 100)
@@ -445,15 +393,25 @@ index 16990d45f4..514b95a60f 100644
 +
 +#include <ec/lenovo/h8/acpi/ec.asl>
 +#include <ec/lenovo/h8/acpi/thinkpad_bat_thresholds_b0.asl>
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/acpi/superio.asl b/src/mainboard/lenovo/sklkbl_thinkpad/acpi/superio.asl
+new file mode 100644
+index 0000000000..55b1db5b11
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/acpi/superio.asl
+@@ -0,0 +1,3 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <drivers/pc80/pc/ps2_controller.asl>
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c b/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
-index ccd8ec1b40..55afd3d048 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
+new file mode 100644
+index 0000000000..fb660dbdfa
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/bootblock.c
-@@ -1,7 +1,57 @@
- /* SPDX-License-Identifier: GPL-2.0-only */
- 
+@@ -0,0 +1,60 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
 +#include <arch/io.h>
- #include <bootblock_common.h>
++#include <bootblock_common.h>
 +#include <device/pci.h>
 +#include <soc/pci_devs.h>
 +#include "ec.h"
@@ -476,25 +434,22 @@ index ccd8ec1b40..55afd3d048 100644
 +
 +	microchip_pnp_exit_conf_state(port);
 +
-+	// NOTE: this is incredibly hacky and uses a debug backdoor in the EC
-+	// firmware to control the UART GPIOs.
-+	// Unfortunately production EC firmware has no way to do this via regular EC
-+	// commands.
-+
++#ifdef CONFIG_BOARD_LENOVO_T480
 +	// Supply debug unlock key
 +	debug_write_key(DEBUG_RW_KEY_IDX, debug_rw_key);
 +
 +	// Use debug writes to set UART_TX and UART_RX GPIOs
 +	debug_write_dword(0xf0c400 + 0x110, 0x00001000);
 +	debug_write_dword(0xf0c400 + 0x114, 0x00001000);
++#endif
 +}
 +
 +
 +#define UART_PORT	0x3f8
 +#define UART_IRQ	4
- 
- void bootblock_mainboard_early_init(void)
- {
++
++void bootblock_mainboard_early_init(void)
++{
 +	// Tell EC via BIOS Debug Port 1 that the world isn't on fire
 +
 +	// Let the EC know that BIOS code is running
@@ -504,17 +459,49 @@ index ccd8ec1b40..55afd3d048 100644
 +	// Enable accesses to EC1 interface
 +	ec0_write(0, ec0_read(0) | 0x20);
 +
++	// Reset LEDs to power on state
++	// (Without this warm reboot leaves LEDs off)
++	ec0_write(0x0c, 0x80);
++	ec0_write(0x0c, 0x07);
++	ec0_write(0x0c, 0x8a);
++
 +	// Setup debug UART
 +	configure_uart(EC_CFG_PORT, UART_PORT, UART_IRQ);
- }
++}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
-index ddb6e8aaa5..745af8c8cd 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
+new file mode 100644
+index 0000000000..c07d4d53ca
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/devicetree.cb
-@@ -8,6 +8,42 @@ chip soc/intel/skylake
- 		device ref south_xhci on end
- 		device ref lpc_espi on
- 			register "serirq_mode" = "SERIRQ_CONTINUOUS"
+@@ -0,0 +1,71 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++chip soc/intel/skylake
++	# IGD Displays
++	register "gfx" = "GMA_STATIC_DISPLAYS(0)"
++
++	register "panel_cfg" = "{
++		.up_delay_ms		= 200,
++		.down_delay_ms		=  50,
++		.cycle_delay_ms		= 600,
++		.backlight_on_delay_ms	=   1,
++		.backlight_off_delay_ms	= 200,
++		.backlight_pwm_hz	= 200,
++	}"
++
++        # Power
++        register "PmConfigSlpS3MinAssert" = "2"         # 50ms
++        register "PmConfigSlpS4MinAssert" = "1"         # 1s
++        register "PmConfigSlpSusMinAssert" = "3"        # 500ms
++        register "PmConfigSlpAMinAssert" = "3"          # 2s
++
++	device domain 0 on
++		device ref igpu on end
++		device ref sa_thermal on end
++		device ref thermal on end
++		device ref south_xhci on end
++		device ref lpc_espi on
++			register "serirq_mode" = "SERIRQ_CONTINUOUS"
 +
 +			register "gen1_dec" = "0x007c1601"
 +			register "gen2_dec" = "0x000c15e1"
@@ -551,33 +538,39 @@ index ddb6e8aaa5..745af8c8cd 100644
 +				end
 +			end
 +
- 			chip drivers/pc80/tpm
- 				device pnp 0c31.0 on end
- 			end
++			chip drivers/pc80/tpm
++				device pnp 0c31.0 on end
++			end
++		end
++		device ref hda on end
++	end
++end
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl b/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
-index 967b652853..237500775f 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
+new file mode 100644
+index 0000000000..aa4d4de2a6
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/dsdt.asl
-@@ -1,5 +1,10 @@
- /* SPDX-License-Identifier: GPL-2.0-only */
- 
-+#define BRIGHTNESS_UP \_SB.PCI0.GFX0.INCB
-+#define BRIGHTNESS_DOWN \_SB.PCI0.GFX0.DECB
-+#define EC_LENOVO_H8_ME_WORKAROUND 1
-+#define THINKPAD_EC_GPE 17
+@@ -0,0 +1,33 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
 +
- #include <acpi/acpi.h>
- DefinitionBlock(
- 	"dsdt.aml",
-@@ -14,9 +19,19 @@ DefinitionBlock(
- 	#include <soc/intel/common/block/acpi/acpi/globalnvs.asl>
- 	#include <cpu/intel/common/acpi/cpu.asl>
- 
--	Device (\_SB.PCI0) {
++#include <acpi/acpi.h>
++DefinitionBlock(
++	"dsdt.aml",
++	"DSDT",
++	ACPI_DSDT_REV_2,
++	OEM_ID,
++	ACPI_TABLE_CREATOR,
++	0x20110725
++)
++{
++	#include <acpi/dsdt_top.asl>
++	#include <soc/intel/common/block/acpi/acpi/globalnvs.asl>
++	#include <cpu/intel/common/acpi/cpu.asl>
++
 +	Device (\_SB.PCI0)
 +	{
- 		#include <soc/intel/skylake/acpi/systemagent.asl>
- 		#include <soc/intel/skylake/acpi/pch.asl>
++		#include <soc/intel/skylake/acpi/systemagent.asl>
++		#include <soc/intel/skylake/acpi/pch.asl>
 +		#include <drivers/intel/gma/acpi/default_brightness_levels.asl>
 +	}
 +
@@ -587,9 +580,10 @@ index 967b652853..237500775f 100644
 +		{
 +			Name (_ADR, Zero)
 +		}
- 	}
- 
- 	#include <southbridge/intel/common/acpi/sleepstates.asl>
++	}
++
++	#include <southbridge/intel/common/acpi/sleepstates.asl>
++}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/ec.c b/src/mainboard/lenovo/sklkbl_thinkpad/ec.c
 new file mode 100644
 index 0000000000..adb6a60324
@@ -869,21 +863,21 @@ index 0000000000..d89ed712d4
 +
 +#endif
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c b/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
-index 6c3b077cc4..b41cca02a7 100644
---- a/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
+new file mode 100644
+index 0000000000..44c8578852
+--- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/ramstage.c
-@@ -1,11 +1,105 @@
- /* SPDX-License-Identifier: GPL-2.0-only */
- 
+@@ -0,0 +1,105 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
 +#include <arch/io.h>
- #include <device/device.h>
++#include <device/device.h>
 +#include <drivers/intel/gma/int15.h>
 +#include <option.h>
 +#include <soc/ramstage.h>
 +#include "ec.h"
 +#include "gpio.h"
- 
--static void init_mainboard(void *chip_info)
++
 +#define GPIO_GPU_RST		GPP_E22 // active low
 +#define GPIO_1R8VIDEO_AON_ON	GPP_E23
 +
@@ -895,7 +889,7 @@ index 6c3b077cc4..b41cca02a7 100644
 +
 +void mainboard_silicon_init_params(FSP_SIL_UPD *params)
 +{
-+	static const char *dgfx_vram_id_str[] = { "1GB", "2GB", "4GB", "N/A" };
++	static const char * const dgfx_vram_id_str[] = { "1GB", "2GB", "4GB", "N/A" };
 +
 +	int dgfx_vram_id;
 +
@@ -971,28 +965,14 @@ index 6c3b077cc4..b41cca02a7 100644
 +}
 +
 +static void mainboard_init(void *chip_info)
- {
++{
 +	dump_ec_cfg(EC_CFG_PORT);
- }
- 
- struct chip_operations mainboard_ops = {
--	.init = init_mainboard,
++}
++
++struct chip_operations mainboard_ops = {
 +	.enable_dev = mainboard_enable,
 +	.init = mainboard_init,
- };
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c b/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c
-deleted file mode 100644
-index 59a62f484e..0000000000
---- a/src/mainboard/lenovo/sklkbl_thinkpad/romstage.c
-+++ /dev/null
-@@ -1,7 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0-only */
--
--#include <soc/romstage.h>
--
--void mainboard_memory_init_params(FSPM_UPD *mupd)
--{
--}
++};
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/data.vbt b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/data.vbt
 new file mode 100644
 index 0000000000000000000000000000000000000000..4db4202961d0be67b75f52b28f2111d5655595c3
@@ -1386,31 +1366,13 @@ index 0000000000..5252a402f9
 +}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
 new file mode 100644
-index 0000000000..4b68ec3f49
+index 0000000000..bf66bd3a69
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,103 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +chip soc/intel/skylake
-+	# IGD Displays
-+	register "gfx" = "GMA_STATIC_DISPLAYS(0)"
-+
-+	register "panel_cfg" = "{
-+		.up_delay_ms		= 200,
-+		.down_delay_ms		=  50,
-+		.cycle_delay_ms		= 600,
-+		.backlight_on_delay_ms	=   1,
-+		.backlight_off_delay_ms	= 200,
-+		.backlight_pwm_hz	= 200,
-+	}"
-+
-+        # Power
-+        register "PmConfigSlpS3MinAssert" = "2"         # 50ms
-+        register "PmConfigSlpS4MinAssert" = "1"         # 1s
-+        register "PmConfigSlpSusMinAssert" = "3"        # 500ms
-+        register "PmConfigSlpAMinAssert" = "3"          # 2s
-+
 +	device domain 0 on
 +		device ref south_xhci on
 +			register "usb2_ports" = "{
@@ -1434,12 +1396,9 @@ index 0000000000..4b68ec3f49
 +		end
 +
 +		device ref sata on
-+			# SATA_0  - NC
-+			# SATA_1A - NC
-+			# SATA_1B - NC
-+			# SATA_2  - SATA caddy
-+			register "SataPortsEnable[3]" = "1"
-+			register "SataPortsDevSlp[3]" = "1"
++			# SATA_2 - JHDD1 SATA SSD
++			register "SataPortsEnable[2]" = "1"
++			register "SataPortsDevSlp[2]" = "1"
 +		end
 +
 +		# PCIe controller 1 - 1x4
@@ -1877,7 +1836,7 @@ index 0000000000..b1d96c5a76
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/memory_init_params.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/memory_init_params.c
 new file mode 100644
-index 0000000000..085abebbcb
+index 0000000000..001e934b3a
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/memory_init_params.c
 @@ -0,0 +1,44 @@
@@ -1915,7 +1874,7 @@ index 0000000000..085abebbcb
 +	spd_idx = gpio_get(GPP_F16) | gpio_get(GPP_F17) << 1 | gpio_get(GPP_F18) << 2 |
 +		  gpio_get(GPP_F19) << 3 | gpio_get(GPP_F20) << 4;
 +	printk(BIOS_DEBUG, "Detected MEMORY_ID = %d\n", spd_idx);
-+	snprintf(spd_name, sizeof spd_name, "spd_%d.bin", spd_idx);
++	snprintf(spd_name, sizeof(spd_name), "spd_%d.bin", spd_idx);
 +	mem_cfg->MemorySpdPtr00    = (uintptr_t)cbfs_map(spd_name, &spd_size);
 +
 +	/* Get SPD for memory slot (CH B) */
@@ -1927,31 +1886,13 @@ index 0000000000..085abebbcb
 +}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
 new file mode 100644
-index 0000000000..5f1c38bc03
+index 0000000000..d4afca20c4
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,103 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +
 +chip soc/intel/skylake
-+	# IGD Displays
-+	register "gfx" = "GMA_STATIC_DISPLAYS(0)"
-+
-+	register "panel_cfg" = "{
-+		.up_delay_ms		= 200,
-+		.down_delay_ms		=  50,
-+		.cycle_delay_ms		= 600,
-+		.backlight_on_delay_ms	=   1,
-+		.backlight_off_delay_ms	= 200,
-+		.backlight_pwm_hz	= 200,
-+	}"
-+
-+        # Power
-+        register "PmConfigSlpS3MinAssert" = "2"         # 50ms
-+        register "PmConfigSlpS4MinAssert" = "1"         # 1s
-+        register "PmConfigSlpSusMinAssert" = "3"        # 500ms
-+        register "PmConfigSlpAMinAssert" = "3"          # 2s
-+
 +	device domain 0 on
 +		device ref south_xhci on
 +			register "usb2_ports" = "{
@@ -1975,12 +1916,9 @@ index 0000000000..5f1c38bc03
 +		end
 +
 +		device ref sata on
-+			# SATA_0  - NC
-+			# SATA_1A - NC
-+			# SATA_1B - NC
-+			# SATA_2  - M.2 2280 SATA
-+			register "SataPortsEnable[3]" = "1"
-+			register "SataPortsDevSlp[3]" = "1"
++			# SATA_2 - Main M.2 SATA SSD
++			register "SataPortsEnable[2]" = "1"
++			register "SataPortsDevSlp[2]" = "1"
 +		end
 +
 +		# PCIe controller 1 - 1x2+2x1
@@ -2055,7 +1993,7 @@ index 0000000000..5f1c38bc03
 +		end
 +	end
 +end
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_0.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_0.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_0.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_0.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..86f39ddb55ea9fb58d5e5699637636ef597c734e
 GIT binary patch
@@ -2066,7 +2004,7 @@ YT>%dM8_BI;nL`dsaHtp+rc($20I8n}l>h($
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_1.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_1.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_1.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_1.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..df0f6e58b79286a4aeb690c5027adf7a1f5f668b
 GIT binary patch
@@ -2077,7 +2015,7 @@ Yx&j>hH(SqvWezd%<4`dwOs5b40B_I==>Px#
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_10.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_10.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_10.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_10.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..24f0d8992bc5244c62488da9633e4885f52f3e22
 GIT binary patch
@@ -2089,7 +2027,7 @@ PvjPw>z-1}5hGzN!nb#F$
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_11.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_11.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_11.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_11.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..59b6b9e78263c42aae367ab7d4a784d888f30efe
 GIT binary patch
@@ -2101,7 +2039,7 @@ YZDQ=?WT@*L<g5S$3~*UWt)ZEI0F{0fq5uE@
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_12.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_12.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_12.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_12.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..93be0ac94fc57222cd29e34eee11042d7842ac25
 GIT binary patch
@@ -2113,7 +2051,7 @@ VsD}a&Ff^?FkI#a;_$28g2LQ`x7jOUo
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_13.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_13.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_13.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_13.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..171a272bc734b72395622bf889d24972ef2d14f7
 GIT binary patch
@@ -2125,7 +2063,7 @@ VsD}a&Ff^?FkI#a;_$28g2LP>g7pDLK
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_14.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_14.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_14.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_14.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..a2a64a5e1adada3fc00b2e4edc60c77e610881a9
 GIT binary patch
@@ -2137,7 +2075,7 @@ GCj$V){1T)9
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_15.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_15.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_15.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_15.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..a2a64a5e1adada3fc00b2e4edc60c77e610881a9
 GIT binary patch
@@ -2149,7 +2087,7 @@ GCj$V){1T)9
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_16.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_16.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_16.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_16.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..a64a5a93fb4aef4d5f63d79cb2582731b9ac5063
 GIT binary patch
@@ -2159,7 +2097,7 @@ NcmZQz7zHCa1ONg600961
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_17.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_17.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_17.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_17.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..5f23e86606094d3e5d2011db902ebd4a500bbffa
 GIT binary patch
@@ -2171,7 +2109,7 @@ V%v%8n7#i08$7jJ^e3JB$0{}ZV7fApB
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_18.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_18.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_18.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_18.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..05633943eb5af166da66a2e1f4e74948f75782fb
 GIT binary patch
@@ -2183,7 +2121,7 @@ Vn70BDFf^?FkI#a;_$28g2LNS*7)Ag9
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_19.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_19.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_19.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_19.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..857da9c9828cdac842329f6cef4539283777268b
 GIT binary patch
@@ -2195,7 +2133,7 @@ GP6hy+m=i1j
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_2.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_2.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_2.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_2.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..b5b14cf2dfa06ae183b0379da4dc825129e1589f
 GIT binary patch
@@ -2206,7 +2144,7 @@ XT>%b$v*cE=%%S%6I8=-Z(<uZ1pPdSg
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_20.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_20.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_20.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_20.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..a64a5a93fb4aef4d5f63d79cb2582731b9ac5063
 GIT binary patch
@@ -2216,7 +2154,7 @@ NcmZQz7zHCa1ONg600961
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_3.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_3.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_3.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_3.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..d73736008af1eb67456b2fd66f7dec3b6669a442
 GIT binary patch
@@ -2227,7 +2165,7 @@ YT>%b$+tzbnnL|62aHtp+rc($20QGqazW@LL
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_4.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_4.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_4.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_4.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..829f149547bc24859646c33d5926938d7a1b90cb
 GIT binary patch
@@ -2238,7 +2176,7 @@ XT>%b$o8(ro%%OI594bbI=@bG0z{d&v
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_5.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_5.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_5.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_5.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..a64a5a93fb4aef4d5f63d79cb2582731b9ac5063
 GIT binary patch
@@ -2248,7 +2186,7 @@ NcmZQz7zHCa1ONg600961
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_6.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_6.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_6.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_6.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..a64a5a93fb4aef4d5f63d79cb2582731b9ac5063
 GIT binary patch
@@ -2258,7 +2196,7 @@ NcmZQz7zHCa1ONg600961
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_7.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_7.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_7.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_7.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..940f1e3cd8e5bd9ea32a82a14edcdcbc8132d8c7
 GIT binary patch
@@ -2270,7 +2208,7 @@ E020*^DF6Tf
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_8.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_8.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_8.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_8.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..30c84410d417ef7afa8705c93cdb64a9f4e915a0
 GIT binary patch
@@ -2282,7 +2220,7 @@ H2PXpn6CD!Q
 literal 0
 HcmV?d00001
 
-diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_9.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd_9.bin
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_9.bin b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_9.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..7facef55b93fe1f67411c00bab84862769461f63
 GIT binary patch

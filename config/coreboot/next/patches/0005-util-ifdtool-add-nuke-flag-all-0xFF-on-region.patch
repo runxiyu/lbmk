@@ -1,7 +1,7 @@
-From 851043846f589e718a69009a6b157b4ff5315471 Mon Sep 17 00:00:00 2001
+From 27b2f2bc24e5e860b87119c963e534fb0d3e55f2 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
-Subject: [PATCH 6/8] util/ifdtool: add --nuke flag (all 0xFF on region)
+Subject: [PATCH 05/11] util/ifdtool: add --nuke flag (all 0xFF on region)
 
 When this option is used, the region's contents are overwritten
 with all ones (0xFF).
@@ -20,7 +20,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 83 insertions(+), 31 deletions(-)
 
 diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
-index ace05e2265..ba292fd142 100644
+index 94105efe52..0706496af2 100644
 --- a/util/ifdtool/ifdtool.c
 +++ b/util/ifdtool/ifdtool.c
 @@ -2230,6 +2230,7 @@ static void print_usage(const char *name)
@@ -98,9 +98,9 @@ index ace05e2265..ba292fd142 100644
  	int mode_read = 0, mode_altmedisable = 0, altmedisable = 0, mode_fmap_template = 0;
 +	int mode_nuke = 0;
  	int mode_gpr0_disable = 0, mode_gpr0_enable = 0, mode_gpr0_status = 0;
- 	char *region_type_string = NULL, *region_fname = NULL;
- 	const char *layout_fname = NULL;
-@@ -2280,6 +2336,7 @@ int main(int argc, char *argv[])
+ 	char *region_type_string = NULL, *region_fname = NULL, *layout_fname = NULL;
+ 	char *new_filename = NULL;
+@@ -2279,6 +2335,7 @@ int main(int argc, char *argv[])
  		{"validate", 0, NULL, 't'},
  		{"setpchstrap", 1, NULL, 'S'},
  		{"newvalue", 1, NULL, 'V'},
@@ -108,7 +108,7 @@ index ace05e2265..ba292fd142 100644
  		{0, 0, 0, 0}
  	};
  
-@@ -2329,35 +2386,8 @@ int main(int argc, char *argv[])
+@@ -2328,35 +2385,8 @@ int main(int argc, char *argv[])
  			region_fname++;
  			// Descriptor, BIOS, ME, GbE, Platform
  			// valid type?
@@ -146,7 +146,7 @@ index ace05e2265..ba292fd142 100644
  				fprintf(stderr, "No such region type: '%s'\n\n",
  					region_type_string);
  				fprintf(stderr, "run '%s -h' for usage\n", argv[0]);
-@@ -2534,6 +2564,22 @@ int main(int argc, char *argv[])
+@@ -2533,6 +2563,22 @@ int main(int argc, char *argv[])
  		case 't':
  			mode_validate = 1;
  			break;
@@ -169,7 +169,7 @@ index ace05e2265..ba292fd142 100644
  		case 'v':
  			print_version();
  			exit(EXIT_SUCCESS);
-@@ -2553,7 +2599,8 @@ int main(int argc, char *argv[])
+@@ -2552,7 +2598,8 @@ int main(int argc, char *argv[])
  	if ((mode_dump + mode_layout + mode_fmap_template + mode_extract + mode_inject +
  			mode_setstrap + mode_newlayout + (mode_spifreq | mode_em100 |
  			mode_unlocked | mode_locked) + mode_altmedisable + mode_validate +
@@ -179,7 +179,7 @@ index ace05e2265..ba292fd142 100644
  		fprintf(stderr, "You may not specify more than one mode.\n\n");
  		fprintf(stderr, "run '%s -h' for usage\n", argv[0]);
  		exit(EXIT_FAILURE);
-@@ -2562,7 +2609,8 @@ int main(int argc, char *argv[])
+@@ -2561,7 +2608,8 @@ int main(int argc, char *argv[])
  	if ((mode_dump + mode_layout + mode_fmap_template + mode_extract + mode_inject +
  			mode_setstrap + mode_newlayout + mode_spifreq + mode_em100 +
  			mode_locked + mode_unlocked + mode_density + mode_altmedisable +
@@ -189,7 +189,7 @@ index ace05e2265..ba292fd142 100644
  		fprintf(stderr, "You need to specify a mode.\n\n");
  		fprintf(stderr, "run '%s -h' for usage\n", argv[0]);
  		exit(EXIT_FAILURE);
-@@ -2675,6 +2723,10 @@ int main(int argc, char *argv[])
+@@ -2674,6 +2722,10 @@ int main(int argc, char *argv[])
  		write_image(new_filename, image, size);
  	}
  

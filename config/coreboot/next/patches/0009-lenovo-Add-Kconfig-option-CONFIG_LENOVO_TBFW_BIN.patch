@@ -1,7 +1,7 @@
-From 91c7d772f4803a94950b3224ccd11ffd162b4e36 Mon Sep 17 00:00:00 2001
+From 35295d97b08ee659b6770ce39003732a4bdfb6a0 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Wed, 18 Dec 2024 02:06:18 +0000
-Subject: [PATCH 1/1] lenovo: Add Kconfig option CONFIG_LENOVO_TBFW_BIN
+Subject: [PATCH 09/11] lenovo: Add Kconfig option CONFIG_LENOVO_TBFW_BIN
 
 This is used by lbmk to know where a tb.bin file goes,
 when extracting and padding TBT.bin from Lenovo ThunderBolt
