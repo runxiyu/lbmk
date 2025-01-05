@@ -12,7 +12,7 @@ appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
 hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
 dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
-vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_BLOBS_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
+vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 vguide="https://libreboot.org/docs/install/ivy_has_common.html"
 tmpromdel="$PWD/tmp/DO_NOT_FLASH"
 
