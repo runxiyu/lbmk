@@ -107,10 +107,19 @@ if [ -z "${TMPDIR+x}" ]; then
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	touch lock || $err "cannot create 'lock' file"
-	rm -Rf "$XBMK_CACHE/xbmkpath" || $err "cannot remove xbmkpath"
-	mkdir -p "$XBMK_CACHE/xbmkpath" || $err "cannot create xbmkpath"
-	export PATH="$XBMK_CACHE/xbmkpath:$PATH" || \
-	    $err "Can't create xbmkpath"
+	rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath" || \
+	    $err "cannot remove xbmkpath"
+	mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath" || \
+	    $err "cannot create gnupath"
+	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH" || \
+	    $err "Can't create gnupath/xbmkpath"
+	(
+	# set up python v3.x in PATH, in case it's not set up correctly.
+	# see code above that detected the correct python3 command.
+	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
+	ln -s "`command -v "$python"`" python || \
+	    $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
+	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
 	xbmk_parent="y"
 fi
 
