@@ -512,6 +512,8 @@ patch_release_roms()
 			    1>&2
 			printf "This board probably lacks Intel ethernet.\n" \
 			    1>&2
+			printf "(or it's pre-IFD Intel with Intel GbE NIC)\n" \
+			    1>&2
 		fi
 	fi
 
