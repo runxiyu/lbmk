@@ -1,0 +1,26 @@
+From ebd8293eb1af20c204beb3aa1394865185e2f3f0 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 6 Jan 2025 18:49:58 +0000
+Subject: [PATCH 1/1] Print the Libreboot version in the SeaBIOS menu
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/bootsplash.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/bootsplash.c b/src/bootsplash.c
+index 538b316d..8746098c 100644
+--- a/src/bootsplash.c
++++ b/src/bootsplash.c
+@@ -48,7 +48,7 @@ enable_vga_console(void)
+     call16_int10(&br);
+ 
+     // Write to screen.
+-    printf("SeaBIOS (version %s)\n", VERSION);
++    printf("Libreboot 20241206, 8th revision (SeaBIOS menu): https://libreboot.org/\n");
+     display_uuid();
+ }
+ 
+-- 
+2.39.5
+
