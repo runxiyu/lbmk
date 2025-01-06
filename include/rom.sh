@@ -7,6 +7,9 @@
 
 mkserprog()
 {
+	[ $# -lt 1 ] && $err "mkserprog: no arguments provided"
+	[ "$1" = "pico" ] && mkpicotool
+
 	[ "$_f" = "-d" ] && return 0 # dry run
 	basename -as .h "$serdir/"*.h > "$TMPDIR/ser" || $err "!mk $1 $TMPDIR"
 
@@ -20,6 +23,7 @@ mkserprog()
 			ln -srf "$sersrc/build_$pt/" "$sersrc/build") \
 		    && x_ cmake -DPICO_BOARD="$sertarget" \
 		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc" \
+		    -Dpicotool_DIR="$picotool/picotool" \
 		    && x_ cmake --build "$sersrc/build"
 		[ "$1" = "stm32" ] && x_ make -C "$sersrc" \
 		    libopencm3-just-make BOARD=$sertarget && x_ make -C \
@@ -28,6 +32,18 @@ mkserprog()
 	done < "$TMPDIR/ser"
 
 	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
+}
+
+mkpicotool()
+{
+	rm -Rf "$picotool" || $err "Can't remove picotool builddir"
+	(
+	x_ cd src/picotool
+	cmake -DCMAKE_INSTALL_PREFIX=xbmkbin -DPICOTOOL_FLAT_INSTALL=1 \
+	    -DPICO_SDK_PATH=../pico-sdk || \
+	    $err "Can't prep picotool"
+	make install || $err "Can't build picotool"; :
+	) || $err "Can't build picotool"; :
 }
 
 copyps1bios()
