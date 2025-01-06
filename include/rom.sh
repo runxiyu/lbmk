@@ -8,9 +8,10 @@
 mkserprog()
 {
 	[ $# -lt 1 ] && $err "mkserprog: no arguments provided"
+	[ "$_f" = "-d" ] && return 0 # dry run
+
 	[ "$1" = "pico" ] && mkpicotool
 
-	[ "$_f" = "-d" ] && return 0 # dry run
 	basename -as .h "$serdir/"*.h > "$TMPDIR/ser" || $err "!mk $1 $TMPDIR"
 
 	while read -r sertarget; do
