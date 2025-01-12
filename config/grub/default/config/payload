@@ -178,14 +178,28 @@ menuentry 'Load Operating System (incl. fully encrypted disks)  [o]' --hotkey='o
 
 	search_bootcfg crypto
 
+	lvmvol=""
+
 	# after cryptomount, lvm volumes might be available
 	# using * is slow on some machines, but we use it here,
 	# just once. in so doing, we find every lvm volume
 	for vol in (*); do
 		if regexp ^lvm/ $vol; then
+			lvmvol="${lvmvol} ${vol}"
 			try_bootcfg "${vol}"
 		fi
 	done
+
+	# user might have put luks inside lvm
+	set pager=0
+	echo "Attempting to unlock encrypted LVMs"
+	for vol in ${lvmvol}; do
+		cryptomount "$vol"
+	done
+	set pager=1
+	echo
+
+	search_bootcfg crypto
 
 	true # Prevent pager requiring to accept each line instead of whole screen
 }
