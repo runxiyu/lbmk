@@ -8,9 +8,6 @@ the original upstream died
 i decided to host it myself, on libreboot rsync,
 for use by mirrors.
 
-this is also useful for GNU Boot, when downloading
-acpica on coreboot 4.11_branch, for fam15h boards
-
 this change is not necessary on other coreboot trees,
 which adhere to new coreboot policy (newer coreboot
 pulls acpica from github, which is fairly reliable)
