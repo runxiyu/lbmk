@@ -46,7 +46,7 @@ more robust installation. Documentation is provided.
 How does Libreboot differ from coreboot?
 ========================================
 
-In the same way that *Debian* is a GNU+Linux distribution, `libreboot` is
+In the same way that *Debian* is a Linux distribution, `libreboot` is
 a *coreboot distribution*. If you want to build a ROM image from scratch, you
 otherwise have to perform expert-level configuration of coreboot, GRUB and
 whatever other software you need, to prepare the ROM image. With *libreboot*,
