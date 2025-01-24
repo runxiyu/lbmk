@@ -24,12 +24,17 @@ uint8_t hextonum(char chs), rhex(void);
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
-#define SIZE_4KB 0x1000
 #define NVM_CHECKSUM 0xBABA
 
-uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
+/* gbe is two block sizes, i.e. one of the following multiplied by two: */
+#define SIZE_8KB 0x2000
+#define SIZE_16KB 0x4000
+#define SIZE_64KB 0x10000
+#define SIZE_128KB 0x20000
+
+uint16_t buf16[SIZE_64KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
-size_t nf, gbe[2];
+size_t partsize, nf, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, skipread[2] = {0, 0};
 int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
 
@@ -60,7 +65,7 @@ void (*cmd)(void) = NULL;
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 
 /* Macros for reading/writing the GbE file in memory */
-#define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
+#define word(pos16, partnum) buf16[pos16 + (partnum * (partsize >> 1))]
 #define setWord(pos16, p, val16) if ((gbeFileChanged = 1) && \
     word(pos16, p) != val16) nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
 
@@ -151,8 +156,16 @@ openFiles(const char *path)
 {
 	struct stat st;
 	xopen(fd, path, flags);
-	if ((st.st_size != (SIZE_4KB << 1)))
-		err(errno = ECANCELED, "File `%s` not 8KiB", path);
+	switch(st.st_size) {
+	case SIZE_8KB:
+	case SIZE_16KB:
+	case SIZE_128KB:
+		partsize = st.st_size >> 1;
+		break;
+	default:
+		err(errno = ECANCELED, "Invalid file size (not 8/16/128KiB)");
+		break;
+	}
 	xopen(rfd, "/dev/urandom", O_RDONLY);
 }
 
@@ -161,16 +174,16 @@ void
 readGbe(void)
 {
 	if ((cmd == writeGbe) || (cmd == cmd_copy))
-		nf = SIZE_4KB;
+		nf = partsize;
 	else
 		nf = 128;
 	skipread[part ^ 1] = (cmd == cmd_copy) | (cmd == cmd_setchecksum)
 	    | (cmd == cmd_brick);
-	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
+	gbe[1] = (gbe[0] = (size_t) buf) + partsize;
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
 			continue;
-		err_if(pread(fd, (uint8_t *) gbe[p], nf, p << 12) == -1);
+		err_if(pread(fd, (uint8_t *) gbe[p], nf, p * partsize) == -1);
 		swap(p); /* handle big-endian host CPU */
 	}
 }
@@ -329,7 +342,8 @@ writeGbe(void)
 		if ((!nvmPartChanged[p]) && (cmd != writeGbe))
 			continue;
 		swap(p ^ x);
-		err_if(pwrite(fd, (uint8_t *) gbe[p ^ x], nf, p << 12) == -1);
+		err_if(pwrite(fd, (uint8_t *) gbe[p ^ x], nf, p * partsize)
+		    == -1);
 	}
 	errno = 0;
 	err_if(close(fd) == -1);
