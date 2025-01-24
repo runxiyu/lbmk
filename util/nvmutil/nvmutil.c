@@ -289,7 +289,7 @@ cmd_copy(void)
 		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
 }
 
-/* verify nvme part checksum (return 1 if valid) */
+/* verify nvm part checksum (return 1 if valid) */
 int
 goodChecksum(int partnum)
 {
