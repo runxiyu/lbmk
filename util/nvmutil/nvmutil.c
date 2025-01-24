@@ -94,10 +94,13 @@ main(int argc, char *argv[])
 	   is critical because we only want *file* accesses. */
 	checkdir("/dev/urandom");
 	checkdir(filename); /* Must be a file, not a directory */
+
 #ifdef __OpenBSD__
 	/* OpenBSD sandboxing: https://man.openbsd.org/pledge.2 */
 	/* Also: https://man.openbsd.org/unveil.2 */
+
 	err_if(unveil("/dev/urandom", "r") == -1);
+
 	if (flags == O_RDONLY) { /* write not needed for dump command */
 		err_if(unveil(filename, "r") == -1);
 		err_if(pledge("stdio rpath", NULL) == -1);
