@@ -15,10 +15,10 @@
 #include <unistd.h>
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
-    cmd_dump(void), cmd_setmac(void), readGbe(void), cmd_copy(void),
+    cmd_dump(void), cmd_setmac(void), readGbe(void), checkdir(const char *path),
     macf(int partnum), hexdump(int partnum), openFiles(const char *path),
-    checkdir(const char *path);
-int macAddress(const char *strMac, uint16_t *mac), goodChecksum(int partnum);
+    cmd_copy(void), parseMacString(const char *strMac, uint16_t *mac);
+int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
 #define COMMAND argv[2]
@@ -205,8 +205,7 @@ readGbe(void)
 void
 cmd_setmac(void)
 {
-	if (macAddress(strMac, mac))
-		err(errno = ECANCELED, "Bad MAC address");
+	parseMacString(strMac, mac);
 
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!goodChecksum(part = partnum))
@@ -220,24 +219,27 @@ cmd_setmac(void)
 }
 
 /* parse MAC string, write to char buffer */
-int
-macAddress(const char *strMac, uint16_t *mac)
+void
+parseMacString(const char *strMac, uint16_t *mac)
 {
 	uint64_t total = 0;
 	if (strnlen(strMac, 20) != 17)
-		return 1; /* 1 means error */
+		err(errno = EINVAL, "Invalid MAC address string length");
 
 	for (uint8_t h, i = 0; i < 16; i += 3) {
 		if (i != 15)
 			if (strMac[i + 2] != ':')
-				return 1;
+				err(errno = EINVAL,
+				    "Invalid MAC address separator '%c'",
+				    strMac[i + 2]);
 
 		int byte = i / 3;
 
 		/* Update MAC buffer per-nibble from a given string */
 		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
-				return 1; /* invalid character, MAC string */
+				err(errno = EINVAL, "Invalid character '%c'",
+				    strMac[i + nib]);
 
 			/* if random: ensure local-only, unicast MAC */
 			if ((byte == 0) && (nib == 1)) /* unicast/local nib */
@@ -249,8 +251,10 @@ macAddress(const char *strMac, uint16_t *mac)
 		}
 	}
 
-	/* do not permit multicast/all-zero MAC: */
-	return ((total == 0) || (mac[0] & 1)) ? 1 : 0;
+	if (total == 0)
+		err(errno = EINVAL, "Invalid MAC (all-zero MAC address)");
+	if (mac[0] & 1)
+		err(errno = EINVAL, "Invalid MAC (multicast bit set)");
 }
 
 /* convert hex char to char value (0-15) */
