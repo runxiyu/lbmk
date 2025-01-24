@@ -28,12 +28,13 @@ uint8_t hextonum(char chs), rhex(void);
 
 uint16_t buf16[SIZE_4KB], mac[3] = {0, 0, 0};
 uint8_t *buf = (uint8_t *) &buf16;
-size_t nf = 128, gbe[2];
+size_t nf, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, skipread[2] = {0, 0};
-int e = 1, flags = O_RDWR, rfd, fd, part, gbeFileChanged = 0;
+int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
 
 const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
 
+/* available commands, set a pointer based on user command */
 typedef struct op {
 	char *str;
 	void (*cmd)(void);
@@ -49,13 +50,16 @@ op_t op[] = {
 };
 void (*cmd)(void) = NULL;
 
+/* wrappers for BSD-style err() function (error handling) */
 #define ERR() errno = errno ? errno : ECANCELED
 #define err_if(x) if (x) err(ERR(), "%s", filename)
 
+/* Macro for opening a file with errors properly handled */
 #define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
     if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 
+/* Macros for reading/writing the GbE file in memory */
 #define word(pos16, partnum) buf16[pos16 + (partnum << 11)]
 #define setWord(pos16, p, val16) if ((gbeFileChanged = 1) && \
     word(pos16, p) != val16) nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
@@ -63,7 +67,7 @@ void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
-	if (argc < 3) {
+	if (argc < 3) { /* TODO: manpage! */
 		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
 		fprintf(stderr, "USAGE:\n");
 		fprintf(stderr, " %s FILE dump\n", argv[0]);
@@ -74,43 +78,54 @@ main(int argc, char *argv[])
 		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
 		err(errno = ECANCELED, "Too few arguments");
 	}
-	flags = (strcmp(COMMAND, "dump") == 0) ? O_RDONLY : flags;
+	if (strcmp(COMMAND, "dump") == 0)
+		flags = O_RDONLY; /* write not needed for dump cmd */
+	else
+		flags = O_RDWR;
 	filename = argv[1];
 #ifdef __OpenBSD__
+	/* OpenBSD sandboxing: https://man.openbsd.org/pledge.2 */
+	/* Also: https://man.openbsd.org/unveil.2 */
 	err_if(unveil("/dev/urandom", "r") == -1);
-	if (flags == O_RDONLY) {
+	if (flags == O_RDONLY) { /* write not needed for dump command */
 		err_if(unveil(filename, "r") == -1);
 		err_if(pledge("stdio rpath", NULL) == -1);
-	} else {
+	} else { /* not dump command, so pledge read-write instead */
 		err_if(unveil(filename, "rw") == -1);
 		err_if(pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
+	/* open files, but don't read yet; do pledge after, *then* read */
 	openFiles(filename);
 #ifdef __OpenBSD__
+	/* OpenBSD sandboxing: https://man.openbsd.org/pledge.2 */
 	err_if(pledge("stdio", NULL) == -1);
 #endif
 
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 6; i++) /* detect user-supplied command */
 		if (strcmp(COMMAND, op[i].str) == 0)
 			if ((cmd = argc >= op[i].args ? op[i].cmd : NULL))
-				break;
-	if (cmd == cmd_setmac)
-		strMac = (argc > 3) ? MAC_ADDRESS : strRMac;
-	else if ((cmd != NULL) && (argc > 3))
+				break; /* function ptr set, as per user cmd */
+	if (cmd == cmd_setmac) { /* user wishes to set the MAC address */
+		strMac = strRMac; /* random mac */
+		if (argc > 3) /* user-supplied mac (can be random) */
+			strMac = MAC_ADDRESS;
+	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
 		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
-		    || PARTN[1] ? EINVAL : errno));
-	err_if((errno = (cmd == NULL) ? EINVAL : errno));
+		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
+	}
+	err_if((errno = (cmd == NULL) ? EINVAL : errno)); /* bad user arg */
 
-	readGbe();
-	(*cmd)();
+	readGbe(); /* read gbe file into memory */
+	(*cmd)(); /* operate on gbe file in memory, as per user command */
 
 	if ((gbeFileChanged) && (flags != O_RDONLY) && (cmd != writeGbe))
-		writeGbe();
-	err_if((errno != 0) && (cmd != cmd_dump));
-	return errno;
+		writeGbe(); /* not called for swap cmd; swap calls writeGbe */
+	err_if((errno != 0) && (cmd != cmd_dump)); /* don't err on dump */
+	return errno; /* errno can be set by the dump command */
 }
 
+/* open gbe file and /dev/urandom, setting permissions */
 void
 openFiles(const char *path)
 {
@@ -119,13 +134,18 @@ openFiles(const char *path)
 	if ((st.st_size != (SIZE_4KB << 1)))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	xopen(rfd, "/dev/urandom", O_RDONLY);
-	errno = errno != ENOTDIR ? errno : 0;
+	if (errno == ENOTDIR)
+		errno = 0;
 }
 
+/* read gbe file into memory buffer */
 void
 readGbe(void)
 {
-	nf = ((cmd == writeGbe) || (cmd == cmd_copy)) ? SIZE_4KB : nf;
+	if ((cmd == writeGbe) || (cmd == cmd_copy))
+		nf = SIZE_4KB;
+	else
+		nf = 128;
 	skipread[part ^ 1] = (cmd == cmd_copy) | (cmd == cmd_setchecksum)
 	    | (cmd == cmd_brick);
 	gbe[1] = (gbe[0] = (size_t) buf) + SIZE_4KB;
@@ -133,10 +153,11 @@ readGbe(void)
 		if (skipread[p])
 			continue;
 		err_if(pread(fd, (uint8_t *) gbe[p], nf, p << 12) == -1);
-		swap(p);
+		swap(p); /* handle big-endian host CPU */
 	}
 }
 
+/* set MAC address and checksum on nvm part */
 void
 cmd_setmac(void)
 {
@@ -151,6 +172,7 @@ cmd_setmac(void)
 	}
 }
 
+/* parse MAC string, write to char buffer */
 int
 macAddress(const char *strMac, uint16_t *mac)
 {
@@ -174,6 +196,7 @@ macAddress(const char *strMac, uint16_t *mac)
 	return ((total == 0) | (mac[0] & 1)); /* multicast/all-zero banned */
 }
 
+/* convert hex char to char value (0-15) */
 uint8_t
 hextonum(char ch)
 {
@@ -183,9 +206,10 @@ hextonum(char ch)
 		return ch - 'A' + 10;
 	else if ((ch >= 'a') && (ch <= 'f'))
 		return ch - 'a' + 10;
-	return (ch == '?') ? rhex() : 16;
+	return (ch == '?') ? rhex() : 16; /* 16 for error (invalid char) */
 }
 
+/* random number generator */
 uint8_t
 rhex(void)
 {
@@ -195,6 +219,7 @@ rhex(void)
 	return rnum[n--] & 0xf;
 }
 
+/* print mac address and hexdump of parts */
 void
 cmd_dump(void)
 {
@@ -203,20 +228,26 @@ cmd_dump(void)
 			++numInvalid;
 		printf("MAC (part %d): ", partnum);
 		macf(partnum), hexdump(partnum);
-		errno = ((numInvalid < 2) && (partnum)) ? 0 : errno;
+		if ((numInvalid < 2) && (partnum))
+			errno = 0;
 	}
 }
 
+/* print mac address of part */
 void
 macf(int partnum)
 {
 	for (int c = 0; c < 3; c++) {
 		uint16_t val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
-		printf(c == 2 ? "\n" : ":");
+		if (c == 2)
+			printf("\n");
+		else
+			printf(":");
 	}
 }
 
+/* print hexdump of nvm part */
 void
 hexdump(int partnum)
 {
@@ -227,10 +258,12 @@ hexdump(int partnum)
 			if (c == 4)
 				printf(" ");
 			printf(" %02x %02x", val16 & 0xff, val16 >> 8);
-		} printf("\n");
+		}
+		printf("\n");
 	}
 }
 
+/* correct the checksum on part */
 void
 cmd_setchecksum(void)
 {
@@ -240,6 +273,7 @@ cmd_setchecksum(void)
 	setWord(0x3F, part, NVM_CHECKSUM - val16);
 }
 
+/* intentionally set wrong checksum on part */
 void
 cmd_brick(void)
 {
@@ -247,6 +281,7 @@ cmd_brick(void)
 		setWord(0x3F, part, ((word(0x3F, part)) ^ 0xFF));
 }
 
+/* overwrite the contents of one part with the other */
 void
 cmd_copy(void)
 {
@@ -254,6 +289,7 @@ cmd_copy(void)
 		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
 }
 
+/* verify nvme part checksum (return 1 if valid) */
 int
 goodChecksum(int partnum)
 {
@@ -266,6 +302,7 @@ goodChecksum(int partnum)
 	return (errno = ECANCELED) & 0;
 }
 
+/* write the nvm parts back to the file */
 void
 writeGbe(void)
 {
@@ -273,13 +310,14 @@ writeGbe(void)
 	for (int p = 0, x = (cmd == writeGbe) ? 1 : 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]) && (cmd != writeGbe))
 			continue;
-		swap(p^x);
-		err_if(pwrite(fd, (uint8_t *) gbe[p^x], nf, p << 12) == -1);
+		swap(p ^ x);
+		err_if(pwrite(fd, (uint8_t *) gbe[p ^ x], nf, p << 12) == -1);
 	}
 	errno = 0;
 	err_if(close(fd) == -1);
 }
 
+/* swap byte order on big-endian CPUs. swap skipped on little endian */
 void
 swap(int partnum)
 {
