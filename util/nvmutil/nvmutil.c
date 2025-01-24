@@ -71,6 +71,11 @@ void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
+#ifdef __OpenBSD__
+	/* OpenBSD pledge (sandboxing): https://man.openbsd.org/pledge.2 */
+	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
+#endif
+
 	if (argc < 3) { /* TODO: manpage! */
 		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
 		fprintf(stderr, "USAGE:\n");
@@ -84,29 +89,35 @@ main(int argc, char *argv[])
 	}
 
 	filename = argv[1];
-	if (strcmp(COMMAND, "dump") == 0)
-		flags = O_RDONLY; /* write not needed for dump cmd */
-	else
-		flags = O_RDWR;
 
-	/* Err if files are actually directories; this also
-	   prevents unveil allowing directory accesses, which
-	   is critical because we only want *file* accesses. */
+	if (strcmp(COMMAND, "dump") == 0) {
+		flags = O_RDONLY; /* write not needed for dump cmd */
+#ifdef __OpenBSD__
+		/* writes not needed for the dump command */
+		err_if(pledge("stdio rpath unveil", NULL) == -1);
+#endif
+	} else {
+		flags = O_RDWR;
+	}
+
+	/* check for dir first, to prevent unveil from
+	   permitting directory access on OpenBSD */
 	checkdir("/dev/urandom");
 	checkdir(filename); /* Must be a file, not a directory */
 
 #ifdef __OpenBSD__
-	/* OpenBSD sandboxing: https://man.openbsd.org/pledge.2 */
-	/* Also: https://man.openbsd.org/unveil.2 */
-
+	/* OpenBSD unveil: https://man.openbsd.org/unveil.2 */
 	err_if(unveil("/dev/urandom", "r") == -1);
 
-	if (flags == O_RDONLY) { /* write not needed for dump command */
-		err_if(unveil(filename, "r") == -1);
-		err_if(pledge("stdio rpath", NULL) == -1);
-	} else { /* not dump command, so pledge read-write instead */
+	/* Only allow access to /dev/urandom and the gbe file */
+	if (flags == O_RDONLY) { /* dump command */
+		err_if(unveil(filename, "r") == -1); /* write not needed */
+		err_if(unveil(NULL, NULL) == -1); /* lock unveil */
+		err_if(pledge("stdio rpath", NULL) == -1); /* lock unveil */
+	} else { /* other commands need read-write */
 		err_if(unveil(filename, "rw") == -1);
-		err_if(pledge("stdio rpath wpath", NULL) == -1);
+		err_if(unveil(NULL, NULL) == -1); /* lock unveil */
+		err_if(pledge("stdio rpath wpath", NULL) == -1); /* no unveil */
 	}
 #endif
 
@@ -119,7 +130,7 @@ main(int argc, char *argv[])
 	for (int i = 0; i < 6; i++) /* detect user-supplied command */
 		if (strcmp(COMMAND, op[i].str) == 0)
 			if ((cmd = argc >= op[i].args ? op[i].cmd : NULL))
-				break; /* function ptr set, as per user cmd */
+				break;
 
 	if (cmd == cmd_setmac) {
 		strMac = strRMac; /* random MAC */
