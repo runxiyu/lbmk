@@ -26,7 +26,6 @@ uint8_t hextonum(char chs), rhex(void);
 #define PARTN argv[3]
 #define NVM_CHECKSUM 0xBABA
 
-/* gbe is two block sizes, i.e. one of the following multiplied by two: */
 #define SIZE_8KB 0x2000
 #define SIZE_16KB 0x4000
 #define SIZE_64KB 0x10000
