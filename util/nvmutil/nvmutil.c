@@ -82,11 +82,13 @@ main(int argc, char *argv[])
 		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
 		err(errno = ECANCELED, "Too few arguments");
 	}
+
+	filename = argv[1];
 	if (strcmp(COMMAND, "dump") == 0)
 		flags = O_RDONLY; /* write not needed for dump cmd */
 	else
 		flags = O_RDWR;
-	filename = argv[1];
+
 	/* Err if files are actually directories; this also
 	   prevents unveil allowing directory accesses, which
 	   is critical because we only want *file* accesses. */
@@ -104,8 +106,8 @@ main(int argc, char *argv[])
 		err_if(pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
-	/* open files, but don't read yet; do pledge after, *then* read */
-	openFiles(filename);
+
+	openFiles(filename); /* open files first, to allow harder pledge: */
 #ifdef __OpenBSD__
 	/* OpenBSD sandboxing: https://man.openbsd.org/pledge.2 */
 	err_if(pledge("stdio", NULL) == -1);
@@ -115,9 +117,10 @@ main(int argc, char *argv[])
 		if (strcmp(COMMAND, op[i].str) == 0)
 			if ((cmd = argc >= op[i].args ? op[i].cmd : NULL))
 				break; /* function ptr set, as per user cmd */
-	if (cmd == cmd_setmac) { /* user wishes to set the MAC address */
-		strMac = strRMac; /* random mac */
-		if (argc > 3) /* user-supplied mac (can be random) */
+
+	if (cmd == cmd_setmac) {
+		strMac = strRMac; /* random MAC */
+		if (argc > 3) /* user-supplied MAC (can be random) */
 			strMac = MAC_ADDRESS;
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
 		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
@@ -130,6 +133,7 @@ main(int argc, char *argv[])
 
 	if ((gbeFileChanged) && (flags != O_RDONLY) && (cmd != writeGbe))
 		writeGbe(); /* not called for swap cmd; swap calls writeGbe */
+
 	err_if((errno != 0) && (cmd != cmd_dump)); /* don't err on dump */
 	return errno; /* errno can be set by the dump command */
 }
@@ -154,7 +158,9 @@ void
 openFiles(const char *path)
 {
 	struct stat st;
-	xopen(fd, path, flags);
+
+	xopen(fd, path, flags); /* gbe file */
+
 	switch(st.st_size) {
 	case SIZE_8KB:
 	case SIZE_16KB:
@@ -165,6 +171,8 @@ openFiles(const char *path)
 		err(errno = ECANCELED, "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
+
+	/* the MAC address randomiser relies on reading urandom */
 	xopen(rfd, "/dev/urandom", O_RDONLY);
 }
 
@@ -173,15 +181,21 @@ void
 readGbe(void)
 {
 	if ((cmd == writeGbe) || (cmd == cmd_copy))
-		nf = partsize;
+		nf = partsize; /* read/write the entire block */
 	else
-		nf = 128;
-	skipread[part ^ 1] = (cmd == cmd_copy) | (cmd == cmd_setchecksum)
-	    | (cmd == cmd_brick);
-	gbe[1] = (gbe[0] = (size_t) buf) + partsize;
+		nf = 128; /* only read/write the nvm part of the block */
+
+	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
+		skipread[part ^ 1] = 1; /* only read the user-specified part */
+
+	/* we pread per-part, so each part has its own pointer: */
+	gbe[0] = (size_t) buf;
+	gbe[1] = gbe[0] + partsize;
+
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
-			continue;
+			continue; /* avoid unnecessary reads */
+
 		err_if(pread(fd, (uint8_t *) gbe[p], nf, p * partsize) == -1);
 		swap(p); /* handle big-endian host CPU */
 	}
@@ -193,12 +207,15 @@ cmd_setmac(void)
 {
 	if (macAddress(strMac, mac))
 		err(errno = ECANCELED, "Bad MAC address");
+
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!goodChecksum(part = partnum))
 			continue;
-		for (int w = 0; w < 3; w++)
+
+		for (int w = 0; w < 3; w++) /* write MAC to gbe part */
 			setWord(w, partnum, mac[w]);
-		cmd_setchecksum();
+
+		cmd_setchecksum(); /* MAC updated; need valid checksum */
 	}
 }
 
@@ -207,23 +224,33 @@ int
 macAddress(const char *strMac, uint16_t *mac)
 {
 	uint64_t total = 0;
-	if (strnlen(strMac, 20) == 17) {
+	if (strnlen(strMac, 20) != 17)
+		return 1; /* 1 means error */
+
 	for (uint8_t h, i = 0; i < 16; i += 3) {
 		if (i != 15)
 			if (strMac[i + 2] != ':')
 				return 1;
+
 		int byte = i / 3;
+
+		/* Update MAC buffer per-nibble from a given string */
 		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
-				return 1;
-			if ((byte == 0) && (nib == 1))
-				if (strMac[i + nib] == '?')
+				return 1; /* invalid character, MAC string */
+
+			/* if random: ensure local-only, unicast MAC */
+			if ((byte == 0) && (nib == 1)) /* unicast/local nib */
+				if (strMac[i + nib] == '?') /* ?=random */
 					h = (h & 0xE) | 2; /* local, unicast */
+
 			mac[byte >> 1] |= ((uint16_t ) h)
 			    << ((8 * (byte % 2)) + (4 * (nib ^ 1)));
 		}
-	}}
-	return ((total == 0) | (mac[0] & 1)); /* multicast/all-zero banned */
+	}
+
+	/* do not permit multicast/all-zero MAC: */
+	return ((total == 0) || (mac[0] & 1)) ? 1 : 0;
 }
 
 /* convert hex char to char value (0-15) */
@@ -300,7 +327,8 @@ cmd_setchecksum(void)
 	uint16_t val16 = 0;
 	for (int c = 0; c < 0x3F; c++)
 		val16 += word(c, part);
-	setWord(0x3F, part, NVM_CHECKSUM - val16);
+
+	setWord(0x3F, part, NVM_CHECKSUM - val16); /* correct the checksum */
 }
 
 /* intentionally set wrong checksum on part */
@@ -326,24 +354,32 @@ goodChecksum(int partnum)
 	uint16_t total = 0;
 	for(int w = 0; w <= 0x3F; w++)
 		total += word(w, partnum);
+
 	if (total == NVM_CHECKSUM)
 		return 1;
+
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	return (errno = ECANCELED) & 0;
+	errno = ECANCELED;
+	return 0;
 }
 
 /* write the nvm parts back to the file */
 void
 writeGbe(void)
 {
-	err_if((cmd == writeGbe) && !(goodChecksum(0) || goodChecksum(1)));
+	if (cmd == writeGbe) /* cmd swap calls writeGbE; need valid checksum */
+		err_if(!(goodChecksum(0) || goodChecksum(1)));
+
 	for (int p = 0, x = (cmd == writeGbe) ? 1 : 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]) && (cmd != writeGbe))
 			continue;
-		swap(p ^ x);
+
+		swap(p ^ x); /* swap bytes on big-endian host CPUs */
+
 		err_if(pwrite(fd, (uint8_t *) gbe[p ^ x], nf, p * partsize)
 		    == -1);
 	}
+
 	errno = 0;
 	err_if(close(fd) == -1);
 }
@@ -354,6 +390,7 @@ swap(int partnum)
 {
 	size_t w, x;
 	uint8_t *n = (uint8_t *) gbe[partnum];
+
 	for (w = nf * ((uint8_t *) &e)[0], x = 1; w < nf; w += 2, x += 2)
 		n[w] ^= n[x], n[x] ^= n[w], n[w] ^= n[x];
 }
