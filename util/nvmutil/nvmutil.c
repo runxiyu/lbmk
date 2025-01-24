@@ -16,7 +16,8 @@
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), readGbe(void), cmd_copy(void),
-    macf(int partnum), hexdump(int partnum), openFiles(const char *path);
+    macf(int partnum), hexdump(int partnum), openFiles(const char *path),
+    checkdir(const char *path);
 int macAddress(const char *strMac, uint16_t *mac), goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -55,8 +56,7 @@ void (*cmd)(void) = NULL;
 #define err_if(x) if (x) err(ERR(), "%s", filename)
 
 /* Macro for opening a file with errors properly handled */
-#define xopen(f,l,p) if (opendir(l) != NULL) err(errno = EISDIR, "%s", l); \
-    if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
+#define xopen(f,l,p) if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 
 /* Macros for reading/writing the GbE file in memory */
@@ -83,6 +83,11 @@ main(int argc, char *argv[])
 	else
 		flags = O_RDWR;
 	filename = argv[1];
+	/* Err if files are actually directories; this also
+	   prevents unveil allowing directory accesses, which
+	   is critical because we only want *file* accesses. */
+	checkdir("/dev/urandom");
+	checkdir(filename); /* Must be a file, not a directory */
 #ifdef __OpenBSD__
 	/* OpenBSD sandboxing: https://man.openbsd.org/pledge.2 */
 	/* Also: https://man.openbsd.org/unveil.2 */
@@ -125,6 +130,21 @@ main(int argc, char *argv[])
 	return errno; /* errno can be set by the dump command */
 }
 
+/*
+ * check whether urandom/file is a directory, and err if so,
+ * to prevent later unveil calls from permitting directory access
+ * on OpenBSD
+ */
+void
+checkdir(const char *path)
+{
+	if (opendir(path) != NULL)
+		err(errno = EISDIR, "%s", path);
+	if (errno = ENOTDIR)
+		errno = 0;
+	err_if(errno);
+}
+
 /* open gbe file and /dev/urandom, setting permissions */
 void
 openFiles(const char *path)
@@ -134,8 +154,6 @@ openFiles(const char *path)
 	if ((st.st_size != (SIZE_4KB << 1)))
 		err(errno = ECANCELED, "File `%s` not 8KiB", path);
 	xopen(rfd, "/dev/urandom", O_RDONLY);
-	if (errno == ENOTDIR)
-		errno = 0;
 }
 
 /* read gbe file into memory buffer */
