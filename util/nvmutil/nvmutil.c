@@ -127,10 +127,12 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio", NULL) == -1);
 #endif
 
-	for (int i = 0; i < 6; i++) /* detect user-supplied command */
-		if (strcmp(COMMAND, op[i].str) == 0)
-			if ((cmd = argc >= op[i].args ? op[i].cmd : NULL))
-				break;
+	for (int i = 0; (i < 6) && (cmd == NULL); i++) {
+		if (strcmp(COMMAND, op[i].str) != 0)
+			continue;
+		if (argc >= op[i].args)
+			cmd = op[i].cmd;
+	}
 
 	if (cmd == cmd_setmac) {
 		strMac = strRMac; /* random MAC */
