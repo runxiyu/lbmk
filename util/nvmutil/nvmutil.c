@@ -130,8 +130,11 @@ main(int argc, char *argv[])
 	for (int i = 0; (i < 6) && (cmd == NULL); i++) {
 		if (strcmp(COMMAND, op[i].str) != 0)
 			continue;
-		if (argc >= op[i].args)
+		if (argc >= op[i].args) {
 			cmd = op[i].cmd;
+			break;
+		}
+		err(errno = EINVAL, "Too few args on command '%s'", op[i].str);
 	}
 
 	if (cmd == cmd_setmac) {
