@@ -32,7 +32,6 @@ uint8_t hextonum(char chs), rhex(void);
 #define SIZE_128KB 0x20000
 
 uint16_t buf16[SIZE_64KB], mac[3] = {0, 0, 0};
-uint8_t *buf = (uint8_t *) &buf16;
 size_t partsize, nf, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, skipread[2] = {0, 0};
 int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
@@ -208,7 +207,7 @@ readGbe(void)
 		skipread[part ^ 1] = 1; /* only read the user-specified part */
 
 	/* we pread per-part, so each part has its own pointer: */
-	gbe[0] = (size_t) buf;
+	gbe[0] = (size_t) buf16;
 	gbe[1] = gbe[0] + partsize;
 
 	for (int p = 0; p < 2; p++) {
