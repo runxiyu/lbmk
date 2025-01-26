@@ -31,7 +31,7 @@ uint8_t hextonum(char chs), rhex(void);
 #define SIZE_64KB 0x10000
 #define SIZE_128KB 0x20000
 
-uint16_t buf16[SIZE_64KB], mac[3] = {0, 0, 0};
+uint16_t mac[3] = {0, 0, 0}, *buf16;
 size_t partsize, nf, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, skipread[2] = {0, 0};
 int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
@@ -198,6 +198,10 @@ openFiles(const char *path)
 void
 readGbe(void)
 {
+	char *buf = malloc(partsize << 1);
+	if (buf == NULL)
+		err(errno, "Can't malloc %ld B for '%s'", partsize, filename);
+
 	if ((cmd == writeGbe) || (cmd == cmd_copy))
 		nf = partsize; /* read/write the entire block */
 	else
@@ -207,8 +211,9 @@ readGbe(void)
 		skipread[part ^ 1] = 1; /* only read the user-specified part */
 
 	/* we pread per-part, so each part has its own pointer: */
-	gbe[0] = (size_t) buf16;
+	gbe[0] = (size_t) buf;
 	gbe[1] = gbe[0] + partsize;
+	buf16 = (uint16_t *) buf;
 
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
