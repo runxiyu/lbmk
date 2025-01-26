@@ -198,10 +198,6 @@ openFiles(const char *path)
 void
 readGbe(void)
 {
-	char *buf = malloc(partsize << 1);
-	if (buf == NULL)
-		err(errno, "Can't malloc %ld B for '%s'", partsize, filename);
-
 	if ((cmd == writeGbe) || (cmd == cmd_copy))
 		nf = partsize; /* read/write the entire block */
 	else
@@ -210,9 +206,13 @@ readGbe(void)
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
 		skipread[part ^ 1] = 1; /* only read the user-specified part */
 
+	char *buf = malloc(nf << 1);
+	if (buf == NULL)
+		err(errno, "Can't malloc %ld B for '%s'", partsize, filename);
+
 	/* we pread per-part, so each part has its own pointer: */
 	gbe[0] = (size_t) buf;
-	gbe[1] = gbe[0] + partsize;
+	gbe[1] = gbe[0] + nf;
 
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
