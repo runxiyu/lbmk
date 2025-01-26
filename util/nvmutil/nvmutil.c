@@ -147,10 +147,10 @@ main(int argc, char *argv[])
 	err_if((errno = (cmd == NULL) ? EINVAL : errno)); /* bad user arg */
 
 	readGbe(); /* read gbe file into memory */
-	(*cmd)(); /* operate on gbe file in memory, as per user command */
 
-	if ((gbeFileChanged) && (flags != O_RDONLY))
-		writeGbe();
+	(*cmd)(); /* operate on gbe file in memory */
+
+	writeGbe(); /* write changes back to file */
 
 	err_if((errno != 0) && (cmd != cmd_dump)); /* don't err on dump */
 	return errno; /* errno can be set by the dump command */
@@ -413,6 +413,9 @@ goodChecksum(int partnum)
 void
 writeGbe(void)
 {
+	if ((!gbeFileChanged) || (flags == O_RDONLY))
+		return;
+
 	for (int p = 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]))
 			continue;
