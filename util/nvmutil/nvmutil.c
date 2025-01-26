@@ -33,7 +33,7 @@ uint8_t hextonum(char chs), rhex(void);
 
 uint16_t mac[3] = {0, 0, 0};
 size_t partsize, nf, gbe[2];
-uint8_t nvmPartChanged[2] = {0, 0}, skipread[2] = {0, 0};
+uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
 
 const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
@@ -204,18 +204,22 @@ readGbe(void)
 		nf = 128; /* only read/write the nvm part of the block */
 
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
-		skipread[part ^ 1] = 1; /* only read the user-specified part */
+		do_read[part ^ 1] = 0; /* only read the user-specified part */
 
-	char *buf = malloc(nf << 1);
+	/* AND do_read[*] to avoid wasteful malloc */
+	/* cmd_copy also relies on this */
+	char *buf = malloc(nf << (do_read[0] & do_read[1]));
 	if (buf == NULL)
 		err(errno, "Can't malloc %ld B for '%s'", partsize, filename);
 
 	/* we pread per-part, so each part has its own pointer: */
+	/* if a do_read is 0, both pointers are the same; this accomplishes
+	   the desired result for cmd_copy (see cmd_copy function) */
 	gbe[0] = (size_t) buf;
-	gbe[1] = gbe[0] + nf;
+	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
 
 	for (int p = 0; p < 2; p++) {
-		if (skipread[p])
+		if (!do_read[p])
 			continue; /* avoid unnecessary reads */
 
 		err_if(pread(fd, (uint8_t *) gbe[p], nf, p * partsize) == -1);
@@ -369,8 +373,10 @@ cmd_brick(void)
 void
 cmd_copy(void)
 {
-	if ((gbeFileChanged = nvmPartChanged[part ^ 1] = goodChecksum(part)))
-		gbe[part ^ 1] = gbe[part]; /* speedhack: copy ptr, not words */
+	gbeFileChanged = nvmPartChanged[part ^ 1] = goodChecksum(part);
+
+	/* no need to actually copy because gbe[] pointers are both the same */
+	/* we simply set the right nvm part as changed, and write the file */
 }
 
 /* verify nvm part checksum (return 1 if valid) */
