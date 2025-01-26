@@ -17,7 +17,8 @@
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), readGbe(void), checkdir(const char *path),
     macf(int partnum), hexdump(int partnum), openFiles(const char *path),
-    cmd_copy(void), parseMacString(const char *strMac, uint16_t *mac);
+    cmd_copy(void), parseMacString(const char *strMac, uint16_t *mac),
+    cmd_swap(void);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -46,7 +47,7 @@ typedef struct op {
 op_t op[] = {
 { .str = "dump", .cmd = cmd_dump, .args = 3},
 { .str = "setmac", .cmd = cmd_setmac, .args = 3},
-{ .str = "swap", .cmd = writeGbe, .args = 3},
+{ .str = "swap", .cmd = cmd_swap, .args = 3},
 { .str = "copy", .cmd = cmd_copy, .args = 4},
 { .str = "brick", .cmd = cmd_brick, .args = 4},
 { .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4},
@@ -148,8 +149,8 @@ main(int argc, char *argv[])
 	readGbe(); /* read gbe file into memory */
 	(*cmd)(); /* operate on gbe file in memory, as per user command */
 
-	if ((gbeFileChanged) && (flags != O_RDONLY) && (cmd != writeGbe))
-		writeGbe(); /* not called for swap cmd; swap calls writeGbe */
+	if ((gbeFileChanged) && (flags != O_RDONLY))
+		writeGbe();
 
 	err_if((errno != 0) && (cmd != cmd_dump)); /* don't err on dump */
 	return errno; /* errno can be set by the dump command */
@@ -197,7 +198,7 @@ openFiles(const char *path)
 void
 readGbe(void)
 {
-	if ((cmd == writeGbe) || (cmd == cmd_copy))
+	if ((cmd == cmd_swap) || (cmd == cmd_copy))
 		nf = partsize; /* read/write the entire block */
 	else
 		nf = 128; /* only read/write the nvm part of the block */
@@ -378,6 +379,20 @@ cmd_copy(void)
 	/* we simply set the right nvm part as changed, and write the file */
 }
 
+/* swap contents between the two parts */
+void
+cmd_swap(void) {
+	err_if(!(goodChecksum(0) || goodChecksum(1)));
+	errno = 0;
+
+	/* speedhack: swap pointers, not words. (xor swap) */
+	gbe[0] ^= gbe[1];
+	gbe[1] ^= gbe[0];
+	gbe[0] ^= gbe[1];
+
+	gbeFileChanged = nvmPartChanged[0] = nvmPartChanged[1] = 1;
+}
+
 /* verify nvm part checksum (return 1 if valid) */
 int
 goodChecksum(int partnum)
@@ -398,16 +413,13 @@ goodChecksum(int partnum)
 void
 writeGbe(void)
 {
-	if (cmd == writeGbe) /* cmd swap calls writeGbE; need valid checksum */
-		err_if(!(goodChecksum(0) || goodChecksum(1)));
-
-	for (int p = 0, x = (cmd == writeGbe) ? 1 : 0; p < 2; p++) {
-		if ((!nvmPartChanged[p]) && (cmd != writeGbe))
+	for (int p = 0; p < 2; p++) {
+		if ((!nvmPartChanged[p]))
 			continue;
 
-		swap(p ^ x); /* swap bytes on big-endian host CPUs */
+		swap(p); /* swap bytes on big-endian host CPUs */
 
-		err_if(pwrite(fd, (uint8_t *) gbe[p ^ x], nf, p * partsize)
+		err_if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize)
 		    == -1);
 	}
 
@@ -417,8 +429,8 @@ writeGbe(void)
 
 /* swap byte order on big-endian CPUs. swap skipped on little endian */
 void
-swap(int partnum)
-{
+swap(int partnum) /* swaps bytes in words, not pointers. */
+{		/* not to be confused with cmd_swap */
 	size_t w, x;
 	uint8_t *n = (uint8_t *) gbe[partnum];
 
