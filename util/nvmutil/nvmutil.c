@@ -31,7 +31,7 @@ uint8_t hextonum(char chs), rhex(void);
 #define SIZE_64KB 0x10000
 #define SIZE_128KB 0x20000
 
-uint16_t mac[3] = {0, 0, 0}, *buf16;
+uint16_t mac[3] = {0, 0, 0};
 size_t partsize, nf, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, skipread[2] = {0, 0};
 int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
@@ -63,7 +63,7 @@ void (*cmd)(void) = NULL;
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 
 /* Macros for reading/writing the GbE file in memory */
-#define word(pos16, partnum) buf16[pos16 + (partnum * (partsize >> 1))]
+#define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
 #define setWord(pos16, p, val16) if ((gbeFileChanged = 1) && \
     word(pos16, p) != val16) nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
 
@@ -213,7 +213,6 @@ readGbe(void)
 	/* we pread per-part, so each part has its own pointer: */
 	gbe[0] = (size_t) buf;
 	gbe[1] = gbe[0] + partsize;
-	buf16 = (uint16_t *) buf;
 
 	for (int p = 0; p < 2; p++) {
 		if (skipread[p])
