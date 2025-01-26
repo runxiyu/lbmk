@@ -28,7 +28,6 @@ uint8_t hextonum(char chs), rhex(void);
 
 #define SIZE_8KB 0x2000
 #define SIZE_16KB 0x4000
-#define SIZE_64KB 0x10000
 #define SIZE_128KB 0x20000
 
 uint16_t mac[3] = {0, 0, 0};
@@ -210,7 +209,7 @@ readGbe(void)
 	/* cmd_copy also relies on this */
 	char *buf = malloc(nf << (do_read[0] & do_read[1]));
 	if (buf == NULL)
-		err(errno, "Can't malloc %ld B for '%s'", partsize, filename);
+		err(errno, NULL);
 
 	/* we pread per-part, so each part has its own pointer: */
 	/* if a do_read is 0, both pointers are the same; this accomplishes
