@@ -747,7 +747,7 @@ modify_mac_addresses()
 	done < "tmp/rom.list"
 	printf "\nThe following GbE NVM words were written in '%s':\n" \
 	    "$archive"
-	x_ util/nvmutil/nvm tmp/gbe dump | grep -v "bytes read from file"
+	x_ util/nvmutil/nvm tmp/gbe dump | grep -v "bytes read from file" || :
 
 	[ "$new_mac" = "restore" ] && \
 	    printf "\nNOTE: User specified setmac 'restore' argument.\n" && \
