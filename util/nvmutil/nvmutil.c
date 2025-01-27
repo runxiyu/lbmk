@@ -221,6 +221,8 @@ readGbe(void)
 	gbe[0] = (size_t) buf;
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
 
+	ssize_t tnr = 0; /* total bytes read */
+
 	for (int p = 0; p < 2; p++) {
 		if (!do_read[p])
 			continue; /* avoid unnecessary reads */
@@ -232,8 +234,12 @@ readGbe(void)
 			    "%ld bytes written on '%s', expected %ld bytes\n",
 			    nr, filename, nf);
 
+		tnr += nr;
+
 		swap(p); /* handle big-endian host CPU */
 	}
+
+	printf("%ld bytes read from file '%s'\n", tnr, filename);
 }
 
 /* set MAC address and checksum on nvm part */
