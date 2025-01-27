@@ -37,7 +37,7 @@ uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
 size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
-int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
+int e = 1, flags, rfd, fd, part;
 
 const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
 
@@ -67,8 +67,8 @@ void (*cmd)(void) = NULL;
 
 /* Macros for reading/writing the GbE file in memory */
 #define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
-#define setWord(pos16, p, val16) if ((gbeFileChanged = 1) && \
-    word(pos16, p) != val16) nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
+#define setWord(pos16, p, val16) if (word(pos16, p) != val16) \
+    nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
 
 int
 main(int argc, char *argv[])
@@ -395,7 +395,7 @@ cmd_brick(void)
 void
 cmd_copy(void)
 {
-	gbeFileChanged = nvmPartChanged[part ^ 1] = goodChecksum(part);
+	nvmPartChanged[part ^ 1] = goodChecksum(part);
 
 	/* no need to actually copy because gbe[] pointers are both the same */
 	/* we simply set the right nvm part as changed, and write the file */
@@ -412,7 +412,7 @@ cmd_swap(void) {
 	gbe[1] ^= gbe[0];
 	gbe[0] ^= gbe[1];
 
-	gbeFileChanged = nvmPartChanged[0] = nvmPartChanged[1] = 1;
+	nvmPartChanged[0] = nvmPartChanged[1] = 1;
 }
 
 /* verify nvm part checksum (return 1 if valid) */
@@ -435,7 +435,7 @@ goodChecksum(int partnum)
 void
 writeGbe(void)
 {
-	if ((!gbeFileChanged) || (flags == O_RDONLY))
+	if ((flags == O_RDONLY))
 		return;
 
 	ssize_t tnw = 0; /* total bytes written */
@@ -455,7 +455,7 @@ writeGbe(void)
 		tnw += nf;
 	}
 
-	if ((!tnw) && (gbeFileChanged))
+	if ((!tnw) && !(nvmPartChanged[0] || nvmPartChanged[1]))
 		fprintf(stderr, "No changes needed on file '%s'\n", filename);
 	else if (tnw)
 		printf("%ld bytes written to file '%s'\n", tnw, filename);
