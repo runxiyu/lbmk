@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
 		fprintf(stderr, "USAGE:\n");
 		fprintf(stderr, " %s FILE dump\n", argv[0]);
-		fprintf(stderr, " %s FILE\n # does same as setmac without arg",
+		fprintf(stderr, " %s FILE\n # same as setmac without arg\n",
 		    argv[0]);
 		fprintf(stderr, " %s FILE setmac [MAC]\n", argv[0]);
 		fprintf(stderr, " %s FILE swap\n", argv[0]);
