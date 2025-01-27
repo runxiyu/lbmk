@@ -78,10 +78,12 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
 #endif
 
-	if (argc < 3) { /* TODO: manpage! */
+	if (argc < 2) { /* TODO: manpage! */
 		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
 		fprintf(stderr, "USAGE:\n");
 		fprintf(stderr, " %s FILE dump\n", argv[0]);
+		fprintf(stderr, " %s FILE\n # does same as setmac without arg",
+		    argv[0]);
 		fprintf(stderr, " %s FILE setmac [MAC]\n", argv[0]);
 		fprintf(stderr, " %s FILE swap\n", argv[0]);
 		fprintf(stderr, " %s FILE copy 0|1\n", argv[0]);
@@ -92,14 +94,16 @@ main(int argc, char *argv[])
 
 	filename = argv[1];
 
-	if (strcmp(COMMAND, "dump") == 0) {
-		flags = O_RDONLY; /* write not needed for dump cmd */
+	flags = O_RDWR;
+
+	if (argc > 2) {
+		if (strcmp(COMMAND, "dump") == 0) {
+			flags = O_RDONLY; /* write not needed for dump cmd */
 #ifdef __OpenBSD__
-		/* writes not needed for the dump command */
-		err_if(pledge("stdio rpath unveil", NULL) == -1);
+			/* writes not needed for the dump command */
+			err_if(pledge("stdio rpath unveil", NULL) == -1);
 #endif
-	} else {
-		flags = O_RDWR;
+		}
 	}
 
 	/* check for dir first, to prevent unveil from
@@ -129,14 +133,19 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio", NULL) == -1);
 #endif
 
-	for (int i = 0; (i < 6) && (cmd == NULL); i++) {
-		if (strcmp(COMMAND, op[i].str) != 0)
-			continue;
-		if (argc >= op[i].args) {
-			cmd = op[i].cmd;
-			break;
+	if (argc > 2) {
+		for (int i = 0; (i < 6) && (cmd == NULL); i++) {
+			if (strcmp(COMMAND, op[i].str) != 0)
+				continue;
+			if (argc >= op[i].args) {
+				cmd = op[i].cmd;
+				break;
+			}
+			err(errno = EINVAL, "Too few args on command '%s'",
+			    op[i].str);
 		}
-		err(errno = EINVAL, "Too few args on command '%s'", op[i].str);
+	} else {
+		cmd = cmd_setmac;
 	}
 
 	if (cmd == cmd_setmac) {
