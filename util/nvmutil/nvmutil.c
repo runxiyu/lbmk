@@ -470,7 +470,7 @@ writeGbe(void)
 		cmd_dump();
 	}
 
-	if ((!tnw) && (flags != O_RDONLY))
+	if ((!tnw) && (flags != O_RDONLY) && (!errno))
 		fprintf(stderr, "No changes needed on file '%s'\n", filename);
 	else if (tnw)
 		printf("%ld bytes written to file '%s'\n", tnw, filename);
