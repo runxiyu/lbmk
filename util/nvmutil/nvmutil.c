@@ -435,13 +435,10 @@ goodChecksum(int partnum)
 void
 writeGbe(void)
 {
-	if ((flags == O_RDONLY))
-		return;
-
 	ssize_t tnw = 0; /* total bytes written */
 
 	for (int p = 0; p < 2; p++) {
-		if ((!nvmPartChanged[p]))
+		if ((!nvmPartChanged[p]) || (flags == O_RDONLY))
 			continue;
 
 		swap(p); /* swap bytes on big-endian host CPUs */
@@ -455,7 +452,7 @@ writeGbe(void)
 		tnw += nf;
 	}
 
-	if ((!tnw) && !(nvmPartChanged[0] || nvmPartChanged[1]))
+	if ((!tnw) && (flags != O_RDONLY))
 		fprintf(stderr, "No changes needed on file '%s'\n", filename);
 	else if (tnw)
 		printf("%ld bytes written to file '%s'\n", tnw, filename);
