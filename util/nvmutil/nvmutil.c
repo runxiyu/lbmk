@@ -331,6 +331,10 @@ void
 cmd_dump(void)
 {
 	for (int partnum = 0, numInvalid = 0; partnum < 2; partnum++) {
+		if ((cmd != cmd_dump) && (flags != O_RDONLY) &&
+		    (!nvmPartChanged[partnum]))
+			continue;
+
 		if (!goodChecksum(partnum))
 			++numInvalid;
 		printf("MAC (part %d): ", partnum);
@@ -436,6 +440,13 @@ void
 writeGbe(void)
 {
 	ssize_t tnw = 0; /* total bytes written */
+
+	if ((flags != O_RDONLY) && (cmd != cmd_dump)) {
+		if (nvmPartChanged[0] || nvmPartChanged[1])
+			printf("The following nvm words will be written:\n");
+		cmd_dump();
+		errno = 0; /* reset for cmd_brick */
+	}
 
 	for (int p = 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]) || (flags == O_RDONLY))
