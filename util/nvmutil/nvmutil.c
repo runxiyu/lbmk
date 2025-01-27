@@ -225,7 +225,13 @@ readGbe(void)
 		if (!do_read[p])
 			continue; /* avoid unnecessary reads */
 
-		err_if(pread(fd, (uint8_t *) gbe[p], nf, p * partsize) == -1);
+		ssize_t nr = pread(fd, (uint8_t *) gbe[p], nf, p * partsize);
+		err_if(nr == -1);
+		if (nr != nf)
+			err(errno == ECANCELED,
+			    "%ld bytes written on '%s', expected %ld bytes\n",
+			    nr, filename, nf);
+
 		swap(p); /* handle big-endian host CPU */
 	}
 }
