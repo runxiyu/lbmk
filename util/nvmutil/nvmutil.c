@@ -437,6 +437,6 @@ swap(int partnum) /* swaps bytes in words, not pointers. */
 	size_t w, x;
 	uint8_t *n = (uint8_t *) gbe[partnum];
 
-	for (w = nf * ((uint8_t *) &e)[0], x = 1; w < nf; w += 2, x += 2)
+	for (w = nf * ((uint8_t *) &e)[0], x = 1; w < 128; w += 2, x += 2)
 		n[w] ^= n[x], n[x] ^= n[w], n[w] ^= n[x];
 }
