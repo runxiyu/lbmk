@@ -249,6 +249,8 @@ cmd_setmac(void)
 	int mac_updated = 0;
 	parseMacString(strMac, mac);
 
+	printf("MAC address to be written: %s\n", strMac);
+
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!goodChecksum(part = partnum))
 			continue;
@@ -256,6 +258,9 @@ cmd_setmac(void)
 
 		for (int w = 0; w < 3; w++) /* write MAC to gbe part */
 			setWord(w, partnum, mac[w]);
+
+		printf("Wrote MAC address to part %d: ", partnum);
+		macf(partnum);
 
 		cmd_setchecksum(); /* MAC updated; need valid checksum */
 	}
