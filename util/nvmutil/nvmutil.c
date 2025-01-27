@@ -449,13 +449,6 @@ writeGbe(void)
 {
 	ssize_t tnw = 0; /* total bytes written */
 
-	if ((flags != O_RDONLY) && (cmd != cmd_dump)) {
-		if (nvmPartChanged[0] || nvmPartChanged[1])
-			printf("The following nvm words will be written:\n");
-		cmd_dump();
-		errno = 0; /* reset for cmd_brick */
-	}
-
 	for (int p = 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]) || (flags == O_RDONLY))
 			continue;
@@ -471,12 +464,20 @@ writeGbe(void)
 		tnw += nf;
 	}
 
+	if ((flags != O_RDONLY) && (cmd != cmd_dump)) {
+		if (nvmPartChanged[0] || nvmPartChanged[1])
+			printf("The following nvm words were written:\n");
+		cmd_dump();
+	}
+
 	if ((!tnw) && (flags != O_RDONLY))
 		fprintf(stderr, "No changes needed on file '%s'\n", filename);
 	else if (tnw)
 		printf("%ld bytes written to file '%s'\n", tnw, filename);
 
-	errno = 0;
+	if (tnw)
+		errno = 0;
+
 	err_if(close(fd) == -1);
 }
 
