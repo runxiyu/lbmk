@@ -25,7 +25,8 @@ uint8_t hextonum(char chs), rhex(void);
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
-#define NVM_CHECKSUM 0xBABA
+#define NVM_CHECKSUM 0xBABA /* checksum value */
+#define NVM_CHECKSUM_WORD 0x3F /* checksum word position */
 #define NVM_SIZE 128 /* Area containing NVM words */
 
 #define SIZE_8KB 0x2000
@@ -356,10 +357,11 @@ void
 cmd_setchecksum(void)
 {
 	uint16_t val16 = 0;
-	for (int c = 0; c < 0x3F; c++)
+	for (int c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += word(c, part);
 
-	setWord(0x3F, part, NVM_CHECKSUM - val16); /* correct the checksum */
+	/* correct the checksum */
+	setWord(NVM_CHECKSUM_WORD, part, NVM_CHECKSUM - val16);
 }
 
 /* intentionally set wrong checksum on part */
@@ -367,7 +369,8 @@ void
 cmd_brick(void)
 {
 	if (goodChecksum(part))
-		setWord(0x3F, part, ((word(0x3F, part)) ^ 0xFF));
+		setWord(NVM_CHECKSUM_WORD, part,
+		    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
 }
 
 /* overwrite the contents of one part with the other */
@@ -399,7 +402,7 @@ int
 goodChecksum(int partnum)
 {
 	uint16_t total = 0;
-	for(int w = 0; w <= 0x3F; w++)
+	for(int w = 0; w <= NVM_CHECKSUM_WORD; w++)
 		total += word(w, partnum);
 
 	if (total == NVM_CHECKSUM)
