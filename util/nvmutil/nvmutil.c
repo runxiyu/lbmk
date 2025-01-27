@@ -26,6 +26,7 @@ uint8_t hextonum(char chs), rhex(void);
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
 #define NVM_CHECKSUM 0xBABA
+#define NVM_SIZE 128 /* Area containing NVM words */
 
 #define SIZE_8KB 0x2000
 #define SIZE_16KB 0x4000
@@ -201,7 +202,7 @@ readGbe(void)
 	if ((cmd == cmd_swap) || (cmd == cmd_copy))
 		nf = partsize; /* read/write the entire block */
 	else
-		nf = 128; /* only read/write the nvm part of the block */
+		nf = NVM_SIZE; /* only read/write the nvm part of the block */
 
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
 		do_read[part ^ 1] = 0; /* only read the user-specified part */
@@ -437,6 +438,6 @@ swap(int partnum) /* swaps bytes in words, not pointers. */
 	size_t w, x;
 	uint8_t *n = (uint8_t *) gbe[partnum];
 
-	for (w = nf * ((uint8_t *) &e)[0], x = 1; w < 128; w += 2, x += 2)
+	for (w = nf * ((uint8_t *) &e)[0], x = 1; w < NVM_SIZE; w += 2, x += 2)
 		n[w] ^= n[x], n[x] ^= n[w], n[w] ^= n[x];
 }
