@@ -246,18 +246,22 @@ readGbe(void)
 void
 cmd_setmac(void)
 {
+	int mac_updated = 0;
 	parseMacString(strMac, mac);
 
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!goodChecksum(part = partnum))
 			continue;
-		errno = 0;
+		mac_updated = 1;
 
 		for (int w = 0; w < 3; w++) /* write MAC to gbe part */
 			setWord(w, partnum, mac[w]);
 
 		cmd_setchecksum(); /* MAC updated; need valid checksum */
 	}
+
+	if (mac_updated)
+		errno = 0; /* reset in case one of the checksums failed */
 }
 
 /* parse MAC string, write to char buffer */
