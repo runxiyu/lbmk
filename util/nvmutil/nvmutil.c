@@ -34,7 +34,8 @@ uint8_t hextonum(char chs), rhex(void);
 #define SIZE_128KB 0x20000
 
 uint16_t mac[3] = {0, 0, 0};
-size_t partsize, nf, gbe[2];
+ssize_t nf;
+size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int e = 1, flags, rfd, fd, part, gbeFileChanged = 0;
 
@@ -420,15 +421,19 @@ writeGbe(void)
 	if ((!gbeFileChanged) || (flags == O_RDONLY))
 		return;
 
-	size_t tbw = 0; /* total bytes written */
+	ssize_t tbw = 0; /* total bytes written */
 
 	for (int p = 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]))
 			continue;
 
 		swap(p); /* swap bytes on big-endian host CPUs */
-		err_if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize)
-		    == -1);
+		ssize_t bw = pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize);
+		err_if(bw == -1);
+		if (bw != nf)
+			err(errno == ECANCELED,
+			    "%ld bytes written on '%s', expected %ld bytes\n",
+			    bw, filename, nf);
 
 		tbw += nf;
 	}
