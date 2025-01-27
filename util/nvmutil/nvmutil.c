@@ -420,15 +420,23 @@ writeGbe(void)
 	if ((!gbeFileChanged) || (flags == O_RDONLY))
 		return;
 
+	size_t tbw = 0; /* total bytes written */
+
 	for (int p = 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]))
 			continue;
 
 		swap(p); /* swap bytes on big-endian host CPUs */
-
 		err_if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize)
 		    == -1);
+
+		tbw += nf;
 	}
+
+	if ((!tbw) && (gbeFileChanged))
+		fprintf(stderr, "No changes needed on file '%s'\n", filename);
+	else if (tbw)
+		printf("%ld bytes written to file '%s'\n", tbw, filename);
 
 	errno = 0;
 	err_if(close(fd) == -1);
