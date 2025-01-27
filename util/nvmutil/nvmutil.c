@@ -337,8 +337,11 @@ cmd_dump(void)
 
 		if (!goodChecksum(partnum))
 			++numInvalid;
+
 		printf("MAC (part %d): ", partnum);
-		macf(partnum), hexdump(partnum);
+		macf(partnum);
+		hexdump(partnum);
+
 		if ((numInvalid < 2) && (partnum))
 			errno = 0;
 	}
