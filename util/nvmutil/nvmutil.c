@@ -268,7 +268,6 @@ cmd_setmac(void)
 	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!goodChecksum(part = partnum))
 			continue;
-		mac_updated = 1;
 
 		for (int w = 0; w < 3; w++) /* write MAC to gbe part */
 			setWord(w, partnum, mac[w]);
@@ -277,6 +276,7 @@ cmd_setmac(void)
 		macf(partnum);
 
 		cmd_setchecksum(); /* MAC updated; need valid checksum */
+		mac_updated = 1;
 	}
 
 	if (mac_updated)
