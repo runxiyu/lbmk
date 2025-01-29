@@ -38,7 +38,7 @@ uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
 size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
-int e = 1, flags, rfd, fd, part;
+int flags, rfd, fd, part;
 
 const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
 
@@ -498,6 +498,7 @@ swap(int partnum) /* swaps bytes in words, not pointers. */
 {		/* not to be confused with cmd_swap */
 	size_t w, x;
 	uint8_t *n = (uint8_t *) gbe[partnum];
+	int e = 1;
 
 	for (w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1; w < NVM_SIZE;
 	    w += 2, x += 2) {
