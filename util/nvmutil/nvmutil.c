@@ -149,7 +149,10 @@ main(int argc, char *argv[])
 		cmd = cmd_setmac;
 	}
 
-	if (cmd == cmd_setmac) {
+	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
+		strMac = COMMAND;
+		cmd = cmd_setmac;
+	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
 		strMac = strRMac; /* random MAC */
 		if (argc > 3) /* user-supplied MAC (can be random) */
 			strMac = MAC_ADDRESS;
