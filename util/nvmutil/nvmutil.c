@@ -29,6 +29,7 @@ uint8_t hextonum(char chs), rhex(void);
 #define NVM_CHECKSUM_WORD 0x3F /* checksum word position */
 #define NVM_SIZE 128 /* Area containing NVM words */
 
+#define SIZE_4KB 0x1000
 #define SIZE_8KB 0x2000
 #define SIZE_16KB 0x4000
 #define SIZE_128KB 0x20000
@@ -211,7 +212,8 @@ void
 readGbe(void)
 {
 	if ((cmd == cmd_swap) || (cmd == cmd_copy))
-		nf = partsize; /* read/write the entire block */
+		nf = SIZE_4KB; /* read/write the entire block */
+			/* only need to do 4KB even on larger gbe files */
 	else
 		nf = NVM_SIZE; /* only read/write the nvm part of the block */
 
