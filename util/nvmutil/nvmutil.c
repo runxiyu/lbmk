@@ -182,7 +182,7 @@ checkdir(const char *path)
 {
 	if (opendir(path) != NULL)
 		err(errno = EISDIR, "%s", path);
-	if (errno = ENOTDIR)
+	if (errno == ENOTDIR)
 		errno = 0;
 	err_if(errno);
 }
