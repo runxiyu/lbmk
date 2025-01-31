@@ -37,8 +37,9 @@ initialisation](https://doc.coreboot.org/getting_started/architecture.html).
 Coreboot is notoriously difficult to install for most non-technical users; it
 handles only basic initialization and jumps to a separate
 [payload](https://doc.coreboot.org/payloads.html) program (e.g.
+[SeaBIOS](https://www.seabios.org/SeaBIOS),
 [GRUB](https://www.gnu.org/software/grub/),
-[Tianocore](https://www.tianocore.org/)), which must also be configured.
+[U-Boot](https://docs.u-boot.org/en/latest/)), which must also be configured.
 *The libreboot software solves this problem*; it is a *coreboot distribution* with
 an automated build system (named *lbmk*) that builds complete *ROM images*, for
 more robust installation. Documentation is provided.
