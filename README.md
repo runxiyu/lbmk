@@ -1,8 +1,8 @@
 Libreboot
 =========
 
-* Documentation: [libreboot.org](https://libreboot.org)
-* Support: [\#libreboot](https://web.libera.chat/#libreboot) on
+Documentation: [libreboot.org](https://libreboot.org)\
+Support: [\#libreboot](https://web.libera.chat/#libreboot) on
   [Libera](https://libera.chat/) IRC
 
 Libreboot provides 
