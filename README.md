@@ -21,7 +21,7 @@ Why use Libreboot, and what is coreboot?
 A lot of users who use libre operating systems still use proprietary boot
 firmware, which often contain backdoors and bugs, hampering
 [user freedom](https://writefreesoftware.org) and
-[right to repair](https://vid.puffyan.us/watch?v=Npd_xDuNi9k).
+[right to repair](https://www.eff.org/issues/right-to-repair).
 
 [coreboot](https://coreboot.org) provides libre boot firmware by initializing
 the hardware then running a payload. However, coreboot is notoriously difficult
